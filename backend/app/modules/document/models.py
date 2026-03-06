@@ -1,0 +1,69 @@
+from sqlalchemy import Column, String, DateTime, Text, Enum as SQLEnum, ForeignKey, JSON
+from sqlalchemy.orm import relationship
+from datetime import datetime
+import enum
+from app.database import Base
+
+
+class ProcessingStatus(str, enum.Enum):
+    PENDING = "pending"
+    UPLOADED = "uploaded"
+    PROCESSING = "processing"
+    OCR_COMPLETE = "ocr_complete"
+    EMBEDDED = "embedded"
+    COMPLETED = "completed"
+    COMPLETE = "completed"
+    PARTIAL_INDEXED = "partial_indexed"
+    FAILED = "failed"
+
+
+class DocumentType(str, enum.Enum):
+    CONTRACT = "contract"
+    FINANCIAL_RECORD = "financial_record"
+    TERMINATION_NOTICE = "termination_notice"
+    WITNESS_STATEMENT = "witness_statement"
+    EMPLOYMENT_CONTRACT = "employment_contract"
+    SALARY_RECORDS = "salary_records"
+    TERMINATION_LETTER = "termination_letter"
+    EVIDENCE = "evidence"
+    COURT_ORDER = "court_order"
+    OTHER = "other"
+
+
+class Document(Base):
+    __tablename__ = "documents"
+    
+    id = Column(String, primary_key=True, index=True)
+    case_id = Column(String, ForeignKey("cases.id"), nullable=False)
+    document_type = Column(SQLEnum(DocumentType), nullable=False)
+    file_name = Column(String, nullable=False)
+    file_path = Column(String)
+    file_size = Column(String)
+    mime_type = Column(String)
+    storage_key = Column(String)  # MinIO object key
+    processing_status = Column(SQLEnum(ProcessingStatus), default=ProcessingStatus.PENDING)
+    uploaded_by = Column(String, ForeignKey("users.id"))
+    ocr_text = Column(Text)
+    doc_metadata = Column(JSON, name="metadata")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    case = relationship("Case", back_populates="documents")
+    uploaded_by_user = relationship("User", back_populates="documents")
+    extracted_entities = relationship("ExtractedEntity", back_populates="document")
+
+
+class ExtractedEntity(Base):
+    __tablename__ = "extracted_entities"
+    
+    id = Column(String, primary_key=True, index=True)
+    document_id = Column(String, ForeignKey("documents.id"), nullable=False)
+    entity_type = Column(String, nullable=False)  # e.g., employee_name, employer_name, salary
+    entity_value = Column(Text)
+    confidence_score = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    document = relationship("Document", back_populates="extracted_entities")
+

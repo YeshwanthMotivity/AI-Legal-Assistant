@@ -1,0 +1,125 @@
+from pydantic import BaseModel
+from typing import Optional, List
+from datetime import datetime
+from app.modules.case.models import CaseStatus, CaseType
+
+
+class CaseBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    case_type: CaseType
+    employee_name: Optional[str] = None
+    employer_name: Optional[str] = None
+    claim_amount: Optional[str] = None
+
+
+class CaseCreate(CaseBase):
+    pass
+
+
+class CaseUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[CaseStatus] = None
+    employee_name: Optional[str] = None
+    employer_name: Optional[str] = None
+    claim_amount: Optional[str] = None
+    hearing_date: Optional[datetime] = None
+
+
+class CaseAssign(BaseModel):
+    assigned_to: str
+
+
+class CaseResponse(CaseBase):
+    id: str
+    case_number: str
+    status: CaseStatus
+    assigned_to: Optional[str] = None
+    created_by: Optional[str] = None
+    filed_date: Optional[datetime] = None
+    hearing_date: Optional[datetime] = None
+    judgment_date: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+class CaseListResponse(BaseModel):
+    total: int
+    items: List[CaseResponse]
+
+
+# Analysis schemas
+class CaseAnalyzeRequest(BaseModel):
+    document_ids: Optional[List[str]] = None
+
+
+class CaseAnalyzeResponse(BaseModel):
+    case_id: str
+    status: str
+    extracted_entities: dict
+    similar_cases: List[dict]
+    recommended_articles: List[str]
+
+
+class CaseAnalysisResponse(BaseModel):
+    case_id: str
+    analysis: dict
+
+
+# Judgment schemas
+class JudgmentDraftRequest(BaseModel):
+    analysis_id: Optional[str] = None
+
+
+class JudgmentDraftResponse(BaseModel):
+    case_id: str
+    draft_text: str
+    confidence_score: float
+
+
+class JudgmentRequest(BaseModel):
+    judgment_text: str
+    decision: str
+    compensation_amount: Optional[str] = None
+    reasoning: Optional[str] = None
+    legal_precedents: Optional[List[str]] = None
+    articles_cited: Optional[List[str]] = None
+
+
+class JudgmentResponse(BaseModel):
+    id: str
+    case_id: str
+    judge_id: str
+    judgment_text: str
+    decision: str
+    compensation_amount: Optional[str] = None
+    is_final: str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+# Feedback schemas
+class FeedbackRequest(BaseModel):
+    legal_relevance_score: int
+    reasoning_quality_score: int
+    explanation_clarity_score: int
+    feedback_text: Optional[str] = None
+    suggested_improvements: Optional[str] = None
+
+
+class FeedbackResponse(BaseModel):
+    id: str
+    judgment_id: str
+    case_id: str
+    judge_id: str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+

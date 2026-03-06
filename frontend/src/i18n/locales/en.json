@@ -1,0 +1,93 @@
+{
+  "common": {
+    "appName": "AI Judicial Assistant",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "search": "Search",
+    "filter": "Filter",
+    "actions": "Actions"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "username": "Username",
+    "password": "Password",
+    "loginButton": "Sign In",
+    "loginError": "Invalid credentials",
+    "welcome": "Welcome back"
+  },
+  "roles": {
+    "admin": "Administrator",
+    "judge": "Judge",
+    "clerk": "Clerk"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "cases": "Cases",
+    "documents": "Documents",
+    "users": "Users",
+    "settings": "Settings",
+    "metrics": "Metrics"
+  },
+  "case": {
+    "title": "Case Management",
+    "caseNumber": "Case Number",
+    "caseType": "Case Type",
+    "status": "Status",
+    "createdAt": "Created At",
+    "assignedTo": "Assigned To",
+    "description": "Description",
+    "analyze": "Analyze Case",
+    "draft": "Draft Judgment",
+    "viewDetails": "View Details",
+    "assign": "Assign Case",
+    "feedback": "Submit Feedback"
+  },
+  "document": {
+    "title": "Document Management",
+    "upload": "Upload Document",
+    "fileName": "File Name",
+    "fileType": "File Type",
+    "uploadedBy": "Uploaded By",
+    "processingStatus": "Processing Status",
+    "metadata": "Metadata"
+  },
+  "admin": {
+    "userManagement": "User Management",
+    "caseAssignment": "Case Assignment",
+    "metricsDashboard": "Metrics Dashboard",
+    "auditLogs": "Audit Logs"
+  },
+  "metrics": {
+    "title": "System Metrics",
+    "retrieval": "Retrieval Performance",
+    "precisionAt5": "Precision@5",
+    "recallAt5": "Recall@5",
+    "mrr": "MRR",
+    "similarity": "Case Similarity",
+    "top5Accuracy": "Top-5 Accuracy",
+    "avgSimilarity": "Avg Similarity",
+    "processing": "Document Processing",
+    "entityAccuracy": "Entity Extraction Accuracy",
+    "reasoning": "AI Reasoning",
+    "outcomeAgreement": "Outcome Agreement",
+    "judgeScore": "Judge Score",
+    "performance": "System Performance",
+    "searchLatency": "Search Latency",
+    "aiLatency": "AI Latency"
+  },
+  "status": {
+    "pending": "Pending",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  }
+}
+

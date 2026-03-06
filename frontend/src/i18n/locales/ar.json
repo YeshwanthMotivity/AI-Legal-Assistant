@@ -1,0 +1,93 @@
+{
+  "common": {
+    "appName": "المساعد القضائي الذكي",
+    "loading": "جاري التحميل...",
+    "error": "حدث خطأ",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "submit": "إرسال",
+    "back": "رجوع",
+    "next": "التالي",
+    "search": "بحث",
+    "filter": "تصفية",
+    "actions": "الإجراءات"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "username": "اسم المستخدم",
+    "password": "كلمة المرور",
+    "loginButton": "دخول",
+    "loginError": "بيانات الاعتماد غير صحيحة",
+    "welcome": "مرحباً بعودتك"
+  },
+  "roles": {
+    "admin": "مدير",
+    "judge": "قاضي",
+    "clerk": "موظف"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "cases": "القضايا",
+    "documents": "المستندات",
+    "users": "المستخدمون",
+    "settings": "الإعدادات",
+    "metrics": "المقاييس"
+  },
+  "case": {
+    "title": "إدارة القضايا",
+    "caseNumber": "رقم القضية",
+    "caseType": "نوع القضية",
+    "status": "الحالة",
+    "createdAt": "تاريخ الإنشاء",
+    "assignedTo": "مُسند إلى",
+    "description": "الوصف",
+    "analyze": "تحليل القضية",
+    "draft": "صياغة الحكم",
+    "viewDetails": "عرض التفاصيل",
+    "assign": "تعيين القضية",
+    "feedback": "إرسال الملاحظات"
+  },
+  "document": {
+    "title": "إدارة المستندات",
+    "upload": "رفع مستند",
+    "fileName": "اسم الملف",
+    "fileType": "نوع الملف",
+    "uploadedBy": "رفع بواسطة",
+    "processingStatus": "حالة المعالجة",
+    "metadata": "البيانات الوصفية"
+  },
+  "admin": {
+    "userManagement": "إدارة المستخدمين",
+    "caseAssignment": "تعيين القضايا",
+    "metricsDashboard": "لوحة المقاييس",
+    "auditLogs": "سجلات التدقيق"
+  },
+  "metrics": {
+    "title": "مقاييس النظام",
+    "retrieval": "أداء الاسترجاع",
+    "precisionAt5": "الدقة@5",
+    "recallAt5": "الاستدعاء@5",
+    "mrr": "معدل الترتيب المتبادل",
+    "similarity": "التشابه بين القضايا",
+    "top5Accuracy": "دقة_top-5",
+    "avgSimilarity": "متوسط التشابه",
+    "processing": "معالجة المستندات",
+    "entityAccuracy": "دقة استخراج الكيانات",
+    "reasoning": "الاستدلال الذكي",
+    "outcomeAgreement": "الاتفاق على النتيجة",
+    "judgeScore": "تقييم القاضي",
+    "performance": "أداء النظام",
+    "searchLatency": "زمن البحث",
+    "aiLatency": "زمن الذكاء الاصطناعي"
+  },
+  "status": {
+    "pending": "معلق",
+    "inProgress": "قيد التنفيذ",
+    "completed": "مكتمل",
+    "cancelled": "ملغى"
+  }
+}
+
