@@ -1,15 +1,35 @@
 from typing import Optional, List
+
+from fastapi import BackgroundTasks
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import AsyncSessionLocal
+from app.modules.case.models import CaseStatus
 from app.modules.case.schemas import (
     CaseCreate, CaseUpdate, CaseResponse, CaseListResponse,
-    CaseAnalyzeResponse, CaseAnalysisResponse, JudgmentDraftResponse,
+    CaseAnalyzeResponse, CaseAnalysisResponse, CaseAnalysisDetail, JudgmentDraftResponse,
     JudgmentResponse, FeedbackResponse
 )
 from app.modules.case.repository import CaseRepository
+from app.modules.evaluation.judgment_repository import JudgmentRepository
+from app.modules.orchestrator.services import OrchestratorService
 
 
 class CaseService:
-    def __init__(self, case_repository: CaseRepository):
+    def __init__(self, db: AsyncSession, case_repository: CaseRepository):
+        self.db = db
         self.case_repository = case_repository
+        self.judgment_repository = JudgmentRepository(db)
+
+    @staticmethod
+    async def _run_analysis_task(case_id: str) -> None:
+        async with AsyncSessionLocal() as task_db:
+            try:
+                await OrchestratorService(task_db).run_analysis(case_id)
+                await task_db.commit()
+            except Exception:
+                await task_db.rollback()
+                raise
     
     async def create_case(self, case_data: CaseCreate, created_by: str) -> CaseResponse:
         """Create a new case."""
@@ -51,77 +71,109 @@ class CaseService:
             return None
         return CaseResponse.model_validate(case)
     
-    async def analyze_case(self, case_id: str) -> CaseAnalyzeResponse:
-        """Analyze case (stub - no business logic)."""
+    async def analyze_case(self, case_id: str, background_tasks: BackgroundTasks) -> CaseAnalyzeResponse:
+        """Queue AI analysis for a case."""
+        case = await self.case_repository.update_status(case_id, CaseStatus.UNDER_REVIEW)
+        if not case:
+            return CaseAnalyzeResponse(
+                case_id=case_id,
+                status="not_found",
+            )
+
+        await self.db.commit()
+        background_tasks.add_task(self._run_analysis_task, case_id)
+
         return CaseAnalyzeResponse(
             case_id=case_id,
-            status="analysis_complete",
-            extracted_entities={
-                "employee_name": "John Doe",
-                "employer_name": "ABC Corporation",
-                "salary": "5000 AED",
-                "employment_start": "2020-01-01",
-                "termination_reason": "Resignation"
-            },
-            similar_cases=[
-                {"case_number": "CASE-20240101-001", "similarity": 0.85},
-                {"case_number": "CASE-20240101-002", "similarity": 0.72}
-            ],
-            recommended_articles=["Article 132", "Article 145"]
+            status="analysis_pending",
         )
     
     async def get_case_analysis(self, case_id: str) -> CaseAnalysisResponse:
-        """Get case analysis (stub)."""
+        """Get persisted analysis result by case status."""
+        case = await self.case_repository.get_by_id(case_id)
+        if not case:
+            return CaseAnalysisResponse(
+                case_id=case_id,
+                analysis=CaseAnalysisDetail(status="not_found"),
+            )
+
+        if case.status == CaseStatus.UNDER_REVIEW:
+            return CaseAnalysisResponse(
+                case_id=case_id,
+                analysis=CaseAnalysisDetail(status="pending"),
+            )
+
+        if case.status == CaseStatus.REASONING_UNAVAILABLE:
+            judgment = await self.judgment_repository.get_by_case_id(case_id)
+            return CaseAnalysisResponse(
+                case_id=case_id,
+                analysis=CaseAnalysisDetail(
+                    status="reasoning_unavailable",
+                    outcome=judgment.decision if judgment else None,
+                    reasoning=judgment.reasoning if judgment else None,
+                    cited_laws=judgment.articles_cited if judgment and judgment.articles_cited else [],
+                    cited_cases=judgment.legal_precedents if judgment and judgment.legal_precedents else [],
+                    confidence=judgment.ai_confidence_score if judgment else None,
+                    draft_text=judgment.draft_text if judgment else None,
+                    model_used=judgment.model_used if judgment else None,
+                    explainability=judgment.explainability if judgment else None,
+                ),
+            )
+
+        judgment = await self.judgment_repository.get_by_case_id(case_id)
+        if case.status == CaseStatus.ANALYSIS_COMPLETE and judgment:
+            return CaseAnalysisResponse(
+                case_id=case_id,
+                analysis=CaseAnalysisDetail(
+                    status="analysis_complete",
+                    outcome=judgment.decision,
+                    reasoning=judgment.reasoning,
+                    cited_laws=judgment.articles_cited or [],
+                    cited_cases=judgment.legal_precedents or [],
+                    confidence=judgment.ai_confidence_score,
+                    draft_text=judgment.draft_text,
+                    model_used=judgment.model_used,
+                    explainability=judgment.explainability,
+                ),
+            )
+
         return CaseAnalysisResponse(
             case_id=case_id,
-            analysis={
-                "summary": "Case analysis pending AI processing",
-                "key_issues": ["Unpaid wages", "Wrongful termination"],
-                "recommendations": ["Review employment contract", "Check salary records"]
-            }
+            analysis=CaseAnalysisDetail(status=getattr(case.status, "value", str(case.status))),
         )
     
     async def draft_judgment(self, case_id: str) -> JudgmentDraftResponse:
-        """Generate judgment draft (stub)."""
+        """Return persisted AI draft text."""
+        judgment = await self.judgment_repository.get_by_case_id(case_id)
+        draft_text = judgment.draft_text if judgment and judgment.draft_text else ""
+        confidence = judgment.ai_confidence_score if judgment and judgment.ai_confidence_score is not None else 0.0
         return JudgmentDraftResponse(
             case_id=case_id,
-            draft_text="This is a stub judgment draft. In production, the AI would generate the actual judgment based on case analysis.",
-            confidence_score=0.82
+            draft_text=draft_text,
+            confidence_score=confidence,
         )
     
     async def create_judgment(self, case_id: str, judgment_data: dict, judge_id: str) -> JudgmentResponse:
-        """Create judgment (stub)."""
-        from app.modules.evaluation.models import Judgment
-        import uuid
-        
-        judgment = Judgment(
-            id=str(uuid.uuid4()),
-            case_id=case_id,
-            judge_id=judge_id,
-            judgment_text=judgment_data.get("judgment_text", ""),
-            decision=judgment_data.get("decision", ""),
-            compensation_amount=judgment_data.get("compensation_amount"),
-            reasoning=judgment_data.get("reasoning"),
-            legal_precedents=judgment_data.get("legal_precedents"),
-            articles_cited=judgment_data.get("articles_cited"),
-            is_final="true"
-        )
-        return JudgmentResponse.model_validate(judgment)
+        """Finalize judgment via orchestrator service."""
+        final_text = judgment_data.get("judgment_text", "")
+        result = await OrchestratorService(self.db).finalize_judgment(case_id, final_text, judge_id)
+        if judgment_data.get("decision") is not None:
+            judgment = await self.judgment_repository.get_by_case_id(case_id)
+            if judgment:
+                judgment.decision = judgment_data.get("decision")
+                judgment.compensation_amount = judgment_data.get("compensation_amount")
+                judgment.reasoning = judgment_data.get("reasoning")
+                judgment.legal_precedents = judgment_data.get("legal_precedents")
+                judgment.articles_cited = judgment_data.get("articles_cited")
+                await self.db.commit()
+                result["decision"] = judgment.decision
+                result["compensation_amount"] = judgment.compensation_amount
+        if not result.get("decision"):
+            result["decision"] = judgment_data.get("decision", "")
+        return JudgmentResponse.model_validate(result)
     
     async def submit_feedback(self, case_id: str, feedback_data: dict, judge_id: str) -> FeedbackResponse:
-        """Submit judge feedback (stub)."""
-        from app.modules.evaluation.models import JudgeFeedback
-        import uuid
-        
-        feedback = JudgeFeedback(
-            id=str(uuid.uuid4()),
-            case_id=case_id,
-            judge_id=judge_id,
-            legal_relevance_score=str(feedback_data.get("legal_relevance_score", 0)),
-            reasoning_quality_score=str(feedback_data.get("reasoning_quality_score", 0)),
-            explanation_clarity_score=str(feedback_data.get("explanation_clarity_score", 0)),
-            feedback_text=feedback_data.get("feedback_text"),
-            suggested_improvements=feedback_data.get("suggested_improvements")
-        )
-        return FeedbackResponse.model_validate(feedback)
+        """Submit feedback through orchestrator service."""
+        feedback_result = await OrchestratorService(self.db).record_feedback(case_id, feedback_data, judge_id)
+        return FeedbackResponse.model_validate(feedback_result)
 

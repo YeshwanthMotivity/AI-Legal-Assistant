@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 from app.modules.case.models import CaseStatus, CaseType
@@ -60,14 +60,26 @@ class CaseAnalyzeRequest(BaseModel):
 class CaseAnalyzeResponse(BaseModel):
     case_id: str
     status: str
-    extracted_entities: dict
-    similar_cases: List[dict]
-    recommended_articles: List[str]
+    extracted_entities: dict = Field(default_factory=dict)
+    similar_cases: List[dict] = Field(default_factory=list)
+    recommended_articles: List[str] = Field(default_factory=list)
+
+
+class CaseAnalysisDetail(BaseModel):
+    status: str
+    outcome: Optional[str] = None
+    reasoning: Optional[str] = None
+    cited_laws: List[str] = Field(default_factory=list)
+    cited_cases: List[str] = Field(default_factory=list)
+    confidence: Optional[float] = None
+    draft_text: Optional[str] = None
+    model_used: Optional[str] = None
+    explainability: Optional[dict] = None
 
 
 class CaseAnalysisResponse(BaseModel):
     case_id: str
-    analysis: dict
+    analysis: CaseAnalysisDetail
 
 
 # Judgment schemas
@@ -97,8 +109,9 @@ class JudgmentResponse(BaseModel):
     judgment_text: str
     decision: str
     compensation_amount: Optional[str] = None
-    is_final: str
+    is_finalized: bool
     created_at: datetime
+    finalized_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True

@@ -9,6 +9,7 @@ class CaseStatus(str, enum.Enum):
     PENDING = "pending"
     ASSIGNED = "assigned"
     UNDER_REVIEW = "under_review"
+    REASONING_UNAVAILABLE = "reasoning_unavailable"
     ANALYSIS_COMPLETE = "analysis_complete"
     JUDGMENT_DRAFTED = "judgment_drafted"
     FINALIZED = "finalized"

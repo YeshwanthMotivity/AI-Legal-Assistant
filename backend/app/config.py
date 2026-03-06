@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     bge_reranker_url: str = "http://bge_reranker:8002"
     jais_url: str = "http://jais:8003"
     fallback_model_url: str = "http://fallback_model:8004"
+    jais_timeout_seconds: int = 30
     enable_sparse_search: bool = False
     
     # Application

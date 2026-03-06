@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/cases", tags=["Cases"])
 
 def get_case_service(db: AsyncSession = Depends(get_db)) -> CaseService:
     repository = CaseRepository(db)
-    return CaseService(repository)
+    return CaseService(db, repository)
 
 
 @router.get("", response_model=CaseListResponse)
@@ -98,6 +98,7 @@ async def assign_case(
 @router.post("/{case_id}/analyze", response_model=CaseAnalyzeResponse)
 async def analyze_case(
     case_id: str,
+    background_tasks: BackgroundTasks,
     service: CaseService = Depends(get_case_service),
     current_user: dict = Depends(require_role(UserRole.JUDGE))
 ):
@@ -109,7 +110,7 @@ async def analyze_case(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Case not found"
         )
-    return await service.analyze_case(case_id)
+    return await service.analyze_case(case_id, background_tasks)
 
 
 @router.get("/{case_id}/analysis", response_model=CaseAnalysisResponse)

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Text, ForeignKey, JSON, Float
+from sqlalchemy import Column, String, DateTime, Text, ForeignKey, JSON, Float, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
@@ -9,14 +9,21 @@ class Judgment(Base):
     
     id = Column(String, primary_key=True, index=True)
     case_id = Column(String, ForeignKey("cases.id"), nullable=False)
-    judge_id = Column(String, ForeignKey("users.id"), nullable=False)
+    judge_id = Column(String, ForeignKey("users.id"), nullable=True)
     judgment_text = Column(Text)
     decision = Column(String)  # e.g., "approved", "rejected", "partial"
     compensation_amount = Column(String)
     reasoning = Column(Text)
     legal_precedents = Column(JSON)  # List of similar cases cited
     articles_cited = Column(JSON)  # List of law articles cited
-    is_final = Column(String, default="false")
+    draft_text = Column(Text)  # AI-generated draft
+    final_text = Column(Text)  # Judge-finalized text
+    is_finalized = Column(Boolean, default=False)
+    ai_confidence_score = Column(Float)
+    finalized_at = Column(DateTime)
+    model_used = Column(String)
+    explainability = Column(JSON)
+    reasoning_status = Column(String, default="ok")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

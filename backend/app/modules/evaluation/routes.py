@@ -19,6 +19,14 @@ async def get_metrics(
     phase2_averages = await repository.get_phase2_averages()
     phase3_averages = await repository.get_phase3_averages()
     phase4_averages = await repository.get_phase4_averages()
+    phase5_averages = await repository.get_phase5_averages()
+
+    judge_score_components = [
+        phase5_averages.get("legal_relevance_score", 0.0),
+        phase5_averages.get("reasoning_quality_score", 0.0),
+        phase5_averages.get("explanation_clarity_score", 0.0),
+    ]
+    judge_score = sum(judge_score_components) / len(judge_score_components) if judge_score_components else 0.0
 
     return MetricsResponse(
         precision_at_5=phase2_averages.get("precision_at_5", 0.0),
@@ -28,9 +36,8 @@ async def get_metrics(
         avg_similarity_score=phase3_averages.get("avg_similarity_score", 0.0),
         graph_confidence=phase4_averages.get("graph_confidence", 0.0),
         entity_extraction_accuracy=0.0,
-        outcome_agreement=0.0,
-        judge_score=0.0,
+        outcome_agreement=phase5_averages.get("outcome_agreement", 0.0),
+        judge_score=judge_score,
         search_latency=0.0,
-        ai_latency=0.0,
+        ai_latency=phase5_averages.get("ai_latency", 0.0),
     )
-
