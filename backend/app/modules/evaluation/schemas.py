@@ -1,6 +1,4 @@
 from pydantic import BaseModel
-from typing import Optional, List
-from datetime import datetime
 
 
 class MetricsResponse(BaseModel):
@@ -12,6 +10,9 @@ class MetricsResponse(BaseModel):
     # Case similarity metrics
     top_5_accuracy: float
     avg_similarity_score: float
+    
+    # Graph query metrics
+    graph_confidence: float
     
     # Document processing metrics
     entity_extraction_accuracy: float

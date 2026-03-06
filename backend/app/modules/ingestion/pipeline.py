@@ -81,8 +81,21 @@ async def run_ingestion_pipeline(
         )
         qdrant_failed = True
 
+    # Fetch case for graph writing and summary upsert
+    case_repo = CaseRepository(db)
+    case = await case_repo.get_by_id(case_id)
+    case_title = case.title if case else ""
+    case_type = case.case_type.value if case and case.case_type else ""
+    
     try:
-        await write_to_graph(case_id, document_id, entities)
+        await write_to_graph(
+            case_id, 
+            document_id, 
+            entities,
+            case_title=case_title,
+            case_type=case_type,
+            outcome="",  # Empty at ingestion time, updated when judgment is finalized
+        )
     except Exception:
         logger.exception(
             "Neo4j write failed for document_id=%s case_id=%s",

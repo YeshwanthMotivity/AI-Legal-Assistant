@@ -10,6 +10,7 @@ from app.config import settings
 from app.modules.evaluation.repository import EvaluationEventRepository
 from app.modules.case.repository import CaseRepository
 from app.modules.similarity.schemas import SimilarityResponse, SimilarCase
+from app.modules.ingestion.graph_writer import write_similarity_edges
 
 logger = logging.getLogger(__name__)
 
@@ -352,6 +353,10 @@ class SimilarityService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Similarity KPI logging failed: {exc}",
             ) from exc
+
+        # Wire SIMILAR_TO edges in Neo4j (fire-and-forget)
+        if candidate_case_ids:
+            asyncio.create_task(write_similarity_edges(case_id, candidate_case_ids))
 
         return SimilarityResponse(
             case_id=case_id,

@@ -46,6 +46,7 @@ async def init_neo4j():
     """Initialize Neo4j constraints and indexes."""
     try:
         from neo4j import GraphDatabase
+        from app.modules.ingestion.law_seeder import seed_law_articles
         
         driver = GraphDatabase.driver(
             settings.neo4j_uri,
@@ -66,6 +67,10 @@ async def init_neo4j():
             session.run("CREATE INDEX IF NOT EXISTS FOR (p:Person) ON (p.name)")
             
         driver.close()
+        
+        # Seed UAE Labor Law articles
+        await seed_law_articles()
+        
         logger.info("Neo4j initialization complete")
     except Exception as e:
         logger.warning(f"Neo4j initialization skipped: {e}")
