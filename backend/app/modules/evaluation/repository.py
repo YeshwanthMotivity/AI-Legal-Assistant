@@ -64,3 +64,37 @@ class EvaluationEventRepository:
             metric_type: float(avg_value) if avg_value is not None else 0.0
             for metric_type, avg_value in rows
         }
+
+    async def create_similarity_event(
+        self,
+        run_id: str,
+        case_id: str,
+        metric_type: str,
+        value: float,
+    ) -> EvaluationEvent:
+        event = EvaluationEvent(
+            id=str(uuid.uuid4()),
+            query_id=run_id,
+            document_id=None,
+            case_id=case_id,
+            metric_type=metric_type,
+            entity_type=None,
+            value=value,
+            phase="phase_3",
+        )
+        self.db.add(event)
+        await self.db.flush()
+        await self.db.refresh(event)
+        return event
+
+    async def get_phase3_averages(self) -> dict[str, float]:
+        result = await self.db.execute(
+            select(EvaluationEvent.metric_type, func.avg(EvaluationEvent.value))
+            .where(EvaluationEvent.phase == "phase_3")
+            .group_by(EvaluationEvent.metric_type)
+        )
+        rows = result.all()
+        return {
+            metric_type: float(avg_value) if avg_value is not None else 0.0
+            for metric_type, avg_value in rows
+        }

@@ -17,6 +17,7 @@ from app.modules.user.routes import admin_router as user_admin_router
 from app.modules.audit.routes import router as audit_router
 from app.modules.evaluation.routes import router as evaluation_router
 from app.modules.search.routes import router as search_router
+from app.modules.similarity.routes import router as similarity_router
 from app.auth.routes import router as auth_router
 
 
@@ -74,6 +75,7 @@ def create_app() -> FastAPI:
     app.include_router(audit_router, prefix="/api/v1", tags=["admin"])
     app.include_router(evaluation_router, prefix="/api/v1", tags=["admin"])
     app.include_router(search_router, prefix="/api/v1", tags=["search"])
+    app.include_router(similarity_router, prefix="/api/v1", tags=["similarity"])
     
     return app
 

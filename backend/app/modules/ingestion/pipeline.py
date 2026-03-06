@@ -11,6 +11,8 @@ from app.modules.ingestion.minio_client import download_file, upload_file
 from app.modules.ingestion.ner import extract_entities
 from app.modules.ingestion.ocr import run_ocr
 from app.modules.ingestion.vector_store import upsert_chunks
+from app.modules.case.repository import CaseRepository
+from app.modules.similarity.vector_store import upsert_case_summary
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +95,40 @@ async def run_ingestion_pipeline(
         await document_repo.update_status(document_id, ProcessingStatus.PARTIAL_INDEXED)
     else:
         await document_repo.update_status(document_id, ProcessingStatus.COMPLETED)
+
+    # Upsert case summary to case_summaries collection for similarity search (Phase 3)
+    try:
+        case_repo = CaseRepository(db)
+        case = await case_repo.get_by_id(case_id)
+        if case:
+            # Build summary text same as SimilarityService: title + case_type + employee_name + employer_name
+            summary_parts = [
+                case.title,
+                case.case_type.value if case.case_type else "",
+                case.employee_name or "",
+                case.employer_name or "",
+            ]
+            summary_text = " ".join(part for part in summary_parts if part)
+            
+            if summary_text:
+                # Embed the summary
+                summary_embeddings = await embed_chunks([summary_text])
+                if summary_embeddings:
+                    # Upsert to case_summaries collection with empty outcome (will be updated when judgment is finalized)
+                    await upsert_case_summary(
+                        case_id=case_id,
+                        case_type=case.case_type.value if case.case_type else "",
+                        case_title=case.title,
+                        claimant=case.employee_name or "",
+                        respondent=case.employer_name or "",
+                        outcome="",  # Empty at ingestion time, updated when judgment is finalized
+                        embedding=summary_embeddings[0],
+                    )
+    except Exception:
+        logger.exception(
+            "Case summary upsert failed for case_id=%s",
+            case_id,
+        )
 
     for entity in entities:
         await event_repo.create_event(
