@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import datetime
 from typing import Any
 
@@ -159,9 +160,18 @@ async def context_builder_node(state: AnalysisState) -> dict[str, Any]:
 
 async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
     system_prompt = (
-        "You are a UAE Labor Law judicial assistant. Provide grounded reasoning.\n"
-        "Arabic instruction: use only legally grounded, available evidence.\n"
-        "Return strict JSON with keys: outcome, reasoning, cited_laws, cited_cases, confidence, draft_judgment."
+        "You are a UAE Labor Law judicial assistant.\n"
+        "Use only the provided context and do not invent facts.\n"
+        "Return only valid JSON with this exact schema:\n"
+        "{"
+        "\"outcome\": string|null,"
+        "\"reasoning\": string,"
+        "\"cited_laws\": string[],"
+        "\"cited_cases\": (string|object)[],"
+        "\"confidence\": number,"
+        "\"draft_judgment\": string"
+        "}\n"
+        "Do not include markdown, explanations, or extra keys outside the JSON."
     )
     user_prompt = json.dumps(
         {
@@ -186,20 +196,55 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             data = response.json()
             return str(data["choices"][0]["message"]["content"])
 
-    def _normalize_reasoning(content: str, model_used: str, status: str) -> dict[str, Any]:
+    def _extract_json_object(raw: str) -> dict[str, Any] | None:
+        raw = (raw or "").strip()
+        if not raw:
+            return None
         try:
-            parsed = json.loads(content)
-            if not isinstance(parsed, dict):
-                raise ValueError("invalid json shape")
-            result = parsed
+            parsed = json.loads(raw)
+            if isinstance(parsed, dict):
+                return parsed
         except Exception:
+            pass
+
+        match = re.search(r"\{[\s\S]*\}", raw)
+        if not match:
+            return None
+        candidate = match.group(0)
+        try:
+            parsed = json.loads(candidate)
+            if isinstance(parsed, dict):
+                return parsed
+        except Exception:
+            return None
+        return None
+
+    def _normalize_reasoning(content: str, model_used: str, status: str) -> dict[str, Any]:
+        parsed = _extract_json_object(content)
+        try:
+            if not parsed:
+                raise ValueError("missing-json")
+            result = {
+                "outcome": parsed.get("outcome"),
+                "reasoning": str(parsed.get("reasoning", "")).strip(),
+                "cited_laws": parsed.get("cited_laws", []) if isinstance(parsed.get("cited_laws", []), list) else [],
+                "cited_cases": parsed.get("cited_cases", []) if isinstance(parsed.get("cited_cases", []), list) else [],
+                "confidence": float(parsed.get("confidence", 0.0) or 0.0),
+                "draft_judgment": str(parsed.get("draft_judgment", "")).strip(),
+            }
+            if not result["draft_judgment"]:
+                result["draft_judgment"] = result["reasoning"]
+        except Exception:
+            cleaned = re.sub(r"\{[\s\S]*\}", "", content).strip()
+            if not cleaned:
+                cleaned = "Reasoning generated but could not be parsed into strict JSON."
             result = {
                 "outcome": None,
-                "reasoning": content,
+                "reasoning": cleaned,
                 "cited_laws": [],
                 "cited_cases": [],
                 "confidence": 0.5,
-                "draft_judgment": content,
+                "draft_judgment": cleaned,
             }
         result["model_used"] = model_used
         return {

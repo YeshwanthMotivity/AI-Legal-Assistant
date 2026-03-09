@@ -4,6 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.document.models import Document, ExtractedEntity, ProcessingStatus
 from app.modules.document.schemas import DocumentCreate, DocumentUpdate
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentRepository:
@@ -83,6 +86,10 @@ class DocumentRepository:
         if not document:
             return
         document.processing_status = status
+        logger.info(
+            "Document processing status transition",
+            extra={"document_id": document_id, "case_id": document.case_id, "status": status.value},
+        )
         await self.db.flush()
 
     async def save_ocr_text(self, document_id: str, text: str) -> None:

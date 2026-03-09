@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, BackgroundTasks, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
@@ -50,7 +50,7 @@ async def upload_document(
     case_id: str,
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    document_type: DocumentType = DocumentType.OTHER,
+    document_type: DocumentType = Form(DocumentType.OTHER),
     db: AsyncSession = Depends(get_db),
     service: DocumentService = Depends(get_document_service),
     current_user: dict = Depends(require_role(UserRole.ADMIN, UserRole.CLERK, UserRole.JUDGE))

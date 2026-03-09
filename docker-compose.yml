@@ -112,8 +112,14 @@ services:
       - "8003:8003"
     environment:
       - MODEL_PATH=/models
+      - OLLAMA_URL=${OLLAMA_URL:-http://ollama:11434}
+      - OLLAMA_MODEL_PRIMARY=${OLLAMA_MODEL_PRIMARY:-jais:13b-chat}
+      - OLLAMA_TIMEOUT_SECONDS=${OLLAMA_TIMEOUT_SECONDS:-60}
     volumes:
       - jais_models:/models
+    depends_on:
+      ollama:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8003/health" ]
       interval: 10s
@@ -131,13 +137,34 @@ services:
       - "8004:8004"
     environment:
       - MODEL_PATH=/models
+      - OLLAMA_URL=${OLLAMA_URL:-http://ollama:11434}
+      - OLLAMA_MODEL_FALLBACK=${OLLAMA_MODEL_FALLBACK:-phi3:mini}
+      - OLLAMA_TIMEOUT_SECONDS=${OLLAMA_TIMEOUT_SECONDS:-60}
     volumes:
       - fallback_models:/models
+    depends_on:
+      ollama:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/health')" ]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+
+  # Ollama Runtime
+  ollama:
+    image: ollama/ollama:latest
+    container_name: judicial_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:11434/api/tags" ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
 
   # Backend API
@@ -166,6 +193,8 @@ services:
       jais:
         condition: service_healthy
       fallback_model:
+        condition: service_healthy
+      ollama:
         condition: service_healthy
     healthcheck:
       test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
@@ -199,5 +228,6 @@ volumes:
   minio_data:
   jais_models:
   fallback_models:
+  ollama_data:
 
 

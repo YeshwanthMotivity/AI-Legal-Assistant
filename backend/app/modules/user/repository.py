@@ -16,10 +16,22 @@ class UserRepository:
         return result.scalar_one_or_none()
     
     async def get_by_email(self, email: str) -> Optional[User]:
-        result = await self.db.execute(select(User).where(User.email == email))
+        result = await self.db.execute(
+            select(User).where(User.email == email).where(User.is_active == "true")
+        )
         return result.scalar_one_or_none()
     
     async def get_by_username(self, username: str) -> Optional[User]:
+        result = await self.db.execute(
+            select(User).where(User.username == username).where(User.is_active == "true")
+        )
+        return result.scalar_one_or_none()
+
+    async def get_by_email_any(self, email: str) -> Optional[User]:
+        result = await self.db.execute(select(User).where(User.email == email))
+        return result.scalar_one_or_none()
+
+    async def get_by_username_any(self, username: str) -> Optional[User]:
         result = await self.db.execute(select(User).where(User.username == username))
         return result.scalar_one_or_none()
     
@@ -63,7 +75,7 @@ class UserRepository:
         if not user:
             return False
         
-        await self.db.delete(user)
+        user.is_active = "false"
         await self.db.flush()
         return True
     

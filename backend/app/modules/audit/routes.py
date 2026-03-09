@@ -33,13 +33,14 @@ async def get_audit_logs(
     logs = list(result.scalars().all())
     
     # Get total count
-    count_query = select(AuditLog)
+    from sqlalchemy import func
+    count_query = select(func.count(AuditLog.id))
     if action:
         count_query = count_query.where(AuditLog.action == action)
     if user_id:
         count_query = count_query.where(AuditLog.user_id == user_id)
     count_result = await db.execute(count_query)
-    total = len(list(count_result.scalars().all()))
+    total = count_result.scalar_one()
     
     return AuditLogListResponse(
         total=total,

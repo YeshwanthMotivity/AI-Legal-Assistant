@@ -6,14 +6,12 @@ from app.database import Base
 
 
 class CaseStatus(str, enum.Enum):
-    PENDING = "pending"
-    ASSIGNED = "assigned"
-    UNDER_REVIEW = "under_review"
-    REASONING_UNAVAILABLE = "reasoning_unavailable"
-    ANALYSIS_COMPLETE = "analysis_complete"
-    JUDGMENT_DRAFTED = "judgment_drafted"
-    FINALIZED = "finalized"
-    CLOSED = "closed"
+    CREATED = "Created"
+    DOCUMENTS_UPLOADED = "DocumentsUploaded"
+    AI_ANALYSIS_PENDING = "AIAnalysisPending"
+    AI_ANALYSIS_READY = "AIAnalysisReady"
+    DRAFT_GENERATED = "DraftGenerated"
+    FINALIZED = "Finalized"
 
 
 class CaseType(str, enum.Enum):
@@ -32,13 +30,23 @@ class Case(Base):
     case_type = Column(SQLEnum(CaseType), nullable=False)
     title = Column(String, nullable=False)
     description = Column(Text)
-    status = Column(SQLEnum(CaseStatus), nullable=False, default=CaseStatus.PENDING)
+    status = Column(
+        SQLEnum(
+            CaseStatus,
+            name="casestatus",
+            values_callable=lambda enum_cls: [item.value for item in enum_cls],
+        ),
+        nullable=False,
+        default=CaseStatus.CREATED,
+    )
     assigned_to = Column(String, ForeignKey("users.id"))
     created_by = Column(String, ForeignKey("users.id"))
-    employee_name = Column(String)
-    employer_name = Column(String)
+    claimant_name = Column(String)
+    respondent_name = Column(String)
     claim_amount = Column(String)
-    filed_date = Column(DateTime, default=datetime.utcnow)
+    filing_date = Column(DateTime, default=datetime.utcnow)
+    court_number = Column(String)
+    notes = Column(Text)
     hearing_date = Column(DateTime)
     judgment_date = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)

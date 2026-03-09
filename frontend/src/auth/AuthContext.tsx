@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react'
+import axios from 'axios'
 
 export type UserRole = 'admin' | 'judge' | 'clerk'
 
@@ -30,6 +31,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [refreshToken, setRefreshToken] = useState<string | null>(null)
   const [user, setUser] = useState<User | null>(null)
 
+  const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'
+
+  const decodeJwtPayload = (token: string): Record<string, unknown> | null => {
+    try {
+      const payloadSegment = token.split('.')[1]
+      if (!payloadSegment) return null
+      const base64 = payloadSegment.replace(/-/g, '+').replace(/_/g, '/')
+      const json = atob(base64)
+      return JSON.parse(json) as Record<string, unknown>
+    } catch {
+      return null
+    }
+  }
+
+  const mapRole = (role: unknown): UserRole => {
+    if (role === 'admin' || role === 'judge' || role === 'clerk') return role
+    return 'clerk'
+  }
+
   // Load refresh token from localStorage on mount
   useEffect(() => {
     const storedRefreshToken = localStorage.getItem('refreshToken')
@@ -39,34 +59,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (storedRefreshToken && storedAccessToken && storedUser) {
       setRefreshToken(storedRefreshToken)
       setAccessToken(storedAccessToken)
-      setUser(JSON.parse(storedUser))
+      try {
+        setUser(JSON.parse(storedUser))
+      } catch {
+        localStorage.removeItem('user')
+      }
     }
   }, [])
 
   const login = async (username: string, password: string) => {
-    // In production, call the actual API with username and password
-    // For demo purposes, simulate a successful login
-    if (!password) {
-      throw new Error('Password is required')
+    const email = username.includes('@') ? username : `${username}@example.com`
+    const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+      email,
+      password,
+    })
+
+    const { access_token, refresh_token } = response.data
+    const payload = decodeJwtPayload(access_token)
+    if (!payload) {
+      throw new Error('Invalid access token payload')
     }
 
-    const mockUser: User = {
-      sub: '1',
-      username,
-      email: `${username}@example.com`,
-      role: username.includes('admin') ? 'admin' : username.includes('judge') ? 'judge' : 'clerk',
+    const authenticatedUser: User = {
+      sub: String(payload.sub ?? ''),
+      username: String(payload.username ?? username),
+      role: mapRole(payload.role),
+      email: undefined,
     }
-    
-    const mockAccessToken = 'mock-access-token-' + Date.now()
-    const mockRefreshToken = 'mock-refresh-token-' + Date.now()
 
-    setAccessToken(mockAccessToken)
-    setRefreshToken(mockRefreshToken)
-    setUser(mockUser)
+    setAccessToken(access_token)
+    setRefreshToken(refresh_token)
+    setUser(authenticatedUser)
 
-    localStorage.setItem('accessToken', mockAccessToken)
-    localStorage.setItem('refreshToken', mockRefreshToken)
-    localStorage.setItem('user', JSON.stringify(mockUser))
+    localStorage.setItem('accessToken', access_token)
+    localStorage.setItem('refreshToken', refresh_token)
+    localStorage.setItem('user', JSON.stringify(authenticatedUser))
   }
 
   const logout = () => {
@@ -85,10 +112,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return
     }
 
-    // Stub implementation - in production, call the actual API
-    const mockAccessToken = 'mock-access-token-refreshed-' + Date.now()
-    setAccessToken(mockAccessToken)
-    localStorage.setItem('accessToken', mockAccessToken)
+    const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+      refresh_token: refreshToken,
+    })
+    const { access_token, refresh_token } = response.data
+    const payload = decodeJwtPayload(access_token)
+    if (!payload) {
+      logout()
+      return
+    }
+
+    const authenticatedUser: User = {
+      sub: String(payload.sub ?? ''),
+      username: String(payload.username ?? user?.username ?? ''),
+      role: mapRole(payload.role),
+      email: user?.email,
+    }
+
+    setAccessToken(access_token)
+    setRefreshToken(refresh_token)
+    setUser(authenticatedUser)
+    localStorage.setItem('accessToken', access_token)
+    localStorage.setItem('refreshToken', refresh_token)
+    localStorage.setItem('user', JSON.stringify(authenticatedUser))
   }
 
   const isAuthenticated = !!accessToken && !!user

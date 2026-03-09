@@ -22,7 +22,7 @@ class OrchestratorService:
         self.judgment_repository = JudgmentRepository(db)
 
     async def run_analysis(self, case_id: str) -> dict[str, Any]:
-        case = await self.case_repository.update_status(case_id, CaseStatus.UNDER_REVIEW)
+        case = await self.case_repository.update_status(case_id, CaseStatus.AI_ANALYSIS_PENDING)
         if not case:
             raise ValueError(f"Case not found: {case_id}")
         await self.db.commit()
@@ -74,9 +74,9 @@ class OrchestratorService:
         )
 
         if reasoning_status == "reasoning_unavailable":
-            await self.case_repository.update_status(case_id, CaseStatus.REASONING_UNAVAILABLE)
+            await self.case_repository.update_status(case_id, CaseStatus.AI_ANALYSIS_PENDING)
         else:
-            await self.case_repository.update_status(case_id, CaseStatus.ANALYSIS_COMPLETE)
+            await self.case_repository.update_status(case_id, CaseStatus.AI_ANALYSIS_READY)
 
         await self.evaluation_repository.create_ai_event(
             run_id=run_id,
@@ -123,9 +123,9 @@ class OrchestratorService:
             judgment_id=judgment.id,
             case_id=case_id,
             judge_id=judge_id,
-            legal_relevance_score=str(feedback_data.get("legal_relevance_score", 0)),
-            reasoning_quality_score=str(feedback_data.get("reasoning_quality_score", 0)),
-            explanation_clarity_score=str(feedback_data.get("explanation_clarity_score", 0)),
+            legal_relevance_score=float(feedback_data.get("legal_relevance_score", 0)),
+            reasoning_quality_score=float(feedback_data.get("reasoning_quality_score", 0)),
+            explanation_clarity_score=float(feedback_data.get("explanation_clarity_score", 0)),
             feedback_text=feedback_data.get("feedback_text"),
             suggested_improvements=feedback_data.get("suggested_improvements"),
             created_at=datetime.utcnow(),

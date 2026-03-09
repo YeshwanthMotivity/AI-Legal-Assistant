@@ -15,6 +15,10 @@ class UserService:
         user = await self.user_repository.get_by_username(login_data.username)
         if not user:
             return None
+
+        is_active = str(getattr(user, "is_active", "false")).lower() in {"true", "1", "yes"}
+        if not is_active:
+            return None
         
         if not await self.user_repository.verify_password(login_data.password, user.hashed_password):
             return None
@@ -47,11 +51,18 @@ class UserService:
                 detail="Invalid refresh token",
             )
         
+        user = await self.user_repository.get_by_id(payload.get("sub"))
+        if not user or str(getattr(user, "is_active", "false")).lower() not in {"true", "1", "yes"}:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found or inactive",
+            )
+
         # Create new tokens
         new_payload = {
             "sub": payload.get("sub"),
             "username": payload.get("username"),
-            "role": payload.get("role"),
+            "role": user.role.value if hasattr(user.role, "value") else user.role,
         }
         
         access_token = create_access_token(new_payload)
@@ -65,14 +76,14 @@ class UserService:
     async def create_user(self, user_data: UserCreate) -> UserResponse:
         """Create a new user."""
         # Check if user already exists
-        existing_user = await self.user_repository.get_by_email(user_data.email)
+        existing_user = await self.user_repository.get_by_email_any(user_data.email)
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already registered",
             )
         
-        existing_username = await self.user_repository.get_by_username(user_data.username)
+        existing_username = await self.user_repository.get_by_username_any(user_data.username)
         if existing_username:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

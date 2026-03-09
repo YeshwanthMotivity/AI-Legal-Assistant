@@ -1,15 +1,15 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+﻿import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './auth/useAuth'
 import PrivateRoute from './auth/PrivateRoute'
 import Login from './pages/Login'
 import CaseList from './pages/judge/CaseList'
 import CaseDetail from './pages/judge/CaseDetail'
-import JudgmentDraft from './pages/judge/JudgmentDraft'
 import ClerkCaseList from './pages/clerk/CaseList'
 import DocumentUpload from './pages/clerk/DocumentUpload'
 import UserManagement from './pages/admin/UserManagement'
 import CaseAssignment from './pages/admin/CaseAssignment'
 import MetricsDashboard from './pages/admin/MetricsDashboard'
+import AuditLog from './pages/admin/AuditLog'
 
 function HomeRedirect() {
   const { isAuthenticated, user } = useAuth()
@@ -33,13 +33,20 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login />} />
-      
-      {/* Judge Routes */}
+
       <Route
         path="/judge/cases"
         element={
           <PrivateRoute allowedRoles={['judge']}>
             <CaseList />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/judge/cases/new"
+        element={
+          <PrivateRoute allowedRoles={['judge']}>
+            <CaseList openCreateOnLoad />
           </PrivateRoute>
         }
       />
@@ -51,16 +58,7 @@ function App() {
           </PrivateRoute>
         }
       />
-      <Route
-        path="/judge/cases/:id/draft"
-        element={
-          <PrivateRoute allowedRoles={['judge']}>
-            <JudgmentDraft />
-          </PrivateRoute>
-        }
-      />
-      
-      {/* Clerk Routes */}
+
       <Route
         path="/clerk/cases"
         element={
@@ -77,8 +75,7 @@ function App() {
           </PrivateRoute>
         }
       />
-      
-      {/* Admin Routes */}
+
       <Route
         path="/admin/users"
         element={
@@ -103,8 +100,15 @@ function App() {
           </PrivateRoute>
         }
       />
-      
-      {/* Default redirect */}
+      <Route
+        path="/admin/audit"
+        element={
+          <PrivateRoute allowedRoles={['admin']}>
+            <AuditLog />
+          </PrivateRoute>
+        }
+      />
+
       <Route path="/" element={<HomeRedirect />} />
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
@@ -112,4 +116,3 @@ function App() {
 }
 
 export default App
-

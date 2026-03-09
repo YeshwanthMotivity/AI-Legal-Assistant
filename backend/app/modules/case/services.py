@@ -36,17 +36,33 @@ class CaseService:
         case = await self.case_repository.create(case_data, created_by)
         return CaseResponse.model_validate(case)
     
-    async def get_case(self, case_id: str) -> Optional[CaseResponse]:
+    async def get_case(self, case_id: str, user_id: str = '', user_role: str = '') -> Optional[CaseResponse]:
         """Get case by ID."""
         case = await self.case_repository.get_by_id(case_id)
         if not case:
             return None
+
+        role = str(user_role).lower()
+        if role == 'judge' and case.assigned_to != user_id and case.created_by != user_id:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=403, detail='Forbidden')
+            
         return CaseResponse.model_validate(case)
     
-    async def get_all_cases(self, skip: int = 0, limit: int = 100, status: Optional[str] = None) -> CaseListResponse:
-        """Get all cases with pagination."""
-        cases = await self.case_repository.get_all(skip, limit)
-        total = await self.case_repository.count()
+    async def get_all_cases(self, user_id: str = '', user_role: str = '', skip: int = 0, limit: int = 100, status: Optional[str] = None) -> CaseListResponse:
+        """Get all cases with pagination and scope."""
+        role = str(user_role).lower()
+        status_enum = self._parse_status(status)
+        if role == 'judge':
+            cases = await self.case_repository.get_by_judge(user_id, skip, limit)
+            total = await self.case_repository.count_by_judge(user_id)
+        elif role == 'clerk':
+            cases = await self.case_repository.get_clerk_visible(skip, limit, status_enum)
+            total = await self.case_repository.count_clerk_visible(status_enum)
+        else:
+            cases = await self.case_repository.get_all(skip, limit, status_enum)
+            total = await self.case_repository.count(status_enum)
+            
         return CaseListResponse(
             total=total,
             items=[CaseResponse.model_validate(c) for c in cases]
@@ -73,7 +89,7 @@ class CaseService:
     
     async def analyze_case(self, case_id: str, background_tasks: BackgroundTasks) -> CaseAnalyzeResponse:
         """Queue AI analysis for a case."""
-        case = await self.case_repository.update_status(case_id, CaseStatus.UNDER_REVIEW)
+        case = await self.case_repository.update_status(case_id, CaseStatus.AI_ANALYSIS_PENDING)
         if not case:
             return CaseAnalyzeResponse(
                 case_id=case_id,
@@ -97,18 +113,18 @@ class CaseService:
                 analysis=CaseAnalysisDetail(status="not_found"),
             )
 
-        if case.status == CaseStatus.UNDER_REVIEW:
+        if case.status == CaseStatus.AI_ANALYSIS_PENDING:
             return CaseAnalysisResponse(
                 case_id=case_id,
-                analysis=CaseAnalysisDetail(status="pending"),
+                analysis=CaseAnalysisDetail(status=CaseStatus.AI_ANALYSIS_PENDING.value),
             )
 
-        if case.status == CaseStatus.REASONING_UNAVAILABLE:
-            judgment = await self.judgment_repository.get_by_case_id(case_id)
+        judgment = await self.judgment_repository.get_by_case_id(case_id)
+        if case.status == CaseStatus.AI_ANALYSIS_PENDING and judgment and judgment.reasoning_status == "reasoning_unavailable":
             return CaseAnalysisResponse(
                 case_id=case_id,
                 analysis=CaseAnalysisDetail(
-                    status="reasoning_unavailable",
+                    status=CaseStatus.AI_ANALYSIS_PENDING.value,
                     outcome=judgment.decision if judgment else None,
                     reasoning=judgment.reasoning if judgment else None,
                     cited_laws=judgment.articles_cited if judgment and judgment.articles_cited else [],
@@ -120,12 +136,11 @@ class CaseService:
                 ),
             )
 
-        judgment = await self.judgment_repository.get_by_case_id(case_id)
-        if case.status == CaseStatus.ANALYSIS_COMPLETE and judgment:
+        if case.status == CaseStatus.AI_ANALYSIS_READY and judgment:
             return CaseAnalysisResponse(
                 case_id=case_id,
                 analysis=CaseAnalysisDetail(
-                    status="analysis_complete",
+                    status=CaseStatus.AI_ANALYSIS_READY.value,
                     outcome=judgment.decision,
                     reasoning=judgment.reasoning,
                     cited_laws=judgment.articles_cited or [],
@@ -177,3 +192,11 @@ class CaseService:
         feedback_result = await OrchestratorService(self.db).record_feedback(case_id, feedback_data, judge_id)
         return FeedbackResponse.model_validate(feedback_result)
 
+    @staticmethod
+    def _parse_status(status: Optional[str]) -> Optional[CaseStatus]:
+        if not status:
+            return None
+        try:
+            return CaseStatus(status)
+        except ValueError:
+            return None

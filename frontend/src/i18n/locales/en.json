@@ -12,7 +12,8 @@
     "next": "Next",
     "search": "Search",
     "filter": "Filter",
-    "actions": "Actions"
+    "actions": "Actions",
+    "language": "Language"
   },
   "auth": {
     "login": "Login",
@@ -63,7 +64,71 @@
     "userManagement": "User Management",
     "caseAssignment": "Case Assignment",
     "metricsDashboard": "Metrics Dashboard",
-    "auditLogs": "Audit Logs"
+    "auditLogs": "Audit Logs",
+    "nav": {
+      "metrics": "Metrics",
+      "users": "Users",
+      "assignments": "Assignments",
+      "audit": "Audit Logs"
+    },
+    "pages": {
+      "usersTitle": "Admin User Management",
+      "usersSubtitle": "Create and deactivate platform users",
+      "assignmentsTitle": "Admin Case Assignment",
+      "assignmentsSubtitle": "Assign and reassign cases to judges",
+      "metricsTitle": "Admin Dashboard",
+      "metricsSubtitle": "Operational overview and KPI metrics",
+      "auditTitle": "Admin Audit Monitoring",
+      "auditSubtitle": "Real-time audit event stream"
+    },
+    "forms": {
+      "userManagement": "User Management",
+      "createUser": "Create User",
+      "email": "Email",
+      "username": "Username",
+      "fullName": "Full Name",
+      "role": "Role",
+      "password": "Password",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "deactivate": "Deactivate",
+      "assignJudge": "Assign Judge",
+      "selectJudge": "Select Judge",
+      "assign": "Assign",
+      "reassign": "Reassign"
+    },
+    "messages": {
+      "requiredFields": "Please fill all required fields.",
+      "userCreated": "User created successfully.",
+      "userCreateFailed": "User creation failed.",
+      "userDeactivated": "User deactivated successfully.",
+      "userDeactivateFailed": "User deactivation failed.",
+      "confirmDeactivate": "Do you want to deactivate this user?",
+      "caseAssigned": "Case assignment updated.",
+      "caseAssignFailed": "Case assignment failed."
+    },
+    "tables": {
+      "unassignedCases": "Unassigned Cases",
+      "assignedCases": "Assigned Cases",
+      "auditStream": "Audit Event Stream"
+    },
+    "stats": {
+      "totalCases": "Total Cases",
+      "activeJudges": "Active Judges",
+      "documentsProcessed": "Documents Processed",
+      "judgmentsFinalized": "Judgments Finalized"
+    },
+    "metricsKpi": {
+      "title": "System Metrics (T10 Data)"
+    },
+    "audit": {
+      "timestamp": "Timestamp",
+      "action": "Action",
+      "user": "User",
+      "resource": "Resource",
+      "description": "Description"
+    }
   },
   "metrics": {
     "title": "System Metrics",
@@ -87,7 +152,158 @@
     "pending": "Pending",
     "inProgress": "In Progress",
     "completed": "Completed",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "Created": "Created",
+    "DocumentsUploaded": "Documents Uploaded",
+    "AIAnalysisPending": "AI Analysis Pending",
+    "AIAnalysisReady": "AI Analysis Ready",
+    "DraftGenerated": "Draft Generated",
+    "Finalized": "Finalized"
+  },
+  "judge": {
+    "dashboard": {
+      "title": "Judge Case Dashboard",
+      "subtitle": "Review your assigned and completed cases",
+      "assignedCases": "Assigned Cases",
+      "previousCases": "Previous Cases",
+      "openCase": "Open Case",
+      "viewCase": "View Case",
+      "createCase": "Create New Case",
+      "caseCreatedSuccess": "Case created successfully.",
+      "noCases": "No cases found for this tab."
+    },
+    "workspace": {
+      "title": "Case Workspace",
+      "caseId": "Case ID",
+      "documents": "Case Documents",
+      "documentType": "Document Type",
+      "uploadDocument": "Upload Document",
+      "uploadNow": "Upload Now",
+      "noFileSelected": "No file selected",
+      "uploadSuccess": "Document uploaded successfully.",
+      "uploadError": "Document upload failed.",
+      "runAnalysis": "Run AI Analysis",
+      "analysisPending": "AI analysis is in progress...",
+      "analysisReady": "AI analysis is ready.",
+      "analysisFailed": "AI analysis failed.",
+      "analysisError": "Unable to load analysis right now.",
+      "waitingAnalysis": "Run AI analysis to populate this panel.",
+      "similarPrecedents": "Similar Precedents",
+      "lawArticles": "UAE Labor Law Articles",
+      "entitlementCalculation": "Entitlement Calculation",
+      "judgmentDraft": "Judgment Draft",
+      "regenerate": "Regenerate",
+      "finalize": "Finalize",
+      "aiConfidence": "AI Confidence",
+      "feedbackTitle": "Judge Feedback",
+      "judgmentFinalized": "Judgment finalized successfully.",
+      "feedbackSuccess": "Feedback submitted successfully."
+    },
+    "documentStatus": {
+      "pending": "Pending",
+      "uploaded": "Uploaded",
+      "processing": "Processing",
+      "ocr_complete": "OCR Complete",
+      "embedded": "Embedded",
+      "completed": "Completed",
+      "partial_indexed": "Partially Indexed",
+      "failed": "Failed"
+    },
+    "form": {
+      "title": "Title",
+      "caseType": "Case Type",
+      "claimant": "Claimant",
+      "respondent": "Respondent",
+      "filingDate": "Filing Date",
+      "notes": "Notes"
+    },
+    "caseTypes": {
+      "unpaid_wages": "Unpaid Wages",
+      "wrongful_termination": "Wrongful Termination",
+      "end_of_service": "End of Service",
+      "contract_dispute": "Contract Dispute",
+      "other": "Other"
+    },
+    "documentTypes": {
+      "contract": "Contract",
+      "financial_record": "Financial Record",
+      "termination_notice": "Termination Notice",
+      "witness_statement": "Witness Statement",
+      "employment_contract": "Employment Contract",
+      "salary_records": "Salary Records",
+      "termination_letter": "Termination Letter",
+      "evidence": "Evidence",
+      "court_order": "Court Order",
+      "other": "Other"
+    },
+    "judgment": {
+      "decision": "Decision",
+      "accept": "Accept",
+      "reject": "Reject",
+      "partial": "Partial",
+      "compensation": "Compensation Amount",
+      "compensationPlaceholder": "Optional amount",
+      "reasoning": "Reasoning Notes",
+      "reasoningPlaceholder": "Optional reasoning notes",
+      "validationEmpty": "Judgment content cannot be empty."
+    },
+    "feedback": {
+      "legalRelevance": "Legal Relevance",
+      "reasoningQuality": "Reasoning Quality",
+      "explanationClarity": "Explanation Clarity",
+      "feedbackText": "Feedback",
+      "suggestedImprovements": "Suggested Improvements"
+    }
+  },
+  "clerk": {
+    "nav": {
+      "cases": "Clerk Cases",
+      "documents": "Document Upload"
+    },
+    "pages": {
+      "casesTitle": "Clerk Case Operations",
+      "casesSubtitle": "Create and maintain case records",
+      "documentsTitle": "Clerk Document Operations",
+      "documentsSubtitle": "Upload, tag, and monitor case documents"
+    },
+    "forms": {
+      "createCase": "Create New Case",
+      "title": "Title",
+      "caseType": "Case Type",
+      "claimant": "Claimant",
+      "respondent": "Respondent",
+      "filingDate": "Filing Date",
+      "courtNumber": "Court Number",
+      "createCaseAction": "Create Case",
+      "editMetadata": "Edit Metadata",
+      "metadataEditor": "Case Metadata",
+      "hearingDate": "Hearing Date",
+      "saveMetadata": "Save Metadata",
+      "assignedJudge": "Assigned Judge",
+      "caseSelection": "Case Selection",
+      "selectCase": "Select a case",
+      "uploadZone": "Drag & Drop Upload Zone",
+      "dragDropHelp": "Drop PDF, DOCX, or image files here",
+      "pickFiles": "Choose Files",
+      "uploadQueued": "Upload Queued Files",
+      "selectCaseFirst": "Select a case to view and upload documents."
+    },
+    "tables": {
+      "recentCases": "Recent Cases",
+      "caseDocuments": "Case Documents"
+    },
+    "messages": {
+      "requiredFields": "Please fill all required fields.",
+      "caseCreated": "Case created successfully.",
+      "caseCreateFailed": "Case creation failed.",
+      "caseUpdated": "Case metadata updated successfully.",
+      "caseUpdateFailed": "Case metadata update failed."
+    },
+    "uploadStatus": {
+      "queued": "Queued",
+      "uploading": "Uploading",
+      "success": "Uploaded",
+      "failed": "Failed"
+    }
   }
 }
-

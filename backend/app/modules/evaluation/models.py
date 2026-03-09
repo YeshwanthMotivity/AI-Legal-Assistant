@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Text, ForeignKey, JSON, Float, Boolean
+from sqlalchemy import Column, String, DateTime, Text, ForeignKey, JSON, Float, Boolean, Integer
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
@@ -41,10 +41,10 @@ class JudgeFeedback(Base):
     case_id = Column(String, ForeignKey("cases.id"), nullable=False)
     judge_id = Column(String, ForeignKey("users.id"), nullable=False)
     
-    # Feedback scores (1-5)
-    legal_relevance_score = Column(String)
-    reasoning_quality_score = Column(String)
-    explanation_clarity_score = Column(String)
+    # Feedback scores (1–5 as float)
+    legal_relevance_score = Column(Float)
+    reasoning_quality_score = Column(Float)
+    explanation_clarity_score = Column(Float)
     
     feedback_text = Column(Text)
     suggested_improvements = Column(Text)
@@ -61,11 +61,30 @@ class EvaluationEvent(Base):
 
     id = Column(String, primary_key=True, index=True)
     document_id = Column(String, ForeignKey("documents.id"), nullable=True)
-    case_id = Column(String, ForeignKey("cases.id"), nullable=False)
+    # case_id is nullable to support benchmark runner events which have no case
+    case_id = Column(String, ForeignKey("cases.id"), nullable=True)
     metric_type = Column(String, nullable=False)
     entity_type = Column(String, nullable=True)
     query_id = Column(String, nullable=True, index=True)
     value = Column(Float, nullable=False)
     phase = Column(String, nullable=False, default="phase_1")
+    # Flexible JSON payload for benchmark context (run_id, mode, query_text, etc.)
+    metadata_ = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ReleaseGate(Base):
+    """Records explicit judge / admin sign-off decisions for each retrieval phase gate."""
+    __tablename__ = "release_gates"
+
+    id = Column(String, primary_key=True, index=True)
+    phase = Column(String, nullable=False, index=True)   # phase_1 | phase_2 | phase_3 | phase_5
+    mode = Column(String, nullable=False)                # dense_baseline | hybrid
+    status = Column(String, nullable=False, default="pending")  # pending | approved | deferred
+    rationale = Column(Text, nullable=True)
+    judge_sign_off = Column(String, nullable=True)       # free-text name/ID of signing judge
+    decided_by = Column(String, ForeignKey("users.id"), nullable=True)
+    decided_at = Column(DateTime, nullable=True)
+    benchmark_run_id = Column(String, nullable=True)     # links to EvaluationEvent.query_id
     created_at = Column(DateTime, default=datetime.utcnow)
 

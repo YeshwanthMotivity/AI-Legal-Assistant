@@ -8,23 +8,45 @@ class CaseBase(BaseModel):
     title: str
     description: Optional[str] = None
     case_type: CaseType
-    employee_name: Optional[str] = None
-    employer_name: Optional[str] = None
+    claimant_name: Optional[str] = None
+    respondent_name: Optional[str] = None
     claim_amount: Optional[str] = None
 
 
 class CaseCreate(CaseBase):
-    pass
+    hearing_date: Optional[datetime] = None
+    filing_date: Optional[datetime] = None
+    court_number: Optional[str] = None
+    notes: Optional[str] = None
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "title": "Unpaid salary dispute",
+                "description": "Salary delayed for 3 months",
+                "case_type": "unpaid_wages",
+                "claimant_name": "John Doe",
+                "respondent_name": "ACME LLC",
+                "claim_amount": "15000",
+                "filing_date": "2026-03-06T00:00:00",
+                "hearing_date": "2026-03-20T10:00:00",
+                "court_number": "LAB-3",
+                "notes": "Urgent hearing requested",
+            }
+        }
 
 
 class CaseUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     status: Optional[CaseStatus] = None
-    employee_name: Optional[str] = None
-    employer_name: Optional[str] = None
+    claimant_name: Optional[str] = None
+    respondent_name: Optional[str] = None
     claim_amount: Optional[str] = None
     hearing_date: Optional[datetime] = None
+    filing_date: Optional[datetime] = None
+    court_number: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class CaseAssign(BaseModel):
@@ -37,7 +59,9 @@ class CaseResponse(CaseBase):
     status: CaseStatus
     assigned_to: Optional[str] = None
     created_by: Optional[str] = None
-    filed_date: Optional[datetime] = None
+    filing_date: Optional[datetime] = None
+    court_number: Optional[str] = None
+    notes: Optional[str] = None
     hearing_date: Optional[datetime] = None
     judgment_date: Optional[datetime] = None
     created_at: datetime

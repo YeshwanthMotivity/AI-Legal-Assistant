@@ -1,9 +1,19 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+﻿import json
+import os
+import time
+import urllib.error
+import urllib.request
 from typing import List, Optional
+
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 import uvicorn
 
-app = FastAPI(title="Fallback LLM Service")
+app = FastAPI(title='Fallback LLM Service')
+
+OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://ollama:11434').rstrip('/')
+OLLAMA_MODEL_FALLBACK = os.getenv('OLLAMA_MODEL_FALLBACK', 'phi3:mini')
+OLLAMA_TIMEOUT_SECONDS = int(os.getenv('OLLAMA_TIMEOUT_SECONDS', '60'))
 
 
 class Message(BaseModel):
@@ -20,48 +30,83 @@ class ChatCompletionRequest(BaseModel):
 
 class ChatCompletionResponse(BaseModel):
     id: str
-    object: str = "chat.completion"
+    object: str = 'chat.completion'
     created: int
     model: str
     choices: List[dict]
     usage: dict
 
 
-@app.get("/health")
+@app.get('/health')
 async def health_check():
-    return {"status": "healthy", "service": "fallback_model"}
+    tags_url = f'{OLLAMA_URL}/api/tags'
+    try:
+        request = urllib.request.Request(tags_url, method='GET')
+        with urllib.request.urlopen(request, timeout=5) as response:
+            response.read()
+        return {'status': 'healthy', 'service': 'fallback_model', 'provider': 'ollama'}
+    except Exception:
+        return {'status': 'degraded', 'service': 'fallback_model', 'provider': 'ollama'}
 
 
-@app.post("/v1/chat/completions", response_model=ChatCompletionResponse)
+def _ollama_chat(messages: List[dict], model: str, temperature: float) -> str:
+    payload = {
+        'model': model,
+        'messages': messages,
+        'stream': False,
+        'options': {
+            'temperature': temperature,
+        },
+    }
+    body = json.dumps(payload).encode('utf-8')
+    request = urllib.request.Request(
+        f'{OLLAMA_URL}/api/chat',
+        data=body,
+        headers={'Content-Type': 'application/json'},
+        method='POST',
+    )
+    with urllib.request.urlopen(request, timeout=OLLAMA_TIMEOUT_SECONDS) as response:
+        data = json.loads(response.read().decode('utf-8'))
+    message = data.get('message', {})
+    return str(message.get('content', '')).strip()
+
+
+@app.post('/v1/chat/completions', response_model=ChatCompletionResponse)
 async def chat_completions(request: ChatCompletionRequest):
-    """OpenAI-compatible chat completions endpoint (Fallback Model)."""
-    # Stub implementation - returns dummy response
-    # In production, this would load a smaller quantized model
-    import time
-    
-    response = ChatCompletionResponse(
-        id=f"chatcmpl-fallback-{int(time.time())}",
+    model = OLLAMA_MODEL_FALLBACK
+    try:
+        content = _ollama_chat([msg.model_dump() for msg in request.messages], model, float(request.temperature or 0.1))
+    except urllib.error.HTTPError as exc:
+        error_body = exc.read().decode('utf-8', errors='ignore') if exc.fp else ''
+        raise HTTPException(status_code=502, detail=f'Ollama HTTP error: {exc.code} {error_body}')
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f'Ollama request failed: {exc}')
+
+    if not content:
+        raise HTTPException(status_code=502, detail='Ollama returned empty content')
+
+    prompt_text = '\n'.join(msg.content for msg in request.messages)
+    prompt_tokens = max(1, len(prompt_text) // 4)
+    completion_tokens = max(1, len(content) // 4)
+
+    return ChatCompletionResponse(
+        id=f'chatcmpl-fallback-{int(time.time())}',
         created=int(time.time()),
-        model=request.model,
+        model=model,
         choices=[
             {
-                "index": 0,
-                "message": {
-                    "role": "assistant",
-                    "content": "This is a stub response from the fallback model. In production, a smaller quantized model would generate the actual response."
-                },
-                "finish_reason": "stop"
+                'index': 0,
+                'message': {'role': 'assistant', 'content': content},
+                'finish_reason': 'stop',
             }
         ],
         usage={
-            "prompt_tokens": 100,
-            "completion_tokens": 50,
-            "total_tokens": 150
-        }
+            'prompt_tokens': prompt_tokens,
+            'completion_tokens': completion_tokens,
+            'total_tokens': prompt_tokens + completion_tokens,
+        },
     )
-    return response
 
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8004)
-
+if __name__ == '__main__':
+    uvicorn.run(app, host='0.0.0.0', port=8004)

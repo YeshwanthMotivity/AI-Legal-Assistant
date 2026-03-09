@@ -29,6 +29,7 @@ async def run_ingestion_pipeline(
     event_repo = EvaluationEventRepository(db)
 
     await document_repo.update_status(document_id, ProcessingStatus.PROCESSING)
+    logger.info("Document status updated", extra={"document_id": document_id, "case_id": case_id, "status": ProcessingStatus.PROCESSING.value})
     await db.commit()
 
     file_bytes = await download_file("case-documents", storage_key)
@@ -43,6 +44,7 @@ async def run_ingestion_pipeline(
             mime_type,
         )
         await document_repo.update_status(document_id, ProcessingStatus.FAILED)
+        logger.info("Document status updated", extra={"document_id": document_id, "case_id": case_id, "status": ProcessingStatus.FAILED.value})
         await db.commit()
         return
 
@@ -57,6 +59,7 @@ async def run_ingestion_pipeline(
 
     await document_repo.save_ocr_text(document_id, raw_text)
     await document_repo.update_status(document_id, ProcessingStatus.OCR_COMPLETE)
+    logger.info("Document status updated", extra={"document_id": document_id, "case_id": case_id, "status": ProcessingStatus.OCR_COMPLETE.value})
     await db.commit()
 
     entities = await extract_entities(raw_text)
@@ -106,8 +109,10 @@ async def run_ingestion_pipeline(
 
     if qdrant_failed or neo4j_failed:
         await document_repo.update_status(document_id, ProcessingStatus.PARTIAL_INDEXED)
+        logger.info("Document status updated", extra={"document_id": document_id, "case_id": case_id, "status": ProcessingStatus.PARTIAL_INDEXED.value})
     else:
         await document_repo.update_status(document_id, ProcessingStatus.COMPLETED)
+        logger.info("Document status updated", extra={"document_id": document_id, "case_id": case_id, "status": ProcessingStatus.COMPLETED.value})
 
     # Upsert case summary to case_summaries collection for similarity search (Phase 3)
     try:
@@ -118,8 +123,8 @@ async def run_ingestion_pipeline(
             summary_parts = [
                 case.title,
                 case.case_type.value if case.case_type else "",
-                case.employee_name or "",
-                case.employer_name or "",
+                case.claimant_name or "",
+                case.respondent_name or "",
             ]
             summary_text = " ".join(part for part in summary_parts if part)
             
@@ -132,8 +137,8 @@ async def run_ingestion_pipeline(
                         case_id=case_id,
                         case_type=case.case_type.value if case.case_type else "",
                         case_title=case.title,
-                        claimant=case.employee_name or "",
-                        respondent=case.employer_name or "",
+                        claimant=case.claimant_name or "",
+                        respondent=case.respondent_name or "",
                         outcome="",  # Empty at ingestion time, updated when judgment is finalized
                         embedding=summary_embeddings[0],
                     )
