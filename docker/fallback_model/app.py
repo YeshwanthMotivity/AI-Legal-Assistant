@@ -9,7 +9,26 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
 
-app = FastAPI(title='Fallback LLM Service')
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        print(f"Auto-pulling model {OLLAMA_MODEL_FALLBACK} from {OLLAMA_URL}")
+        req = urllib.request.Request(
+            f"{OLLAMA_URL}/api/pull",
+            data=json.dumps({"name": OLLAMA_MODEL_FALLBACK}).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=600):
+            pass
+        print(f"Successfully ensured {OLLAMA_MODEL_FALLBACK} is present.")
+    except Exception as e:
+        print(f"Warning: Failed to auto-pull model: {e}")
+    yield
+
+app = FastAPI(title='Fallback LLM Service', lifespan=lifespan)
 
 OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://ollama:11434').rstrip('/')
 OLLAMA_MODEL_FALLBACK = os.getenv('OLLAMA_MODEL_FALLBACK', 'phi3:mini')

@@ -45,8 +45,8 @@ class SimilarityService:
         summary_parts = [
             case.title,
             case.case_type.value if case.case_type else "",
-            case.employee_name or "",
-            case.employer_name or "",
+            case.claimant_name or "",
+            case.respondent_name or "",
         ]
         summary_text = " ".join(part for part in summary_parts if part)
 
@@ -142,8 +142,8 @@ class SimilarityService:
                     case_id=case_id,
                     case_type=case.case_type.value if case.case_type else "",
                     case_title=case.title,
-                    claimant=case.employee_name or "",
-                    respondent=case.employer_name or "",
+                    claimant=case.claimant_name or "",
+                    respondent=case.respondent_name or "",
                     outcome="",
                     embedding=query_embedding,
                 )

@@ -9,7 +9,27 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
 
-app = FastAPI(title='JAIS LLM Service')
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        print(f"Auto-pulling model {OLLAMA_MODEL_PRIMARY} from {OLLAMA_URL}")
+        req = urllib.request.Request(
+            f"{OLLAMA_URL}/api/pull",
+            data=json.dumps({"name": OLLAMA_MODEL_PRIMARY}).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        # Timeout is set high because downloading a multibyte model takes time
+        with urllib.request.urlopen(req, timeout=600):
+            pass
+        print(f"Successfully ensured {OLLAMA_MODEL_PRIMARY} is present.")
+    except Exception as e:
+        print(f"Warning: Failed to auto-pull model: {e}")
+    yield
+
+app = FastAPI(title='JAIS LLM Service', lifespan=lifespan)
 
 OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://ollama:11434').rstrip('/')
 OLLAMA_MODEL_PRIMARY = os.getenv('OLLAMA_MODEL_PRIMARY', 'qwen2.5:7b-instruct')

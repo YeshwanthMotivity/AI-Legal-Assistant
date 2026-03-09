@@ -20,11 +20,7 @@ class SearchService:
 
     async def search(self, request: SearchRequest) -> SearchResponse:
         if settings.enable_sparse_search:
-            raise HTTPException(
-                status_code=status.HTTP_501_NOT_IMPLEMENTED,
-                detail="Sparse search is not implemented in this dense-only baseline.",
-            )
-
+            logger.warning("Sparse search requested but not implemented in this dense-only baseline. Falling back to dense only.")
         query_id = str(uuid.uuid4())
 
         async with httpx.AsyncClient(timeout=60.0) as client:
@@ -160,30 +156,22 @@ class SearchService:
                 )
 
         try:
+            top_score = final_results[0].score if final_results else 0.0
             await self.evaluation_repository.create_search_event(
                 query_id=query_id,
                 case_id=request.case_id,
-                metric_type="precision_at_5",
-                value=1.0,
+                metric_type="search_top1_score",
+                value=top_score,
             )
             await self.evaluation_repository.create_search_event(
                 query_id=query_id,
                 case_id=request.case_id,
-                metric_type="recall_at_5",
-                value=1.0,
-            )
-            await self.evaluation_repository.create_search_event(
-                query_id=query_id,
-                case_id=request.case_id,
-                metric_type="mrr",
-                value=1.0,
+                metric_type="search_result_count",
+                value=float(len(final_results)),
             )
             await self.db.commit()
         except Exception as exc:
-            logger.exception("Search KPI persistence failed")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Search KPI logging failed: {exc}",
-            ) from exc
+            # KPI logging failure must NOT break a successful search
+            logger.exception("Search KPI persistence failed — returning results anyway")
 
         return SearchResponse(results=final_results, query_id=query_id)

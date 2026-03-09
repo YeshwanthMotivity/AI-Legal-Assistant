@@ -116,8 +116,6 @@ async def run_ingestion_pipeline(
 
     # Upsert case summary to case_summaries collection for similarity search (Phase 3)
     try:
-        case_repo = CaseRepository(db)
-        case = await case_repo.get_by_id(case_id)
         if case:
             # Build summary text same as SimilarityService: title + case_type + employee_name + employer_name
             summary_parts = [
