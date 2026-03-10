@@ -1,16 +1,23 @@
 # Stage 1: Build
-FROM node:20-alpine AS builder
+FROM mirror.gcr.io/library/node:20-alpine AS builder
 
 WORKDIR /app
 
+# Copy package files first for better layer caching
 COPY package*.json ./
-RUN npm install
 
+# Install dependencies (this layer is cached if package*.json doesn't change)
+RUN --mount=type=cache,target=/root/.npm npm ci
+
+# Copy source code
 COPY . .
+
+# Build the app (skip TypeScript checking for faster builds in development)
+# Use npm run build for production (includes tsc), npm run build:fast for development
 RUN npm run build
 
 # Stage 2: Serve with Nginx
-FROM nginx:alpine
+FROM mirror.gcr.io/library/nginx:alpine
 
 # Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf

@@ -1,20 +1,16 @@
-FROM python:3.11-slim
+FROM mirror.gcr.io/library/python:3.11-slim
 
 WORKDIR /app
 
 # Install PyTorch CPU-only first, then sentence-transformers
-RUN pip install --no-cache-dir \
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install \
     torch --index-url https://download.pytorch.org/whl/cpu && \
-    pip install --no-cache-dir \
+    pip install \
     fastapi uvicorn pydantic sentence-transformers
 
-# Pre-download the reranker model into the image layer
-ARG RERANKER_MODEL=BAAI/bge-reranker-v2-m3
-RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('${RERANKER_MODEL}', max_length=512)"
-
+# BGE Reranker will be automatically downloaded by the sentence-transformers library at runtime.
 COPY app.py /app/app.py
-
-ENV RERANKER_MODEL=${RERANKER_MODEL}
 
 EXPOSE 8002
 

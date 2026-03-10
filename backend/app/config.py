@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import Optional
-from pydantic import field_validator
+from pydantic import ConfigDict, field_validator
 
 
 class Settings(BaseSettings):
@@ -47,12 +46,15 @@ class Settings(BaseSettings):
     fallback_model_url: str = "http://fallback_model:8004"
     jais_timeout_seconds: int = 30
     enable_sparse_search: bool = False
+    embedding_dimension: int = 384
     
     # Application
     debug: bool = True
     app_name: str = "AI Judicial Assistant"
     CORS_ORIGINS: list[str] = ["*"]
     ALLOWED_HOSTS: list[str] = ["*"]
+
+    model_config = ConfigDict(env_file=".env", case_sensitive=False)
 
     @field_validator("debug", mode="before")
     @classmethod
@@ -67,10 +69,5 @@ class Settings(BaseSettings):
                 return False
         return value
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
-
-
 settings = Settings()
 

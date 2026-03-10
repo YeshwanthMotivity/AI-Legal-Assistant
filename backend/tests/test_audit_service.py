@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -7,7 +7,9 @@ from app.modules.audit.service import AuditService
 
 @pytest.mark.asyncio
 async def test_audit_service_writes_extra_metadata() -> None:
-    session = AsyncMock()
+    session = MagicMock()
+    session.add = MagicMock()
+    session.flush = AsyncMock()
     service = AuditService(session)
 
     payload = {"source": "unit-test", "field": "value"}

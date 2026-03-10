@@ -19,8 +19,9 @@ def _make_execute_result(rows):
 
 
 def _make_db(rows=None):
-    db = AsyncMock()
-    db.execute.return_value = _make_execute_result(rows or [])
+    db = MagicMock()
+    db.add = MagicMock()
+    db.execute = AsyncMock(return_value=_make_execute_result(rows or []))
     db.flush = AsyncMock()
     db.refresh = AsyncMock()
     return db
@@ -33,7 +34,8 @@ async def test_create_event_with_nullable_case_id():
     """create_event() must NOT raise when case_id is None (benchmark events)."""
     from unittest.mock import patch, MagicMock
 
-    db = AsyncMock()
+    db = MagicMock()
+    db.add = MagicMock()
     db.flush = AsyncMock()
     db.refresh = AsyncMock()
 

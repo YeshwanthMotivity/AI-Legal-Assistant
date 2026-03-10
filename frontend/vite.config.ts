@@ -20,7 +20,16 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: false, // Disable sourcemaps for faster builds
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['react-quill', 'recharts'],
+        },
+      },
+    },
   },
+  cacheDir: 'node_modules/.vite', // Explicit cache directory
 })
 

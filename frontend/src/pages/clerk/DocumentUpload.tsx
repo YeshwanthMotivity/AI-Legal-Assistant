@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import PortalLayout from '../../components/layout/PortalLayout'
@@ -79,7 +79,6 @@ const DocumentUpload = () => {
     for (const job of jobs) {
       if (job.status !== 'queued' && job.status !== 'failed') continue
       setJobs((prev) => prev.map((item) => (item.id === job.id ? { ...item, status: 'uploading', progress: 0 } : item)))
-      // eslint-disable-next-line no-await-in-loop
       await uploadMutation.mutateAsync(job)
     }
   }

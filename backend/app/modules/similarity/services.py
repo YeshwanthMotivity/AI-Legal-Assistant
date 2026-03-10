@@ -69,7 +69,7 @@ class SimilarityService:
                 if hasattr(client, "search"):
                     results = client.search(
                         collection_name="case_summaries",
-                        query_vector=[0.0] * 768,  # Dummy vector for payload-only search
+                        query_vector=[0.0] * settings.embedding_dimension,
                         query_filter=search_filter,
                         limit=limit,
                         with_payload=True,
@@ -77,7 +77,7 @@ class SimilarityService:
                 else:
                     result = client.query_points(
                         collection_name="case_summaries",
-                        query=[0.0] * 768,
+                        query=[0.0] * settings.embedding_dimension,
                         query_filter=search_filter,
                         limit=limit,
                         with_payload=True,

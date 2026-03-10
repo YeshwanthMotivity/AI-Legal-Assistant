@@ -4,8 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
 export default function JudgeDashboard(): ReactNode {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   useEffect(() => {
     if (user?.role !== 'judge') {
@@ -16,9 +21,17 @@ export default function JudgeDashboard(): ReactNode {
   return (
     <div className="min-h-screen bg-gray-100">
       <nav className="bg-blue-600 text-white p-4">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold">Judge Dashboard</h1>
-          <p className="text-sm mt-1">Welcome, {user?.email}</p>
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">Judge Dashboard</h1>
+            <p className="text-sm mt-1">Welcome, {user?.email}</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded text-sm font-medium transition-colors"
+          >
+            Logout
+          </button>
         </div>
       </nav>
 

@@ -184,7 +184,7 @@ const MetricsDashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.07)" />
                 <XAxis type="number" tickFormatter={v => `${v}ms`} tick={{ fontSize: 11 }} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={100} />
-                <Tooltip formatter={(v: number) => [`${v.toFixed(0)} ms`]} />
+                <Tooltip formatter={(v: any) => [`${Number(v).toFixed(0)} ms`]} />
                 <Bar dataKey="ms" fill="#f43f5e" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -201,7 +201,7 @@ const MetricsDashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.07)" />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${v}%`} domain={[0, 100]} />
-                <Tooltip formatter={(v: number) => [`${v}%`]} />
+                <Tooltip formatter={(v: any) => [`${v}%`]} />
                 <Bar dataKey="accuracy" fill="#6366f1" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

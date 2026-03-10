@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 
-MODEL_NAME = os.getenv("MODEL_NAME", "BAAI/bge-m3")
+MODEL_NAME = "intfloat/multilingual-e5-small"
 _model = None
 
 

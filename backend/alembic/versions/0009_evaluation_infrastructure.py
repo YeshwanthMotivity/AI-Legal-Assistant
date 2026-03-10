@@ -15,51 +15,59 @@ import sqlalchemy as sa
 
 # revision identifiers
 revision = "0009"
-down_revision = "0008"
+down_revision = "0008_case_status_lifecycle"
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
-    # 1. Make evaluation_events.case_id nullable
-    op.alter_column(
-        "evaluation_events",
-        "case_id",
-        existing_type=sa.String(),
-        nullable=True,
-    )
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
 
-    # 2. Add metadata_ JSON column to evaluation_events
-    op.add_column(
-        "evaluation_events",
-        sa.Column("metadata_", sa.JSON(), nullable=True),
-    )
-
-    # 3. Fix judge_feedback score columns: VARCHAR → DOUBLE PRECISION
-    #    We drop and recreate them (data loss acknowledged, confirmed by user)
-    for col in ("legal_relevance_score", "reasoning_quality_score", "explanation_clarity_score"):
-        op.drop_column("judge_feedback", col)
-        op.add_column(
-            "judge_feedback",
-            sa.Column(col, sa.Float(), nullable=True),
+    eval_columns = {column["name"]: column for column in inspector.get_columns("evaluation_events")}
+    if "case_id" in eval_columns and not eval_columns["case_id"]["nullable"]:
+        op.alter_column(
+            "evaluation_events",
+            "case_id",
+            existing_type=sa.String(),
+            nullable=True,
         )
 
-    # 4. Create release_gates table
-    op.create_table(
-        "release_gates",
-        sa.Column("id", sa.String(), nullable=False),
-        sa.Column("phase", sa.String(), nullable=False),
-        sa.Column("mode", sa.String(), nullable=False),
-        sa.Column("status", sa.String(), nullable=False, server_default="pending"),
-        sa.Column("rationale", sa.Text(), nullable=True),
-        sa.Column("judge_sign_off", sa.String(), nullable=True),
-        sa.Column("decided_by", sa.String(), sa.ForeignKey("users.id"), nullable=True),
-        sa.Column("decided_at", sa.DateTime(), nullable=True),
-        sa.Column("benchmark_run_id", sa.String(), nullable=True),
-        sa.Column("created_at", sa.DateTime(), nullable=True),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index("ix_release_gates_phase", "release_gates", ["phase"])
+    if "metadata_" not in eval_columns:
+        op.add_column(
+            "evaluation_events",
+            sa.Column("metadata_", sa.JSON(), nullable=True),
+        )
+
+    judge_columns = {column["name"]: column for column in inspector.get_columns("judge_feedback")}
+    for col in ("legal_relevance_score", "reasoning_quality_score", "explanation_clarity_score"):
+        if col not in judge_columns:
+            op.add_column("judge_feedback", sa.Column(col, sa.Float(), nullable=True))
+            continue
+        if not isinstance(judge_columns[col]["type"], sa.Float):
+            op.drop_column("judge_feedback", col)
+            op.add_column("judge_feedback", sa.Column(col, sa.Float(), nullable=True))
+
+    table_names = set(inspector.get_table_names())
+    if "release_gates" not in table_names:
+        op.create_table(
+            "release_gates",
+            sa.Column("id", sa.String(), nullable=False),
+            sa.Column("phase", sa.String(), nullable=False),
+            sa.Column("mode", sa.String(), nullable=False),
+            sa.Column("status", sa.String(), nullable=False, server_default="pending"),
+            sa.Column("rationale", sa.Text(), nullable=True),
+            sa.Column("judge_sign_off", sa.String(), nullable=True),
+            sa.Column("decided_by", sa.String(), sa.ForeignKey("users.id"), nullable=True),
+            sa.Column("decided_at", sa.DateTime(), nullable=True),
+            sa.Column("benchmark_run_id", sa.String(), nullable=True),
+            sa.Column("created_at", sa.DateTime(), nullable=True),
+            sa.PrimaryKeyConstraint("id"),
+        )
+
+    index_names = {index["name"] for index in inspector.get_indexes("release_gates")} if "release_gates" in table_names else set()
+    if "ix_release_gates_phase" not in index_names:
+        op.create_index("ix_release_gates_phase", "release_gates", ["phase"])
 
 
 def downgrade() -> None:

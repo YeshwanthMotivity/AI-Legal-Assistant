@@ -18,24 +18,33 @@ async def init_qdrant():
         
         client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
         
-        # Create legal_chunks collection (dense-only, vector size = 1024 for BGE-M3)
         collections = client.get_collections().collections
         collection_names = [c.name for c in collections]
-        
-        if "legal_chunks" not in collection_names:
+        desired_size = settings.embedding_dimension
+
+        def _collection_size(name: str) -> int | None:
+            info = client.get_collection(name)
+            vectors = info.config.params.vectors
+            if hasattr(vectors, "size"):
+                return vectors.size
+            if isinstance(vectors, dict):
+                return vectors.get("size")
+            return None
+
+        def _ensure_collection(name: str) -> None:
+            if name in collection_names:
+                size = _collection_size(name)
+                if size != desired_size:
+                    client.delete_collection(name)
+                else:
+                    return
             client.create_collection(
-                collection_name="legal_chunks",
-                vectors_config=VectorParams(size=1024, distance=Distance.COSINE)
+                collection_name=name,
+                vectors_config=VectorParams(size=desired_size, distance=Distance.COSINE),
             )
-            logger.info("Created 'legal_chunks' collection in Qdrant")
-        
-        # Create case_summaries collection
-        if "case_summaries" not in collection_names:
-            client.create_collection(
-                collection_name="case_summaries",
-                vectors_config=VectorParams(size=1024, distance=Distance.COSINE)
-            )
-            logger.info("Created 'case_summaries' collection in Qdrant")
+
+        _ensure_collection("legal_chunks")
+        _ensure_collection("case_summaries")
         
         logger.info("Qdrant initialization complete")
     except Exception as e:

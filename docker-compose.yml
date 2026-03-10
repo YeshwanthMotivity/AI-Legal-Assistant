@@ -80,11 +80,14 @@ services:
     container_name: judicial_bge_m3
     ports:
       - "8001:8001"
+    volumes:
+      - bge_m3_cache:/root/.cache/huggingface
     healthcheck:
       test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')" ]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 120s
     restart: unless-stopped
 
   # BGE Reranker Service
@@ -95,11 +98,14 @@ services:
     container_name: judicial_bge_reranker
     ports:
       - "8002:8002"
+    volumes:
+      - bge_reranker_cache:/root/.cache/huggingface
     healthcheck:
       test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')" ]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 120s
     restart: unless-stopped
 
   # JAIS LLM Service
@@ -161,8 +167,8 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:11434/api/tags" ]
-      interval: 15s
+      test: [ "CMD", "ollama", "list" ]
+      interval: 10s
       timeout: 5s
       retries: 10
     restart: unless-stopped
@@ -229,5 +235,7 @@ volumes:
   jais_models:
   fallback_models:
   ollama_data:
+  bge_m3_cache:
+  bge_reranker_cache:
 
 
