@@ -44,8 +44,18 @@ class OrchestratorService:
             "model_used": None,
             "db": self.db,
         }
-        state = dict(await orchestrator_graph.ainvoke(initial_state))
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Starting orchestration graph for case {case_id}")
+        
+        try:
+            state = dict(await orchestrator_graph.ainvoke(initial_state))
+        except Exception as e:
+            logger.error(f"Graph execution failed for case {case_id}: {e}")
+            raise
+            
         ai_latency = time.monotonic() - ai_start_time
+        logger.info(f"Orchestration graph complete for case {case_id} in {ai_latency:.2f}s")
 
         reasoning = state.get("reasoning", {}) or {}
         reasoning_status = state.get("reasoning_status", "") or ""

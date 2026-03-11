@@ -1,5 +1,5 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional
+from pydantic import BaseModel, EmailStr, field_validator, field_serializer
+from typing import Optional, Any
 from datetime import datetime
 from app.modules.user.models import UserRole
 
@@ -10,6 +10,17 @@ class UserBase(BaseModel):
     username: str
     full_name: Optional[str] = None
     role: UserRole = UserRole.CLERK
+
+    @field_validator("role", mode="before")
+    @classmethod
+    def validate_role(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            return v.upper()
+        return v
+
+    @field_serializer("role")
+    def serialize_role(self, v: UserRole) -> str:
+        return v.value.lower()
 
 
 class UserCreate(UserBase):

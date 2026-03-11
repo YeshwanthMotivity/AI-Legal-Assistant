@@ -4,7 +4,9 @@ from typing import Any, TypedDict
 class AnalysisState(TypedDict):
     case_id: str
     entities: list[dict[str, Any]]
-    search_results: list[dict[str, Any]]
+    search_results: list[dict[str, Any]] # Uploaded doc chunks
+    precedents: list[dict[str, Any]]      # Similar court cases
+    laws: list[dict[str, Any]]            # Statutory law articles
     graph_results: dict[str, Any]
     calculation: dict[str, Any]
     context: dict[str, Any]
@@ -14,4 +16,5 @@ class AnalysisState(TypedDict):
     draft_text: str
     error: str | None
     model_used: str | None
+    query_language: str | None
     db: Any

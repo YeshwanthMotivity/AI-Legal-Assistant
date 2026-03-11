@@ -39,9 +39,14 @@ async def download_file(bucket: str, key: str) -> bytes:
     loop = asyncio.get_event_loop()
 
     def _download() -> bytes:
+        import sys
+        sys.stderr.write(f"DEBUG: starting download of {bucket}/{key}\n")
+        sys.stderr.flush()
         client = _get_client()
-        obj = client.get_object(bucket_name=bucket, object_name=key)
         try:
+            obj = client.get_object(bucket_name=bucket, object_name=key)
+            sys.stderr.write(f"DEBUG: got object response, reading...\n")
+            sys.stderr.flush()
             return obj.read()
         finally:
             obj.close()

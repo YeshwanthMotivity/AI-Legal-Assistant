@@ -42,8 +42,8 @@ class CaseService:
         if not case:
             return None
 
-        role = str(user_role).lower()
-        if role == 'judge' and case.assigned_to != user_id and case.created_by != user_id:
+        role = str(user_role).upper()
+        if role == 'JUDGE' and case.assigned_to != user_id and case.created_by != user_id:
             from fastapi import HTTPException
             raise HTTPException(status_code=403, detail='Forbidden')
             
@@ -51,12 +51,12 @@ class CaseService:
     
     async def get_all_cases(self, user_id: str = '', user_role: str = '', skip: int = 0, limit: int = 100, status: Optional[str] = None) -> CaseListResponse:
         """Get all cases with pagination and scope."""
-        role = str(user_role).lower()
+        role = str(user_role).upper()
         status_enum = self._parse_status(status)
-        if role == 'judge':
+        if role == 'JUDGE':
             cases = await self.case_repository.get_by_judge(user_id, skip, limit)
             total = await self.case_repository.count_by_judge(user_id)
-        elif role == 'clerk':
+        elif role == 'CLERK':
             cases = await self.case_repository.get_clerk_visible(skip, limit, status_enum)
             total = await self.case_repository.count_clerk_visible(status_enum)
         else:

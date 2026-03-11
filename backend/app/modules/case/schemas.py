@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List
+from pydantic import BaseModel, Field, field_validator, field_serializer
+from typing import Optional, List, Any
 from datetime import datetime
 from app.modules.case.models import CaseStatus, CaseType
 
@@ -11,6 +11,17 @@ class CaseBase(BaseModel):
     claimant_name: Optional[str] = None
     respondent_name: Optional[str] = None
     claim_amount: Optional[str] = None
+
+    @field_validator("case_type", mode="before")
+    @classmethod
+    def validate_case_type(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            return v.upper()
+        return v
+
+    @field_serializer("case_type")
+    def serialize_case_type(self, v: CaseType) -> str:
+        return v.value.lower()
 
 
 class CaseCreate(CaseBase):
@@ -67,6 +78,21 @@ class CaseResponse(CaseBase):
     created_at: datetime
     updated_at: datetime
     
+    @field_validator("status", mode="before")
+    @classmethod
+    def validate_status(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            # Try to match case-insensitively or just capitalize correctly if it matches a known value
+            mapping = {s.value.lower(): s.value for s in CaseStatus}
+            return mapping.get(v.lower(), v)
+        return v
+
+    @field_serializer("status")
+    def serialize_status(self, v: CaseStatus) -> str:
+        # Frontend might expect specific casing, like "Created" or "AIAnalysisReady"
+        # Since we changed values, let's see if we should return them as is or lowercase
+        return v.value
+
     class Config:
         from_attributes = True
 

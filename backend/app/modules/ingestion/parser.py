@@ -26,7 +26,7 @@ class LegalStructureParser:
         "\nReturn ONLY valid JSON. If a section is not found, return an empty string for it."
     )
 
-    def __init__(self, timeout: float = 60.0):
+    def __init__(self, timeout: float = 2.0):
         self.url = f"{settings.jais_url}/v1/chat/completions"
         self.timeout = timeout
 
@@ -83,7 +83,7 @@ class LegalStructureParser:
             # Fallback to empty structure
             return {
                 "case_metadata": {"case_number": "", "court_name": "", "judgment_date": ""},
-                "facts": text[:2000],  # Minimal fallback
+                "facts": text,  # Use full text for fallback chunking
                 "arguments": "",
                 "reasoning": "",
                 "conclusion": "",

@@ -15,11 +15,11 @@ class CaseStatus(str, enum.Enum):
 
 
 class CaseType(str, enum.Enum):
-    UNPAID_WAGES = "unpaid_wages"
-    WRONGFUL_TERMINATION = "wrongful_termination"
-    END_OF_SERVICE = "end_of_service"
-    CONTRACT_DISPUTE = "contract_dispute"
-    OTHER = "other"
+    UNPAID_WAGES = "UNPAID_WAGES"
+    WRONGFUL_TERMINATION = "WRONGFUL_TERMINATION"
+    END_OF_SERVICE = "END_OF_SERVICE"
+    CONTRACT_DISPUTE = "CONTRACT_DISPUTE"
+    OTHER = "OTHER"
 
 
 class Case(Base):

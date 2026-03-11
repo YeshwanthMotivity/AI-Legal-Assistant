@@ -1,4 +1,4 @@
-﻿export type CaseStatus =
+export type CaseStatus =
   | 'Created'
   | 'DocumentsUploaded'
   | 'AIAnalysisPending'
@@ -108,6 +108,8 @@ export interface CreateCaseRequest {
   case_type: CaseType
   claimant_name: string
   respondent_name: string
+  description: string
+  claim_amount: string
   filing_date: string
   notes?: string
 }

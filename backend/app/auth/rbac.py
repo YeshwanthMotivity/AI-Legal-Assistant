@@ -8,9 +8,9 @@ security = HTTPBearer(auto_error=False)
 
 # Role definitions
 class UserRole:
-    ADMIN = "admin"
-    JUDGE = "judge"
-    CLERK = "clerk"
+    ADMIN = "ADMIN"
+    JUDGE = "JUDGE"
+    CLERK = "CLERK"
 
 
 # Role hierarchy - higher roles include permissions of lower roles
@@ -68,19 +68,26 @@ def require_role(*allowed_roles: str):
     JUDGE inherits CLERK permissions. An admin can access any judge or
     clerk route without being explicitly listed.
     """
+    # Normalize allowed roles to uppercase for comparison
+    normalized_allowed = {r.upper() for r in allowed_roles}
+
     async def role_checker(
         user: dict = Depends(get_current_user)
     ) -> dict:
-        user_role = user.get("role")
+        user_role = user.get("role", "")
+        # Normalize the user's role to uppercase for comparison
+        normalized_user_role = user_role.upper() if isinstance(user_role, str) else user_role
         # Expand the user's role to all roles they are permitted to act under
-        effective_roles = ROLE_HIERARCHY.get(user_role, [user_role])
+        effective_roles = ROLE_HIERARCHY.get(normalized_user_role, [normalized_user_role])
 
-        if not any(r in allowed_roles for r in effective_roles):
+        if not any(r.upper() in normalized_allowed for r in effective_roles):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Access denied. Required roles: {', '.join(allowed_roles)}"
             )
 
+        # Store normalized role back so downstream code sees uppercase
+        user["role"] = normalized_user_role
         return user
 
     return role_checker

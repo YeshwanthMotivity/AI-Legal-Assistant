@@ -1,39 +1,35 @@
 import json
 import os
 import time
-import urllib.error
-import urllib.request
 from typing import List, Optional
 
+import httpx
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
 
 from contextlib import asynccontextmanager
 
+OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://ollama:11434').rstrip('/')
+OLLAMA_MODEL_FALLBACK = os.getenv('OLLAMA_MODEL_FALLBACK', 'qwen2.5:1.5b-instruct')
+OLLAMA_TIMEOUT_SECONDS = int(os.getenv('OLLAMA_TIMEOUT_SECONDS', '600'))
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        print(f"Auto-pulling model {OLLAMA_MODEL_FALLBACK} from {OLLAMA_URL}")
-        req = urllib.request.Request(
-            f"{OLLAMA_URL}/api/pull",
-            data=json.dumps({"name": OLLAMA_MODEL_FALLBACK}).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST"
-        )
-        # Increase timeout for model pulling
-        with urllib.request.urlopen(req, timeout=3600):
-            pass
-        print(f"Successfully ensured {OLLAMA_MODEL_FALLBACK} is present.")
-    except Exception as e:
-        print(f"Warning: Failed to auto-pull model: {e}")
+    async with httpx.AsyncClient(timeout=3600) as client:
+        try:
+            print(f"Auto-pulling model {OLLAMA_MODEL_FALLBACK} from {OLLAMA_URL}")
+            response = await client.post(
+                f"{OLLAMA_URL}/api/pull",
+                json={"name": OLLAMA_MODEL_FALLBACK}
+            )
+            response.raise_for_status()
+            print(f"Successfully ensured {OLLAMA_MODEL_FALLBACK} is present.")
+        except Exception as e:
+            print(f"Warning: Failed to auto-pull model: {e}")
     yield
 
 app = FastAPI(title='Fallback LLM Service', lifespan=lifespan)
-
-OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://ollama:11434').rstrip('/')
-OLLAMA_MODEL_FALLBACK = os.getenv('OLLAMA_MODEL_FALLBACK', 'phi3:mini')
-OLLAMA_TIMEOUT_SECONDS = int(os.getenv('OLLAMA_TIMEOUT_SECONDS', '300'))
 
 class Message(BaseModel):
     role: str
@@ -60,15 +56,15 @@ class ChatCompletionResponse(BaseModel):
 async def health_check():
     tags_url = f'{OLLAMA_URL}/api/tags'
     try:
-        request = urllib.request.Request(tags_url, method='GET')
-        with urllib.request.urlopen(request, timeout=5) as response:
-            response.read()
-        return {'status': 'healthy', 'service': 'fallback_model', 'provider': 'ollama'}
-    except Exception:
-        return {'status': 'degraded', 'service': 'fallback_model', 'provider': 'ollama'}
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.get(tags_url)
+            response.raise_for_status()
+        return {'status': 'healthy', 'service': 'fallback_model', 'provider': 'ollama', 'model': OLLAMA_MODEL_FALLBACK}
+    except Exception as e:
+        return {'status': 'degraded', 'service': 'fallback_model', 'error': str(e)}
 
 
-def _ollama_chat(messages: List[dict], model: str, temperature: float) -> str:
+async def _ollama_chat(messages: List[dict], model: str, temperature: float) -> str:
     payload = {
         'model': model,
         'messages': messages,
@@ -77,15 +73,15 @@ def _ollama_chat(messages: List[dict], model: str, temperature: float) -> str:
             'temperature': temperature,
         },
     }
-    body = json.dumps(payload).encode('utf-8')
-    request = urllib.request.Request(
-        f'{OLLAMA_URL}/api/chat',
-        data=body,
-        headers={'Content-Type': 'application/json'},
-        method='POST',
-    )
-    with urllib.request.urlopen(request, timeout=OLLAMA_TIMEOUT_SECONDS) as response:
-        data = json.loads(response.read().decode('utf-8'))
+    
+    async with httpx.AsyncClient(timeout=OLLAMA_TIMEOUT_SECONDS) as client:
+        response = await client.post(
+            f'{OLLAMA_URL}/api/chat',
+            json=payload
+        )
+        response.raise_for_status()
+        data = response.json()
+        
     message = data.get('message', {})
     return str(message.get('content', '')).strip()
 
@@ -94,16 +90,16 @@ def _ollama_chat(messages: List[dict], model: str, temperature: float) -> str:
 async def chat_completions(request: ChatCompletionRequest):
     model = OLLAMA_MODEL_FALLBACK
     try:
-        content = _ollama_chat([msg.model_dump() for msg in request.messages], model, float(request.temperature or 0.1))
-    except urllib.error.HTTPError as exc:
-        error_body = exc.read().decode('utf-8', errors='ignore') if exc.fp else ''
-        raise HTTPException(status_code=502, detail=f'Ollama HTTP error: {exc.code} {error_body}')
+        content = await _ollama_chat([msg.model_dump() for msg in request.messages], model, float(request.temperature or 0.1))
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(status_code=502, detail=f'Ollama HTTP error: {exc.response.status_code} {exc.response.text}')
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f'Ollama request failed: {exc}')
 
     if not content:
         raise HTTPException(status_code=502, detail='Ollama returned empty content')
 
+    # Rough token estimation
     prompt_text = '\n'.join(msg.content for msg in request.messages)
     prompt_tokens = max(1, len(prompt_text) // 4)
     completion_tokens = max(1, len(content) // 4)

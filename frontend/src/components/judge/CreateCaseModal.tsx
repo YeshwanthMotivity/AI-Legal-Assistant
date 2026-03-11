@@ -1,4 +1,4 @@
-﻿import { FormEvent, useState } from 'react'
+import { FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { CaseType, CreateCaseRequest } from '../../types/judge'
 
@@ -17,6 +17,8 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
   const [caseType, setCaseType] = useState<CaseType>(defaultCaseType)
   const [claimant, setClaimant] = useState('')
   const [respondent, setRespondent] = useState('')
+  const [description, setDescription] = useState('')
+  const [claimAmount, setClaimAmount] = useState('')
   const [filingDate, setFilingDate] = useState('')
   const [notes, setNotes] = useState('')
 
@@ -25,6 +27,8 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
     setCaseType(defaultCaseType)
     setClaimant('')
     setRespondent('')
+    setDescription('')
+    setClaimAmount('')
     setFilingDate('')
     setNotes('')
   }
@@ -42,6 +46,8 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
       case_type: caseType,
       claimant_name: claimant,
       respondent_name: respondent,
+      description,
+      claim_amount: claimAmount,
       filing_date: filingDateTime,
       notes,
     })
@@ -83,13 +89,23 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
           </label>
 
           <label>
+            {t('judge.form.claimAmount')}
+            <input value={claimAmount} onChange={(event) => setClaimAmount(event.target.value)} placeholder="e.g. 15000" />
+          </label>
+
+          <label>
             {t('judge.form.filingDate')}
             <input type="date" value={filingDate} onChange={(event) => setFilingDate(event.target.value)} required />
           </label>
 
-          <label>
+          <label className="full-width">
+            {t('judge.form.description')}
+            <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} required />
+          </label>
+
+          <label className="full-width">
             {t('judge.form.notes')}
-            <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={4} />
+            <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} />
           </label>
 
           <div className="modal-actions">

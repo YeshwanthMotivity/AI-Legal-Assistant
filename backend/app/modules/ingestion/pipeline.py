@@ -25,6 +25,8 @@ async def run_ingestion_pipeline(
     mime_type: str,
     doc_type: str,
     db: AsyncSession,
+    collection_name: str = "legal_chunks",
+    extra_metadata: dict = None,
 ) -> None:
     document_repo = DocumentRepository(db)
     event_repo = EvaluationEventRepository(db)
@@ -34,10 +36,13 @@ async def run_ingestion_pipeline(
     await db.commit()
 
     file_bytes = await download_file("case-documents", storage_key)
+    print(f"Downloaded file bytes for {document_id}")
 
     try:
         raw_text = await run_ocr(file_bytes, mime_type)
-    except Exception:
+        print(f"Extracted raw text (len {len(raw_text)}) for {document_id}")
+    except Exception as e:
+        print(f"OCR failed: {e}")
         logger.exception(
             "OCR failed for document_id=%s case_id=%s mime_type=%s",
             document_id,
@@ -92,17 +97,29 @@ async def run_ingestion_pipeline(
     neo4j_failed = False
 
     try:
+        print(f"Embedding {len(chunk_texts)} chunks for {document_id}", flush=True)
         embeddings = await embed_chunks(chunk_texts)
+        print(f"Successfully embedded {len(embeddings)} chunks for {document_id}", flush=True)
+        
         # Upsert with metadata enrichment
+        metadata_list = [c["metadata"] for c in hybrid_chunks]
+        if extra_metadata:
+            for m in metadata_list:
+                m.update(extra_metadata)
+                
+        print(f"Upserting {len(embeddings)} points to {collection_name} for {document_id}", flush=True)
         await upsert_chunks(
             case_id, 
             document_id, 
             doc_type, 
             chunk_texts, 
             embeddings,
-            metadata=[c["metadata"] for c in hybrid_chunks]
+            metadata=metadata_list,
+            collection_name=collection_name
         )
-    except Exception:
+        print(f"Successfully upserted points to {collection_name} for {document_id}", flush=True)
+    except Exception as e:
+        print(f"Qdrant upsert failed loop catching: {e}", flush=True)
         logger.exception(
             "Qdrant upsert failed for document_id=%s case_id=%s",
             document_id,
@@ -117,6 +134,7 @@ async def run_ingestion_pipeline(
     case_type = case.case_type.value if case and case.case_type else ""
     
     try:
+        print(f"Writing to Neo4j graph for {document_id}", flush=True)
         await write_to_graph(
             case_id, 
             document_id, 
@@ -125,7 +143,9 @@ async def run_ingestion_pipeline(
             case_type=case_type,
             outcome="",  # Empty at ingestion time, updated when judgment is finalized
         )
-    except Exception:
+        print(f"Successfully wrote to Neo4j graph for {document_id}", flush=True)
+    except Exception as e:
+        print(f"Neo4j write failed: {e}", flush=True)
         logger.exception(
             "Neo4j write failed for document_id=%s case_id=%s",
             document_id,

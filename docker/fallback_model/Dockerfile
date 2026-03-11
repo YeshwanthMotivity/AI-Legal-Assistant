@@ -2,7 +2,7 @@ FROM mirror.gcr.io/library/python:3.11-slim
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir fastapi uvicorn pydantic openai pydantic-settings
+RUN pip install --no-cache-dir fastapi uvicorn pydantic openai pydantic-settings httpx
 
 COPY app.py /app/app.py
 

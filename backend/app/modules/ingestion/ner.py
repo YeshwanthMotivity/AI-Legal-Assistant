@@ -69,11 +69,11 @@ async def extract_entities(text: str) -> list[dict]:
     )
     
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=2.0) as client:
             response = await client.post(
-                f"{settings.jais_url}/v1/chat/completions",
+                f"{settings.fallback_model_url}/v1/chat/completions",
                 json={
-                    "model": "jais",
+                    "model": "fallback",
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": text[:4000]}  # avoid token limits

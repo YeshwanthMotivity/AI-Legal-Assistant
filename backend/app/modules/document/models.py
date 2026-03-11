@@ -6,28 +6,28 @@ from app.database import Base
 
 
 class ProcessingStatus(str, enum.Enum):
-    PENDING = "pending"
-    UPLOADED = "uploaded"
-    PROCESSING = "processing"
-    OCR_COMPLETE = "ocr_complete"
-    EMBEDDED = "embedded"
-    COMPLETED = "completed"
-    COMPLETE = "completed"
-    PARTIAL_INDEXED = "partial_indexed"
-    FAILED = "failed"
+    PENDING = "PENDING"
+    UPLOADED = "UPLOADED"
+    PROCESSING = "PROCESSING"
+    OCR_COMPLETE = "OCR_COMPLETE"
+    EMBEDDED = "EMBEDDED"
+    COMPLETED = "COMPLETED"
+    COMPLETE = "COMPLETED"
+    PARTIAL_INDEXED = "PARTIAL_INDEXED"
+    FAILED = "FAILED"
 
 
 class DocumentType(str, enum.Enum):
-    CONTRACT = "contract"
-    FINANCIAL_RECORD = "financial_record"
-    TERMINATION_NOTICE = "termination_notice"
-    WITNESS_STATEMENT = "witness_statement"
-    EMPLOYMENT_CONTRACT = "employment_contract"
-    SALARY_RECORDS = "salary_records"
-    TERMINATION_LETTER = "termination_letter"
-    EVIDENCE = "evidence"
-    COURT_ORDER = "court_order"
-    OTHER = "other"
+    CONTRACT = "CONTRACT"
+    FINANCIAL_RECORD = "FINANCIAL_RECORD"
+    TERMINATION_NOTICE = "TERMINATION_NOTICE"
+    WITNESS_STATEMENT = "WITNESS_STATEMENT"
+    EMPLOYMENT_CONTRACT = "EMPLOYMENT_CONTRACT"
+    SALARY_RECORDS = "SALARY_RECORDS"
+    TERMINATION_LETTER = "TERMINATION_LETTER"
+    EVIDENCE = "EVIDENCE"
+    COURT_ORDER = "COURT_ORDER"
+    OTHER = "OTHER"
 
 
 class Document(Base):

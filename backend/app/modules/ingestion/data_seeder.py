@@ -2,6 +2,7 @@ import asyncio
 import os
 import uuid
 import logging
+import re
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import AsyncSessionLocal
@@ -20,8 +21,10 @@ except ImportError:
 from app.modules.ingestion.pipeline import run_ingestion_pipeline
 from app.modules.ingestion.minio_client import upload_file
 
-logger = logging.getLogger(__name__)
+import logging
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger(__name__)
 # Mapping directory names to CaseType enum
 FOLDER_TO_CASE_TYPE = {
     "Employement contract dispute": CaseType.CONTRACT_DISPUTE,
@@ -33,6 +36,13 @@ FOLDER_TO_CASE_TYPE = {
 
 DATA_ROOT = "/app/data/DIFC (Dubai International Financial Centre Court)"
 
+def detect_language(file_name: str) -> str:
+    """Simple heuristic to detect language from filename."""
+    file_name_lower = file_name.lower()
+    if any(tag in file_name_lower for tag in ["arabic", "-arb", "(arb)", "_ar"]):
+        return "ar"
+    return "en"
+
 async def seed_judgments(db: AsyncSession, limit: int = None):
     judgment_dir = os.path.join(DATA_ROOT, "Court_Judgments")
     if not os.path.exists(judgment_dir):
@@ -40,77 +50,106 @@ async def seed_judgments(db: AsyncSession, limit: int = None):
         return
 
     count = 0
-    # Process categories
-    for folder_name in os.listdir(judgment_dir):
-        case_type = FOLDER_TO_CASE_TYPE.get(folder_name)
-        if not case_type:
-            continue
-            
-        case_folder = os.path.join(judgment_dir, folder_name)
-        if not os.path.isdir(case_folder):
-            continue
-            
-        # Process files in category
-        for file_name in os.listdir(case_folder):
-            file_name_lower = file_name.lower()
-            if not file_name_lower.endswith(".pdf"):
-                continue
-            
-            # Skip Arabic files
-            if "arabic" in file_name_lower or "-arb" in file_name_lower or "(arb)" in file_name_lower:
+    # Recursive walk through all folders in Court_Judgments
+    for root, dirs, files in os.walk(judgment_dir):
+        # Determine case type from folder name in the path
+        case_type = CaseType.OTHER
+        folder_name = ""
+        for folder, ctype in FOLDER_TO_CASE_TYPE.items():
+            if folder in root:
+                case_type = ctype
+                folder_name = folder
+                break
+        
+        for file_name in files:
+            if not file_name.lower().endswith(".pdf"):
                 continue
                 
-            file_path = os.path.join(case_folder, file_name)
-            
-            # Skip empty or massive files for stability
+            file_path = os.path.join(root, file_name)
             file_size = os.path.getsize(file_path)
-            if file_size == 0:
-                logger.warning(f"Skipping 0-byte file: {file_name}")
-                continue
-            if file_size > 10 * 1024 * 1024: # 10MB limit
-                logger.warning(f"Skipping large file (>10MB): {file_name}")
+            if file_size == 0 or file_size > 15 * 1024 * 1024:
                 continue
                 
-            # Check if already exists in DB to skip
-            result = await db.execute(select(Document).where(Document.file_name == file_name))
-            if result.scalar_one_or_none():
-                logger.debug(f"Skipping already processed file: {file_name}")
-                continue
+            # Extract year from filename if possible
+            year_match = re.search(r"(\[| )(20[0-2]\d)(\]|$| )", file_name)
+            year = year_match.group(2) if year_match else "Unknown"
+            
+            language = detect_language(file_name)
+            logger.info(f"Seeding judgment: {file_name} [Lang: {language}]")
                 
-            await process_file(db, file_path, case_type, DocumentType.COURT_ORDER)
+            await process_file(
+                db, 
+                file_path, 
+                case_type, 
+                DocumentType.COURT_ORDER, 
+                collection_name="difc_precedents",
+                extra_metadata={
+                    "court": "DIFC Court",
+                    "jurisdiction": "DIFC",
+                    "year": year,
+                    "category": folder_name or "General",
+                    "case_name": file_name.replace(".pdf", "").replace(".PDF", ""),
+                    "language": language,
+                    "source_file": file_name
+                }
+            )
             count += 1
             if limit and count >= limit:
                 return
 
 async def seed_laws(db: AsyncSession):
-    laws_dir = os.path.join(DATA_ROOT, "Laws", "DIFC Employment Law")
+    laws_dir = os.path.join(DATA_ROOT, "Laws")
     if not os.path.exists(laws_dir):
         logger.error(f"Laws directory not found: {laws_dir}")
         return
 
-    for file_name in os.listdir(laws_dir):
-        if not file_name.endswith(".pdf"):
-            continue
-        file_path = os.path.join(laws_dir, file_name)
-        
-        # Skip empty or massive files for stability
-        file_size = os.path.getsize(file_path)
-        if file_size == 0:
-            logger.warning(f"Skipping 0-byte law file: {file_name}")
-            continue
-        if file_size > 10 * 1024 * 1024:
-            logger.warning(f"Skipping large law file (>10MB): {file_name}")
-            continue
+    logger.info(f"Scanning laws directory: {laws_dir}")
+    for root, dirs, files in os.walk(laws_dir):
+        for file_name in files:
+            if not file_name.lower().endswith(".pdf"):
+                continue
+                
+            file_path = os.path.join(root, file_name)
+            file_size = os.path.getsize(file_path)
             
-        await process_file(db, file_path, CaseType.OTHER, DocumentType.OTHER)
+            if file_size == 0 or file_size > 20 * 1024 * 1024:
+                continue
 
-async def process_file(db: AsyncSession, file_path: str, case_type: CaseType, doc_type: DocumentType):
+            language = detect_language(file_name)
+            law_category = os.path.basename(root)
+            
+            logger.info(f"Seeding law: {file_name} [Lang: {language}]")
+            
+            await process_file(
+                db, 
+                file_path, 
+                CaseType.OTHER, 
+                DocumentType.OTHER, 
+                collection_name="difc_laws",
+                extra_metadata={
+                    "law_name": file_name.replace(".pdf", "").replace(".PDF", ""),
+                    "jurisdiction": "DIFC",
+                    "court": "N/A",
+                    "language": language,
+                    "category": law_category,
+                    "source_file": file_name
+                }
+            )
+
+async def process_file(
+    db: AsyncSession, 
+    file_path: str, 
+    case_type: CaseType, 
+    doc_type: DocumentType, 
+    collection_name: str = "legal_chunks",
+    extra_metadata: dict = None
+):
     file_name = os.path.basename(file_path)
     case_id = str(uuid.uuid4())
     doc_id = str(uuid.uuid4())
     case_number = f"SEED-{file_name.upper().replace('.PDF', '')}-{str(uuid.uuid4())[:8]}"
     
-    logger.info(f"Processing {file_name} as {doc_type}...")
+    logger.info(f"Processing {file_name} as {doc_type} in collection {collection_name}...")
 
     # 1. Create Case record
     new_case = Case(
@@ -118,6 +157,10 @@ async def process_file(db: AsyncSession, file_path: str, case_type: CaseType, do
         case_number=case_number,
         case_type=case_type,
         title=f"Seeded Case: {file_name}",
+        claimant_name="Seeded Claimant",
+        respondent_name="Seeded Respondent",
+        description=f"Automated evaluation case for {file_name}.",
+        notes="Document uploaded via automated seeder.",
         status=CaseStatus.CREATED
     )
     db.add(new_case)
@@ -154,11 +197,13 @@ async def process_file(db: AsyncSession, file_path: str, case_type: CaseType, do
             storage_key=f"seeded/{file_name}",
             mime_type="application/pdf",
             doc_type=doc_type.value, # Pass string value to pipeline
-            db=db
+            db=db,
+            collection_name=collection_name,
+            extra_metadata=extra_metadata
         )
-        logger.info(f"Successfully ingested {file_name}")
+        print(f"Successfully ingested {file_name}", flush=True)
     except Exception as e:
-        logger.error(f"Failed to ingest {file_name}: {e}")
+        print(f"Failed to ingest {file_name}: {e}", flush=True)
 
 async def main(limit: int = None, seed_all: bool = False):
     async with AsyncSessionLocal() as db:

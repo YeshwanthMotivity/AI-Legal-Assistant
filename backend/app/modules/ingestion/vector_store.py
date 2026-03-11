@@ -1,8 +1,11 @@
 import asyncio
 import uuid
+import logging
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 async def upsert_chunks(
@@ -12,7 +15,9 @@ async def upsert_chunks(
     chunks: list[str],
     embeddings: list[list[float]],
     metadata: list[dict] = None,
+    collection_name: str = "legal_chunks",
 ) -> None:
+    logger.info(f"upsert_chunks called for case {case_id}, doc {document_id} with {len(chunks)} chunks and {len(embeddings)} embeddings")
     loop = asyncio.get_event_loop()
 
     def _upsert() -> None:
@@ -41,6 +46,12 @@ async def upsert_chunks(
                 )
             )
         if points:
-            client.upsert(collection_name="legal_chunks", points=points)
+            logger.info(f"Upserting {len(points)} points to collection '{collection_name}' for case {case_id}")
+            try:
+                client.upsert(collection_name=collection_name, points=points)
+                logger.info(f"Successfully upserted points to '{collection_name}'")
+            except Exception as e:
+                logger.error(f"Failed to upsert to Qdrant collection '{collection_name}': {e}")
+                raise
 
     await loop.run_in_executor(None, _upsert)

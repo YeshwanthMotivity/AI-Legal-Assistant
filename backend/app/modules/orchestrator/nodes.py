@@ -13,6 +13,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.modules.orchestrator.state import AnalysisState
 
+logger = logging.getLogger(__name__)
+
 
 def _entity_values(entities: list[dict[str, Any]], key: str) -> list[str]:
     return [str(e.get("entity_value", "")).strip() for e in entities if e.get("entity_type") == key and e.get("entity_value")]
@@ -40,6 +42,11 @@ def _parse_date(value: str) -> datetime | None:
         except ValueError:
             continue
     return None
+def _detect_query_language(text: str) -> str:
+    arabic_chars = re.findall(r'[\u0600-\u06FF]', text)
+    if len(text) > 0 and len(arabic_chars) > len(text) * 0.1:
+        return "ar"
+    return "en"
 
 
 async def document_agent_node(state: AnalysisState) -> dict[str, Any]:
@@ -61,13 +68,33 @@ async def document_agent_node(state: AnalysisState) -> dict[str, Any]:
     return {"entities": entities}
 
 
+async def _build_enriched_query(state: AnalysisState) -> str:
+    db: AsyncSession = state["db"]
+    from app.modules.case.models import Case
+    result = await db.execute(select(Case).where(Case.id == state["case_id"]))
+    case = result.scalar_one_or_none()
+    
+    if not case:
+        query = f"case {state['case_id']}"
+        state["query_language"] = _detect_query_language(query)
+        return query
+    
+    parts = [
+        case.title,
+        case.case_type.value if case.case_type else "",
+        f"Claimant: {case.claimant_name}" if case.claimant_name else "",
+        f"Respondent: {case.respondent_name}" if case.respondent_name else "",
+        case.description or "",
+        case.notes or ""
+    ]
+    query = " ".join(p for p in parts if p).strip()
+    state["query_language"] = _detect_query_language(query)
+    return query
+
+
 async def search_agent_node(state: AnalysisState) -> dict[str, Any]:
     db: AsyncSession = state["db"]
-    entities = state.get("entities", [])
-    employee = _first_entity(entities, "employee_name")
-    employer = _first_entity(entities, "employer_name")
-    termination_reason = _first_entity(entities, "termination_reason")
-    query_text = " ".join(part for part in [employee, employer, termination_reason] if part) or f"case {state['case_id']}"
+    query_text = await _build_enriched_query(state)
 
     from app.modules.search.schemas import SearchRequest
     from app.modules.search.services import SearchService
@@ -78,11 +105,114 @@ async def search_agent_node(state: AnalysisState) -> dict[str, Any]:
         )
         search_results = [
             {"chunk_text": item.chunk_text, "score": item.score, "document_id": item.document_id}
-            for item in response.results
+            for item in response.results if item.score > 0.6
         ]
-    except (httpx.HTTPError, HTTPException, Exception):
+    except Exception:
         search_results = []
     return {"search_results": search_results}
+
+
+async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
+    db: AsyncSession = state["db"]
+    query_text = await _build_enriched_query(state)
+    
+    # We'll use SearchService but target the 'difc_precedents' collection
+    # Note: SearchService currently hardcodes 'legal_chunks'. We need to modify it or use a similar logic here.
+    from qdrant_client import QdrantClient
+    from qdrant_client.models import Filter, FieldCondition, MatchValue
+    
+    async def _qdrant_search(query_embedding):
+        client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+        # Self-matching protection: Filter out this case_id
+        # In seeded precedents, 'case_id' is stored.
+        common_filter = Filter(
+            must_not=[FieldCondition(key="case_id", match=MatchValue(value=state["case_id"]))]
+        )
+        
+        # Compatibility with newer qdrant-client versions.
+        result = client.query_points(
+            collection_name="difc_precedents",
+            query=query_embedding,
+            query_filter=common_filter,
+            limit=10,
+            with_payload=True,
+        )
+        return result.points if hasattr(result, "points") else result.get("points", []) if isinstance(result, dict) else result
+
+    try:
+        # 1. Embed
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(f"{settings.bge_m3_url}/embed", json={"texts": [query_text]})
+            embeddings = resp.json().get("embeddings", []) if isinstance(resp.json(), dict) else resp.json()
+            query_vec = embeddings[0]
+
+        # 2. Search
+        candidates = await _qdrant_search(query_vec)
+        
+        # 3. Filter & Rerank (Simplifying rerank call here for brevity, or we can use the service)
+        results = []
+        for c in candidates:
+            payload = c.payload if hasattr(c, "payload") else c.get("payload", {})
+            score = c.score if hasattr(c, "score") else c.get("score", 0.0)
+            
+            doc_language = payload.get("language", "en")
+            if state.get("query_language") == doc_language:
+                score += 0.05
+                
+            if score > 0.6:
+                results.append({
+                    "title": payload.get("case_name", "Unknown Case"),
+                    "year": payload.get("year", "N/A"),
+                    "category": payload.get("category", "Unspecified"),
+                    "text": payload.get("raw_text", "")[:500],
+                    "score": score
+                })
+        return {"precedents": results[:5]}
+    except Exception:
+        logger.exception("Precedent search failed")
+        return {"precedents": []}
+
+
+async def law_search_node(state: AnalysisState) -> dict[str, Any]:
+    query_text = await _build_enriched_query(state)
+    from qdrant_client import QdrantClient
+
+    async def _qdrant_search(query_embedding):
+        client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+        result = client.query_points(
+            collection_name="difc_laws",
+            query=query_embedding,
+            limit=10,
+            with_payload=True,
+        )
+        return result.points if hasattr(result, "points") else result.get("points", []) if isinstance(result, dict) else result
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(f"{settings.bge_m3_url}/embed", json={"texts": [query_text]})
+            embeddings = resp.json().get("embeddings", []) if isinstance(resp.json(), dict) else resp.json()
+            query_vec = embeddings[0]
+
+        candidates = await _qdrant_search(query_vec)
+        results = []
+        for c in candidates:
+            payload = c.payload if hasattr(c, "payload") else c.get("payload", {})
+            score = c.score if hasattr(c, "score") else c.get("score", 0.0)
+            
+            doc_language = payload.get("language", "en")
+            if state.get("query_language") == doc_language:
+                score += 0.05
+                
+            if score > 0.6:
+                results.append({
+                    "law_name": payload.get("law_name", "Unknown Law"),
+                    "text": payload.get("raw_text", ""),
+                    "score": score
+                })
+        return {"laws": results[:5]}
+    except Exception:
+        logger.exception("Law search failed")
+        return {"laws": []}
 
 
 async def graph_agent_node(state: AnalysisState) -> dict[str, Any]:
@@ -180,33 +310,68 @@ async def calculation_agent_node(state: AnalysisState) -> dict[str, Any]:
 
 
 async def context_builder_node(state: AnalysisState) -> dict[str, Any]:
-    # Dedup and organize artifacts
+    db: AsyncSession = state["db"]
+    case_id = state["case_id"]
+    
+    # 1. Fetch Case Metadata
+    from app.modules.case.models import Case
+    result = await db.execute(select(Case).where(Case.id == case_id))
+    case = result.scalar_one_or_none()
+    
+    def safe_val(val: Any) -> str:
+        return str(val).strip() if val and str(val).strip() else "Not provided"
+
+    case_metadata = {
+        "title": safe_val(case.title if case else ""),
+        "claimant": safe_val(case.claimant_name if case else ""),
+        "respondent": safe_val(case.respondent_name if case else ""),
+        "description": safe_val(case.description if case else ""),
+        "notes": safe_val(case.notes if case else ""),
+        "claim_amount": safe_val(case.claim_amount if case else ""),
+    }
+
+    # 2. Organize Semantic Evidence (Fragments)
     search_texts = []
     seen_search = set()
     for item in state.get("search_results", []):
         t = (item.get("chunk_text") or "").strip()
         if t and t not in seen_search:
             seen_search.add(t)
-            search_texts.append(t)
+            search_texts.append(t[:500]) # Cap for performance
+        if len(search_texts) >= 3:
+            break
 
-    graph_results = state.get("graph_results", {})
+    # 3. Organize Legal Authority
     precedents = []
+    # From Vector Search (Precedents Collection)
+    for p in state.get("precedents", []):
+        precedents.append(f"Precedent: {p['title']} ({p['year']}) | Match: {p['score']:.2f}\n{p['text']}")
+    
+    # From Graph Search (if any)
+    graph_results = state.get("graph_results", {})
     for rc in graph_results.get("related_cases", []):
-        precedents.append(f"Case: {rc.get('title')} | Outcome: {rc.get('outcome')}")
+        precedents.append(f"Graph Case: {rc.get('title')} | Outcome: {rc.get('outcome')}")
 
     laws = []
+    # From Vector Search (Laws Collection)
+    for l in state.get("laws", []):
+        laws.append(f"Statute: {l['law_name']} | Match: {l['score']:.2f}\n{l['text']}")
+        
+    # From Graph Search
     for l in graph_results.get("law_articles", []):
         laws.append(f"Article {l.get('article_number')}: {l.get('title')}\n{l.get('full_text')}")
 
     context = {
-        "case_entities": state.get("entities", []),
+        "case_metadata": case_metadata,
         "labor_calculation": state.get("calculation", {}),
         "legal_authority": {
-            "graph_precedents": precedents,
-            "cited_law_articles": laws
+            "similar_precedents": precedents,
+            "relevant_statutes": laws
         },
-        "semantic_evidence_fragments": search_texts
+        "document_evidence_fragments": search_texts
     }
+    
+    logger.debug(f"Built multi-source context for case {case_id}")
     return {"context": context}
 
 
@@ -219,22 +384,23 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         "You are an expert UAE Labor Law Judicial Assistant specializing in DIFC Employment Law.\n"
         "Your task is to analyze the case context and generate a high-quality legal reasoning and draft judgment.\n\n"
         "CONTEXT HIERARCHY:\n"
-        "1. GRAPH PRECEDENTS (High Weight): These are specific judicial decisions found via the knowledge graph. They represent the strongest legal authority.\n"
-        "2. SEMANTIC FRAGMENTS (Medium Weight): These are relevant facts and law articles found via semantic vector search.\n"
-        "3. ENTITIES (Facts): Authority of facts extracted from the case documents.\n\n"
+        "1. CASE METADATA (Primary Facts): Foundation of the case (Parties, Description, Notes).\n"
+        "2. RELEVANT STATUTES (High Weight): Articles from DIFC Employment Law. These are binding.\n"
+        "3. SIMILAR PRECEDENTS (High Weight): Past judicial decisions. Use these to guide the interpretation of laws.\n"
+        "4. DOCUMENT EVIDENCE (Supporting): Fragments from case documents and evidence.\n\n"
         "RULES:\n"
-        "- Use standard DIFC Court terminology (Claimant, Respondent, Article, Order).\n"
-        "- If the Graph Precedents mention a specific Article, prioritize that Article in your reasoning.\n"
-        "- Do not hallucinate articles. Cited laws MUST be present in the provided context.\n"
+        "- Use standard DIFC Court terminology (Claimant, Respondent, Tribunal, Article).\n"
+        "- Cite specific Articles and Precedents found in the context using their identifiers.\n"
+        "- If a specific statute is provided, apply it strictly to the facts in metadata.\n"
         "- Return ONLY valid JSON with the exact schema provided below.\n\n"
         "SCHEMA:\n"
         "{\n"
         "  \"outcome\": \"Approved\" | \"Rejected\" | \"Partial\",\n"
-        "  \"reasoning\": \"Detailed legal logic linking facts to articles...\",\n"
+        "  \"reasoning\": \"Detailed legal logic linking facts to specific statutes and precedents...\",\n"
         "  \"cited_laws\": [\"Article X\", \"Article Y\"],\n"
         "  \"cited_cases\": [\"Case Name (Citation)\"],\n"
         "  \"confidence\": 0.0 to 1.0,\n"
-        "  \"draft_judgment\": \"Full structured draft text in court format...\"\n"
+        "  \"draft_judgment\": \"Full structured draft text in court format (Header, Facts, Law, Conclusion)...\"\n"
         "}"
     )
     user_prompt = json.dumps(
@@ -251,6 +417,10 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             {"role": "user", "content": user_prompt},
         ],
         "temperature": 0.1,
+        "max_tokens": 1024,
+        "options": {
+            "num_ctx": 2048,
+        },
     }
 
     async def _call(url: str, timeout_seconds: int) -> str:
@@ -298,10 +468,11 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             }
             if not result["draft_judgment"]:
                 result["draft_judgment"] = result["reasoning"]
-        except Exception:
+        except Exception as e:
+            logger.error(f"JSON parsing failed for {model_used} model output: {e}")
             cleaned = re.sub(r"\{[\s\S]*\}", "", content).strip()
             if not cleaned:
-                cleaned = "Reasoning generated but could not be parsed into strict JSON."
+                cleaned = f"Reasoning generated by {model_used} but could not be parsed into strict JSON."
             result = {
                 "outcome": None,
                 "reasoning": cleaned,
@@ -318,24 +489,27 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         }
 
     try:
-        jais_content = await _call(
-            f"{settings.jais_url}/v1/chat/completions",
+        logger.info(f"Invoking fallback model (lighter/faster) for case {state['case_id']}")
+        fallback_content = await _call(
+            f"{settings.fallback_model_url}/v1/chat/completions",
             settings.jais_timeout_seconds,
         )
-        return _normalize_reasoning(jais_content, "jais", "ok")
-    except Exception:
+        return _normalize_reasoning(fallback_content, "fallback", "ok")
+    except Exception as e:
+        logger.warning(f"Fallback model failed: {e}. Attempting primary (jais)...")
         try:
-            fallback_content = await _call(
-                f"{settings.fallback_model_url}/v1/chat/completions",
+            jais_content = await _call(
+                f"{settings.jais_url}/v1/chat/completions",
                 settings.jais_timeout_seconds,
             )
-            return _normalize_reasoning(fallback_content, "fallback", "fallback_used")
-        except Exception as e:
-            logger.exception(f"Primary and fallback models failed for case {state['case_id']}: {e}")
+            return _normalize_reasoning(jais_content, "jais", "ok")
+        except Exception as e2:
+            error_msg = f"Primary and fallback models both failed for case {state['case_id']}: fallback={e}, jais={e2}"
+            logger.error(error_msg)
             return {
                 "reasoning": {
                     "outcome": None,
-                    "reasoning": "Reasoning unavailable due to model failures.",
+                    "reasoning": f"Reasoning unavailable due to model failures. (Technical error: {str(e2)})",
                     "cited_laws": [],
                     "cited_cases": [],
                     "confidence": 0.0,
@@ -344,7 +518,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
                 },
                 "model_used": "none",
                 "reasoning_status": "reasoning_unavailable",
-                "error": str(e),
+                "error": str(e2),
             }
 
 
