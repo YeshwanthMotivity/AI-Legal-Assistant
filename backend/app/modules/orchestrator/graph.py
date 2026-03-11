@@ -25,9 +25,8 @@ graph.add_node("judgment_drafting_agent_node", judgment_drafting_agent_node)
 
 graph.add_edge(START, "document_agent_node")
 graph.add_edge("document_agent_node", "search_agent_node")
-graph.add_edge("document_agent_node", "graph_agent_node")
+graph.add_edge("search_agent_node", "graph_agent_node") # Changed: Graph now follows Search
 graph.add_edge("document_agent_node", "calculation_agent_node")
-graph.add_edge("search_agent_node", "context_builder_node")
 graph.add_edge("graph_agent_node", "context_builder_node")
 graph.add_edge("calculation_agent_node", "context_builder_node")
 graph.add_edge("context_builder_node", "reasoning_agent_node")

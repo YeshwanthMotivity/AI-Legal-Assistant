@@ -73,10 +73,8 @@ class OrchestratorService:
             reasoning_status=reasoning_status or "ok",
         )
 
-        if reasoning_status == "reasoning_unavailable":
-            await self.case_repository.update_status(case_id, CaseStatus.AI_ANALYSIS_PENDING)
-        else:
-            await self.case_repository.update_status(case_id, CaseStatus.AI_ANALYSIS_READY)
+        # Always set to READY so the frontend stops polling and shows whatever results were gathered
+        await self.case_repository.update_status(case_id, CaseStatus.AI_ANALYSIS_READY)
 
         await self.evaluation_repository.create_ai_event(
             run_id=run_id,

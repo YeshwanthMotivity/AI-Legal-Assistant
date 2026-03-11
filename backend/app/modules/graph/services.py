@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import re
 from neo4j import GraphDatabase
 from neo4j.exceptions import ServiceUnavailable
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,7 +49,7 @@ class GraphQueryService:
 
                 with driver.session() as session:
                     if intent == GraphQueryIntent.FIND_RELEVANT_LAWS:
-                        # Direct CITES query
+                        # Direct CITES query from case
                         result = session.run(
                             """
                             MATCH (c:Case {case_id: $case_id})-[:CITES]->(l:LawArticle)
@@ -68,27 +69,27 @@ class GraphQueryService:
                                     title=record["title"],
                                     full_text=record["full_text"],
                                 ))
-                        else:
-                            # Fallback: query law articles from similar cases
-                            result = session.run(
-                                """
-                                MATCH (c:Case {case_id: $case_id})-[:SIMILAR_TO]->(s:Case)-[:CITES]->(l:LawArticle)
-                                RETURN DISTINCT l.article_id AS article_id, l.article_number AS article_number, 
-                                       l.title AS title, l.full_text AS full_text
-                                LIMIT 10
-                                """,
-                                case_id=case_id,
-                            )
-                            records = list(result)
-                            if records:
-                                graph_confidence = 0.5
-                                for record in records:
-                                    law_articles.append(LawArticleResult(
-                                        article_id=record["article_id"],
-                                        article_number=record["article_number"],
-                                        title=record["title"],
-                                        full_text=record["full_text"],
-                                    ))
+                        
+                        # Citation-based discovery (Graph-RAG Bridge)
+                        # Find other cases that cite the same articles as the current case
+                        result = session.run(
+                            """
+                            MATCH (c:Case {case_id: $case_id})-[:CITES]->(l:LawArticle)<-[:CITES]-(other:Case)
+                            WHERE other.case_id <> $case_id
+                            RETURN other.case_id AS case_id, other.title AS title, 
+                                   other.case_type AS case_type, other.outcome AS outcome,
+                                   l.article_number AS cited_article
+                            LIMIT 10
+                            """,
+                            case_id=case_id,
+                        )
+                        for record in list(result):
+                            related_cases.append(RelatedCaseResult(
+                                case_id=record["case_id"],
+                                title=f"{record['title']} (Cited {record['cited_article']})",
+                                case_type=record["case_type"],
+                                outcome=record["outcome"],
+                            ))
 
                     elif intent == GraphQueryIntent.FIND_RELATED_CASES:
                         result = session.run(
@@ -171,4 +172,3 @@ class GraphQueryService:
             related_cases=related_cases,
             graph_confidence=graph_confidence,
         )
-

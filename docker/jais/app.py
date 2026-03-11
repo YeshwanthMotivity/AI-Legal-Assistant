@@ -1,4 +1,4 @@
-﻿import json
+import json
 import os
 import time
 import urllib.error
@@ -21,8 +21,9 @@ async def lifespan(app: FastAPI):
             headers={"Content-Type": "application/json"},
             method="POST"
         )
-        # Timeout is set high because downloading a multibyte model takes time
-        with urllib.request.urlopen(req, timeout=600):
+        # Timeout is set high because downloading a multibyte model takes time.
+        # Setting timeout to None to wait indefinitely for the pull request.
+        with urllib.request.urlopen(req, timeout=3600):
             pass
         print(f"Successfully ensured {OLLAMA_MODEL_PRIMARY} is present.")
     except Exception as e:
@@ -32,9 +33,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title='JAIS LLM Service', lifespan=lifespan)
 
 OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://ollama:11434').rstrip('/')
-OLLAMA_MODEL_PRIMARY = os.getenv('OLLAMA_MODEL_PRIMARY', 'qwen2.5:7b-instruct')
-OLLAMA_TIMEOUT_SECONDS = int(os.getenv('OLLAMA_TIMEOUT_SECONDS', '60'))
-
+OLLAMA_MODEL_PRIMARY = os.getenv('OLLAMA_MODEL_PRIMARY', 'jwnder/jais-adaptive:7b')
+OLLAMA_TIMEOUT_SECONDS = int(os.getenv('OLLAMA_TIMEOUT_SECONDS', '300'))
 
 class Message(BaseModel):
     role: str

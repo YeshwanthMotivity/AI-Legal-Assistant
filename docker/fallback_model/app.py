@@ -1,4 +1,4 @@
-﻿import json
+import json
 import os
 import time
 import urllib.error
@@ -21,7 +21,8 @@ async def lifespan(app: FastAPI):
             headers={"Content-Type": "application/json"},
             method="POST"
         )
-        with urllib.request.urlopen(req, timeout=600):
+        # Increase timeout for model pulling
+        with urllib.request.urlopen(req, timeout=3600):
             pass
         print(f"Successfully ensured {OLLAMA_MODEL_FALLBACK} is present.")
     except Exception as e:
@@ -32,8 +33,7 @@ app = FastAPI(title='Fallback LLM Service', lifespan=lifespan)
 
 OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://ollama:11434').rstrip('/')
 OLLAMA_MODEL_FALLBACK = os.getenv('OLLAMA_MODEL_FALLBACK', 'phi3:mini')
-OLLAMA_TIMEOUT_SECONDS = int(os.getenv('OLLAMA_TIMEOUT_SECONDS', '60'))
-
+OLLAMA_TIMEOUT_SECONDS = int(os.getenv('OLLAMA_TIMEOUT_SECONDS', '300'))
 
 class Message(BaseModel):
     role: str

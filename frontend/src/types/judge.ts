@@ -73,6 +73,7 @@ export interface NormalizedCaseAnalysis {
   confidence: number
   draftText: string
   explainability: Record<string, unknown>
+  reasoning_status?: string
 }
 
 export interface CaseAnalysisResponse {

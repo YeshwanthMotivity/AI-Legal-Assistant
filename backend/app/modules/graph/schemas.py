@@ -10,10 +10,10 @@ class GraphQueryIntent(str, Enum):
 
 
 class LawArticleResult(BaseModel):
-    article_id: str
+    article_id: str | None = None
     article_number: str
-    title: str
-    full_text: str
+    title: str | None = None
+    full_text: str | None = None
 
 
 class RelatedCaseResult(BaseModel):

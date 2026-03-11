@@ -101,13 +101,13 @@ const MetricsDashboard = () => {
   })
 
   useQuery({
-    queryKey: ['admin-docs-processed', (casesQ.data?.items ?? []).map(i => i.id).join(',')],
+    queryKey: ['admin-docs-processed', (casesQ.data?.items ?? []).map((i: any) => i.id).join(',')],
     enabled: Boolean(casesQ.data?.items?.length),
     queryFn: async () => {
       const cases = (casesQ.data?.items ?? []).slice(0, 50)
-      const docs = await Promise.all(cases.map(c => clerkGetCaseDocuments(c.id)))
-      const count = docs.flatMap(b => b.items)
-        .filter(d => ['completed', 'embedded', 'partial_indexed'].includes(String(d.processing_status).toLowerCase()))
+      const docs = await Promise.all(cases.map((c: any) => clerkGetCaseDocuments(c.id)))
+      const count = docs.flatMap((b: any) => b.items)
+        .filter((d: any) => ['completed', 'embedded', 'partial_indexed'].includes(String(d.processing_status).toLowerCase()))
         .length
       setDocsProcessed(count)
       return count
@@ -131,9 +131,9 @@ const MetricsDashboard = () => {
     const users = usersQ.data ?? []
     return {
       totalCases: cases.length,
-      activeJudges: users.filter(u => u.role === 'judge' && String(u.is_active).toLowerCase() === 'true').length,
+      activeJudges: users.filter((u: any) => u.role === 'judge' && String(u.is_active).toLowerCase() === 'true').length,
       documentsProcessed: docsProcessed,
-      judgmentsFinalized: cases.filter(c => c.status === 'Finalized').length,
+      judgmentsFinalized: cases.filter((c: any) => c.status === 'Finalized').length,
     }
   }, [casesQ.data, usersQ.data, docsProcessed])
 
@@ -142,12 +142,12 @@ const MetricsDashboard = () => {
   // Build time-series lookup by (phase, metric_type)
   function tsData(phase: string, metricType: string) {
     return (metrics?.time_series ?? [])
-      .find(ts => ts.phase === phase && ts.metric_type === metricType)
-      ?.data.map(pt => ({ time: formatBucket(pt.bucket), value: pt.value })) ?? []
+      .find((ts: any) => ts.phase === phase && ts.metric_type === metricType)
+      ?.data.map((pt: any) => ({ time: formatBucket(pt.bucket), value: pt.value })) ?? []
   }
 
   // Entity extraction bar data
-  const entityBarData = Object.entries(metrics?.entity_extraction_by_type ?? {}).map(([k, v]) => ({
+  const entityBarData = Object.entries(metrics?.entity_extraction_by_type ?? {}).map(([k, v]: [string, any]) => ({
     name: k, accuracy: parseFloat((v * 100).toFixed(1)),
   }))
 
@@ -182,9 +182,9 @@ const MetricsDashboard = () => {
             <ResponsiveContainer>
               <BarChart data={latencyData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.07)" />
-                <XAxis type="number" tickFormatter={v => `${v}ms`} tick={{ fontSize: 11 }} />
+                <XAxis type="number" tickFormatter={(v: any) => `${v}ms`} tick={{ fontSize: 11 }} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={100} />
-                <Tooltip formatter={(v: any) => [`${Number(v).toFixed(0)} ms`]} />
+                <Tooltip formatter={(value: any) => [value ? `${Number(value).toFixed(0)} ms` : '—']} />
                 <Bar dataKey="ms" fill="#f43f5e" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -200,8 +200,8 @@ const MetricsDashboard = () => {
               <BarChart data={entityBarData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.07)" />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${v}%`} domain={[0, 100]} />
-                <Tooltip formatter={(v: any) => [`${v}%`]} />
+                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: any) => `${v}%`} domain={[0, 100]} />
+                <Tooltip formatter={(value: any) => [value ? `${value}%` : '—']} />
                 <Bar dataKey="accuracy" fill="#6366f1" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -224,11 +224,11 @@ const MetricsDashboard = () => {
             <ResponsiveContainer>
               <LineChart data={(() => {
                 const keys = ['precision_at_5', 'recall_at_5', 'mrr']
-                const allTimes = [...new Set(keys.flatMap(k => tsData('phase_2', k).map(d => d.time)))].sort()
-                return allTimes.map(time => {
+                const allTimes = [...new Set(keys.flatMap((k: any) => tsData('phase_2', k).map((d: any) => d.time)))].sort()
+                return allTimes.map((time: any) => {
                   const row: Record<string, unknown> = { time }
-                  keys.forEach(k => {
-                    const pt = tsData('phase_2', k).find(d => d.time === time)
+                  keys.forEach((k: any) => {
+                    const pt = tsData('phase_2', k).find((d: any) => d.time === time)
                     row[k] = pt ? parseFloat(pt.value.toFixed(4)) : undefined
                   })
                   return row
@@ -259,11 +259,11 @@ const MetricsDashboard = () => {
             <ResponsiveContainer>
               <LineChart data={(() => {
                 const keys = ['top_5_accuracy', 'avg_similarity_score']
-                const allTimes = [...new Set(keys.flatMap(k => tsData('phase_3', k).map(d => d.time)))].sort()
-                return allTimes.map(time => {
+                const allTimes = [...new Set(keys.flatMap((k: any) => tsData('phase_3', k).map((d: any) => d.time)))].sort()
+                return allTimes.map((time: any) => {
                   const row: Record<string, unknown> = { time }
-                  keys.forEach(k => {
-                    const pt = tsData('phase_3', k).find(d => d.time === time)
+                  keys.forEach((k: any) => {
+                    const pt = tsData('phase_3', k).find((d: any) => d.time === time)
                     row[k] = pt ? parseFloat(pt.value.toFixed(4)) : undefined
                   })
                   return row
@@ -287,7 +287,7 @@ const MetricsDashboard = () => {
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
           <select
             value={benchmarkMode}
-            onChange={e => setBenchmarkMode(e.target.value as 'dense_baseline' | 'hybrid')}
+            onChange={(e: any) => setBenchmarkMode(e.target.value as 'dense_baseline' | 'hybrid')}
             style={{ padding: '0.4rem 0.8rem', borderRadius: 8, background: 'var(--input-bg,#2a2a3e)', color: 'inherit', border: '1px solid rgba(255,255,255,0.15)' }}
           >
             <option value="dense_baseline">Dense Baseline</option>
@@ -335,7 +335,7 @@ const MetricsDashboard = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.75rem' }}>
             <select
               value={gateForm.phase}
-              onChange={e => setGateForm(f => ({ ...f, phase: e.target.value }))}
+              onChange={(e: any) => setGateForm((f: any) => ({ ...f, phase: e.target.value }))}
               style={{ padding: '0.4rem 0.8rem', borderRadius: 8, background: 'var(--input-bg,#2a2a3e)', color: 'inherit', border: '1px solid rgba(255,255,255,0.15)' }}
             >
               <option value="phase_1">Phase 1 — Entity Extraction</option>
@@ -345,7 +345,7 @@ const MetricsDashboard = () => {
             </select>
             <select
               value={gateForm.mode}
-              onChange={e => setGateForm(f => ({ ...f, mode: e.target.value }))}
+              onChange={(e: any) => setGateForm((f: any) => ({ ...f, mode: e.target.value }))}
               style={{ padding: '0.4rem 0.8rem', borderRadius: 8, background: 'var(--input-bg,#2a2a3e)', color: 'inherit', border: '1px solid rgba(255,255,255,0.15)' }}
             >
               <option value="dense_baseline">Dense Baseline</option>
@@ -354,14 +354,14 @@ const MetricsDashboard = () => {
             <input
               placeholder="Judge name / sign-off ref"
               value={gateForm.judge_sign_off}
-              onChange={e => setGateForm(f => ({ ...f, judge_sign_off: e.target.value }))}
+              onChange={(e: any) => setGateForm((f: any) => ({ ...f, judge_sign_off: e.target.value }))}
               style={{ padding: '0.4rem 0.8rem', borderRadius: 8, background: 'var(--input-bg,#2a2a3e)', color: 'inherit', border: '1px solid rgba(255,255,255,0.15)', gridColumn: 'span 2' }}
             />
             <textarea
               placeholder="Rationale…"
               value={gateForm.rationale}
               rows={2}
-              onChange={e => setGateForm(f => ({ ...f, rationale: e.target.value }))}
+              onChange={(e: any) => setGateForm((f: any) => ({ ...f, rationale: e.target.value }))}
               style={{ padding: '0.4rem 0.8rem', borderRadius: 8, background: 'var(--input-bg,#2a2a3e)', color: 'inherit', border: '1px solid rgba(255,255,255,0.15)', gridColumn: 'span 2', resize: 'vertical' }}
             />
             <div style={{ gridColumn: 'span 2', display: 'flex', gap: '0.75rem' }}>
@@ -394,7 +394,7 @@ const MetricsDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {gatesQ.data.map(g => (
+                {gatesQ.data.map((g: any) => (
                   <tr key={g.id}>
                     <td>{g.phase}</td>
                     <td>{g.mode}</td>

@@ -4,12 +4,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.document.models import ProcessingStatus
 from app.modules.document.repository import DocumentRepository
 from app.modules.evaluation.repository import EvaluationEventRepository
-from app.modules.ingestion.chunker import chunk_text
+from app.modules.ingestion.chunker import hybrid_chunk_legal_doc
 from app.modules.ingestion.embedder import embed_chunks
 from app.modules.ingestion.graph_writer import write_to_graph
 from app.modules.ingestion.minio_client import download_file, upload_file
 from app.modules.ingestion.ner import extract_entities
 from app.modules.ingestion.ocr import run_ocr
+from app.modules.ingestion.parser import LegalStructureParser
 from app.modules.ingestion.vector_store import upsert_chunks
 from app.modules.case.repository import CaseRepository
 from app.modules.similarity.vector_store import upsert_case_summary
@@ -62,20 +63,45 @@ async def run_ingestion_pipeline(
     logger.info("Document status updated", extra={"document_id": document_id, "case_id": case_id, "status": ProcessingStatus.OCR_COMPLETE.value})
     await db.commit()
 
+    # Step 2: Legal Structure Parsing (Multi-Stage Ingestion)
+    parser = LegalStructureParser()
+    structured_data = await parser.parse(raw_text)
+    
+    # Merge citations from parser with NER results
     entities = await extract_entities(raw_text)
+    parser_citations = structured_data.get("citations", [])
+    for citation in parser_citations:
+        if isinstance(citation, str):
+            entities.append({
+                "entity_type": "law_article_number",
+                "entity_value": citation,
+                "confidence_score": 0.85
+            })
+
     if entities:
         await document_repo.save_extracted_entities(document_id, entities)
         await db.commit()
 
-    chunks = chunk_text(raw_text)
+    # Step 3: Hybrid Chunking
+    hybrid_chunks = hybrid_chunk_legal_doc(structured_data, doc_type)
+    chunk_texts = [c["text"] for c in hybrid_chunks]
+    
     embeddings: list[list[float]] = []
 
     qdrant_failed = False
     neo4j_failed = False
 
     try:
-        embeddings = await embed_chunks(chunks)
-        await upsert_chunks(case_id, document_id, doc_type, chunks, embeddings)
+        embeddings = await embed_chunks(chunk_texts)
+        # Upsert with metadata enrichment
+        await upsert_chunks(
+            case_id, 
+            document_id, 
+            doc_type, 
+            chunk_texts, 
+            embeddings,
+            metadata=[c["metadata"] for c in hybrid_chunks]
+        )
     except Exception:
         logger.exception(
             "Qdrant upsert failed for document_id=%s case_id=%s",

@@ -1,8 +1,10 @@
 import json
+import logging
 import re
 from datetime import datetime
 from typing import Any
 
+import asyncio
 import httpx
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -91,14 +93,50 @@ async def graph_agent_node(state: AnalysisState) -> dict[str, Any]:
     law_articles: list[dict[str, Any]] = []
     related_cases: list[dict[str, Any]] = []
     graph_confidence = 0.0
+    
+    # Graph-RAG Bridge: Extract citations from search results to expand graph search
+    search_results = state.get("search_results", [])
+    extended_citations = []
+    for res in search_results:
+        text = res.get("chunk_text", "")
+        # Look for "Article X" or "Article X(Y)" patterns
+        found = re.findall(r"Article\s*\(?(\d+)\)?", text, re.IGNORECASE)
+        extended_citations.extend(found)
+    
     service = GraphQueryService(db)
     try:
+        # Standard graph search
         laws_response = await service.query(state["case_id"], GraphQueryIntent.FIND_RELEVANT_LAWS)
         cases_response = await service.query(state["case_id"], GraphQueryIntent.FIND_RELATED_CASES)
+        
         law_articles = [item.model_dump() for item in laws_response.law_articles]
         related_cases = [item.model_dump() for item in cases_response.related_cases]
-        graph_confidence = max(laws_response.graph_confidence, cases_response.graph_confidence)
+        
+        # If we have citations from search but no graph results yet, try to find cases with those citations
+        if not related_cases and extended_citations:
+            # This logic would be better inside the service, but adding a quick bridge here
+            from neo4j import GraphDatabase
+            def _find_by_citations():
+                driver = GraphDatabase.driver(settings.neo4j_uri, auth=(settings.neo4j_user, settings.neo4j_password))
+                with driver.session() as session:
+                    # Find cases that cite the law articles found in our semantic chunks
+                    result = session.run(
+                        "MATCH (l:LawArticle)<-[:CITES]-(c:Case) "
+                        "WHERE l.article_number IN $articles AND c.case_id <> $case_id "
+                        "RETURN c.case_id AS case_id, c.title AS title, c.outcome AS outcome LIMIT 5",
+                        articles=[f"Article {a}" for a in set(extended_citations)],
+                        case_id=state["case_id"]
+                    )
+                    return [{"case_id": r["case_id"], "title": f"{r['title']} (Graph Bridge)", "outcome": r["outcome"]} for r in result]
+            
+            bridge_cases = await asyncio.get_event_loop().run_in_executor(None, _find_by_citations)
+            related_cases.extend(bridge_cases)
+            if bridge_cases:
+                graph_confidence = 0.7
+
+        graph_confidence = max(graph_confidence, laws_response.graph_confidence, cases_response.graph_confidence)
     except Exception:
+        logger.exception("Graph agent failed")
         pass
 
     return {
@@ -142,36 +180,62 @@ async def calculation_agent_node(state: AnalysisState) -> dict[str, Any]:
 
 
 async def context_builder_node(state: AnalysisState) -> dict[str, Any]:
-    dedup = []
-    seen = set()
+    # Dedup and organize artifacts
+    search_texts = []
+    seen_search = set()
     for item in state.get("search_results", []):
-        text = (item.get("chunk_text") or "").strip()
-        if text and text not in seen:
-            seen.add(text)
-            dedup.append(item)
+        t = (item.get("chunk_text") or "").strip()
+        if t and t not in seen_search:
+            seen_search.add(t)
+            search_texts.append(t)
+
+    graph_results = state.get("graph_results", {})
+    precedents = []
+    for rc in graph_results.get("related_cases", []):
+        precedents.append(f"Case: {rc.get('title')} | Outcome: {rc.get('outcome')}")
+
+    laws = []
+    for l in graph_results.get("law_articles", []):
+        laws.append(f"Article {l.get('article_number')}: {l.get('title')}\n{l.get('full_text')}")
+
     context = {
-        "entities": state.get("entities", []),
-        "search_results": dedup,
-        "graph_results": state.get("graph_results", {}),
-        "calculation": state.get("calculation", {}),
+        "case_entities": state.get("entities", []),
+        "labor_calculation": state.get("calculation", {}),
+        "legal_authority": {
+            "graph_precedents": precedents,
+            "cited_law_articles": laws
+        },
+        "semantic_evidence_fragments": search_texts
     }
     return {"context": context}
 
 
+
+logger = logging.getLogger(__name__)
+
+
 async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
     system_prompt = (
-        "You are a UAE Labor Law judicial assistant.\n"
-        "Use only the provided context and do not invent facts.\n"
-        "Return only valid JSON with this exact schema:\n"
-        "{"
-        "\"outcome\": string|null,"
-        "\"reasoning\": string,"
-        "\"cited_laws\": string[],"
-        "\"cited_cases\": (string|object)[],"
-        "\"confidence\": number,"
-        "\"draft_judgment\": string"
-        "}\n"
-        "Do not include markdown, explanations, or extra keys outside the JSON."
+        "You are an expert UAE Labor Law Judicial Assistant specializing in DIFC Employment Law.\n"
+        "Your task is to analyze the case context and generate a high-quality legal reasoning and draft judgment.\n\n"
+        "CONTEXT HIERARCHY:\n"
+        "1. GRAPH PRECEDENTS (High Weight): These are specific judicial decisions found via the knowledge graph. They represent the strongest legal authority.\n"
+        "2. SEMANTIC FRAGMENTS (Medium Weight): These are relevant facts and law articles found via semantic vector search.\n"
+        "3. ENTITIES (Facts): Authority of facts extracted from the case documents.\n\n"
+        "RULES:\n"
+        "- Use standard DIFC Court terminology (Claimant, Respondent, Article, Order).\n"
+        "- If the Graph Precedents mention a specific Article, prioritize that Article in your reasoning.\n"
+        "- Do not hallucinate articles. Cited laws MUST be present in the provided context.\n"
+        "- Return ONLY valid JSON with the exact schema provided below.\n\n"
+        "SCHEMA:\n"
+        "{\n"
+        "  \"outcome\": \"Approved\" | \"Rejected\" | \"Partial\",\n"
+        "  \"reasoning\": \"Detailed legal logic linking facts to articles...\",\n"
+        "  \"cited_laws\": [\"Article X\", \"Article Y\"],\n"
+        "  \"cited_cases\": [\"Case Name (Citation)\"],\n"
+        "  \"confidence\": 0.0 to 1.0,\n"
+        "  \"draft_judgment\": \"Full structured draft text in court format...\"\n"
+        "}"
     )
     user_prompt = json.dumps(
         {
@@ -266,7 +330,8 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
                 settings.jais_timeout_seconds,
             )
             return _normalize_reasoning(fallback_content, "fallback", "fallback_used")
-        except Exception:
+        except Exception as e:
+            logger.exception(f"Primary and fallback models failed for case {state['case_id']}: {e}")
             return {
                 "reasoning": {
                     "outcome": None,
@@ -279,7 +344,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
                 },
                 "model_used": "none",
                 "reasoning_status": "reasoning_unavailable",
-                "error": "primary_and_fallback_failed",
+                "error": str(e),
             }
 
 
@@ -297,18 +362,34 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
 
 async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
     reasoning = state.get("reasoning", {})
-    draft_text = str(reasoning.get("draft_judgment") or "").strip()
-    if not draft_text:
-        draft_text = (
-            "AI Draft:\n"
-            f"Outcome: {reasoning.get('outcome')}\n"
-            f"Reasoning: {reasoning.get('reasoning')}\n"
-            f"Confidence: {reasoning.get('confidence')}\n"
-        )
+    draft_content = str(reasoning.get("draft_judgment") or "").strip()
+    
+    if not draft_content:
+        draft_content = reasoning.get("reasoning", "No reasoning provided.")
+
+    # Apply professional Court Template
+    court_header = (
+        "DIFC COURTS - SMALL CLAIMS TRIBUNAL\n"
+        f"CASE ID: {state['case_id']}\n"
+        "--------------------------------------------------\n"
+        "AI-ASSISTED JUDGMENT DRAFT\n"
+        "--------------------------------------------------\n\n"
+    )
+    
+    final_draft = (
+        f"{court_header}"
+        "1. DISPOSITION AND OUTCOME\n"
+        f"The Tribunal's decision is: {reasoning.get('outcome', 'PENDING')}\n\n"
+        "2. LEGAL REASONING\n"
+        f"{draft_content}\n\n"
+        "3. CITED AUTHORITIES\n"
+        f"Laws: {', '.join(reasoning.get('cited_laws', []))}\n"
+        f"Precedents: {', '.join(reasoning.get('cited_cases', []))}\n\n"
+        "--- End of Draft ---"
+    )
 
     from app.modules.ingestion.minio_client import upload_file
-
-    payload = draft_text.encode("utf-8")
+    payload = final_draft.encode("utf-8")
     try:
         await upload_file(
             bucket="judgment-drafts",
@@ -321,4 +402,4 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
         # Draft persistence to DB still continues even if object storage is unavailable.
         pass
 
-    return {"draft_text": draft_text}
+    return {"draft_text": final_draft}

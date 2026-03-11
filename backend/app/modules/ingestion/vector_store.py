@@ -11,6 +11,7 @@ async def upsert_chunks(
     doc_type: str,
     chunks: list[str],
     embeddings: list[list[float]],
+    metadata: list[dict] = None,
 ) -> None:
     loop = asyncio.get_event_loop()
 
@@ -19,17 +20,24 @@ async def upsert_chunks(
         points = []
         for idx, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
             point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{document_id}:{idx}"))
+            
+            payload = {
+                "case_id": case_id,
+                "document_id": document_id,
+                "chunk_index": idx,
+                "doc_type": doc_type,
+                "raw_text": chunk,
+            }
+            
+            # Merge additional semantic metadata if provided
+            if metadata and idx < len(metadata):
+                payload.update(metadata[idx])
+                
             points.append(
                 PointStruct(
                     id=point_id,
                     vector=embedding,
-                    payload={
-                        "case_id": case_id,
-                        "document_id": document_id,
-                        "chunk_index": idx,
-                        "doc_type": doc_type,
-                        "raw_text": chunk,
-                    },
+                    payload=payload,
                 )
             )
         if points:

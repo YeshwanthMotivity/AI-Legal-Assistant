@@ -115,7 +115,9 @@ async def write_to_graph(
             for article_number in law_articles:
                 session.run(
                     """
-                    MATCH (c:Case {case_id: $case_id}), (l:LawArticle {article_number: $article_number})
+                    MERGE (l:LawArticle {article_number: $article_number})
+                    WITH l
+                    MATCH (c:Case {case_id: $case_id})
                     MERGE (c)-[:CITES]->(l)
                     MERGE (l)-[:CITED_BY]->(c)
                     """,

@@ -127,6 +127,7 @@ const CaseDetail = () => {
   const analysis = analysisQuery.analysis?.analysis
   const isReady = analysis?.status === 'AIAnalysisReady'
   const isPending = analysisQuery.isPolling || runAnalysisMutation.isPending
+  const isUnavailable = isReady && (analysis?.reasoning_status === 'reasoning_unavailable' || !analysis?.reasoning)
 
   const lawArticles = analysis?.lawArticles ?? []
   const precedents = useMemo(() => (analysis?.similarPrecedents ?? []).slice(0, 5), [analysis?.similarPrecedents])
@@ -313,6 +314,12 @@ const CaseDetail = () => {
               <p>{t('judge.workspace.waitingAnalysis')}</p>
             )}
           </div>
+
+          {isUnavailable && (
+            <div className="warning-banner" style={{ marginBottom: '1rem', background: '#fff3cd', border: '1px solid #ffeeba', color: '#856404', padding: '1rem', borderRadius: '4px' }}>
+              <strong>Notice:</strong> AI Reasoning is currently unavailable. This may be due to high server load or connectivity issues with the AI models. Basic analysis data like law articles and precedents may still be available above.
+            </div>
+          )}
 
           <JudgmentEditor
             draftText={analysis?.draftText ?? ''}

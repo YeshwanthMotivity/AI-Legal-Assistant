@@ -86,8 +86,8 @@ services:
       test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')" ]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 120s
+      retries: 10
+      start_period: 300s
     restart: unless-stopped
 
   # BGE Reranker Service
@@ -104,8 +104,8 @@ services:
       test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')" ]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 120s
+      retries: 10
+      start_period: 300s
     restart: unless-stopped
 
   # JAIS LLM Service
@@ -181,6 +181,8 @@ services:
     container_name: judicial_backend
     env_file:
       - .env
+    volumes:
+      - ./data:/app/data
     ports:
       - "8000:8000"
     depends_on:
