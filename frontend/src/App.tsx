@@ -14,6 +14,7 @@ import AuditLog from './pages/admin/AuditLog'
 import AdminDashboard from './pages/AdminDashboard'
 import JudgeDashboard from './pages/JudgeDashboard'
 import ClerkDashboard from './pages/ClerkDashboard'
+import JudgmentDraft from './pages/judge/JudgmentDraft'
 
 function HomeRedirect() {
   const { isAuthenticated, user } = useAuth()
@@ -67,6 +68,14 @@ function App() {
         element={
           <PrivateRoute allowedRoles={['judge']}>
             <PrecedentDetailPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/judge/cases/:id/draft"
+        element={
+          <PrivateRoute allowedRoles={['judge']}>
+            <JudgmentDraft />
           </PrivateRoute>
         }
       />

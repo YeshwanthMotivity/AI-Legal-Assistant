@@ -19,13 +19,18 @@ const PortalLayout = ({ title, subtitle, children }: PortalLayoutProps) => {
     switch (user?.role) {
       case 'clerk':
         return [
+          { to: '/clerk/dashboard', label: 'Dashboard' },
           { to: '/clerk/cases', label: t('clerk.nav.cases') },
           { to: '/clerk/documents', label: t('clerk.nav.documents') },
         ]
       case 'judge':
-        return [{ to: '/judge/cases', label: t('judge.nav.cases') }]
+        return [
+          { to: '/judge/dashboard', label: 'Dashboard' },
+          { to: '/judge/cases', label: t('judge.nav.cases') }
+        ]
       case 'admin':
         return [
+          { to: '/admin/dashboard', label: 'Dashboard' },
           { to: '/admin/metrics', label: t('admin.nav.metrics') },
           { to: '/admin/users', label: t('admin.nav.users') },
           { to: '/admin/assignments', label: t('admin.nav.assignments') },
