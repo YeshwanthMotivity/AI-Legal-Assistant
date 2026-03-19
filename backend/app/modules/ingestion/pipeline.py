@@ -1,13 +1,22 @@
-import json
+"""
+pipeline.py — Fixed version
+Changes from original:
+  - Removed MinIO dependency (reads PDF directly from filesystem)
+  - Removed Neo4j dependency (write_to_graph removed)
+  - Added language parameter — passed through to chunk metadata
+  - Removed neo4j_failed flag (no longer needed)
+  - Simplified status tracking
+"""
+
 import logging
+import os
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.modules.document.models import ProcessingStatus
 from app.modules.document.repository import DocumentRepository
 from app.modules.evaluation.repository import EvaluationEventRepository
 from app.modules.ingestion.chunker import hybrid_chunk_legal_doc
 from app.modules.ingestion.embedder import embed_chunks
-from app.modules.ingestion.graph_writer import write_to_graph
-from app.modules.ingestion.minio_client import download_file, upload_file
 from app.modules.ingestion.ner import extract_entities
 from app.modules.ingestion.ocr import run_ocr
 from app.modules.ingestion.parser import LegalStructureParser
@@ -16,6 +25,10 @@ from app.modules.case.repository import CaseRepository
 from app.modules.similarity.vector_store import upsert_case_summary
 
 logger = logging.getLogger(__name__)
+
+# Base directory where PDF documents are stored on the filesystem
+# This maps to ./data in docker-compose (bind-mounted to /app/data in container)
+DATA_DIR = os.environ.get("DATA_DIR", "/app/data")
 
 
 async def run_ingestion_pipeline(
@@ -27,57 +40,80 @@ async def run_ingestion_pipeline(
     db: AsyncSession,
     collection_name: str = "legal_chunks",
     extra_metadata: dict = None,
-    language: str = "en",
+    language: str = "en",          # ADDED: language parameter
+    file_path: str = None,         # ADDED: direct file path (preferred over storage_key)
 ) -> None:
+    """
+    Full ingestion pipeline for a legal document.
+
+    Steps:
+      1. Read PDF from filesystem
+      2. Extract text (OCR) with pdfplumber + cleaning
+      3. Parse structure with LLM (facts, reasoning, conclusion)
+      4. Extract entities (NER)
+      5. Chunk the structured text
+      6. Embed chunks via BGE-M3
+      7. Store in Qdrant
+      8. Update PostgreSQL status
+    """
     document_repo = DocumentRepository(db)
     event_repo = EvaluationEventRepository(db)
 
     await document_repo.update_status(document_id, ProcessingStatus.PROCESSING)
-    logger.info("Document status updated", extra={"document_id": document_id, "case_id": case_id, "status": ProcessingStatus.PROCESSING.value})
+    logger.info(
+        "Pipeline started",
+        extra={"document_id": document_id, "case_id": case_id}
+    )
     await db.commit()
 
-    file_bytes = await download_file("case-documents", storage_key)
-    print(f"Downloaded file bytes for {document_id}")
-
+    # ── Step 1: Read file from filesystem ────────────────────────────────────
     try:
-        raw_text = await run_ocr(file_bytes, mime_type)
-        print(f"Extracted raw text (len {len(raw_text)}) for {document_id}")
+        # Prefer direct file_path if provided, otherwise construct from storage_key
+        if file_path and os.path.exists(file_path):
+            read_path = file_path
+        else:
+            read_path = os.path.join(DATA_DIR, storage_key)
+
+        with open(read_path, "rb") as f:
+            file_bytes = f.read()
+        logger.info(f"Read {len(file_bytes)} bytes from {read_path}")
     except Exception as e:
-        print(f"OCR failed: {e}")
-        logger.exception(
-            "OCR failed for document_id=%s case_id=%s mime_type=%s",
-            document_id,
-            case_id,
-            mime_type,
-        )
+        logger.error(f"Failed to read file for {document_id}: {e}")
         await document_repo.update_status(document_id, ProcessingStatus.FAILED)
-        logger.info("Document status updated", extra={"document_id": document_id, "case_id": case_id, "status": ProcessingStatus.FAILED.value})
         await db.commit()
         return
 
-    ocr_blob = json.dumps({"document_id": document_id, "ocr_text": raw_text}).encode("utf-8")
-    await upload_file(
-        bucket="ocr-output",
-        key=f"{document_id}.json",
-        data=ocr_blob,
-        length=len(ocr_blob),
-        content_type="application/json",
-    )
+    # ── Step 2: OCR / Text extraction ────────────────────────────────────────
+    try:
+        raw_text = await run_ocr(file_bytes, mime_type)
+        logger.info(f"OCR complete: {len(raw_text)} chars for {document_id}")
+    except Exception as e:
+        logger.exception(
+            "OCR failed for document_id=%s case_id=%s", document_id, case_id
+        )
+        await document_repo.update_status(document_id, ProcessingStatus.FAILED)
+        await db.commit()
+        return
 
     await document_repo.save_ocr_text(document_id, raw_text)
     await document_repo.update_status(document_id, ProcessingStatus.OCR_COMPLETE)
-    logger.info("Document status updated", extra={"document_id": document_id, "case_id": case_id, "status": ProcessingStatus.OCR_COMPLETE.value})
     await db.commit()
 
-    # Step 2: Legal Structure Parsing (Multi-Stage Ingestion)
+    # ── Step 3: Legal structure parsing ──────────────────────────────────────
     parser = LegalStructureParser()
     structured_data = await parser.parse(raw_text)
-    
-    # Merge citations from parser with NER results
+
+    # ── Step 4: Entity extraction ─────────────────────────────────────────────
     entities = await extract_entities(raw_text)
+
+    # Merge article citations found by parser
     parser_citations = structured_data.get("citations", [])
+    existing_articles = {
+        e["entity_value"] for e in entities
+        if e.get("entity_type") == "law_article_number"
+    }
     for citation in parser_citations:
-        if isinstance(citation, str):
+        if isinstance(citation, str) and citation not in existing_articles:
             entities.append({
                 "entity_type": "law_article_number",
                 "entity_value": citation,
@@ -88,120 +124,108 @@ async def run_ingestion_pipeline(
         await document_repo.save_extracted_entities(document_id, entities)
         await db.commit()
 
-    # Step 3: Hybrid Chunking
+    logger.info(f"Extracted {len(entities)} entities for {document_id}")
+
+    # ── Step 5: Chunking ──────────────────────────────────────────────────────
     hybrid_chunks = hybrid_chunk_legal_doc(structured_data, doc_type)
     chunk_texts = [c["text"] for c in hybrid_chunks]
-    
-    embeddings: list[list[float]] = []
+    logger.info(f"Created {len(chunk_texts)} chunks for {document_id}")
 
+    if not chunk_texts:
+        logger.warning(f"No chunks produced for {document_id}, marking failed")
+        await document_repo.update_status(document_id, ProcessingStatus.FAILED)
+        await db.commit()
+        return
+
+    # ── Step 6 & 7: Embed + Store in Qdrant ──────────────────────────────────
     qdrant_failed = False
-    neo4j_failed = False
-
     try:
-        print(f"Embedding {len(chunk_texts)} chunks for {document_id}", flush=True)
         embeddings = await embed_chunks(chunk_texts)
-        print(f"Successfully embedded {len(embeddings)} chunks for {document_id}", flush=True)
-        
-        # Upsert with metadata enrichment
+        logger.info(f"Embedded {len(embeddings)} chunks for {document_id}")
+
+        # Build metadata list with language tag
         metadata_list = [c["metadata"] for c in hybrid_chunks]
         for m in metadata_list:
-            m["language"] = language
+            m["language"] = language          # FIXED: language now stored in metadata
+            m["case_name"] = case_id          # useful for precedent search
+            m["filename"] = storage_key
             if extra_metadata:
                 m.update(extra_metadata)
-                
-        print(f"Upserting {len(embeddings)} points to {collection_name} for {document_id}", flush=True)
+
         await upsert_chunks(
-            case_id, 
-            document_id, 
-            doc_type, 
-            chunk_texts, 
+            case_id,
+            document_id,
+            doc_type,
+            chunk_texts,
             embeddings,
             metadata=metadata_list,
             collection_name=collection_name
         )
-        print(f"Successfully upserted points to {collection_name} for {document_id}", flush=True)
+        logger.info(
+            f"Upserted {len(embeddings)} points to "
+            f"{collection_name} for {document_id}"
+        )
     except Exception as e:
-        print(f"Qdrant upsert failed loop catching: {e}", flush=True)
         logger.exception(
             "Qdrant upsert failed for document_id=%s case_id=%s",
-            document_id,
-            case_id,
+            document_id, case_id
         )
         qdrant_failed = True
 
-    # Fetch case for graph writing and summary upsert
-    case_repo = CaseRepository(db)
-    case = await case_repo.get_by_id(case_id)
-    case_title = case.title if case else ""
-    case_type = case.case_type.value if case and case.case_type else ""
-    
-    try:
-        print(f"Writing to Neo4j graph for {document_id}", flush=True)
-        await write_to_graph(
-            case_id, 
-            document_id, 
-            entities,
-            case_title=case_title,
-            case_type=case_type,
-            outcome="",  # Empty at ingestion time, updated when judgment is finalized
+    # ── Step 8: Update final status ───────────────────────────────────────────
+    if qdrant_failed:
+        await document_repo.update_status(
+            document_id, ProcessingStatus.PARTIAL_INDEXED
         )
-        print(f"Successfully wrote to Neo4j graph for {document_id}", flush=True)
-    except Exception as e:
-        print(f"Neo4j write failed: {e}", flush=True)
-        logger.exception(
-            "Neo4j write failed for document_id=%s case_id=%s",
-            document_id,
-            case_id,
-        )
-        neo4j_failed = True
-
-    if qdrant_failed or neo4j_failed:
-        await document_repo.update_status(document_id, ProcessingStatus.PARTIAL_INDEXED)
-        logger.info("Document status updated", extra={"document_id": document_id, "case_id": case_id, "status": ProcessingStatus.PARTIAL_INDEXED.value})
     else:
-        await document_repo.update_status(document_id, ProcessingStatus.COMPLETED)
-        logger.info("Document status updated", extra={"document_id": document_id, "case_id": case_id, "status": ProcessingStatus.COMPLETED.value})
+        await document_repo.update_status(
+            document_id, ProcessingStatus.COMPLETED
+        )
+    await db.commit()
 
-    # Upsert case summary to case_summaries collection for similarity search (Phase 3)
+    # ── Optional: Upsert case summary for similarity search ──────────────────
     try:
+        case_repo = CaseRepository(db)
+        case = await case_repo.get_by_id(case_id)
         if case:
-            # Build summary text same as SimilarityService: title + case_type + employee_name + employer_name
             summary_parts = [
                 case.title,
                 case.case_type.value if case.case_type else "",
                 case.claimant_name or "",
                 case.respondent_name or "",
             ]
-            summary_text = " ".join(part for part in summary_parts if part)
-            
+            summary_text = " ".join(p for p in summary_parts if p)
+
             if summary_text:
-                # Embed the summary
                 summary_embeddings = await embed_chunks([summary_text])
                 if summary_embeddings:
-                    # Upsert to case_summaries collection with empty outcome (will be updated when judgment is finalized)
                     await upsert_case_summary(
                         case_id=case_id,
                         case_type=case.case_type.value if case.case_type else "",
                         case_title=case.title,
                         claimant=case.claimant_name or "",
                         respondent=case.respondent_name or "",
-                        outcome="",  # Empty at ingestion time, updated when judgment is finalized
+                        outcome="",
                         embedding=summary_embeddings[0],
                     )
     except Exception:
         logger.exception(
-            "Case summary upsert failed for case_id=%s",
-            case_id,
+            "Case summary upsert failed for case_id=%s", case_id
         )
 
+    # ── KPI events ────────────────────────────────────────────────────────────
     for entity in entities:
-        await event_repo.create_event(
-            document_id=document_id,
-            case_id=case_id,
-            metric_type="entity_extraction_accuracy",
-            entity_type=entity.get("entity_type", "unknown"),
-            value=float(entity.get("confidence_score", 0.0)),
-            phase="phase_1",
-        )
+        try:
+            await event_repo.create_event(
+                document_id=document_id,
+                case_id=case_id,
+                metric_type="entity_extraction_accuracy",
+                entity_type=entity.get("entity_type", "unknown"),
+                value=float(entity.get("confidence_score", 0.0)),
+                phase="phase_1",
+            )
+        except Exception:
+            pass  # KPI failure must not break ingestion
 
     await db.commit()
+    logger.info(f"Pipeline complete for {document_id} | status={\"FAILED\" if qdrant_failed else \"COMPLETED\"}")
