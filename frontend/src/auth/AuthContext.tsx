@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [refreshToken, setRefreshToken] = useState<string | null>(null)
   const [user, setUser] = useState<User | null>(null)
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'
+  const API_BASE_URL = "http://backend:8000"
 
   const decodeJwtPayload = (token: string): Record<string, unknown> | null => {
     try {

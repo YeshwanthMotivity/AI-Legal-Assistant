@@ -47,11 +47,7 @@ class Settings:
     qdrant_url: str = os.getenv("QDRANT_URL", "http://qdrant:6333")
     qdrant_collection_name: str = "judicial_documents"
     
-    # Graph DB settings
-    neo4j_uri: str = os.getenv("NEO4J_URI", "bolt://neo4j:7687")
-    neo4j_user: str = os.getenv("NEO4J_USER", "neo4j")
-    neo4j_password: str = os.getenv("NEO4J_PASSWORD", "password")
-    
+
     # Object storage settings
     minio_endpoint: str = os.getenv("MINIO_ENDPOINT", "minio:9000")
     minio_access_key: str = os.getenv("MINIO_ACCESS_KEY", "minioadmin")

@@ -51,39 +51,6 @@ async def init_qdrant():
         logger.warning(f"Qdrant initialization skipped: {e}")
 
 
-async def init_neo4j():
-    """Initialize Neo4j constraints and indexes."""
-    try:
-        from neo4j import GraphDatabase
-        from app.modules.ingestion.law_seeder import seed_law_articles
-        
-        driver = GraphDatabase.driver(
-            settings.neo4j_uri,
-            auth=(settings.neo4j_user, settings.neo4j_password)
-        )
-        
-        with driver.session() as session:
-            # Create uniqueness constraints
-            session.run("CREATE CONSTRAINT IF NOT EXISTS FOR (c:Case) REQUIRE c.case_id IS UNIQUE")
-            session.run("CREATE CONSTRAINT IF NOT EXISTS FOR (p:Person) REQUIRE p.person_id IS UNIQUE")
-            session.run("CREATE CONSTRAINT IF NOT EXISTS FOR (c:Company) REQUIRE c.company_id IS UNIQUE")
-            session.run("CREATE CONSTRAINT IF NOT EXISTS FOR (l:LawArticle) REQUIRE l.article_id IS UNIQUE")
-            session.run("CREATE CONSTRAINT IF NOT EXISTS FOR (e:Evidence) REQUIRE e.evidence_id IS UNIQUE")
-            
-            # Create indexes
-            session.run("CREATE INDEX IF NOT EXISTS FOR (c:Case) ON (c.status)")
-            session.run("CREATE INDEX IF NOT EXISTS FOR (c:Case) ON (c.case_type)")
-            session.run("CREATE INDEX IF NOT EXISTS FOR (p:Person) ON (p.name)")
-            
-        driver.close()
-        
-        # Seed UAE Labor Law articles
-        await seed_law_articles()
-        
-        logger.info("Neo4j initialization complete")
-    except Exception as e:
-        logger.warning(f"Neo4j initialization skipped: {e}")
-
 
 async def init_minio():
     """Initialize MinIO buckets."""
@@ -118,7 +85,7 @@ async def init_stores():
     logger.info("Initializing data stores...")
     
     await init_qdrant()
-    await init_neo4j()
+
     await init_minio()
     
     logger.info("Data stores initialization complete")
