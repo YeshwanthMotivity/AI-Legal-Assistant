@@ -73,6 +73,7 @@ async def login(request: LoginRequest, session: AsyncSession = Depends(get_db)):
         data={
             "sub": str(user.id),
             "email": user.email,
+            "username": user.username,
             "role": user.role.value if hasattr(user.role, "value") else str(user.role),
         },
         expires_delta=timedelta(hours=1)
@@ -128,6 +129,7 @@ async def refresh_token(request: RefreshRequest, session: AsyncSession = Depends
         data={
             "sub": str(user.id),
             "email": user.email,
+            "username": user.username,
             "role": user.role.value if hasattr(user.role, "value") else str(user.role),
         },
         expires_delta=timedelta(hours=1)

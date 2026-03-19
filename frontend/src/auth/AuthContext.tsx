@@ -1,5 +1,5 @@
-import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react'
-import axios from 'axios'
+import React, { createContext, useState, useEffect, ReactNode } from 'react'
+import { apiClient } from '../api/client'
 
 export type UserRole = 'admin' | 'judge' | 'clerk'
 
@@ -30,8 +30,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [refreshToken, setRefreshToken] = useState<string | null>(null)
   const [user, setUser] = useState<User | null>(null)
-
-  const API_BASE_URL = "http://backend:8000"
 
   const decodeJwtPayload = (token: string): Record<string, unknown> | null => {
     try {
@@ -70,7 +68,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (username: string, password: string) => {
     const email = username.includes('@') ? username : `${username}@example.com`
-    const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+    const response = await apiClient.post('/auth/login', {
       email,
       password,
     })
@@ -113,7 +111,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return
     }
 
-    const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+    const response = await apiClient.post('/auth/refresh', {
       refresh_token: refreshToken,
     })
     const { access_token, refresh_token } = response.data
@@ -157,11 +155,4 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   )
 }
 
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
-}
 

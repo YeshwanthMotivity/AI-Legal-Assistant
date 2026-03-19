@@ -119,6 +119,7 @@ function App() {
       />
 
       <Route path="/" element={<HomeRedirect />} />
+      <Route path="/unauthorized" element={<Navigate to="/" />} />
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   )
