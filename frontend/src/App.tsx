@@ -11,6 +11,9 @@ import UserManagement from './pages/admin/UserManagement'
 import CaseAssignment from './pages/admin/CaseAssignment'
 import MetricsDashboard from './pages/admin/MetricsDashboard'
 import AuditLog from './pages/admin/AuditLog'
+import AdminDashboard from './pages/AdminDashboard'
+import JudgeDashboard from './pages/JudgeDashboard'
+import ClerkDashboard from './pages/ClerkDashboard'
 
 function HomeRedirect() {
   const { isAuthenticated, user } = useAuth()
@@ -20,12 +23,12 @@ function HomeRedirect() {
   }
 
   if (user.role === 'admin') {
-    return <Navigate to="/admin/metrics" replace />
+    return <Navigate to="/admin/dashboard" replace />
   }
   if (user.role === 'judge') {
-    return <Navigate to="/judge/cases" replace />
+    return <Navigate to="/judge/dashboard" replace />
   }
-  return <Navigate to="/clerk/cases" replace />
+  return <Navigate to="/clerk/dashboard" replace />
 }
 
 function App() {
@@ -81,6 +84,31 @@ function App() {
         element={
           <PrivateRoute allowedRoles={['clerk']}>
             <DocumentUpload />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/admin/dashboard"
+        element={
+          <PrivateRoute allowedRoles={['admin']}>
+            <AdminDashboard />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/judge/dashboard"
+        element={
+          <PrivateRoute allowedRoles={['judge']}>
+            <JudgeDashboard />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/clerk/dashboard"
+        element={
+          <PrivateRoute allowedRoles={['clerk']}>
+            <ClerkDashboard />
           </PrivateRoute>
         }
       />
