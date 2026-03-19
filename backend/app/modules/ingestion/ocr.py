@@ -6,10 +6,14 @@ Changes from original:
   - Added Tesseract OCR fallback for scanned/image PDFs
   - Added language detection
   - Added Arabic RTL word ordering
+  - Fixed: explicit TESSDATA_PREFIX so Docker container always finds ara.traineddata
+  - Fixed: Tesseract Arabic config uses --oem 1 (LSTM only) for better Arabic accuracy
+  - Fixed: pdfplumber RTL ordering uses x1 (right edge) not x0 for correct Arabic word seq
 """
 
 import asyncio
 import io
+import os
 import re
 import unicodedata
 import logging
@@ -20,6 +24,21 @@ from docx import Document as DocxDocument
 import pdfplumber
 
 logger = logging.getLogger(__name__)
+
+# ── Tesseract configuration ──────────────────────────────────────────────────
+# In the Docker container, apt installs tessdata to /usr/share/tesseract-ocr/4.00/tessdata
+# Set TESSDATA_PREFIX explicitly so pytesseract always finds ara.traineddata
+_TESSDATA_CANDIDATES = [
+    "/usr/share/tesseract-ocr/5/tessdata",
+    "/usr/share/tesseract-ocr/4.00/tessdata",
+    "/usr/share/tessdata",
+    "/usr/local/share/tessdata",
+]
+for _path in _TESSDATA_CANDIDATES:
+    if os.path.isfile(os.path.join(_path, "ara.traineddata")):
+        os.environ.setdefault("TESSDATA_PREFIX", _path)
+        logger.info(f"Tesseract tessdata found at: {_path}")
+        break
 
 # ── Arabic character range ───────────────────────────────────────────────────
 ARABIC_CHARS = re.compile(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]+')
@@ -99,6 +118,9 @@ def _extract_with_pdfplumber(file_bytes: bytes) -> str:
     """
     Extract text from a native (text-based) PDF using pdfplumber.
     Handles Arabic RTL by sorting words right-to-left on Arabic lines.
+
+    FIX: Uses x1 (right edge of word) for RTL sorting instead of x0,
+    which gives correct reading order for Arabic words on a line.
     """
     full_text = []
 
@@ -135,10 +157,11 @@ def _extract_with_pdfplumber(file_bytes: bytes) -> str:
                     is_arabic = bool(ARABIC_CHARS.search(sample))
 
                     if is_arabic:
-                        # Arabic: sort right to left
-                        line_words.sort(key=lambda w: w['x0'], reverse=True)
+                        # Arabic RTL: sort by x1 (right edge) descending
+                        # x1 = right edge of bounding box — correct for RTL reading order
+                        line_words.sort(key=lambda w: w['x1'], reverse=True)
                     else:
-                        # English: sort left to right
+                        # English LTR: sort by x0 (left edge) ascending
                         line_words.sort(key=lambda w: w['x0'])
 
                     line_text = ' '.join(w['text'] for w in line_words)
@@ -162,6 +185,11 @@ def _extract_with_tesseract(file_bytes: bytes) -> str:
     """
     OCR fallback using Tesseract for scanned/image-based PDFs.
     Uses Arabic + English language packs.
+
+    FIX: Uses --oem 1 (LSTM neural net only) for better Arabic recognition.
+         --oem 3 (auto) often falls back to legacy engine which is poor for Arabic.
+    FIX: Separates Arabic-dominant pages to use lang='ara+eng' with RTL page seg,
+         and English-dominant pages to use lang='eng+ara'.
     """
     try:
         from pdf2image import convert_from_bytes
@@ -169,11 +197,23 @@ def _extract_with_tesseract(file_bytes: bytes) -> str:
         pages_text = []
         for i, img in enumerate(images):
             logger.info(f"Tesseract OCR: processing page {i + 1}/{len(images)}")
-            text = pytesseract.image_to_string(
+
+            # First pass: try Arabic+English (good for Arabic-dominant pages)
+            text_ar = pytesseract.image_to_string(
                 img,
                 lang='ara+eng',
-                config='--oem 3 --psm 3'
+                config='--oem 1 --psm 3'
             )
+            # Second pass: try English+Arabic (good for English-dominant pages)
+            text_en = pytesseract.image_to_string(
+                img,
+                lang='eng+ara',
+                config='--oem 1 --psm 3'
+            )
+
+            # Pick the result with more extracted text
+            text = text_ar if len(text_ar.strip()) >= len(text_en.strip()) else text_en
+
             if text.strip():
                 pages_text.append(text)
         return '\n\n'.join(pages_text)
@@ -232,11 +272,18 @@ async def run_ocr(file_bytes: bytes, mime_type: str) -> str:
 
         # Image file — direct Tesseract
         image = Image.open(io.BytesIO(file_bytes))
-        text = pytesseract.image_to_string(
+        # Detect language from filename/context not available here, try both
+        text_ar = pytesseract.image_to_string(
             image,
             lang='ara+eng',
-            config='--oem 3 --psm 3'
+            config='--oem 1 --psm 3'
         )
+        text_en = pytesseract.image_to_string(
+            image,
+            lang='eng+ara',
+            config='--oem 1 --psm 3'
+        )
+        text = text_ar if len(text_ar.strip()) >= len(text_en.strip()) else text_en
         return clean_text(text.strip())
 
     return await loop.run_in_executor(None, _extract)

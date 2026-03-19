@@ -83,6 +83,13 @@ async def upload_document(
         content_type=file.content_type or "application/octet-stream",
     )
 
+    import os
+    DATA_DIR = os.environ.get("DATA_DIR", "/app/data")
+    local_path = os.path.join(DATA_DIR, storage_key)
+    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+    with open(local_path, "wb") as f:
+        f.write(file_bytes)
+
     document.storage_key = storage_key
     await db.flush()
     await db.commit()
