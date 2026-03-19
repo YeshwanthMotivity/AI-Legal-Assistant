@@ -1,25 +1,6 @@
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16
-    container_name: judicial_postgres
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-judicial_assistant}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    mem_limit: 512m
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
 
-  # Qdrant Vector Database
+  # ── Vector Database ───────────────────────────────────────────────────────
   qdrant:
     image: qdrant/qdrant:latest
     container_name: judicial_qdrant
@@ -27,58 +8,11 @@ services:
       - "6333:6333"
       - "6334:6334"
     volumes:
-      - qdrant_data:/qdrant/storage
-    mem_limit: 800m
+      - /home/administrator/data/qdrant:/qdrant/storage
+    mem_limit: 1g
     restart: unless-stopped
 
-  # Neo4j Graph Database
-  neo4j:
-    image: neo4j:5
-    container_name: judicial_neo4j
-    environment:
-      NEO4J_AUTH: ${NEO4J_AUTH:-neo4j/password}
-      NEO4J_PLUGINS: '["apoc"]'
-      NEO4J_server_memory_heap_initial__size: 256m
-      NEO4J_server_memory_heap_max__size: 768m
-      NEO4J_server_memory_pagecache_size: 256m
-      NEO4J_server_jvm_additional: "-XX:+UseG1GC"
-    mem_limit: 2g
-    ports:
-      - "7474:7474"
-      - "7687:7687"
-    volumes:
-      - neo4j_data:/data
-      - neo4j_logs:/logs
-    healthcheck:
-      test: [ "CMD-SHELL", "wget -qO /dev/null http://localhost:7474 || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
-    restart: unless-stopped
-
-  # MinIO Object Storage
-  minio:
-    image: minio/minio:latest
-    container_name: judicial_minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - minio_data:/data
-    mem_limit: 300m
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # BGE-M3 Embedding Service
+  # ── Embedding Service ─────────────────────────────────────────────────────
   bge_m3:
     build:
       context: ./docker/bge_m3
@@ -87,16 +21,17 @@ services:
     ports:
       - "8001:8001"
     volumes:
-      - bge_m3_cache:/root/.cache/huggingface
+      - /home/administrator/data/hf_cache/bge_m3:/root/.cache/huggingface
+    mem_limit: 3g
     healthcheck:
-      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')" ]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 300s
     restart: unless-stopped
 
-  # BGE Reranker Service
+  # ── Reranker Service ──────────────────────────────────────────────────────
   bge_reranker:
     build:
       context: ./docker/bge_reranker
@@ -105,81 +40,17 @@ services:
     ports:
       - "8002:8002"
     volumes:
-      - bge_reranker_cache:/root/.cache/huggingface
+      - /home/administrator/data/hf_cache/bge_reranker:/root/.cache/huggingface
+    mem_limit: 2g
     healthcheck:
-      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')" ]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 300s
     restart: unless-stopped
 
-  # JAIS LLM Service
-  jais:
-    build:
-      context: ./docker/jais
-      dockerfile: Dockerfile
-    container_name: judicial_jais
-    ports:
-      - "8003:8003"
-    environment:
-      - MODEL_PATH=/models
-      - OLLAMA_URL=${OLLAMA_URL:-http://ollama:11434}
-      - OLLAMA_MODEL_PRIMARY=${OLLAMA_MODEL_PRIMARY:-jais:13b-chat}
-      - OLLAMA_TIMEOUT_SECONDS=${OLLAMA_TIMEOUT_SECONDS:-60}
-    volumes:
-      - jais_models:/models
-    depends_on:
-      ollama:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8003/health" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # Fallback LLM Service
-  fallback_model:
-    build:
-      context: ./docker/fallback_model
-      dockerfile: Dockerfile
-    container_name: judicial_fallback_model
-    ports:
-      - "8004:8004"
-    environment:
-      - MODEL_PATH=/models
-      - OLLAMA_URL=${OLLAMA_URL:-http://ollama:11434}
-      - OLLAMA_MODEL_FALLBACK=${OLLAMA_MODEL_FALLBACK:-phi3:mini}
-      - OLLAMA_TIMEOUT_SECONDS=${OLLAMA_TIMEOUT_SECONDS:-60}
-    volumes:
-      - fallback_models:/models
-    depends_on:
-      ollama:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/health')" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # Ollama Runtime
-  ollama:
-    image: ollama/ollama:latest
-    container_name: judicial_ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    healthcheck:
-      test: [ "CMD", "ollama", "list" ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
-
-  # Backend API
+  # ── Backend API ───────────────────────────────────────────────────────────
   backend:
     build:
       context: ./backend
@@ -192,32 +63,20 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      postgres:
-        condition: service_healthy
       qdrant:
         condition: service_started
-      neo4j:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
       bge_m3:
         condition: service_healthy
       bge_reranker:
         condition: service_healthy
-      jais:
-        condition: service_healthy
-      fallback_model:
-        condition: service_healthy
-      ollama:
-        condition: service_healthy
     healthcheck:
-      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
 
-  # Frontend
+  # ── Frontend ──────────────────────────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
@@ -228,22 +87,14 @@ services:
     depends_on:
       - backend
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
 
-volumes:
-  postgres_data:
-  qdrant_data:
-  neo4j_data:
-  neo4j_logs:
-  minio_data:
-  jais_models:
-  fallback_models:
-  ollama_data:
-  bge_m3_cache:
-  bge_reranker_cache:
-
-
+# ── Native on VM (outside Docker) ────────────────────────────────────────────
+# PostgreSQL: sudo apt install postgresql
+# Ollama:     curl -fsSL https://ollama.com/install.sh | sh
+#             ollama pull jwnder/jais-adaptive:7b
+#             ollama pull qwen2.5:1.5b-instruct

@@ -1,3 +1,4 @@
+
 # AI Judicial Assistant Platform
 ## Enterprise Architecture, Evaluation, and KPI Framework
 ### (Detailed Technical Specification for Demo and Enterprise Scaling)
@@ -169,7 +170,7 @@ Restrictions:
                   │                Data Layer               │
                   │-----------------------------------------│
                   │ PostgreSQL – structured data           │
-                  │ Qdrant – vector embeddings              │
+                  │ Qdrant – vector embeddings             │
                   │ Neo4j – knowledge graph                │
                   │ MinIO – document storage               │
                   └────────────────────────────────────────┘
