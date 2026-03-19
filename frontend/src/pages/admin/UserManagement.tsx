@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import PortalLayout from '../../components/layout/PortalLayout'
@@ -60,7 +60,7 @@ const UserManagement = () => {
       <section className="panel">
         <div className="panel-title-row">
           <h3>{t('admin.forms.userManagement')}</h3>
-          <button type="button" className="btn-primary" onClick={() => setIsCreateOpen((prev) => !prev)}>
+          <button type="button" className="btn btn-primary" onClick={() => setIsCreateOpen((prev) => !prev)}>
             {t('admin.forms.createUser')}
           </button>
         </div>
@@ -92,12 +92,12 @@ const UserManagement = () => {
               <input type="password" value={form.password} onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))} />
             </label>
             <div className="panel-actions">
-              <button type="button" className="btn-secondary" onClick={() => setIsCreateOpen(false)}>
+              <button type="button" className="btn btn-secondary" onClick={() => setIsCreateOpen(false)}>
                 {t('common.cancel')}
               </button>
               <button
                 type="button"
-                className="btn-primary"
+                className="btn btn-primary"
                 disabled={createMutation.isPending}
                 onClick={() => {
                   if (!form.email || !form.username || !form.password) {
@@ -135,7 +135,7 @@ const UserManagement = () => {
                   <td>
                     <button
                       type="button"
-                      className="btn-secondary"
+                      className="btn btn-secondary"
                       disabled={deactivateMutation.isPending}
                       onClick={() => {
                         if (!window.confirm(t('admin.messages.confirmDeactivate'))) return

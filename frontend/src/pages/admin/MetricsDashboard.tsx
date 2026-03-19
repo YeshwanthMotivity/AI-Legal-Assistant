@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import {
@@ -40,9 +40,9 @@ interface KpiTileProps {
   value: string
   accent?: string
 }
-function KpiTile({ label, value, accent = '#6366f1' }: KpiTileProps) {
+function KpiTile({ label, value, accent = 'var(--emerald-500)' }: KpiTileProps) {
   return (
-    <article style={{ background: 'var(--card-bg, #1e1e2e)', borderRadius: 12, padding: '1.2rem 1.5rem', borderTop: `3px solid ${accent}` }}>
+    <article style={{ background: 'var(--bg-card)', borderRadius: 12, padding: '1.2rem 1.5rem', borderTop: `3px solid ${accent}`, borderLeft: '1px solid var(--border)', borderRight: '1px solid var(--border)', borderBottom: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
       <p style={{ margin: 0, fontSize: 13, opacity: 0.6 }}>{label}</p>
       <p style={{ margin: '0.4rem 0 0', fontSize: 28, fontWeight: 700 }}>{value}</p>
     </article>
@@ -52,8 +52,8 @@ function KpiTile({ label, value, accent = '#6366f1' }: KpiTileProps) {
 interface SectionProps { title: string; children: React.ReactNode }
 function Section({ title, children }: SectionProps) {
   return (
-    <section style={{ background: 'var(--card-bg, #1e1e2e)', borderRadius: 12, padding: '1.5rem', marginBottom: '1.5rem' }}>
-      <h3 style={{ margin: '0 0 1rem', fontSize: 15, fontWeight: 600, letterSpacing: 0.3 }}>{title}</h3>
+    <section className="panel" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
+      <h3 style={{ margin: '0 0 1rem', fontSize: 15, fontWeight: 600, letterSpacing: 0.3, border: 'none' }}>{title}</h3>
       {children}
     </section>
   )
@@ -162,19 +162,19 @@ const MetricsDashboard = () => {
 
       {/* ── Overview tiles ────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-        <KpiTile label={t('admin.stats.totalCases')} value={String(overview.totalCases)} accent="#6366f1" />
-        <KpiTile label={t('admin.stats.activeJudges')} value={String(overview.activeJudges)} accent="#22d3ee" />
-        <KpiTile label={t('admin.stats.documentsProcessed')} value={String(overview.documentsProcessed)} accent="#f59e0b" />
-        <KpiTile label={t('admin.stats.judgmentsFinalized')} value={String(overview.judgmentsFinalized)} accent="#10b981" />
+        <KpiTile label={t('admin.stats.totalCases')} value={String(overview.totalCases)} accent="var(--emerald-500)" />
+        <KpiTile label={t('admin.stats.activeJudges')} value={String(overview.activeJudges)} accent="var(--emerald-400)" />
+        <KpiTile label={t('admin.stats.documentsProcessed')} value={String(overview.documentsProcessed)} accent="var(--emerald-300)" />
+        <KpiTile label={t('admin.stats.judgmentsFinalized')} value={String(overview.judgmentsFinalized)} accent="var(--emerald-600)" />
       </div>
 
       {/* ── System performance ────────────────────────────────────── */}
       <Section title="⚡ System Performance">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
-          <KpiTile label="Search Latency" value={metrics ? ms(metrics.search_latency) : '—'} accent="#f43f5e" />
-          <KpiTile label="AI Latency" value={metrics ? ms(metrics.ai_latency) : '—'} accent="#f43f5e" />
-          <KpiTile label="Outcome Agreement" value={metrics ? pct(metrics.outcome_agreement) : '—'} accent="#10b981" />
-          <KpiTile label="Judge Score (avg)" value={metrics ? score(metrics.judge_score) + ' / 5' : '—'} accent="#a78bfa" />
+          <KpiTile label="Search Latency" value={metrics ? ms(metrics.search_latency) : '—'} accent="var(--danger)" />
+          <KpiTile label="AI Latency" value={metrics ? ms(metrics.ai_latency) : '—'} accent="var(--danger)" />
+          <KpiTile label="Outcome Agreement" value={metrics ? pct(metrics.outcome_agreement) : '—'} accent="var(--success)" />
+          <KpiTile label="Judge Score (avg)" value={metrics ? score(metrics.judge_score) + ' / 5' : '—'} accent="var(--emerald-700)" />
         </div>
         {/* Latency bar chart */}
         {latencyData.some(d => d.ms > 0) && (
@@ -296,7 +296,8 @@ const MetricsDashboard = () => {
           <button
             onClick={() => runBenchmarkMut.mutate()}
             disabled={runBenchmarkMut.isPending}
-            style={{ padding: '0.4rem 1.2rem', borderRadius: 8, background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+            className="btn btn-primary"
+            style={{ padding: '0.4rem 1.2rem' }}
           >
             {runBenchmarkMut.isPending ? 'Running…' : '▶  Run Benchmark'}
           </button>
@@ -368,7 +369,8 @@ const MetricsDashboard = () => {
               <button
                 disabled={submitGateMut.isPending || !gateForm.judge_sign_off || !gateForm.rationale}
                 onClick={() => submitGateMut.mutate({ ...gateForm, status: 'approved' })}
-                style={{ flex: 1, padding: '0.5rem', borderRadius: 8, background: '#10b981', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                className="btn btn-primary"
+                style={{ flex: 1, padding: '0.5rem' }}
               >✔ Approve</button>
               <button
                 disabled={submitGateMut.isPending || !gateForm.judge_sign_off || !gateForm.rationale}

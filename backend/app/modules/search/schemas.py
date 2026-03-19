@@ -5,6 +5,7 @@ class SearchRequest(BaseModel):
     query_text: str
     case_id: str
     top_k: int = 5
+    language: str | None = None
 
 
 class SearchResult(BaseModel):

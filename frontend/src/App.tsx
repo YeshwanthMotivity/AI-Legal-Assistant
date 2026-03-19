@@ -1,9 +1,10 @@
-﻿import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './auth/useAuth'
 import PrivateRoute from './auth/PrivateRoute'
 import Login from './pages/Login'
 import CaseList from './pages/judge/CaseList'
 import CaseDetail from './pages/judge/CaseDetail'
+import PrecedentDetailPage from './pages/judge/PrecedentDetailPage'
 import ClerkCaseList from './pages/clerk/CaseList'
 import DocumentUpload from './pages/clerk/DocumentUpload'
 import UserManagement from './pages/admin/UserManagement'
@@ -55,6 +56,14 @@ function App() {
         element={
           <PrivateRoute allowedRoles={['judge']}>
             <CaseDetail />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/judge/precedents/:id"
+        element={
+          <PrivateRoute allowedRoles={['judge']}>
+            <PrecedentDetailPage />
           </PrivateRoute>
         }
       />

@@ -27,6 +27,7 @@ async def run_ingestion_pipeline(
     db: AsyncSession,
     collection_name: str = "legal_chunks",
     extra_metadata: dict = None,
+    language: str = "en",
 ) -> None:
     document_repo = DocumentRepository(db)
     event_repo = EvaluationEventRepository(db)
@@ -103,8 +104,9 @@ async def run_ingestion_pipeline(
         
         # Upsert with metadata enrichment
         metadata_list = [c["metadata"] for c in hybrid_chunks]
-        if extra_metadata:
-            for m in metadata_list:
+        for m in metadata_list:
+            m["language"] = language
+            if extra_metadata:
                 m.update(extra_metadata)
                 
         print(f"Upserting {len(embeddings)} points to {collection_name} for {document_id}", flush=True)

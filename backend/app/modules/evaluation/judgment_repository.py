@@ -52,6 +52,9 @@ class JudgmentRepository:
         reasoning: str | None,
         cited_laws: list[str],
         cited_cases: list[str],
+        law_articles: list[str],
+        similar_precedents: list[dict],
+        entitlement_breakdown: list[dict],
         model_used: str | None,
         explainability: dict,
         reasoning_status: str,
@@ -66,6 +69,12 @@ class JudgmentRepository:
             )
             self.db.add(judgment)
 
+        # Merge new fields into explainability
+        merged_explainability = explainability or {}
+        merged_explainability["law_articles"] = law_articles
+        merged_explainability["similar_precedents"] = similar_precedents
+        merged_explainability["entitlement_breakdown"] = entitlement_breakdown
+
         judgment.draft_text = draft_text
         judgment.judgment_text = draft_text
         judgment.ai_confidence_score = ai_confidence_score
@@ -74,7 +83,7 @@ class JudgmentRepository:
         judgment.articles_cited = cited_laws
         judgment.legal_precedents = cited_cases
         judgment.model_used = model_used
-        judgment.explainability = explainability
+        judgment.explainability = merged_explainability
         judgment.reasoning_status = reasoning_status
 
         await self.db.flush()

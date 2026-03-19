@@ -17,8 +17,6 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
   const [caseType, setCaseType] = useState<CaseType>(defaultCaseType)
   const [claimant, setClaimant] = useState('')
   const [respondent, setRespondent] = useState('')
-  const [description, setDescription] = useState('')
-  const [claimAmount, setClaimAmount] = useState('')
   const [filingDate, setFilingDate] = useState('')
   const [notes, setNotes] = useState('')
 
@@ -27,8 +25,6 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
     setCaseType(defaultCaseType)
     setClaimant('')
     setRespondent('')
-    setDescription('')
-    setClaimAmount('')
     setFilingDate('')
     setNotes('')
   }
@@ -46,8 +42,8 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
       case_type: caseType,
       claimant_name: claimant,
       respondent_name: respondent,
-      description,
-      claim_amount: claimAmount,
+      description: notes,
+      claim_amount: "0",
       filing_date: filingDateTime,
       notes,
     })
@@ -61,10 +57,15 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
       <div className="modal-card" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
         <h2>{t('judge.dashboard.createCase')}</h2>
 
-        <form onSubmit={handleSubmit} className="form-grid">
-          <label>
+        <form onSubmit={handleSubmit} className="form-grid two-col">
+          <label className="full-width">
             {t('judge.form.title')}
-            <input value={title} onChange={(event) => setTitle(event.target.value)} required />
+            <input 
+              value={title} 
+              onChange={(event) => setTitle(event.target.value)} 
+              placeholder="Case Title"
+              required 
+            />
           </label>
 
           <label>
@@ -79,41 +80,52 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
           </label>
 
           <label>
-            {t('judge.form.claimant')}
-            <input value={claimant} onChange={(event) => setClaimant(event.target.value)} required />
-          </label>
-
-          <label>
-            {t('judge.form.respondent')}
-            <input value={respondent} onChange={(event) => setRespondent(event.target.value)} required />
-          </label>
-
-          <label>
-            {t('judge.form.claimAmount')}
-            <input value={claimAmount} onChange={(event) => setClaimAmount(event.target.value)} placeholder="e.g. 15000" />
-          </label>
-
-          <label>
             {t('judge.form.filingDate')}
             <input type="date" value={filingDate} onChange={(event) => setFilingDate(event.target.value)} required />
           </label>
 
-          <label className="full-width">
-            {t('judge.form.description')}
-            <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} required />
+          <label>
+            {t('judge.form.claimant')}
+            <input 
+              value={claimant} 
+              onChange={(event) => setClaimant(event.target.value)} 
+              placeholder="Claimant Name"
+              required 
+            />
+          </label>
+
+          <label>
+            {t('judge.form.respondent')}
+            <input 
+              value={respondent} 
+              onChange={(event) => setRespondent(event.target.value)} 
+              placeholder="Respondent Name"
+              required 
+            />
           </label>
 
           <label className="full-width">
             {t('judge.form.notes')}
-            <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} />
+            <textarea 
+              value={notes} 
+              onChange={(event) => setNotes(event.target.value)} 
+              rows={5} 
+              placeholder="Detailed case description and notes..."
+              required
+            />
           </label>
 
-          <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={handleClose}>
+          <div className="modal-actions full-width">
+            <button type="button" className="btn btn-secondary" onClick={handleClose}>
               {t('common.cancel')}
             </button>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? t('common.loading') : t('common.submit')}
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? t('common.loading') : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                  {t('common.submit')}
+                </>
+              )}
             </button>
           </div>
         </form>
@@ -123,4 +135,3 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
 }
 
 export default CreateCaseModal
-

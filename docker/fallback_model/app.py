@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import asyncio
 from typing import List, Optional
 
 import httpx
@@ -16,17 +17,21 @@ OLLAMA_TIMEOUT_SECONDS = int(os.getenv('OLLAMA_TIMEOUT_SECONDS', '600'))
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with httpx.AsyncClient(timeout=3600) as client:
-        try:
-            print(f"Auto-pulling model {OLLAMA_MODEL_FALLBACK} from {OLLAMA_URL}")
-            response = await client.post(
-                f"{OLLAMA_URL}/api/pull",
-                json={"name": OLLAMA_MODEL_FALLBACK}
-            )
-            response.raise_for_status()
-            print(f"Successfully ensured {OLLAMA_MODEL_FALLBACK} is present.")
-        except Exception as e:
-            print(f"Warning: Failed to auto-pull model: {e}")
+    # Auto-pull model in background to avoid blocking server startup
+    async def _pull():
+        async with httpx.AsyncClient(timeout=3600) as client:
+            try:
+                print(f"Auto-pulling model {OLLAMA_MODEL_FALLBACK} from {OLLAMA_URL} in background...")
+                response = await client.post(
+                    f"{OLLAMA_URL}/api/pull",
+                    json={"name": OLLAMA_MODEL_FALLBACK}
+                )
+                response.raise_for_status()
+                print(f"Successfully ensured {OLLAMA_MODEL_FALLBACK} is present.")
+            except Exception as e:
+                print(f"Warning: Failed to auto-pull model: {e}")
+    
+    asyncio.create_task(_pull())
     yield
 
 app = FastAPI(title='Fallback LLM Service', lifespan=lifespan)

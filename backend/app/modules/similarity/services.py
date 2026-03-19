@@ -9,7 +9,13 @@ from qdrant_client.models import Filter, FieldCondition, MatchValue
 from app.config import settings
 from app.modules.evaluation.repository import EvaluationEventRepository
 from app.modules.case.repository import CaseRepository
-from app.modules.similarity.schemas import SimilarityResponse, SimilarCase
+from app.modules.similarity.schemas import (
+    SimilarityResponse,
+    SimilarCase,
+    PrecedentDetail,
+    PrecedentChatRequest,
+    PrecedentChatResponse,
+)
 from app.modules.ingestion.graph_writer import write_similarity_edges
 
 logger = logging.getLogger(__name__)
@@ -363,4 +369,82 @@ class SimilarityService:
             similar_cases=similar_cases,
             run_id=run_id,
         )
+
+    async def get_precedent(self, precedent_id: str) -> PrecedentDetail:
+        """Fetch full details of a precedent from Qdrant."""
+        client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+        
+        def _qdrant_get():
+            # In difc_precedents, we use 'case_id' in the payload or actual point ID.
+            # Let's try searching by case_id filter first since that's authoritative
+            search_filter = Filter(
+                must=[FieldCondition(key="case_id", match=MatchValue(value=precedent_id))]
+            )
+            results = client.query_points(
+                collection_name="difc_precedents",
+                query_filter=search_filter,
+                limit=1,
+                with_payload=True,
+            )
+            points = results.points if hasattr(results, "points") else results
+            return points[0] if points else None
+
+        point = await asyncio.get_event_loop().run_in_executor(None, _qdrant_get)
+        if not point:
+             # Try fetching directly by point ID if the string is a valid UUID/int
+             try:
+                 def _get_by_id():
+                     return client.retrieve(collection_name="difc_precedents", ids=[precedent_id])
+                 res = await asyncio.get_event_loop().run_in_executor(None, _get_by_id)
+                 point = res[0] if res else None
+             except Exception:
+                 pass
+
+        if not point:
+            raise HTTPException(status_code=404, detail="Precedent not found")
+
+        payload = point.payload if hasattr(point, "payload") else point.get("payload", {})
+        return PrecedentDetail(
+            id=precedent_id,
+            title=payload.get("case_name") or payload.get("title") or "Unnamed Case",
+            year=str(payload.get("year", "")),
+            category=payload.get("category"),
+            text=payload.get("raw_text") or payload.get("text") or "No text available",
+            outcome=payload.get("outcome"),
+        )
+
+    async def precedent_chat(self, precedent_id: str, request: PrecedentChatRequest) -> PrecedentChatResponse:
+        """Start a conversation about a specific precedent."""
+        detail = await self.get_precedent(precedent_id)
+        
+        system_prompt = (
+            f"You are a legal assistant analyzing the precedent case: {detail.title}.\n"
+            "Answer the user's question BASED ONLY on the case text provided below.\n"
+            "If the information is not in the text, say you don't know.\n\n"
+            "CASE TEXT:\n"
+            f"{detail.text}"
+        )
+        
+        # Use primary model for chat
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            try:
+                # Assuming the JAIS_URL follows OpenAI-like chat completions API
+                response = await client.post(
+                    f"{settings.jais_url}/v1/chat/completions",
+                    json={
+                        "model": "primary",
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": request.message}
+                        ],
+                        "temperature": 0.1
+                    }
+                )
+                response.raise_for_status()
+                data = response.json()
+                answer = data["choices"][0]["message"]["content"]
+                return PrecedentChatResponse(response=answer)
+            except Exception as e:
+                logger.error(f"Precedent chat failed: {e}")
+                raise HTTPException(status_code=502, detail="AI service failed to respond")
 

@@ -46,7 +46,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }
 
   const mapRole = (role: unknown): UserRole => {
-    if (role === 'admin' || role === 'judge' || role === 'clerk') return role
+    const r = String(role || '').toLowerCase()
+    if (r === 'admin' || r === 'judge' || r === 'clerk') return r as UserRole
     return 'clerk'
   }
 

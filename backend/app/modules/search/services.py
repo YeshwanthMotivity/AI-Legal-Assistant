@@ -18,49 +18,57 @@ class SearchService:
         self.db = db
         self.evaluation_repository = EvaluationEventRepository(db)
 
-    async def search(self, request: SearchRequest) -> SearchResponse:
+    async def search(self, request: SearchRequest, precomputed_embedding: list[float] | None = None) -> SearchResponse:
         if settings.enable_sparse_search:
             logger.warning("Sparse search requested but not implemented in this dense-only baseline. Falling back to dense only.")
         query_id = str(uuid.uuid4())
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            try:
-                embed_response = await client.post(
-                    f"{settings.bge_m3_url}/embed",
-                    json={"texts": [request.query_text]},
-                )
-                embed_response.raise_for_status()
-                embed_data = embed_response.json()
-            except Exception as exc:
-                logger.exception("Search embed step failed")
-                raise HTTPException(
-                    status_code=status.HTTP_502_BAD_GATEWAY,
-                    detail=f"Embedding service failed: {exc}",
-                ) from exc
-
-        if isinstance(embed_data, dict):
-            embeddings = embed_data.get("embeddings", [])
-            if not embeddings:
-                raise HTTPException(
-                    status_code=status.HTTP_502_BAD_GATEWAY,
-                    detail=f"Embedding service returned no embeddings: {embed_data}",
-                )
-            query_embedding = embeddings[0]
+        if precomputed_embedding:
+            # Fast path: embedding already computed by document_agent_node
+            query_embedding = precomputed_embedding
+            logger.debug("SearchService: reusing precomputed embedding, skipping BGE-M3 call")
         else:
-            if not embed_data:
-                raise HTTPException(
-                    status_code=status.HTTP_502_BAD_GATEWAY,
-                    detail="Embedding service returned empty response",
-                )
-            query_embedding = embed_data[0]
+            # Slow path: compute embedding here
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                try:
+                    embed_response = await client.post(
+                        f"{settings.bge_m3_url}/embed",
+                        json={"texts": [request.query_text]},
+                    )
+                    embed_response.raise_for_status()
+                    embed_data = embed_response.json()
+                except Exception as exc:
+                    logger.exception("Search embed step failed")
+                    raise HTTPException(
+                        status_code=status.HTTP_502_BAD_GATEWAY,
+                        detail=f"Embedding service failed: {exc}",
+                    ) from exc
+
+            if isinstance(embed_data, dict):
+                embeddings = embed_data.get("embeddings", [])
+                if not embeddings:
+                    raise HTTPException(
+                        status_code=status.HTTP_502_BAD_GATEWAY,
+                        detail=f"Embedding service returned no embeddings: {embed_data}",
+                    )
+                query_embedding = embeddings[0]
+            else:
+                if not embed_data:
+                    raise HTTPException(
+                        status_code=status.HTTP_502_BAD_GATEWAY,
+                        detail="Embedding service returned empty response",
+                    )
+                query_embedding = embed_data[0]
 
         loop = asyncio.get_event_loop()
 
         def _qdrant_search():
             client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
-            common_filter = Filter(
-                must=[FieldCondition(key="case_id", match=MatchValue(value=request.case_id))]
-            )
+            must = [FieldCondition(key="case_id", match=MatchValue(value=request.case_id))]
+            if hasattr(request, "language") and request.language:
+                must.append(FieldCondition(key="language", match=MatchValue(value=request.language)))
+                
+            common_filter = Filter(must=must)
             limit = max(request.top_k * 3, request.top_k)
 
             if hasattr(client, "search"):

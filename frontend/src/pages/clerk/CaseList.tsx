@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import PortalLayout from '../../components/layout/PortalLayout'
@@ -155,7 +155,7 @@ const ClerkCaseList = () => {
         <div className="panel-actions">
           <button
             type="button"
-            className="btn-primary"
+            className="btn btn-primary"
             disabled={createCaseMutation.isPending}
             onClick={() => {
               if (
@@ -208,7 +208,7 @@ const ClerkCaseList = () => {
                   <td>
                     <button
                       type="button"
-                      className="btn-secondary"
+                      className="btn btn-secondary"
                       onClick={() => {
                         setSelectedCaseId(item.id)
                         setMetadataForm({
@@ -256,12 +256,12 @@ const ClerkCaseList = () => {
             </label>
           </div>
           <div className="panel-actions">
-            <button type="button" className="btn-secondary" onClick={() => setSelectedCaseId('')}>
+            <button type="button" className="btn btn-secondary" onClick={() => setSelectedCaseId('')}>
               {t('common.cancel')}
             </button>
             <button
               type="button"
-              className="btn-primary"
+              className="btn btn-primary"
               disabled={updateCaseMutation.isPending}
               onClick={() => {
                 updateCaseMutation.mutate({

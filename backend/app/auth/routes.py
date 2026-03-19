@@ -17,7 +17,7 @@ router = APIRouter()
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 
@@ -36,11 +36,11 @@ async def login(request: LoginRequest, session: AsyncSession = Depends(get_db)):
     """
     Login endpoint.
     
-    Authenticates user with email and password.
+    Authenticates user with email or username and password.
     Returns access and refresh tokens.
     """
-    # Find user by email
-    stmt = select(User).where(User.email == request.email)
+    # Find user by email or username
+    stmt = select(User).where((User.email == request.email) | (User.username == request.email))
     result = await session.execute(stmt)
     user = result.scalars().first()
     

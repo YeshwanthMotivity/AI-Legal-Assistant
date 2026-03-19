@@ -1,4 +1,4 @@
-﻿import apiClient from './client'
+import apiClient from './client'
 import type {
   CaseAnalysisResponse,
   CaseListResponse,
@@ -9,6 +9,8 @@ import type {
   EntitlementItem,
   FeedbackRequest,
   JudgmentRequest,
+  PrecedentChatResponse,
+  PrecedentDetail,
   SimilarPrecedent,
 } from '../types/judge'
 
@@ -239,5 +241,20 @@ export const saveJudgment = async (caseId: string, payload: JudgmentRequest) => 
 
 export const submitFeedback = async (caseId: string, payload: FeedbackRequest) => {
   const response = await apiClient.post(`/cases/${caseId}/feedback`, payload)
+  return response.data
+}
+
+export const getPrecedent = async (precedentId: string): Promise<PrecedentDetail> => {
+  const response = await apiClient.get<PrecedentDetail>(`/precedents/${precedentId}`)
+  return response.data
+}
+
+export const chatWithPrecedent = async (
+  precedentId: string,
+  message: string
+): Promise<PrecedentChatResponse> => {
+  const response = await apiClient.post<PrecedentChatResponse>(`/precedents/${precedentId}/chat`, {
+    message,
+  })
   return response.data
 }

@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import PortalLayout from '../../components/layout/PortalLayout'
@@ -88,7 +88,7 @@ const CaseAssignment = () => {
                   <td>
                     <button
                       type="button"
-                      className="btn-primary"
+                      className="btn btn-primary"
                       disabled={!judgeMap[item.id] || assignMutation.isPending}
                       onClick={() => assignMutation.mutate({ caseId: item.id, judgeId: judgeMap[item.id] })}
                     >
@@ -136,7 +136,7 @@ const CaseAssignment = () => {
                   <td>
                     <button
                       type="button"
-                      className="btn-secondary"
+                      className="btn btn-secondary"
                       disabled={!judgeMap[item.id] || assignMutation.isPending}
                       onClick={() => assignMutation.mutate({ caseId: item.id, judgeId: judgeMap[item.id] })}
                     >

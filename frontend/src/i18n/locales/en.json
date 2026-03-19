@@ -161,6 +161,9 @@
     "Finalized": "Finalized"
   },
   "judge": {
+    "nav": {
+      "cases": "My Cases"
+    },
     "dashboard": {
       "title": "Judge Case Dashboard",
       "subtitle": "Review your assigned and completed cases",
@@ -182,7 +185,7 @@
       "noFileSelected": "No file selected",
       "uploadSuccess": "Document uploaded successfully.",
       "uploadError": "Document upload failed.",
-      "runAnalysis": "Run AI Analysis",
+      "runAnalysis": "Run AI Case Analysis",
       "analysisPending": "AI analysis is in progress...",
       "analysisReady": "AI analysis is ready.",
       "analysisFailed": "AI analysis failed.",

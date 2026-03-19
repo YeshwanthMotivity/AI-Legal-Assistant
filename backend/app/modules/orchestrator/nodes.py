@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 import re
 from datetime import datetime
 from typing import Any
@@ -42,17 +43,111 @@ def _parse_date(value: str) -> datetime | None:
         except ValueError:
             continue
     return None
-def _detect_query_language(text: str) -> str:
+# ─────────────────────────────────────────────────────────────────────────────
+# SHARED EMBEDDING HELPER
+# Called once per pipeline run. All search nodes reuse the result.
+# ─────────────────────────────────────────────────────────────────────────────
+
+async def _get_single_embedding(text: str) -> list[float]:
+    """Single HTTP call to BGE-M3. Raises on failure so the pipeline can abort early."""
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(
+            f"{settings.bge_m3_url}/embed",
+            json={"texts": [text]}
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        embeddings = data.get("embeddings", data) if isinstance(data, dict) else data
+        return embeddings[0]
+
+
+async def _detect_query_language(text: str) -> str:
     arabic_chars = re.findall(r'[\u0600-\u06FF]', text)
     if len(text) > 0 and len(arabic_chars) > len(text) * 0.1:
         return "ar"
     return "en"
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# TOKEN LIMITS — one place to tune, applies to every model call in the pipeline
+# ─────────────────────────────────────────────────────────────────────────────
+
+NODE_TOKEN_LIMITS: dict[str, int] = {
+    "reasoning":      512,   # reasoning_agent_node  — was implicitly 2048
+    "drafting":       1024,  # judgment_drafting_agent_node
+    "explainability": 256,   # explainability_builder_node
+    "search":         128,   # any LLM call inside search nodes (future)
+}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# COMPLEXITY SCORER
+# Returns 0.0 (simple) → 1.0 (complex). Threshold ≥ 0.5 triggers JAIS 7B.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _assess_complexity(state: AnalysisState) -> tuple[float, list[str]]:
+    """
+    Score query complexity to decide which model to use.
+    Returns (score, list_of_reasons_for_logging).
+    """
+    score = 0.0
+    reasons: list[str] = []
+
+    # 1. Arabic content — JAIS is specifically trained on Arabic legal text
+    #    Reuse query_language already detected in document_agent_node (free)
+    if state.get("query_language") == "ar":
+        score += 0.35
+        reasons.append("Arabic query (+0.35)")
+
+    # 2. Query length — longer queries imply more nuanced fact patterns
+    query = state.get("query_text", "")
+    word_count = len(query.split())
+    if word_count > 80:
+        score += 0.25
+        reasons.append(f"Long query {word_count} words (+0.25)")
+    elif word_count > 40:
+        score += 0.10
+        reasons.append(f"Medium query {word_count} words (+0.10)")
+
+    # 3. Multiple retrieved evidence sources — complex fact patterns
+    num_precedents = len(state.get("precedents", []))
+    num_laws = len(state.get("laws", []))
+    if num_precedents >= 3 or num_laws >= 3:
+        score += 0.20
+        reasons.append(f"Rich retrieval: {num_precedents} precedents, {num_laws} laws (+0.20)")
+
+    # 4. Conflicting graph + vector results — needs deeper reasoning
+    graph_cases = state.get("graph_results", {}).get("related_cases", [])
+    vector_cases = state.get("precedents", [])
+    if graph_cases and vector_cases:
+        # Both sources returned results — potential conflicts to reconcile
+        score += 0.10
+        reasons.append("Dual-source evidence (graph + vector) (+0.10)")
+
+    # 5. High-value claim — complex financial calculations needed
+    calculation = state.get("calculation", {})
+    gratuity = calculation.get("gratuity_estimate", 0.0)
+    if gratuity > 50_000:
+        score += 0.10
+        reasons.append(f"High-value claim AED {gratuity:,.0f} (+0.10)")
+
+    return min(score, 1.0), reasons
+
+
+def _select_model(state: AnalysisState) -> tuple[str, str, float]:
+    score, reasons = _assess_complexity(state)
+    reason_str = " | ".join(reasons) if reasons else "no complexity signals"
+    logger.info(f"Model routing → Qwen 1.5B (forced, score={score:.2f}) | Case {state['case_id']} | {reason_str}")
+    return settings.fallback_model_url, "qwen_1.5b", score
+
+
 async def document_agent_node(state: AnalysisState) -> dict[str, Any]:
+    start_time = time.time()
+    logger.info(f"--- Node: document_agent_node starting for case {state['case_id']}")
     db: AsyncSession = state["db"]
     from app.modules.document.models import Document, ExtractedEntity
 
+    # 1. Fetch entities
     result = await db.execute(
         select(ExtractedEntity).join(Document).where(Document.case_id == state["case_id"])
     )
@@ -65,7 +160,28 @@ async def document_agent_node(state: AnalysisState) -> dict[str, Any]:
         }
         for row in rows
     ]
-    return {"entities": entities}
+
+    # 2. Build enriched query ONCE
+    query_text = await _build_enriched_query(state)
+    logger.info(f"--- Node: document_agent_node built query ({len(query_text)} chars), now embedding...")
+
+    # 3. Embed ONCE
+    t_embed = time.time()
+    try:
+        query_embedding = await _get_single_embedding(query_text)
+        logger.info(f"--- Node: document_agent_node embedding finished in {time.time() - t_embed:.2f}s")
+    except Exception:
+        logger.exception("Embedding failed in document_agent_node — downstream search nodes will be skipped")
+        query_embedding = []
+
+    duration = time.time() - start_time
+    logger.info(f"--- Node: document_agent_node finished in {duration:.2f}s")
+
+    return {
+        "entities": entities,
+        "query_text": query_text,           # ← stored in state
+        "query_embedding": query_embedding, # ← stored in state
+    }
 
 
 async def _build_enriched_query(state: AnalysisState) -> str:
@@ -76,7 +192,7 @@ async def _build_enriched_query(state: AnalysisState) -> str:
     
     if not case:
         query = f"case {state['case_id']}"
-        state["query_language"] = _detect_query_language(query)
+        state["query_language"] = await _detect_query_language(query)
         return query
     
     parts = [
@@ -88,77 +204,90 @@ async def _build_enriched_query(state: AnalysisState) -> str:
         case.notes or ""
     ]
     query = " ".join(p for p in parts if p).strip()
-    state["query_language"] = _detect_query_language(query)
+    state["query_language"] = await _detect_query_language(query)
     return query
 
 
 async def search_agent_node(state: AnalysisState) -> dict[str, Any]:
+    start_time = time.time()
+    logger.info(f"--- Node: search_agent_node starting for case {state['case_id']}")
     db: AsyncSession = state["db"]
-    query_text = await _build_enriched_query(state)
+
+    # Use pre-computed values
+    query_text = state.get("query_text")
+    query_embedding = state.get("query_embedding")
+
+    if not query_embedding:
+        logger.warning("search_agent_node: no embedding in state, skipping.")
+        return {"search_results": []}
 
     from app.modules.search.schemas import SearchRequest
     from app.modules.search.services import SearchService
 
     try:
         response = await SearchService(db).search(
-            SearchRequest(query_text=query_text, case_id=state["case_id"], top_k=5)
+            SearchRequest(query_text=query_text or "", case_id=state["case_id"], top_k=5),
+            precomputed_embedding=query_embedding,
         )
         search_results = [
             {"chunk_text": item.chunk_text, "score": item.score, "document_id": item.document_id}
             for item in response.results if item.score > 0.6
         ]
     except Exception:
+        logger.exception("search_agent_node failed")
         search_results = []
+
+    duration = time.time() - start_time
+    logger.info(f"--- Node: search_agent_node finished in {duration:.2f}s")
     return {"search_results": search_results}
 
 
 async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
-    db: AsyncSession = state["db"]
-    query_text = await _build_enriched_query(state)
-    
-    # We'll use SearchService but target the 'difc_precedents' collection
-    # Note: SearchService currently hardcodes 'legal_chunks'. We need to modify it or use a similar logic here.
-    from qdrant_client import QdrantClient
+    start_time = time.time()
+    logger.info(f"--- Node: precedent_search_node starting for case {state['case_id']}")
+
+    query_embedding = state.get("query_embedding")
+
+    if not query_embedding:
+        logger.warning("precedent_search_node: no embedding in state, skipping.")
+        return {"precedents": []}
+
     from qdrant_client.models import Filter, FieldCondition, MatchValue
-    
-    async def _qdrant_search(query_embedding):
-        client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+
+    async def _qdrant_search():
+        from qdrant_client import AsyncQdrantClient
+        client = AsyncQdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
         # Self-matching protection: Filter out this case_id
-        # In seeded precedents, 'case_id' is stored.
+        must_not = [FieldCondition(key="case_id", match=MatchValue(value=state["case_id"]))]
+        must = []
+        if state.get("query_language"):
+            must.append(FieldCondition(key="language", match=MatchValue(value=state["query_language"])))
+            
         common_filter = Filter(
-            must_not=[FieldCondition(key="case_id", match=MatchValue(value=state["case_id"]))]
+            must=must,
+            must_not=must_not
         )
         
-        # Compatibility with newer qdrant-client versions.
-        result = client.query_points(
+        result = await client.query_points(
             collection_name="difc_precedents",
             query=query_embedding,
             query_filter=common_filter,
             limit=10,
             with_payload=True,
         )
-        return result.points if hasattr(result, "points") else result.get("points", []) if isinstance(result, dict) else result
+        await client.close()
+        return result.points if hasattr(result, "points") else (
+            result.get("points", []) if isinstance(result, dict) else result
+        )
 
     try:
-        # 1. Embed
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(f"{settings.bge_m3_url}/embed", json={"texts": [query_text]})
-            embeddings = resp.json().get("embeddings", []) if isinstance(resp.json(), dict) else resp.json()
-            query_vec = embeddings[0]
-
-        # 2. Search
-        candidates = await _qdrant_search(query_vec)
+        candidates = await _qdrant_search()
         
-        # 3. Filter & Rerank (Simplifying rerank call here for brevity, or we can use the service)
         results = []
         for c in candidates:
             payload = c.payload if hasattr(c, "payload") else c.get("payload", {})
             score = c.score if hasattr(c, "score") else c.get("score", 0.0)
             
-            doc_language = payload.get("language", "en")
-            if state.get("query_language") == doc_language:
-                score += 0.05
-                
             if score > 0.6:
                 results.append({
                     "title": payload.get("case_name", "Unknown Case"),
@@ -167,6 +296,8 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
                     "text": payload.get("raw_text", "")[:500],
                     "score": score
                 })
+        duration = time.time() - start_time
+        logger.info(f"--- Node: precedent_search_node finished in {duration:.2f}s")
         return {"precedents": results[:5]}
     except Exception:
         logger.exception("Precedent search failed")
@@ -174,101 +305,98 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
 
 
 async def law_search_node(state: AnalysisState) -> dict[str, Any]:
-    query_text = await _build_enriched_query(state)
-    from qdrant_client import QdrantClient
+    start_time = time.time()
+    logger.info(f"--- Node: law_search_node starting for case {state['case_id']}")
 
-    async def _qdrant_search(query_embedding):
-        client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
-        result = client.query_points(
+    query_embedding = state.get("query_embedding")
+
+    if not query_embedding:
+        logger.warning("law_search_node: no embedding in state, skipping.")
+        return {"laws": []}
+
+    from qdrant_client.models import Filter, FieldCondition, MatchValue
+
+    async def _qdrant_search():
+        from qdrant_client import AsyncQdrantClient
+        client = AsyncQdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+        must = []
+        if state.get("query_language"):
+            must.append(FieldCondition(key="language", match=MatchValue(value=state["query_language"])))
+
+        common_filter = Filter(must=must)
+        
+        result = await client.query_points(
             collection_name="difc_laws",
             query=query_embedding,
+            query_filter=common_filter,
             limit=10,
             with_payload=True,
         )
-        return result.points if hasattr(result, "points") else result.get("points", []) if isinstance(result, dict) else result
+        await client.close()
+        return result.points if hasattr(result, "points") else (
+            result.get("points", []) if isinstance(result, dict) else result
+        )
 
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(f"{settings.bge_m3_url}/embed", json={"texts": [query_text]})
-            embeddings = resp.json().get("embeddings", []) if isinstance(resp.json(), dict) else resp.json()
-            query_vec = embeddings[0]
-
-        candidates = await _qdrant_search(query_vec)
+        candidates = await _qdrant_search()
         results = []
         for c in candidates:
             payload = c.payload if hasattr(c, "payload") else c.get("payload", {})
             score = c.score if hasattr(c, "score") else c.get("score", 0.0)
             
-            doc_language = payload.get("language", "en")
-            if state.get("query_language") == doc_language:
-                score += 0.05
-                
             if score > 0.6:
                 results.append({
                     "law_name": payload.get("law_name", "Unknown Law"),
                     "text": payload.get("raw_text", ""),
                     "score": score
                 })
+        duration = time.time() - start_time
+        logger.info(f"--- Node: law_search_node finished in {duration:.2f}s")
         return {"laws": results[:5]}
     except Exception:
         logger.exception("Law search failed")
         return {"laws": []}
 
 
-async def graph_agent_node(state: AnalysisState) -> dict[str, Any]:
+async def graph_independent_node(state: AnalysisState) -> dict[str, Any]:
+    """Runs in parallel with search nodes. Does not depend on search results."""
+    start_time = time.time()
+    logger.info(f"--- Node: graph_independent_node starting for case {state['case_id']}")
     db: AsyncSession = state["db"]
     from app.modules.graph.schemas import GraphQueryIntent
     from app.modules.graph.services import GraphQueryService
 
-    law_articles: list[dict[str, Any]] = []
-    related_cases: list[dict[str, Any]] = []
-    graph_confidence = 0.0
-    
-    # Graph-RAG Bridge: Extract citations from search results to expand graph search
-    search_results = state.get("search_results", [])
-    extended_citations = []
-    for res in search_results:
-        text = res.get("chunk_text", "")
-        # Look for "Article X" or "Article X(Y)" patterns
-        found = re.findall(r"Article\s*\(?(\d+)\)?", text, re.IGNORECASE)
-        extended_citations.extend(found)
-    
     service = GraphQueryService(db)
     try:
-        # Standard graph search
-        laws_response = await service.query(state["case_id"], GraphQueryIntent.FIND_RELEVANT_LAWS)
-        cases_response = await service.query(state["case_id"], GraphQueryIntent.FIND_RELATED_CASES)
+        # Step: Parallel Neo4j queries via gather
+        laws_response, cases_response = await asyncio.gather(
+            service.query(state["case_id"], GraphQueryIntent.FIND_RELEVANT_LAWS),
+            service.query(state["case_id"], GraphQueryIntent.FIND_RELATED_CASES),
+            return_exceptions=True
+        )
         
-        law_articles = [item.model_dump() for item in laws_response.law_articles]
-        related_cases = [item.model_dump() for item in cases_response.related_cases]
-        
-        # If we have citations from search but no graph results yet, try to find cases with those citations
-        if not related_cases and extended_citations:
-            # This logic would be better inside the service, but adding a quick bridge here
-            from neo4j import GraphDatabase
-            def _find_by_citations():
-                driver = GraphDatabase.driver(settings.neo4j_uri, auth=(settings.neo4j_user, settings.neo4j_password))
-                with driver.session() as session:
-                    # Find cases that cite the law articles found in our semantic chunks
-                    result = session.run(
-                        "MATCH (l:LawArticle)<-[:CITES]-(c:Case) "
-                        "WHERE l.article_number IN $articles AND c.case_id <> $case_id "
-                        "RETURN c.case_id AS case_id, c.title AS title, c.outcome AS outcome LIMIT 5",
-                        articles=[f"Article {a}" for a in set(extended_citations)],
-                        case_id=state["case_id"]
-                    )
-                    return [{"case_id": r["case_id"], "title": f"{r['title']} (Graph Bridge)", "outcome": r["outcome"]} for r in result]
-            
-            bridge_cases = await asyncio.get_event_loop().run_in_executor(None, _find_by_citations)
-            related_cases.extend(bridge_cases)
-            if bridge_cases:
-                graph_confidence = 0.7
+        law_articles = []
+        if not isinstance(laws_response, Exception) and laws_response:
+            law_articles = [item.model_dump() for item in laws_response.law_articles]
+             
+        related_cases = []
+        if not isinstance(cases_response, Exception) and cases_response:
+            related_cases = [item.model_dump() for item in cases_response.related_cases]
+             
+        graph_confidence = 0.0
+        if not isinstance(laws_response, Exception) and laws_response:
+            graph_confidence = max(graph_confidence, laws_response.graph_confidence)
+        if not isinstance(cases_response, Exception) and cases_response:
+            graph_confidence = max(graph_confidence, cases_response.graph_confidence)
 
-        graph_confidence = max(graph_confidence, laws_response.graph_confidence, cases_response.graph_confidence)
     except Exception:
-        logger.exception("Graph agent failed")
-        pass
+        logger.exception("Graph independent search failed")
+        law_articles = []
+        related_cases = []
+        graph_confidence = 0.0
 
+    duration = time.time() - start_time
+    logger.info(f"--- Node: graph_independent_node finished in {duration:.2f}s")
     return {
         "graph_results": {
             "law_articles": law_articles,
@@ -278,7 +406,77 @@ async def graph_agent_node(state: AnalysisState) -> dict[str, Any]:
     }
 
 
+async def _citation_bridge_async(extended_citations: list[str], case_id: str) -> list[dict[str, Any]]:
+    """Optimized citation bridge using async driver or fallback."""
+    if not extended_citations: return []
+    try:
+        from neo4j import AsyncGraphDatabase
+        async with AsyncGraphDatabase.driver(settings.neo4j_uri, auth=(settings.neo4j_user, settings.neo4j_password)) as driver:
+            async with driver.session() as session:
+                result = await session.run(
+                    "MATCH (l:LawArticle)<-[:CITES]-(c:Case) "
+                    "WHERE l.article_number IN $articles AND c.case_id <> $case_id "
+                    "RETURN c.case_id AS case_id, c.title AS title, c.outcome AS outcome LIMIT 5",
+                    articles=[f"Article {a}" for a in set(extended_citations)],
+                    case_id=case_id
+                )
+                records = await result.data()
+                return [{"case_id": r["case_id"], "title": f"{r['title']} (Graph Bridge)", "outcome": r["outcome"]} for r in records]
+    except Exception:
+        logger.warning("Async Neo4j bridge failed, using sync fallback")
+        return await _citation_bridge_sync_fallback(extended_citations, case_id)
+
+async def _citation_bridge_sync_fallback(extended_citations: list[str], case_id: str) -> list[dict[str, Any]]:
+    def _run():
+        from neo4j import GraphDatabase
+        driver = GraphDatabase.driver(settings.neo4j_uri, auth=(settings.neo4j_user, settings.neo4j_password))
+        with driver.session() as session:
+            result = session.run(
+                "MATCH (l:LawArticle)<-[:CITES]-(c:Case) "
+                "WHERE l.article_number IN $articles AND c.case_id <> $case_id "
+                "RETURN c.case_id AS case_id, c.title AS title, c.outcome AS outcome LIMIT 5",
+                articles=[f"Article {a}" for a in set(extended_citations)],
+                case_id=case_id
+            )
+            return [{"case_id": r["case_id"], "title": f"{r['title']} (Graph Bridge)", "outcome": r["outcome"]} for r in result]
+    try:
+        return await asyncio.get_event_loop().run_in_executor(None, _run)
+    except Exception:
+        return []
+
+async def graph_dependent_node(state: AnalysisState) -> dict[str, Any]:
+    """Runs AFTER search_agent_node. Performs citation-based graph lookups if needed."""
+    start_time = time.time()
+    logger.info(f"--- Node: graph_dependent_node starting for case {state['case_id']}")
+    
+    current_graph = state.get("graph_results") or {"law_articles": [], "related_cases": [], "graph_confidence": 0.0}
+    
+    # Extract citations
+    search_results = state.get("search_results", [])
+    extended_citations = []
+    for res in search_results:
+        text = res.get("chunk_text", "")
+        if text:
+            found = re.findall(r"Article\s*\(?(\d+)\)?", text, re.IGNORECASE)
+            extended_citations.extend(found)
+    
+    # Gate: only run bridge if primary search found no cases
+    if not current_graph["related_cases"] and extended_citations:
+        bridge_cases = await _citation_bridge_async(extended_citations, state["case_id"])
+        
+        existing_ids = {c.get("case_id") for c in current_graph["related_cases"]}
+        for bc in bridge_cases:
+            if bc["case_id"] not in existing_ids:
+                current_graph["related_cases"].append(bc)
+                current_graph["graph_confidence"] = max(current_graph["graph_confidence"], 0.7)
+
+    duration = time.time() - start_time
+    logger.info(f"--- Node: graph_dependent_node finished in {duration:.2f}s")
+    return {"graph_results": current_graph}
+
 async def calculation_agent_node(state: AnalysisState) -> dict[str, Any]:
+    start_time = time.time()
+    logger.info(f"--- Node: calculation_agent_node starting for case {state['case_id']}")
     entities = state.get("entities", [])
     salary = _parse_salary(_first_entity(entities, "salary"))
     employment_start = _parse_date(_first_entity(entities, "employment_start"))
@@ -298,7 +496,7 @@ async def calculation_agent_node(state: AnalysisState) -> dict[str, Any]:
     notice_pay = salary if terminated_without_notice else 0.0
     unpaid_wages_flag = bool(_first_entity(entities, "salary"))
 
-    return {
+    res = {
         "calculation": {
             "monthly_salary": salary,
             "years_served": round(years_served, 2),
@@ -307,9 +505,14 @@ async def calculation_agent_node(state: AnalysisState) -> dict[str, Any]:
             "unpaid_wages_flag": unpaid_wages_flag,
         }
     }
+    duration = time.time() - start_time
+    logger.info(f"--- Node: calculation_agent_node finished in {duration:.2f}s")
+    return res
 
 
 async def context_builder_node(state: AnalysisState) -> dict[str, Any]:
+    start_time = time.time()
+    logger.info(f"--- Node: context_builder_node starting for case {state['case_id']}")
     db: AsyncSession = state["db"]
     case_id = state["case_id"]
     
@@ -372,14 +575,22 @@ async def context_builder_node(state: AnalysisState) -> dict[str, Any]:
     }
     
     logger.debug(f"Built multi-source context for case {case_id}")
+    duration = time.time() - start_time
+    logger.info(f"--- Node: context_builder_node finished in {duration:.2f}s")
     return {"context": context}
 
 
 
-logger = logging.getLogger(__name__)
 
 
 async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
+    start_time = time.time()
+    logger.info(f"--- Node: reasoning_agent_node starting for case {state['case_id']}")
+
+    # ── 1. Route to the right model ──────────────────────────────────────────
+    model_url, model_label, complexity_score = _select_model(state)
+
+    # ── 2. Prompts ───────────────────────────────────────────────────────────
     system_prompt = (
         "You are an expert UAE Labor Law Judicial Assistant specializing in DIFC Employment Law.\n"
         "Your task is to analyze the case context and generate a high-quality legal reasoning and draft judgment.\n\n"
@@ -389,47 +600,49 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         "3. SIMILAR PRECEDENTS (High Weight): Past judicial decisions. Use these to guide the interpretation of laws.\n"
         "4. DOCUMENT EVIDENCE (Supporting): Fragments from case documents and evidence.\n\n"
         "RULES:\n"
-        "- Use standard DIFC Court terminology (Claimant, Respondent, Tribunal, Article).\n"
-        "- Cite specific Articles and Precedents found in the context using their identifiers.\n"
-        "- If a specific statute is provided, apply it strictly to the facts in metadata.\n"
-        "- Return ONLY valid JSON with the exact schema provided below.\n\n"
+        "- Return ONLY valid JSON with the exact schema provided below.\n"
+        "- FORMATTING: The \"draft_judgment\" MUST be formatted in high-quality HTML.\n\n"
         "SCHEMA:\n"
         "{\n"
         "  \"outcome\": \"Approved\" | \"Rejected\" | \"Partial\",\n"
-        "  \"reasoning\": \"Detailed legal logic linking facts to specific statutes and precedents...\",\n"
-        "  \"cited_laws\": [\"Article X\", \"Article Y\"],\n"
+        "  \"reasoning\": \"Detailed legal logic...\",\n"
+        "  \"cited_laws\": [\"Article X\"],\n"
         "  \"cited_cases\": [\"Case Name (Citation)\"],\n"
         "  \"confidence\": 0.0 to 1.0,\n"
-        "  \"draft_judgment\": \"Full structured draft text in court format (Header, Facts, Law, Conclusion)...\"\n"
+        "  \"draft_judgment\": \"Full structured draft in HTML...\"\n"
         "}"
     )
     user_prompt = json.dumps(
-        {
-            "case_id": state["case_id"],
-            "context": state.get("context", {}),
-        },
+        {"case_id": state["case_id"], "context": state.get("context", {})},
         ensure_ascii=False,
     )
-    payload = {
-        "model": "jais",
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "temperature": 0.1,
-        "max_tokens": 1024,
-        "options": {
-            "num_ctx": 2048,
-        },
-    }
 
-    async def _call(url: str, timeout_seconds: int) -> str:
+    # ── 3. Build payload with per-node token limit ────────────────────────────
+    def _build_payload(model_label_override: str | None = None) -> dict:
+        return {
+            "model": model_label_override or model_label,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": user_prompt},
+            ],
+            "temperature": 0.1,
+            "max_tokens": NODE_TOKEN_LIMITS["reasoning"],  # 512 — was implicit 2048
+            "options": {"num_ctx": 4096},
+        }
+
+    # ── 4. Single HTTP caller with explicit timeout ───────────────────────────
+    async def _call(url: str, timeout_seconds: int, label: str) -> str:
+        logger.info(f"reasoning_agent_node: calling {label} (timeout={timeout_seconds}s)")
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
-            response = await client.post(url, json=payload)
+            response = await client.post(
+                f"{url}/v1/chat/completions",
+                json=_build_payload(),
+            )
             response.raise_for_status()
             data = response.json()
             return str(data["choices"][0]["message"]["content"])
 
+    # ── 5. JSON parsing helpers ───────────────────────────────────────────────
     def _extract_json_object(raw: str) -> dict[str, Any] | None:
         raw = (raw or "").strip()
         if not raw:
@@ -440,89 +653,163 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
                 return parsed
         except Exception:
             pass
-
         match = re.search(r"\{[\s\S]*\}", raw)
         if not match:
             return None
-        candidate = match.group(0)
         try:
-            parsed = json.loads(candidate)
-            if isinstance(parsed, dict):
-                return parsed
+            parsed = json.loads(match.group(0))
+            return parsed if isinstance(parsed, dict) else None
         except Exception:
             return None
-        return None
 
-    def _normalize_reasoning(content: str, model_used: str, status: str) -> dict[str, Any]:
+    def _normalize_reasoning(content: str, used_label: str, status: str) -> dict[str, Any]:
         parsed = _extract_json_object(content)
-        try:
-            if not parsed:
-                raise ValueError("missing-json")
-            result = {
-                "outcome": parsed.get("outcome"),
-                "reasoning": str(parsed.get("reasoning", "")).strip(),
-                "cited_laws": parsed.get("cited_laws", []) if isinstance(parsed.get("cited_laws", []), list) else [],
-                "cited_cases": parsed.get("cited_cases", []) if isinstance(parsed.get("cited_cases", []), list) else [],
-                "confidence": float(parsed.get("confidence", 0.0) or 0.0),
-                "draft_judgment": str(parsed.get("draft_judgment", "")).strip(),
-            }
-            if not result["draft_judgment"]:
-                result["draft_judgment"] = result["reasoning"]
-        except Exception as e:
-            logger.error(f"JSON parsing failed for {model_used} model output: {e}")
-            cleaned = re.sub(r"\{[\s\S]*\}", "", content).strip()
-            if not cleaned:
-                cleaned = f"Reasoning generated by {model_used} but could not be parsed into strict JSON."
-            result = {
-                "outcome": None,
-                "reasoning": cleaned,
-                "cited_laws": [],
-                "cited_cases": [],
-                "confidence": 0.5,
-                "draft_judgment": cleaned,
-            }
-        result["model_used"] = model_used
-        return {
-            "reasoning": result,
-            "model_used": model_used,
-            "reasoning_status": status,
-        }
-
-    try:
-        logger.info(f"Invoking fallback model (lighter/faster) for case {state['case_id']}")
-        fallback_content = await _call(
-            f"{settings.fallback_model_url}/v1/chat/completions",
-            settings.jais_timeout_seconds,
-        )
-        return _normalize_reasoning(fallback_content, "fallback", "ok")
-    except Exception as e:
-        logger.warning(f"Fallback model failed: {e}. Attempting primary (jais)...")
-        try:
-            jais_content = await _call(
-                f"{settings.jais_url}/v1/chat/completions",
-                settings.jais_timeout_seconds,
-            )
-            return _normalize_reasoning(jais_content, "jais", "ok")
-        except Exception as e2:
-            error_msg = f"Primary and fallback models both failed for case {state['case_id']}: fallback={e}, jais={e2}"
-            logger.error(error_msg)
-            return {
-                "reasoning": {
+        if not parsed:
+            if content and len(content) > 50:
+                logger.warning(f"{used_label} returned non-JSON, using as raw reasoning.")
+                result = {
+                    "outcome": (
+                        "Partial" if "partial" in content.lower()
+                        else "Approved" if "approve" in content.lower()
+                        else "Rejected"
+                    ),
+                    "reasoning": content,
+                    "cited_laws": [],
+                    "cited_cases": [],
+                    "confidence": 0.5,
+                    "draft_judgment": content,
+                }
+            else:
+                result = {
                     "outcome": None,
-                    "reasoning": f"Reasoning unavailable due to model failures. (Technical error: {str(e2)})",
+                    "reasoning": f"Reasoning unavailable — {used_label} returned insufficient content.",
                     "cited_laws": [],
                     "cited_cases": [],
                     "confidence": 0.0,
                     "draft_judgment": "",
-                    "model_used": "none",
-                },
-                "model_used": "none",
-                "reasoning_status": "reasoning_unavailable",
-                "error": str(e2),
+                }
+        else:
+            result = {
+                "outcome":        parsed.get("outcome"),
+                "reasoning":      str(parsed.get("reasoning", "")).strip(),
+                "cited_laws":     parsed.get("cited_laws", []) if isinstance(parsed.get("cited_laws"), list) else [],
+                "cited_cases":    parsed.get("cited_cases", []) if isinstance(parsed.get("cited_cases"), list) else [],
+                "confidence":     float(parsed.get("confidence", 0.0) or 0.0),
+                "draft_judgment": str(parsed.get("draft_judgment", "")).strip(),
             }
+            if not result["draft_judgment"]:
+                result["draft_judgment"] = result["reasoning"]
+
+        result["model_used"] = used_label
+        result["complexity_score"] = round(complexity_score, 2)
+
+        # Build final state payload
+        law_articles = [l.get("law_name") for l in state.get("laws", []) if l.get("law_name")]
+        for gl in state.get("graph_results", {}).get("law_articles", []):
+            if gl.get("title") and gl["title"] not in law_articles:
+                law_articles.append(gl["title"])
+
+        similar_precedents = [
+            {
+                "caseId": p.get("case_id") or p.get("id"),
+                "title": p.get("title"),
+                "similarityScore": p.get("score", 0.0),
+            }
+            for p in state.get("precedents", [])
+        ]
+
+        duration = time.time() - start_time
+        logger.info(
+            f"--- Node: reasoning_agent_node finished in {duration:.2f}s "
+            f"| model={used_label} | complexity={complexity_score:.2f} | status={status}"
+        )
+        return {
+            "reasoning":         result,
+            "law_articles":      law_articles,
+            "similar_precedents": similar_precedents,
+            "reasoning_status":  status,
+            "model_used":        used_label,
+            "complexity_score":  round(complexity_score, 2),
+        }
+
+    # ── 6. Execution: routed model → Qwen fallback → error ───────────────────
+
+    # Determine timeouts
+    # JAIS gets a hard 90s cap — if it hasn't responded by then, Qwen takes over.
+    # Qwen gets the configured timeout (default 120s from settings).
+    JAIS_HARD_TIMEOUT  = 90   # seconds — tune this based on your p95 JAIS latency
+    QWEN_TIMEOUT       = 300  # 5 minutes for CPU inference
+
+    # Use primary timeout based on where we are routing
+    primary_timeout = JAIS_HARD_TIMEOUT if "jais" in model_url else QWEN_TIMEOUT
+
+    try:
+        content = await _call(model_url, primary_timeout, model_label)
+        return _normalize_reasoning(content, model_label, "ok")
+
+    except httpx.TimeoutException:
+        # JAIS hit the hard timeout — fall through to Qwen immediately
+        elapsed = time.time() - start_time
+        logger.warning(
+            f"reasoning_agent_node: {model_label} timed out after {elapsed:.1f}s "
+            f"(limit={primary_timeout}s) — falling back to Qwen 1.5B"
+        )
+        # Only fall back to Qwen if we weren't already using it
+        if model_url != settings.fallback_model_url:
+            try:
+                content = await _call(settings.fallback_model_url, QWEN_TIMEOUT, "qwen_1.5b_timeout_fallback")
+                return _normalize_reasoning(content, "qwen_1.5b_timeout_fallback", "timeout_fallback")
+            except Exception as e_fallback:
+                logger.error(f"Qwen timeout fallback also failed: {repr(e_fallback)}")
+                return _error_result(state, start_time, complexity_score, repr(e_fallback))
+        else:
+            return _error_result(state, start_time, complexity_score, "Qwen timed out")
+
+    except Exception as e_primary:
+        logger.warning(f"reasoning_agent_node: {model_label} failed ({repr(e_primary)}) — trying Qwen fallback")
+        if model_url != settings.fallback_model_url:
+            try:
+                content = await _call(settings.fallback_model_url, QWEN_TIMEOUT, "qwen_1.5b_error_fallback")
+                return _normalize_reasoning(content, "qwen_1.5b_error_fallback", "error_fallback")
+            except Exception as e_fallback:
+                logger.error(f"Both models failed: primary={repr(e_primary)}, fallback={repr(e_fallback)}")
+                return _error_result(state, start_time, complexity_score, repr(e_fallback))
+        else:
+            return _error_result(state, start_time, complexity_score, repr(e_primary))
+
+
+def _error_result(
+    state: AnalysisState,
+    start_time: float,
+    complexity_score: float,
+    error_repr: str,
+) -> dict[str, Any]:
+    """Consistent error shape — keeps the API contract intact even on total failure."""
+    duration = time.time() - start_time
+    logger.error(f"--- Node: reasoning_agent_node FAILED in {duration:.2f}s | {error_repr}")
+    return {
+        "reasoning": {
+            "outcome":        None,
+            "reasoning":      f"Reasoning unavailable. (Error: {error_repr})",
+            "cited_laws":     [],
+            "cited_cases":    [],
+            "confidence":     0.0,
+            "draft_judgment": "",
+            "model_used":     "none",
+            "complexity_score": round(complexity_score, 2),
+        },
+        "law_articles":       [],
+        "similar_precedents": [],
+        "reasoning_status":   "reasoning_unavailable",
+        "model_used":         "none",
+        "error":              error_repr,
+    }
+
 
 
 async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
+    start_time = time.time()
+    logger.info(f"--- Node: explainability_builder_node starting for case {state['case_id']}")
     reasoning = state.get("reasoning", {})
     explainability = {
         "cited_law_articles": reasoning.get("cited_laws", []),
@@ -531,10 +818,14 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
         "confidence_score": float(reasoning.get("confidence", 0.0) or 0.0),
         "graph_law_articles": state.get("graph_results", {}).get("law_articles", []),
     }
+    duration = time.time() - start_time
+    logger.info(f"--- Node: explainability_builder_node finished in {duration:.2f}s")
     return {"explainability": explainability}
 
 
 async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
+    start_time = time.time()
+    logger.info(f"--- Node: judgment_drafting_agent_node starting for case {state['case_id']}")
     reasoning = state.get("reasoning", {})
     draft_content = str(reasoning.get("draft_judgment") or "").strip()
     
@@ -576,4 +867,6 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
         # Draft persistence to DB still continues even if object storage is unavailable.
         pass
 
+    duration = time.time() - start_time
+    logger.info(f"--- Node: judgment_drafting_agent_node finished in {duration:.2f}s")
     return {"draft_text": final_draft}

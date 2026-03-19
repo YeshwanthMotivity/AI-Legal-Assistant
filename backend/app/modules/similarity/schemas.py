@@ -15,6 +15,19 @@ class SimilarityRequest(BaseModel):
 
 class SimilarityResponse(BaseModel):
     case_id: str
-    similar_cases: list[SimilarCase]
-    run_id: str
+class PrecedentDetail(BaseModel):
+    id: str
+    title: str
+    year: str | None = None
+    category: str | None = None
+    text: str
+    outcome: str | None = None
+
+
+class PrecedentChatRequest(BaseModel):
+    message: str
+
+
+class PrecedentChatResponse(BaseModel):
+    response: str
 

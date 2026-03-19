@@ -17,4 +17,7 @@ class AnalysisState(TypedDict):
     error: str | None
     model_used: str | None
     query_language: str | None
+    query_text: str
+    query_embedding: list[float]
+    complexity_score: float | None
     db: Any

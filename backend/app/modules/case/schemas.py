@@ -121,10 +121,14 @@ class CaseAnalysisDetail(BaseModel):
     reasoning: Optional[str] = None
     cited_laws: List[str] = Field(default_factory=list)
     cited_cases: List[str] = Field(default_factory=list)
+    lawArticles: List[str] = Field(default_factory=list)
+    similarPrecedents: List[dict] = Field(default_factory=list)
+    entitlementBreakdown: List[dict] = Field(default_factory=list)
     confidence: Optional[float] = None
     draft_text: Optional[str] = None
     model_used: Optional[str] = None
     explainability: Optional[dict] = None
+    reasoning_status: Optional[str] = "ok"
 
 
 class CaseAnalysisResponse(BaseModel):

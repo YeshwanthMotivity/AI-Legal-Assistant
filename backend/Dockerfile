@@ -16,6 +16,7 @@ COPY pyproject.toml /app/
 # Install Python dependencies
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --upgrade pip && \
+    pip install pypdf && \
     pip install -e .
 
 # Copy application code

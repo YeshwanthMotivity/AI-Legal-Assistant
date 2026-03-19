@@ -130,3 +130,16 @@ export interface FeedbackRequest {
   feedback_text?: string
   suggested_improvements?: string
 }
+
+export interface PrecedentDetail {
+  id: string
+  title: string
+  year?: string
+  category?: string
+  text: string
+  outcome?: string
+}
+
+export interface PrecedentChatResponse {
+  response: string
+}

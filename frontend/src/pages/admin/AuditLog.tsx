@@ -55,7 +55,7 @@ const AuditLog = () => {
         <div className="panel-actions">
           <button
             type="button"
-            className="btn-secondary"
+            className="btn btn-secondary"
             disabled={page <= 1}
             onClick={() => setPage((prev) => Math.max(1, prev - 1))}
           >
@@ -64,7 +64,7 @@ const AuditLog = () => {
           <span className="case-id">{`${page} / ${totalPages}`}</span>
           <button
             type="button"
-            className="btn-secondary"
+            className="btn btn-secondary"
             disabled={page >= totalPages}
             onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
           >

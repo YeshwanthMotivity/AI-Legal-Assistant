@@ -137,6 +137,7 @@ class CaseService:
             )
 
         if case.status == CaseStatus.AI_ANALYSIS_READY and judgment:
+            explain = judgment.explainability or {}
             return CaseAnalysisResponse(
                 case_id=case_id,
                 analysis=CaseAnalysisDetail(
@@ -145,10 +146,14 @@ class CaseService:
                     reasoning=judgment.reasoning,
                     cited_laws=judgment.articles_cited or [],
                     cited_cases=judgment.legal_precedents or [],
+                    lawArticles=explain.get("law_articles") or judgment.articles_cited or [],
+                    similarPrecedents=explain.get("similar_precedents") or [],
+                    entitlementBreakdown=explain.get("entitlement_breakdown") or [],
                     confidence=judgment.ai_confidence_score,
                     draft_text=judgment.draft_text,
                     model_used=judgment.model_used,
                     explainability=judgment.explainability,
+                    reasoning_status=judgment.reasoning_status or "ok",
                 ),
             )
 

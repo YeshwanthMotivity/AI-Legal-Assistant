@@ -32,11 +32,18 @@ async def upsert_chunks(
                 "chunk_index": idx,
                 "doc_type": doc_type,
                 "raw_text": chunk,
+                "language": "en", # Default
             }
             
             # Merge additional semantic metadata if provided
             if metadata and idx < len(metadata):
                 payload.update(metadata[idx])
+            
+            # Force raw_text and case_id to be correct just in case metadata has collisions
+            payload["raw_text"] = chunk
+            payload["case_id"] = case_id
+            if "language" in payload and not payload["language"]:
+                 payload["language"] = "en"
                 
             points.append(
                 PointStruct(

@@ -18,7 +18,7 @@ def init_collections():
             logger.info(f"Creating collection {coll}...")
             client.create_collection(
                 collection_name=coll,
-                vectors_config=VectorParams(size=1024, distance=Distance.COSINE),
+                vectors_config=VectorParams(size=384, distance=Distance.COSINE),
             )
             logger.info(f"Collection {coll} created.")
 

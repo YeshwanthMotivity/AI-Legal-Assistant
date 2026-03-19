@@ -72,12 +72,15 @@ class OrchestratorService:
 
         await self.judgment_repository.upsert_analysis(
             case_id=case_id,
-            draft_text=state.get("draft_text", "") or "",
+            draft_text=state.get("draft_text", "") or reasoning.get("draft_judgment", ""),
             ai_confidence_score=confidence,
             outcome=reasoning.get("outcome"),
             reasoning=reasoning_text,
             cited_laws=cited_laws,
             cited_cases=cited_cases,
+            law_articles=state.get("law_articles", []),
+            similar_precedents=state.get("similar_precedents", []),
+            entitlement_breakdown=state.get("calculation", {}).get("breakdown", []),
             model_used=state.get("model_used"),
             explainability=state.get("explainability", {}) or {},
             reasoning_status=reasoning_status or "ok",
