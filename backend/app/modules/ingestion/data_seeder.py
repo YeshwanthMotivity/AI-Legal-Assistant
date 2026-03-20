@@ -38,7 +38,7 @@ DATA_ROOT = "/app/data/DIFC (Dubai International Financial Centre Court)"
 def detect_language(file_name: str) -> str:
     """Simple heuristic to detect language from filename."""
     file_name_lower = file_name.lower()
-    if any(tag in file_name_lower for tag in ["arabic", "-arb", "(arb)", "_ar"]):
+    if any(tag in file_name_lower for tag in ["arabic", "-arb", "(arb)", "_ar", " ar", "ar."]):
         return "ar"
     return "en"
 
@@ -59,7 +59,7 @@ async def seed_judgments(db: AsyncSession, limit: int = None):
         # ✅ Map folder → case type (important)
         case_type = FOLDER_TO_CASE_TYPE.get(folder_name, CaseType.OTHER)
 
-        logger.info(f"Scanning folder: {folder_name}")
+        logger.info(f"Scanning folder: {root}")
 
         for file_name in files:
 
@@ -89,7 +89,7 @@ async def seed_judgments(db: AsyncSession, limit: int = None):
                     "court": "DIFC Court",
                     "jurisdiction": "DIFC",
                     "category": folder_name,
-                    "case_name": file_name.replace(".pdf", ""),
+                    "case_name": os.path.splitext(file_name)[0],
                 },
             )
 
@@ -112,7 +112,7 @@ async def seed_laws(db: AsyncSession, limit: int = None):
         # ✅ Folder = Law Category
         law_category = os.path.basename(root)
 
-        logger.info(f"Scanning law folder: {law_category}")
+        logger.info(f"Scanning law folder: {root}")
 
         for file_name in files:
 
@@ -139,7 +139,7 @@ async def seed_laws(db: AsyncSession, limit: int = None):
                 DocumentType.LAW,
                 collection_name="difc_laws",
                 extra_metadata={
-                    "law_name": file_name.replace(".pdf", ""),
+                    "law_name": os.path.splitext(file_name)[0],
                     "category": law_category,
                     "jurisdiction": "UAE/DIFC",
                     "is_law": True,
@@ -162,12 +162,11 @@ async def process_file(
     file_name = os.path.basename(file_path)
 
     # Check if already ingested
-    from sqlalchemy import select
     from app.modules.document.models import Document
-    result = await db.execute(select(Document).where(Document.file_name == file_name))
+    result = await db.execute(select(Document).where(Document.storage_key == file_path))
     existing = result.scalars().first()
     if existing:
-        logger.info(f"Skipping {file_name} — already ingested")
+        logger.info(f"Skipping {file_path} — already ingested")
         return
 
     case_id = str(uuid.uuid4())
