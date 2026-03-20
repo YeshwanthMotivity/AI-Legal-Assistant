@@ -11,6 +11,8 @@ import re
 import httpx
 from app.config import settings
 
+OLLAMA_BASE_URL = "http://10.10.0.1:11434"
+
 logger = logging.getLogger(__name__)
 
 JUDGMENT_SCHEMA = {
@@ -119,8 +121,8 @@ LAW_PROMPT_AR = """أنت محلل وثائق قانونية. استخرج ال�
 def _select_model(language: str) -> str:
     """Select model based on language."""
     if language == "ar":
-        return settings.ollama_model_primary   # jwnder/jais-adaptive:7b
-    return settings.ollama_model_fallback      # qwen2.5:1.5b-instruct
+        return "jwnder/jais-adaptive:7b"
+    return "qwen2.5:1.5b-instruct"
 
 
 def _select_prompt(doc_type: str, language: str) -> str:
@@ -184,7 +186,7 @@ async def extract_structure(
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(
-                f"{settings.ollama_url}/api/chat",
+                f"{OLLAMA_BASE_URL}/api/chat",
                 json=payload
             )
             response.raise_for_status()
