@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger(__name__)
 # Mapping directory names to CaseType enum
 FOLDER_TO_CASE_TYPE = {
-    "Employement contract dispute": CaseType.CONTRACT_DISPUTE,
+    "Employment contract dispute": CaseType.CONTRACT_DISPUTE,
     "End of service benefits": CaseType.END_OF_SERVICE,
     "Unpaid wages": CaseType.UNPAID_WAGES,
     "Wrongful termination": CaseType.WRONGFUL_TERMINATION,
@@ -44,96 +44,112 @@ def detect_language(file_name: str) -> str:
 
 async def seed_judgments(db: AsyncSession, limit: int = None):
     judgment_dir = os.path.join(DATA_ROOT, "Court_Judgments")
+
     if not os.path.exists(judgment_dir):
         logger.error(f"Judgment directory not found: {judgment_dir}")
         return
 
     count = 0
-    # Recursive walk through all folders in Court_Judgments
+
     for root, dirs, files in os.walk(judgment_dir):
-        # Determine case type from folder name in the path
-        case_type = CaseType.OTHER
-        folder_name = ""
-        for folder, ctype in FOLDER_TO_CASE_TYPE.items():
-            if folder in root:
-                case_type = ctype
-                folder_name = folder
-                break
-        
+
+        # ✅ Get current subfolder name
+        folder_name = os.path.basename(root)
+
+        # ✅ Map folder → case type (important)
+        case_type = FOLDER_TO_CASE_TYPE.get(folder_name, CaseType.OTHER)
+
+        logger.info(f"Scanning folder: {folder_name}")
+
         for file_name in files:
+
             if not file_name.lower().endswith(".pdf"):
                 continue
-                
+
             file_path = os.path.join(root, file_name)
+
+            if not os.path.exists(file_path):
+                continue
+
             file_size = os.path.getsize(file_path)
             if file_size == 0 or file_size > 15 * 1024 * 1024:
                 continue
-                
-            # Extract year from filename if possible
-            year_match = re.search(r"(\[| )(20[0-2]\d)(\]|$| )", file_name)
-            year = year_match.group(2) if year_match else "Unknown"
-            
+
             language = detect_language(file_name)
-            logger.info(f"Seeding judgment: {file_name} [Lang: {language}]")
-                
+
+            logger.info(f"Seeding judgment: {file_path} [Lang: {language}]")
+
             await process_file(
-                db, 
-                file_path, 
-                case_type, 
-                DocumentType.COURT_ORDER, 
+                db,
+                file_path,
+                case_type,
+                DocumentType.COURT_ORDER,
                 collection_name="difc_precedents",
                 extra_metadata={
                     "court": "DIFC Court",
                     "jurisdiction": "DIFC",
-                    "year": year,
-                    "category": folder_name or "General",
-                    "case_name": file_name.replace(".pdf", "").replace(".PDF", ""),
-                    "language": language,
-                    "source_file": file_name
-                }
+                    "category": folder_name,
+                    "case_name": file_name.replace(".pdf", ""),
+                },
             )
+
             count += 1
+
             if limit and count >= limit:
                 return
 
-async def seed_laws(db: AsyncSession):
+async def seed_laws(db: AsyncSession, limit: int = None):
     laws_dir = os.path.join(DATA_ROOT, "Laws")
+
     if not os.path.exists(laws_dir):
         logger.error(f"Laws directory not found: {laws_dir}")
         return
 
-    logger.info(f"Scanning laws directory: {laws_dir}")
+    count = 0
+
     for root, dirs, files in os.walk(laws_dir):
+
+        # ✅ Folder = Law Category
+        law_category = os.path.basename(root)
+
+        logger.info(f"Scanning law folder: {law_category}")
+
         for file_name in files:
+
             if not file_name.lower().endswith(".pdf"):
                 continue
-                
+
             file_path = os.path.join(root, file_name)
+
+            if not os.path.exists(file_path):
+                continue
+
             file_size = os.path.getsize(file_path)
-            
             if file_size == 0 or file_size > 20 * 1024 * 1024:
                 continue
 
             language = detect_language(file_name)
-            law_category = os.path.basename(root)
-            
-            logger.info(f"Seeding law: {file_name} [Lang: {language}]")
-            
+
+            logger.info(f"Seeding law: {file_path} [Lang: {language}]")
+
             await process_file(
-                db, 
-                file_path, 
-                CaseType.OTHER, 
-                DocumentType.OTHER, 
+                db,
+                file_path,
+                CaseType.OTHER,
+                DocumentType.LAW,
                 collection_name="difc_laws",
                 extra_metadata={
-                    "law_name": file_name.replace(".pdf", "").replace(".PDF", ""),
-                    "jurisdiction": "DIFC",
-                    "court": "N/A",
-                    "language": language,
+                    "law_name": file_name.replace(".pdf", ""),
                     "category": law_category,
-                    "source_file": file_name
-                }
+                    "jurisdiction": "UAE/DIFC",
+                    "is_law": True,
+                },
             )
+
+            count += 1
+
+            if limit and count >= limit:
+                return
 
 async def process_file(
     db: AsyncSession, 
