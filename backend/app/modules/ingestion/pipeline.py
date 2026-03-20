@@ -99,9 +99,27 @@ async def run_ingestion_pipeline(
     await document_repo.update_status(document_id, ProcessingStatus.OCR_COMPLETE)
     await db.commit()
 
-    # ── Step 3: Legal structure parsing ──────────────────────────────────────
+    # ── Step 3: LLM structure extraction ─────────────────────────────────────
+    from app.modules.ingestion.llm_extractor import extract_structure
+    from app.modules.ingestion.ocr import detect_language as ocr_detect_language
+
+    # Auto-detect language from OCR text if not explicitly passed
+    detected_language = language if language in ("en", "ar") else ocr_detect_language(raw_text)
+
+    llm_structured = await extract_structure(
+        text=raw_text,
+        doc_type=doc_type,
+        language=detected_language,
+        filename=os.path.basename(storage_key)
+    )
+
+    # Also run the existing parser for chunking compatibility
     parser = LegalStructureParser()
     structured_data = await parser.parse(raw_text)
+
+    # Merge LLM extraction into structured_data metadata
+    structured_data["llm_metadata"] = llm_structured
+    structured_data["language"] = detected_language
 
     # ── Step 4: Entity extraction ─────────────────────────────────────────────
     entities = await extract_entities(raw_text)

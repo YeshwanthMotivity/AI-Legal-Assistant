@@ -47,14 +47,26 @@ def hybrid_chunk_legal_doc(
         section_chunks = chunk_text(content, chunk_size=chunk_size, overlap=overlap)
         
         for i, chunk_txt in enumerate(section_chunks):
+            metadata = {
+                "section_type": section_name,
+                "chunk_index": i,
+                "total_section_chunks": len(section_chunks),
+                "is_law": doc_type.lower() == "law"
+            }
+            # Carry LLM metadata into chunk metadata
+            llm_meta = structured_data.get("llm_metadata", {})
+            if llm_meta:
+                metadata["case_id_extracted"] = llm_meta.get("case_id", "")
+                metadata["case_title"] = llm_meta.get("case_title", "")
+                metadata["judgment_date"] = llm_meta.get("judgment_date", "")
+                metadata["outcome"] = llm_meta.get("outcome", "")
+                metadata["laws_cited"] = str(llm_meta.get("laws_cited", []))
+                metadata["judge"] = llm_meta.get("judge", "")
+                metadata["facts_summary"] = llm_meta.get("facts_summary", "")[:300]
+
             all_chunks.append({
                 "text": chunk_txt,
-                "metadata": {
-                    "section_type": section_name,
-                    "chunk_index": i,
-                    "total_section_chunks": len(section_chunks),
-                    "is_law": doc_type.lower() == "law"
-                }
+                "metadata": metadata
             })
             
     # If no section-based chunks were created (e.g. parser failed or empty sections), fallback to global chunking
@@ -63,13 +75,25 @@ def hybrid_chunk_legal_doc(
          content = structured_data['facts']
          global_chunks = chunk_text(content, chunk_size=chunk_size, overlap=overlap)
          for i, chunk_txt in enumerate(global_chunks):
+             metadata = {
+                 "section_type": "general",
+                 "chunk_index": i,
+                 "is_law": doc_type.lower() == "law"
+             }
+             # Carry LLM metadata into chunk metadata
+             llm_meta = structured_data.get("llm_metadata", {})
+             if llm_meta:
+                 metadata["case_id_extracted"] = llm_meta.get("case_id", "")
+                 metadata["case_title"] = llm_meta.get("case_title", "")
+                 metadata["judgment_date"] = llm_meta.get("judgment_date", "")
+                 metadata["outcome"] = llm_meta.get("outcome", "")
+                 metadata["laws_cited"] = str(llm_meta.get("laws_cited", []))
+                 metadata["judge"] = llm_meta.get("judge", "")
+                 metadata["facts_summary"] = llm_meta.get("facts_summary", "")[:300]
+
              all_chunks.append({
                  "text": chunk_txt,
-                 "metadata": {
-                     "section_type": "general",
-                     "chunk_index": i,
-                     "is_law": doc_type.lower() == "law"
-                 }
+                 "metadata": metadata
              })
              
     return all_chunks
