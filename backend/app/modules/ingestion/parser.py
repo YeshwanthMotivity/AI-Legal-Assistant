@@ -123,7 +123,7 @@ class LegalStructureParser:
 
     def __init__(self, timeout: float = 120.0):
         # FIXED: was 2.0 — a 7B LLM needs 10-60 seconds minimum
-        self.url = f"{settings.jais_url}/v1/chat/completions"
+        self.url = "http://10.10.0.1:11434/api/chat"
         self.timeout = timeout
 
     async def parse(self, text: str) -> Dict[str, Any]:
@@ -163,7 +163,7 @@ class LegalStructureParser:
                 response.raise_for_status()
                 data = response.json()
 
-            content = data["choices"][0]["message"]["content"]
+            content = data["message"]["content"]
 
             # Clean markdown fences if present
             content = re.sub(r"```json\s*", "", content)

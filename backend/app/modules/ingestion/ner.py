@@ -153,9 +153,9 @@ async def extract_entities(text: str) -> list[dict]:
         # FIXED: was 2.0 — LLM needs time to process legal text
         async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.post(
-                f"{settings.fallback_model_url}/v1/chat/completions",
+                "http://10.10.0.1:11434/api/chat",
                 json={
-                    "model": "fallback",
+                    "model": "qwen2.5:1.5b-instruct",
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": text[:4000]}
@@ -166,7 +166,7 @@ async def extract_entities(text: str) -> list[dict]:
             response.raise_for_status()
             data = response.json()
 
-        content = data["choices"][0]["message"]["content"].strip()
+            content = data["message"]["content"].strip()
 
         # Clean markdown fences
         content = re.sub(r"```json\s*", "", content)

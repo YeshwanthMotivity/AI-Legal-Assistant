@@ -108,7 +108,7 @@ async def run_ingestion_pipeline(
 
     llm_structured = await extract_structure(
         text=raw_text,
-        doc_type=doc_type,
+        doc_type="judgment" if doc_type in ("COURT_ORDER", "judgment", "JUDGMENT") else "law",
         language=detected_language,
         filename=os.path.basename(storage_key)
     )
