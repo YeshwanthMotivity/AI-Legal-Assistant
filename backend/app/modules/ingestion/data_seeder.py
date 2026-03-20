@@ -52,7 +52,6 @@ async def seed_judgments(db: AsyncSession, limit: int = None):
     count = 0
 
     for root, dirs, files in os.walk(judgment_dir):
-
         # ✅ Get current subfolder name
         folder_name = os.path.basename(root)
 
@@ -60,7 +59,6 @@ async def seed_judgments(db: AsyncSession, limit: int = None):
         case_type = FOLDER_TO_CASE_TYPE.get(folder_name, CaseType.OTHER)
 
         logger.info(f"Scanning folder: {root}")
-
         for file_name in files:
 
             if not file_name.lower().endswith(".pdf"):
