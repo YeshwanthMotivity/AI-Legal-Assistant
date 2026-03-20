@@ -179,7 +179,7 @@ async def process_file(
 
     # 4. Trigger Ingestion Pipeline
     try:
-        await run_ingestion_pipeline(
+        result = await run_ingestion_pipeline(
             document_id=doc_id,
             case_id=case_id,
             storage_key=file_path,
@@ -189,6 +189,20 @@ async def process_file(
             collection_name=collection_name,
             extra_metadata=extra_metadata
         )
+        
+        # 5. Enrich Case Metadata with LLM Result
+        if result and isinstance(result, dict):
+            parties = result.get("parties", {})
+            extracted_title = result.get("case_title")
+            extracted_claimant = parties.get("claimant")
+            extracted_respondent = parties.get("defendant") or parties.get("respondent")
+            
+            # Re-fetch or use new_case? Since we are in the same session, new_case is tracked.
+            if extracted_title: new_case.title = extracted_title
+            if extracted_claimant: new_case.claimant_name = extracted_claimant
+            if extracted_respondent: new_case.respondent_name = extracted_respondent
+            await db.commit()
+            
         print(f"Successfully ingested {file_name}", flush=True)
     except Exception as e:
         print(f"Failed to ingest {file_name}: {e}", flush=True)

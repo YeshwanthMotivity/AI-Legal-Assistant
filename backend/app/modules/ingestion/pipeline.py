@@ -42,7 +42,7 @@ async def run_ingestion_pipeline(
     extra_metadata: dict = None,
     language: str = "en",          # ADDED: language parameter
     file_path: str = None,         # ADDED: direct file path (preferred over storage_key)
-) -> None:
+) -> dict:
     """
     Full ingestion pipeline for a legal document.
 
@@ -247,3 +247,4 @@ async def run_ingestion_pipeline(
 
     await db.commit()
     logger.info(f"Pipeline complete for {document_id} | status={'FAILED' if qdrant_failed else 'COMPLETED'}")
+    return llm_structured
