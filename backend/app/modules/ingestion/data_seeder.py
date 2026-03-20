@@ -144,6 +144,16 @@ async def process_file(
     extra_metadata: dict = None
 ):
     file_name = os.path.basename(file_path)
+
+    # Check if already ingested
+    from sqlalchemy import select
+    from app.modules.document.models import Document
+    result = await db.execute(select(Document).where(Document.file_name == file_name))
+    existing = result.scalars().first()
+    if existing:
+        logger.info(f"Skipping {file_name} — already ingested")
+        return
+
     case_id = str(uuid.uuid4())
     doc_id = str(uuid.uuid4())
     case_number = f"SEED-{file_name.upper().replace('.PDF', '')}-{str(uuid.uuid4())[:8]}"
