@@ -228,4 +228,4 @@ async def run_ingestion_pipeline(
             pass  # KPI failure must not break ingestion
 
     await db.commit()
-    logger.info(f"Pipeline complete for {document_id} | status={\"FAILED\" if qdrant_failed else \"COMPLETED\"}")
+    logger.info(f"Pipeline complete for {document_id} | status={'FAILED' if qdrant_failed else 'COMPLETED'}")
