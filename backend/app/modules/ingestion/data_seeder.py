@@ -19,7 +19,6 @@ except ImportError:
     pass
 
 from app.modules.ingestion.pipeline import run_ingestion_pipeline
-from app.modules.ingestion.minio_client import upload_file
 
 import logging
 
@@ -170,7 +169,7 @@ async def process_file(
         id=doc_id,
         case_id=case_id,
         file_name=file_name,
-        storage_key=f"seeded/{file_name}",
+        storage_key=file_path,
         mime_type="application/pdf",
         document_type=doc_type,
         processing_status=ProcessingStatus.PENDING
@@ -178,23 +177,12 @@ async def process_file(
     db.add(new_doc)
     await db.commit()
 
-    # 3. Upload to MinIO
-    with open(file_path, "rb") as f:
-        data = f.read()
-        await upload_file(
-            bucket="case-documents",
-            key=f"seeded/{file_name}",
-            data=data,
-            length=len(data),
-            content_type="application/pdf"
-        )
-
     # 4. Trigger Ingestion Pipeline
     try:
         await run_ingestion_pipeline(
             document_id=doc_id,
             case_id=case_id,
-            storage_key=f"seeded/{file_name}",
+            storage_key=file_path,
             mime_type="application/pdf",
             doc_type=doc_type.value, # Pass string value to pipeline
             db=db,

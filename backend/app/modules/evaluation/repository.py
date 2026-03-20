@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timedelta
 from typing import Optional
-from sqlalchemy import select, func, text
+from sqlalchemy import select, func, text, cast, String
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.evaluation.models import EvaluationEvent
 
@@ -25,8 +25,28 @@ class EvaluationEventRepository:
         query_id: Optional[str] = None,
         metadata: Optional[dict] = None,
     ) -> EvaluationEvent:
-        event = EvaluationEvent(
-            id=str(uuid.uuid4()),
+        new_id = str(uuid.uuid4())
+        try:
+            from sqlalchemy import insert
+            await self.db.execute(
+                insert(EvaluationEvent).values(
+                    id=new_id,
+                    document_id=document_id,
+                    case_id=case_id,
+                    metric_type=metric_type,
+                    entity_type=entity_type,
+                    query_id=query_id,
+                    value=value,
+                    phase=phase,
+                    metadata_=metadata,
+                )
+            )
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Could not insert EvaluationEvent: {e}")
+
+        return EvaluationEvent(
+            id=new_id,
             document_id=document_id,
             case_id=case_id,
             metric_type=metric_type,
@@ -36,10 +56,6 @@ class EvaluationEventRepository:
             phase=phase,
             metadata_=metadata,
         )
-        self.db.add(event)
-        await self.db.flush()
-        await self.db.refresh(event)
-        return event
 
     # ------------------------------------------------------------------ #
     #  Phase-specific convenience writers (keep API for existing callers) #
@@ -213,7 +229,7 @@ class EvaluationEventRepository:
             select(EvaluationEvent.query_id, func.max(EvaluationEvent.created_at))
             .where(EvaluationEvent.phase == "phase_2")
             .where(
-                EvaluationEvent.metadata_["mode"].astext == mode
+                EvaluationEvent.metadata_["mode"].as_string() == mode
             )
             .group_by(EvaluationEvent.query_id)
             .order_by(func.max(EvaluationEvent.created_at).desc())

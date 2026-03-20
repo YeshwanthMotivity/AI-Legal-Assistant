@@ -407,42 +407,12 @@ async def graph_independent_node(state: AnalysisState) -> dict[str, Any]:
 
 
 async def _citation_bridge_async(extended_citations: list[str], case_id: str) -> list[dict[str, Any]]:
-    """Optimized citation bridge using async driver or fallback."""
-    if not extended_citations: return []
-    try:
-        from neo4j import AsyncGraphDatabase
-        async with AsyncGraphDatabase.driver(settings.neo4j_uri, auth=(settings.neo4j_user, settings.neo4j_password)) as driver:
-            async with driver.session() as session:
-                result = await session.run(
-                    "MATCH (l:LawArticle)<-[:CITES]-(c:Case) "
-                    "WHERE l.article_number IN $articles AND c.case_id <> $case_id "
-                    "RETURN c.case_id AS case_id, c.title AS title, c.outcome AS outcome LIMIT 5",
-                    articles=[f"Article {a}" for a in set(extended_citations)],
-                    case_id=case_id
-                )
-                records = await result.data()
-                return [{"case_id": r["case_id"], "title": f"{r['title']} (Graph Bridge)", "outcome": r["outcome"]} for r in records]
-    except Exception:
-        logger.warning("Async Neo4j bridge failed, using sync fallback")
-        return await _citation_bridge_sync_fallback(extended_citations, case_id)
+    """Neo4j removed — returns empty list."""
+    return []
 
 async def _citation_bridge_sync_fallback(extended_citations: list[str], case_id: str) -> list[dict[str, Any]]:
-    def _run():
-        from neo4j import GraphDatabase
-        driver = GraphDatabase.driver(settings.neo4j_uri, auth=(settings.neo4j_user, settings.neo4j_password))
-        with driver.session() as session:
-            result = session.run(
-                "MATCH (l:LawArticle)<-[:CITES]-(c:Case) "
-                "WHERE l.article_number IN $articles AND c.case_id <> $case_id "
-                "RETURN c.case_id AS case_id, c.title AS title, c.outcome AS outcome LIMIT 5",
-                articles=[f"Article {a}" for a in set(extended_citations)],
-                case_id=case_id
-            )
-            return [{"case_id": r["case_id"], "title": f"{r['title']} (Graph Bridge)", "outcome": r["outcome"]} for r in result]
-    try:
-        return await asyncio.get_event_loop().run_in_executor(None, _run)
-    except Exception:
-        return []
+    """Neo4j removed — returns empty list."""
+    return []
 
 async def graph_dependent_node(state: AnalysisState) -> dict[str, Any]:
     """Runs AFTER search_agent_node. Performs citation-based graph lookups if needed."""
@@ -635,12 +605,12 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         logger.info(f"reasoning_agent_node: calling {label} (timeout={timeout_seconds}s)")
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
             response = await client.post(
-                f"{url}/v1/chat/completions",
+                f"{url}/api/chat",
                 json=_build_payload(),
             )
             response.raise_for_status()
             data = response.json()
-            return str(data["choices"][0]["message"]["content"])
+            return str(data["message"]["content"])
 
     # ── 5. JSON parsing helpers ───────────────────────────────────────────────
     def _extract_json_object(raw: str) -> dict[str, Any] | None:

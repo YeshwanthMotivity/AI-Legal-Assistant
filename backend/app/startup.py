@@ -45,6 +45,8 @@ async def init_qdrant():
 
         _ensure_collection("legal_chunks")
         _ensure_collection("case_summaries")
+        _ensure_collection("difc_precedents")
+        _ensure_collection("difc_laws")
         
         logger.info("Qdrant initialization complete")
     except Exception as e:
