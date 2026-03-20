@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger(__name__)
 # Mapping directory names to CaseType enum
 FOLDER_TO_CASE_TYPE = {
-    "Employement contract dispute": CaseType.CONTRACT_DISPUTE,
+    "Employment contract dispute": CaseType.CONTRACT_DISPUTE,
     "End of service benefits": CaseType.END_OF_SERVICE,
     "Unpaid wages": CaseType.UNPAID_WAGES,
     "Wrongful termination": CaseType.WRONGFUL_TERMINATION,
@@ -52,15 +52,17 @@ async def seed_judgments(db: AsyncSession, limit: int = None):
     count = 0
 
     for root, dirs, files in os.walk(judgment_dir):
-        # ✅ Get current subfolder name
-        folder_name = os.path.basename(root)
-
-        # ✅ Map folder → case type (important)
-        case_type = FOLDER_TO_CASE_TYPE.get(folder_name, CaseType.OTHER)
-
-        logger.info(f"Scanning folder: {folder_name}")
-
+        # Determine case type from folder name in the path
+        case_type = CaseType.OTHER
+        folder_name = ""
+        for folder, ctype in FOLDER_TO_CASE_TYPE.items():
+            if folder in root:
+                case_type = ctype
+                folder_name = folder
+                break
+        
         for file_name in files:
+
             if not file_name.lower().endswith(".pdf"):
                 continue
 
@@ -96,7 +98,7 @@ async def seed_judgments(db: AsyncSession, limit: int = None):
             if limit and count >= limit:
                 return
 
-async def seed_laws(db: AsyncSession):
+async def seed_laws(db: AsyncSession, limit: int = None):
     laws_dir = os.path.join(DATA_ROOT, "Laws")
 
     if not os.path.exists(laws_dir):
@@ -158,6 +160,16 @@ async def process_file(
     extra_metadata: dict = None
 ):
     file_name = os.path.basename(file_path)
+
+    # Check if already ingested
+    from sqlalchemy import select
+    from app.modules.document.models import Document
+    result = await db.execute(select(Document).where(Document.file_name == file_name))
+    existing = result.scalars().first()
+    if existing:
+        logger.info(f"Skipping {file_name} — already ingested")
+        return
+
     case_id = str(uuid.uuid4())
     doc_id = str(uuid.uuid4())
     case_number = f"SEED-{file_name.upper().replace('.PDF', '')}-{str(uuid.uuid4())[:8]}"
