@@ -1,26 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
+import { 
+  ChevronLeft, 
+  Send, 
+  MessageSquare, 
+  BookOpen, 
+  Sparkles,
+  Search,
+  History,
+  Info,
+  Scale,
+  AlertCircle
+} from 'lucide-react'
 import { getPrecedent, chatWithPrecedent } from '../../api/judge'
 import { PrecedentDetail } from '../../types/judge'
 import PortalLayout from '../../components/layout/PortalLayout'
-
-// Inline Icons to avoid extra dependencies
-const ArrowLeftIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-)
-const SendIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-)
-const MessageIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
-)
-const BookIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M8 7h6"/><path d="M8 11h8"/></svg>
-)
-const BotIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
-)
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 const PrecedentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -57,22 +56,29 @@ const PrecedentDetailPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg-base)' }}>
-        <p style={{ color: 'var(--text-muted)' }}>Loading AI context...</p>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+           <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto" />
+           <p className="text-muted-foreground font-medium animate-pulse">Establishing secure legal context...</p>
+        </div>
       </div>
     )
   }
 
   if (error || !precedent) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg-base)' }}>
-        <p style={{ color: 'var(--danger)', marginBottom: '1rem' }}>Error loading precedent case.</p>
-        <button 
-          onClick={() => navigate(-1)} 
-          className="btn btn-primary"
-        >
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
+        <div className="p-4 bg-destructive/10 rounded-full text-destructive">
+           <AlertCircle className="w-12 h-12" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-foreground">Failed to Load Precedent</h3>
+          <p className="text-muted-foreground max-w-sm mx-auto mt-2 italic">We encountered an issue retrieving the judicial details for this case reference.</p>
+        </div>
+        <Button onClick={() => navigate(-1)} variant="outline" className="gap-2">
+          <ChevronLeft className="w-4 h-4" />
           Go Back
-        </button>
+        </Button>
       </div>
     )
   }
@@ -80,92 +86,129 @@ const PrecedentDetailPage: React.FC = () => {
   return (
     <PortalLayout 
       title={precedent.title} 
-      subtitle={`${precedent.year || 'N/A'} | ${precedent.category || 'DIFC Precedent'}`}
+      subtitle={`${precedent.year || 'N/A'} | ${precedent.category || 'DIFC Judicial Precedent'}`}
     >
-      <div style={{ display: 'flex', height: 'calc(100vh - 160px)', background: 'var(--bg-base)' }}>
+      <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-12rem)] min-h-[600px]">
         {/* Main Content - Case Text */}
-        <main style={{ flex: '1', overflowY: 'auto', padding: '2.5rem', background: 'var(--bg-card)' }}>
-          <div style={{ maxWidth: '850px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '1.25rem', marginBottom: '2.5rem' }}>
-              <BookIcon />
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Full Case Transcript</h2>
-            </div>
-            <div style={{ color: 'var(--text-primary)', lineHeight: 1.7, whiteSpace: 'pre-wrap', fontSize: '1rem' }}>
-              {precedent.text}
-            </div>
-          </div>
+        <main className="flex-1 min-w-0 flex flex-col gap-6">
+          <Card className="flex-1 shadow-sm border-border/50 overflow-hidden flex flex-col">
+            <CardHeader className="bg-muted/10 border-b py-5 flex flex-row items-center justify-between px-8">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                   <BookOpen className="w-5 h-5" />
+                </div>
+                <CardTitle className="text-lg">Case Transcript & Analysis</CardTitle>
+              </div>
+              <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter">Reference: {id}</Badge>
+            </CardHeader>
+            <CardContent className="p-8 overflow-y-auto leading-relaxed text-sm font-medium">
+              <div className="max-w-4xl mx-auto space-y-6">
+                <div className="flex items-center gap-4 py-4 px-6 bg-primary/5 rounded-2xl border border-primary/10 mb-8">
+                   <Scale className="w-8 h-8 text-primary/40 shrink-0" />
+                   <div>
+                      <h4 className="text-sm font-black uppercase tracking-wider text-primary">Judicial Record</h4>
+                      <p className="text-[11px] text-muted-foreground italic">Official transcript from the DIFC Court of First Instance</p>
+                   </div>
+                </div>
+                <div className="whitespace-pre-wrap text-foreground/90 selection:bg-primary/20">
+                  {precedent.text}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </main>
 
         {/* Sidebar - AI Chat */}
-        <aside style={{ width: '400px', borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)' }}>
-          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <MessageIcon />
-            <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1.1rem' }}>Explore with AI</span>
-          </div>
+        <aside className="w-full lg:w-[450px] flex flex-col shrink-0">
+          <Card className="h-full shadow-xl border-primary/20 overflow-hidden flex flex-col bg-card/50 backdrop-blur-sm">
+            <CardHeader className="bg-primary/5 border-b py-5 flex flex-row items-center justify-between px-6">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 bg-primary rounded-lg text-primary-foreground">
+                   <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                   <CardTitle className="text-sm font-bold">Intelligent Discovery</CardTitle>
+                   <p className="text-[10px] text-muted-foreground font-bold uppercase">Powered by JAIS-30B</p>
+                </div>
+              </div>
+            </CardHeader>
 
-          <div style={{ flex: '1', overflowY: 'auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {messages.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', color: 'var(--text-muted)' }}>
-                  <BotIcon />
+            {/* Chat Messages */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin">
+              {messages.length === 0 && (
+                <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 animate-in fade-in zoom-in-95 duration-700">
+                  <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center text-primary/30">
+                    <MessageSquare className="w-10 h-10" />
+                  </div>
+                  <div className="space-y-2">
+                    <h5 className="font-bold text-foreground">Explore this Case</h5>
+                    <p className="text-xs text-muted-foreground italic leading-relaxed">
+                      Ask detailed questions about legal reasoning, specific clauses, or how this precedent applies to current labor laws.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-2 pt-4">
+                     {['Summary', 'Impact', 'Key Ruling'].map(tag => (
+                       <button key={tag} className="px-3 py-1 bg-muted/50 border rounded-full text-[10px] font-black uppercase hover:bg-primary/10 hover:text-primary transition-all">
+                          {tag}
+                       </button>
+                     ))}
+                  </div>
                 </div>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  Ask questions about this case's reasoning, judgment, or specific UAE constraints.
-                </p>
-              </div>
-            )}
-            
-            {messages.map((msg, idx) => (
-              <div key={idx} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                <div style={{
-                  maxWidth: '85%',
-                  padding: '1rem 1.25rem',
-                  borderRadius: '16px',
-                  borderBottomRightRadius: msg.role === 'user' ? '0' : '16px',
-                  borderBottomLeftRadius: msg.role === 'ai' ? '0' : '16px',
-                  background: msg.role === 'user' ? 'var(--primary)' : 'var(--bg-card)',
-                  color: msg.role === 'user' ? '#fff' : 'var(--text-primary)',
-                  boxShadow: 'var(--shadow-sm)',
-                  border: msg.role === 'ai' ? '1px solid var(--border)' : 'none',
-                  fontSize: '0.9375rem',
-                  textAlign: 'left',
-                  lineHeight: 1.5
-                }}>
-                  {msg.content}
+              )}
+              
+              {messages.map((msg, idx) => (
+                <div key={idx} className={cn("flex w-full animate-in fade-in slide-in-from-bottom-2", msg.role === 'user' ? "justify-end" : "justify-start")}>
+                  <div className={cn(
+                    "max-w-[90%] px-4 py-3 rounded-2xl text-sm font-medium shadow-sm border",
+                    msg.role === 'user' 
+                      ? "bg-primary text-primary-foreground border-transparent rounded-tr-none" 
+                      : "bg-card border-border/50 rounded-tl-none"
+                  )}>
+                    {msg.content}
+                  </div>
                 </div>
-              </div>
-            ))}
-            
-            {chatMutation.isPending && (
-              <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', padding: '1rem 1.5rem', borderRadius: '16px', borderBottomLeftRadius: '0', boxShadow: 'var(--shadow-sm)', display: 'flex', gap: '0.5rem', color: 'var(--text-muted)' }}>
-                  Analyzing...
+              ))}
+              
+              {chatMutation.isPending && (
+                <div className="flex justify-start animate-pulse">
+                  <div className="bg-muted/30 border border-border/10 px-4 py-3 rounded-2xl rounded-tl-none flex items-center gap-2">
+                    <div className="flex gap-1">
+                       <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" />
+                       <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]" />
+                       <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase text-muted-foreground tracking-tighter ml-1">Analyzing context</span>
+                  </div>
                 </div>
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          <div style={{ padding: '1.25rem', background: 'var(--bg-card)', borderTop: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <input 
-                type="text"
-                placeholder="Ask about this precedent..."
-                value={chatMessage}
-                onChange={(e) => setChatMessage(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                style={{ flex: 1, padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)' }}
-              />
-              <button 
-                onClick={handleSendMessage}
-                disabled={!chatMessage.trim() || chatMutation.isPending}
-                className="btn btn-primary cursor-pointer"
-                style={{ padding: '0 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <SendIcon />
-              </button>
+              )}
+              <div ref={chatEndRef} />
             </div>
-          </div>
+
+            {/* Input Area */}
+            <div className="p-6 bg-muted/20 border-t mt-auto">
+              <div className="relative group">
+                <input 
+                  type="text"
+                  placeholder="Inquire about case complexities..."
+                  className="w-full bg-card border rounded-2xl pl-5 pr-14 py-3.5 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-bold placeholder:italic placeholder:font-medium shadow-inner"
+                  value={chatMessage}
+                  onChange={(e) => setChatMessage(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                />
+                <Button 
+                  size="icon"
+                  className="absolute right-2 top-2 h-10 w-10 shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform"
+                  onClick={handleSendMessage}
+                  disabled={!chatMessage.trim() || chatMutation.isPending}
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
+              <p className="text-[9px] text-center mt-3 text-muted-foreground uppercase font-black tracking-widest opacity-50">
+                End-to-End Encrypted Judicial Workspace
+              </p>
+            </div>
+          </Card>
         </aside>
       </div>
     </PortalLayout>

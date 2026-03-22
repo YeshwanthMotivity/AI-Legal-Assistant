@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.document.models import ProcessingStatus
 from app.modules.document.repository import DocumentRepository
 from app.modules.evaluation.repository import EvaluationEventRepository
-from app.modules.ingestion.chunker import hybrid_chunk_legal_doc
+from app.modules.ingestion.chunker_fixed import hybrid_chunk_legal_doc
 from app.modules.ingestion.embedder import embed_chunks
 from app.modules.ingestion.ner import extract_entities
 from app.modules.ingestion.ocr import run_ocr

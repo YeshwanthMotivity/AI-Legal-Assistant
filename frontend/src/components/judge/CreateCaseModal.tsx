@@ -1,6 +1,8 @@
 import { FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Plus } from 'lucide-react'
 import type { CaseType, CreateCaseRequest } from '../../types/judge'
+import { Button } from '@/components/ui/button'
 
 interface CreateCaseModalProps {
   isOpen: boolean
@@ -53,84 +55,123 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
   if (!isOpen) return null
 
   return (
-    <div className="modal-backdrop" role="presentation" onClick={handleClose}>
-      <div className="modal-card" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
-        <h2>{t('judge.dashboard.createCase')}</h2>
+    <dialog 
+      id="create-case-modal-judge" 
+      className="modal bg-transparent backdrop:bg-black/50 p-0 rounded-2xl border shadow-2xl w-full max-w-2xl overflow-hidden"
+      open={isOpen}
+    >
+      <div className="bg-card">
+        <div className="p-6 border-b flex justify-between items-center bg-muted/20">
+          <h3 className="text-xl font-bold">{t('judge.dashboard.createCase')}</h3>
+          <Button variant="ghost" size="icon" onClick={handleClose}>
+            <Plus className="w-5 h-5 rotate-45" />
+          </Button>
+        </div>
 
-        <form onSubmit={handleSubmit} className="form-grid two-col">
-          <label className="full-width">
-            {t('judge.form.title')}
-            <input 
-              value={title} 
-              onChange={(event) => setTitle(event.target.value)} 
-              placeholder="Case Title"
-              required 
-            />
-          </label>
+        <form onSubmit={handleSubmit}>
+          <div className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2 space-y-2">
+                <label className="text-xs font-black uppercase text-muted-foreground ml-1">
+                  {t('judge.form.title')}
+                </label>
+                <input 
+                  className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  value={title} 
+                  onChange={(event) => setTitle(event.target.value)} 
+                  placeholder="e.g. Landmark Construction vs. City Planning"
+                  required 
+                />
+              </div>
 
-          <label>
-            {t('judge.form.caseType')}
-            <select value={caseType} onChange={(event) => setCaseType(event.target.value as CaseType)} required>
-              <option value="unpaid_wages">{t('judge.caseTypes.unpaid_wages')}</option>
-              <option value="wrongful_termination">{t('judge.caseTypes.wrongful_termination')}</option>
-              <option value="end_of_service">{t('judge.caseTypes.end_of_service')}</option>
-              <option value="contract_dispute">{t('judge.caseTypes.contract_dispute')}</option>
-              <option value="other">{t('judge.caseTypes.other')}</option>
-            </select>
-          </label>
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase text-muted-foreground ml-1">
+                  {t('judge.form.caseType')}
+                </label>
+                <select 
+                  className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer"
+                  value={caseType} 
+                  onChange={(event) => setCaseType(event.target.value as CaseType)} 
+                  required
+                >
+                  <option value="unpaid_wages">{t('judge.caseTypes.unpaid_wages')}</option>
+                  <option value="wrongful_termination">{t('judge.caseTypes.wrongful_termination')}</option>
+                  <option value="end_of_service">{t('judge.caseTypes.end_of_service')}</option>
+                  <option value="contract_dispute">{t('judge.caseTypes.contract_dispute')}</option>
+                  <option value="other">{t('judge.caseTypes.other')}</option>
+                </select>
+              </div>
 
-          <label>
-            {t('judge.form.filingDate')}
-            <input type="date" value={filingDate} onChange={(event) => setFilingDate(event.target.value)} required />
-          </label>
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase text-muted-foreground ml-1">
+                  {t('judge.form.filingDate')}
+                </label>
+                <input 
+                  type="date" 
+                  className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                  value={filingDate} 
+                  onChange={(event) => setFilingDate(event.target.value)} 
+                  required 
+                />
+              </div>
 
-          <label>
-            {t('judge.form.claimant')}
-            <input 
-              value={claimant} 
-              onChange={(event) => setClaimant(event.target.value)} 
-              placeholder="Claimant Name"
-              required 
-            />
-          </label>
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase text-muted-foreground ml-1">
+                  {t('judge.form.claimant')}
+                </label>
+                <input 
+                  className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                  value={claimant} 
+                  onChange={(event) => setClaimant(event.target.value)} 
+                  placeholder="Claimant Name"
+                  required 
+                />
+              </div>
 
-          <label>
-            {t('judge.form.respondent')}
-            <input 
-              value={respondent} 
-              onChange={(event) => setRespondent(event.target.value)} 
-              placeholder="Respondent Name"
-              required 
-            />
-          </label>
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase text-muted-foreground ml-1">
+                  {t('judge.form.respondent')}
+                </label>
+                <input 
+                  className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                  value={respondent} 
+                  onChange={(event) => setRespondent(event.target.value)} 
+                  placeholder="Respondent Name"
+                  required 
+                />
+              </div>
 
-          <label className="full-width">
-            {t('judge.form.notes')}
-            <textarea 
-              value={notes} 
-              onChange={(event) => setNotes(event.target.value)} 
-              rows={5} 
-              placeholder="Detailed case description and notes..."
-              required
-            />
-          </label>
+              <div className="md:col-span-2 space-y-2">
+                <label className="text-xs font-black uppercase text-muted-foreground ml-1">
+                  {t('judge.form.notes')}
+                </label>
+                <textarea 
+                  className="w-full bg-background border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none min-h-[120px]"
+                  value={notes} 
+                  onChange={(event) => setNotes(event.target.value)} 
+                  placeholder="Detailed case description and notes..."
+                  required
+                />
+              </div>
+            </div>
+          </div>
 
-          <div className="modal-actions full-width">
-            <button type="button" className="btn btn-secondary" onClick={handleClose}>
+          <div className="p-6 border-t bg-muted/10 flex justify-end gap-3">
+            <Button type="button" variant="outline" onClick={handleClose}>
               {t('common.cancel')}
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+            </Button>
+            <Button type="submit" disabled={isSubmitting} className="min-w-[120px]">
               {isSubmitting ? t('common.loading') : (
                 <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                  <Plus className="w-4 h-4 mr-2" />
                   {t('common.submit')}
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
-    </div>
+    </dialog>
   )
 }
 

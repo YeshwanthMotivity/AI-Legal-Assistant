@@ -2,6 +2,19 @@ import { useEffect, useMemo, useState } from 'react'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { useTranslation } from 'react-i18next'
+import { 
+  RotateCcw, 
+  CheckCircle2, 
+  AlertCircle,
+  Scale,
+  DollarSign,
+  MessageSquare,
+  Sparkles
+} from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 interface JudgmentEditorProps {
   draftText: string
@@ -55,71 +68,123 @@ const JudgmentEditor = ({
   }
 
   return (
-    <div className="panel">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h3 style={{ margin: 0 }}>{t('judge.workspace.judgmentDraft')}</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--emerald-50)', padding: '0.5rem 1rem', borderRadius: '999px' }}>
-          <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--emerald-800)' }}>{t('judge.workspace.aiConfidence')}</span>
-          <div className="confidence-track" style={{ width: '100px', margin: 0 }}>
-            <div className="confidence-fill" style={{ width: `${progress}%`, height: '100%' }} />
-          </div>
-          <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--emerald-700)' }}>{progress}%</span>
+    <Card className="shadow-lg border-primary/10 overflow-hidden">
+      <CardHeader className="bg-primary/5 border-b py-5 flex flex-row items-center justify-between">
+        <div className="flex items-center gap-2">
+           <Scale className="w-5 h-5 text-primary" />
+           <CardTitle className="text-lg">{t('judge.workspace.judgmentDraft')}</CardTitle>
         </div>
-      </div>
+        
+        <div className="flex items-center gap-3 bg-card px-4 py-1.5 rounded-full border shadow-sm">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-tighter">AI Confidence</span>
+          </div>
+          <div className="h-1.5 w-24 bg-accent rounded-full overflow-hidden">
+            <div 
+              className={cn(
+                "h-full rounded-full transition-all duration-1000",
+                progress > 70 ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" : 
+                progress > 40 ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]" : 
+                "bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.4)]"
+              )}
+              style={{ width: `${progress}%` }} 
+            />
+          </div>
+          <span className="text-xs font-black text-primary">{progress}%</span>
+        </div>
+      </CardHeader>
 
-      <div style={{ marginBottom: '2rem' }}>
-        <ReactQuill theme="snow" value={content} onChange={setContent} className="judgment-editor" />
-      </div>
+      <CardContent className="p-8">
+        <div className="space-y-8">
+          <div className="rounded-xl border bg-card overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+            <ReactQuill 
+              theme="snow" 
+              value={content} 
+              onChange={setContent} 
+              className="judgment-editor" 
+            />
+          </div>
 
-      <div className="decision-row">
-        <label>
-          <span style={{ marginBottom: '0.75rem', display: 'block' }}>{t('judge.judgment.decision')}</span>
-          <select value={decision} onChange={(event) => setDecision(event.target.value)}>
-            <option value="accept">{t('judge.judgment.accept')}</option>
-            <option value="reject">{t('judge.judgment.reject')}</option>
-            <option value="partial">{t('judge.judgment.partial')}</option>
-          </select>
-        </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase text-muted-foreground ml-1 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3 h-3" />
+                {t('judge.judgment.decision')}
+              </label>
+              <select 
+                className="w-full bg-muted/20 border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer font-bold"
+                value={decision} 
+                onChange={(event) => setDecision(event.target.value)}
+              >
+                <option value="accept">{t('judge.judgment.accept')}</option>
+                <option value="reject">{t('judge.judgment.reject')}</option>
+                <option value="partial">{t('judge.judgment.partial')}</option>
+              </select>
+            </div>
 
-        <label>
-          <span style={{ marginBottom: '0.75rem', display: 'block' }}>{t('judge.judgment.compensation')}</span>
-          <input
-            value={compensationAmount}
-            onChange={(event) => setCompensationAmount(event.target.value)}
-            placeholder={t('judge.judgment.compensationPlaceholder')}
-          />
-        </label>
-      </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase text-muted-foreground ml-1 flex items-center gap-1.5">
+                <DollarSign className="w-3 h-3" />
+                {t('judge.judgment.compensation')}
+              </label>
+              <input
+                className="w-full bg-muted/20 border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none font-bold placeholder:font-normal"
+                value={compensationAmount}
+                onChange={(event) => setCompensationAmount(event.target.value)}
+                placeholder={t('judge.judgment.compensationPlaceholder')}
+              />
+            </div>
 
-      <div className="form-grid" style={{ marginTop: '2rem' }}>
-        <label className="full-width">
-          <span style={{ marginBottom: '0.75rem', display: 'block' }}>{t('judge.judgment.reasoning')}</span>
-          <textarea
-            rows={5}
-            value={reasoning}
-            onChange={(event) => setReasoning(event.target.value)}
-            placeholder={t('judge.judgment.reasoningPlaceholder')}
-          />
-        </label>
-      </div>
+            <div className="md:col-span-2 space-y-2">
+              <label className="text-[11px] font-black uppercase text-muted-foreground ml-1 flex items-center gap-1.5">
+                <MessageSquare className="w-3 h-3" />
+                {t('judge.judgment.reasoning')}
+              </label>
+              <textarea
+                className="w-full bg-muted/20 border rounded-xl p-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none min-h-[120px] transition-all placeholder:italic"
+                rows={5}
+                value={reasoning}
+                onChange={(event) => setReasoning(event.target.value)}
+                placeholder={t('judge.judgment.reasoningPlaceholder')}
+              />
+            </div>
+          </div>
 
-      {error && <p className="error-text" style={{ color: 'var(--danger)', marginTop: '1rem', fontWeight: '600' }}>{error}</p>}
-
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1.5rem', marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--border-subtle)' }}>
-        <button type="button" className="btn btn-secondary" onClick={onRegenerate}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-          {t('judge.workspace.regenerate')}
-        </button>
-        <button type="button" className="btn btn-primary" onClick={handleFinalize} disabled={isSubmitting}>
-          {isSubmitting ? t('common.loading') : (
-            <>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              {t('judge.workspace.finalize')}
-            </>
+          {error && (
+            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-3 text-destructive animate-in fade-in zoom-in-95">
+              <AlertCircle className="w-5 h-5" />
+              <p className="text-sm font-bold italic">{error}</p>
+            </div>
           )}
-        </button>
-      </div>
-    </div>
+
+          <div className="flex justify-end gap-4 pt-6 border-t items-center">
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="gap-2 border-primary/20 text-primary hover:bg-primary/5 h-11 px-6 shadow-sm"
+              onClick={onRegenerate}
+            >
+              <RotateCcw className="w-4 h-4" />
+              {t('judge.workspace.regenerate')}
+            </Button>
+            <Button 
+              type="button" 
+              className="gap-2 h-11 px-10 shadow-lg shadow-primary/20 font-bold"
+              onClick={handleFinalize} 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Finalizing..." : (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  {t('judge.workspace.finalize')}
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 

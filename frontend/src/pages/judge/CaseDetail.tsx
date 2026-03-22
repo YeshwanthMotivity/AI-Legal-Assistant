@@ -1,8 +1,26 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { 
+  FileText, 
+  Upload, 
+  Sparkles, 
+  Scale, 
+  BookOpen, 
+  Calculator, 
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  ExternalLink,
+  ThumbsUp,
+  MessageSquare,
+  BarChart3,
+  Plus
+} from 'lucide-react'
 import PortalLayout from '../../components/layout/PortalLayout'
 import JudgmentEditor from '../../components/judge/JudgmentEditor'
 import {
@@ -15,6 +33,11 @@ import {
 } from '../../api/judge'
 import { useCaseAnalysisPolling } from '../../hooks/useCaseAnalysisPolling'
 import type { DocumentType, FeedbackRequest, JudgmentRequest } from '../../types/judge'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
+import StatCard from '@/components/StatCard'
 
 const DOCUMENT_TYPES: DocumentType[] = [
   'contract',
@@ -166,6 +189,8 @@ const CaseDetail = () => {
     uploadMutation.mutate({ file: selectedFile, documentType: selectedDocType })
   }
 
+  const navigate = useNavigate()
+
   const handleFinalize = async (payload: {
     judgmentText: string
     decision: string
@@ -191,283 +216,389 @@ const CaseDetail = () => {
       title={t('judge.workspace.title')} 
       subtitle={`${t('judge.workspace.caseId')}: ${caseQuery.data?.case_number ?? id}`}
     >
-      <div className="page-header" style={{ marginBottom: '2rem' }}>
-        <div /> {/* Spacer */}
-        <Link className="btn btn-secondary" to="/judge/cases">
-          <svg style={{ transform: 'rotate(180deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      
+      {/* Action Header */}
+      <div className="flex justify-between items-center mb-8">
+        <Button variant="ghost" onClick={() => navigate('/judge/cases')} className="gap-2 text-muted-foreground hover:text-foreground">
+          <ChevronLeft className="w-4 h-4" />
           {t('common.back')}
-        </Link>
+        </Button>
+        <div className="flex gap-3">
+           <Button 
+            variant="outline" 
+            className="gap-2 border-primary/20 hover:bg-primary/5 text-primary"
+            disabled={isActivelyLoading}
+            onClick={() => runAnalysisMutation.mutate()}
+           >
+              <Sparkles className={cn("w-4 h-4", isActivelyLoading && "animate-pulse")} />
+              {t('judge.workspace.runAnalysis')}
+           </Button>
+           <Button className="shadow-lg shadow-primary/20">
+              Finalize Judgment
+           </Button>
+        </div>
       </div>
 
       {localMessage && (
-        <div className={messageType === 'error' ? 'error-banner' : 'success-banner'} style={{ marginBottom: '2rem' }}>
-          {localMessage}
+        <div className={cn(
+          "mb-8 p-4 rounded-xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-4",
+          messageType === 'error' ? "bg-destructive/10 border-destructive/20 text-destructive" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
+        )}>
+          {messageType === 'error' ? <AlertCircle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
+          <span className="font-bold text-sm">{localMessage}</span>
+          <Button variant="ghost" size="icon" className="ml-auto h-8 w-8" onClick={() => setLocalMessage('')}>
+             <Plus className="w-4 h-4 rotate-45" />
+          </Button>
         </div>
       )}
 
-      <div className="workspace-grid">
-        <aside className="workspace-sidebar">
-          <div className="panel">
-            <h3>{t('judge.workspace.documents')}</h3>
-
-            <div className="form-grid">
-              <label>
-                {t('judge.workspace.documentType')}
-                <select
-                  value={selectedDocType}
-                  onChange={(event) => setSelectedDocType(event.target.value as DocumentType)}
-                >
-                  {DOCUMENT_TYPES.map((docType) => (
-                    <option key={docType} value={docType}>
-                      {t(`judge.documentTypes.${docType}`)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="upload-label">
-                {t('judge.workspace.uploadDocument')}
-                <div style={{ position: 'relative' }}>
-                  <input 
-                    ref={fileInputRef} 
-                    type="file" 
-                    onChange={handleDocumentChange}
-                    style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 10 }}
-                  />
-                  <div className="btn btn-secondary" style={{ width: '100%', justifyContent: 'flex-start' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    {selectedFile ? selectedFile.name : t('judge.workspace.noFileSelected')}
+      <div className="flex flex-col xl:flex-row gap-8 items-start">
+        {/* Sidebar: Documents & Analysis Status */}
+        <aside className="w-full xl:w-96 flex flex-col gap-6 sticky top-24">
+          <Card className="shadow-sm border-border/50">
+            <CardHeader className="bg-muted/10 border-b py-4">
+              <CardTitle className="text-base flex items-center gap-2">
+                <FileText className="w-4 h-4 text-primary" />
+                {t('judge.workspace.documents')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-1.5 text-xs">
+                    <label className="font-black uppercase text-muted-foreground ml-1">{t('judge.workspace.documentType')}</label>
+                    <select
+                      className="w-full bg-background border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/20"
+                      value={selectedDocType}
+                      onChange={(event) => setSelectedDocType(event.target.value as DocumentType)}
+                    >
+                      {DOCUMENT_TYPES.map((docType) => (
+                        <option key={docType} value={docType}>
+                          {t(`judge.documentTypes.${docType}`)}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                </div>
-              </label>
 
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleUpload}
-                disabled={!selectedFile || uploadMutation.isPending}
-              >
-                {uploadMutation.isPending ? t('common.loading') : t('judge.workspace.uploadNow')}
-              </button>
-            </div>
-
-            <div style={{ marginTop: '2rem' }}>
-              <ul className="document-list" style={{ listStyle: 'none', padding: 0 }}>
-                {(documentsQuery.data?.items ?? []).map((doc) => (
-                  <li key={doc.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-base)', borderRadius: 'var(--radius-md)', marginBottom: '0.75rem', border: '1px solid var(--border-subtle)' }}>
-                    <div style={{ overflow: 'hidden', marginRight: '1rem' }}>
-                      <strong style={{ fontSize: '0.9rem', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.file_name}</strong>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t(`judge.documentTypes.${doc.document_type}`)}</span>
+                  <div className="space-y-1.5 text-xs">
+                    <label className="font-black uppercase text-muted-foreground ml-1">{t('judge.workspace.uploadDocument')}</label>
+                    <div className="relative group">
+                       <input 
+                         ref={fileInputRef} 
+                         type="file" 
+                         className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                         onChange={handleDocumentChange}
+                       />
+                       <div className="flex items-center gap-2 w-full bg-background border border-dashed rounded-lg px-3 py-2.5 group-hover:border-primary/50 transition-colors">
+                          <Upload className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
+                          <span className="truncate text-muted-foreground text-xs font-medium italic">
+                            {selectedFile ? selectedFile.name : "Choose file..."}
+                          </span>
+                       </div>
                     </div>
-                    <span className={getDocumentStatusClass(doc.processing_status)}>
-                      {t(`judge.documentStatus.${doc.processing_status}`)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+                  </div>
 
-            <div style={{ marginTop: '2.5rem', paddingTop: '2rem', borderTop: '1px solid var(--border-subtle)' }}>
-              <button
-                type="button"
-                className="btn btn-primary"
-                style={{ width: '100%', padding: '1rem' }}
-                onClick={() => runAnalysisMutation.mutate()}
-                disabled={isActivelyLoading}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
-                {t('judge.workspace.runAnalysis')}
-              </button>
-              
-              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                {isActivelyLoading && <p className="mono" style={{ fontSize: '0.85rem', color: 'var(--emerald-600)' }}>{t('judge.workspace.analysisPending')}</p>}
-                {!isActivelyLoading && isReady && <p className="mono" style={{ fontSize: '0.85rem', color: 'var(--success)' }}>{t('judge.workspace.analysisReady')}</p>}
+                  <Button
+                    className="w-full h-10 shadow-sm"
+                    onClick={handleUpload}
+                    disabled={!selectedFile || uploadMutation.isPending}
+                  >
+                    {uploadMutation.isPending ? "Uploading..." : "Upload & Process"}
+                  </Button>
+                </div>
+
+                <div className="pt-4 border-t space-y-2">
+                  {(documentsQuery.data?.items ?? []).map((doc) => (
+                    <div key={doc.id} className="group flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-transparent hover:border-primary/20 hover:bg-card transition-all">
+                      <div className="flex-1 min-w-0 pr-2">
+                        <div className="flex items-center gap-2 mb-0.5">
+                           <FileText className="w-3.5 h-3.5 text-primary/70 shrink-0" />
+                           <h5 className="text-[11px] font-bold truncate">{doc.file_name}</h5>
+                        </div>
+                        <span className="text-[10px] uppercase text-muted-foreground font-semibold">{t(`judge.documentTypes.${doc.document_type}`)}</span>
+                      </div>
+                      <Badge 
+                        variant={doc.processing_status === 'complete' ? 'success' : doc.processing_status === 'failed' ? 'destructive' : 'warning'}
+                        className="px-1.5 h-4 text-[9px] font-black uppercase tracking-tighter"
+                      >
+                         {t(`judge.documentStatus.${doc.processing_status}`)}
+                      </Badge>
+                    </div>
+                  ))}
+                  {(!documentsQuery.data?.items || documentsQuery.data?.items.length === 0) && (
+                    <div className="py-8 text-center text-[11px] text-muted-foreground italic bg-muted/10 rounded-lg">
+                       No documents uploaded yet.
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
+
+          {/* AI Workbench Status */}
+          <Card className="shadow-sm border-border/50 bg-primary/5 border-primary/10">
+             <CardHeader className="py-4">
+                <CardTitle className="text-sm font-bold flex items-center gap-2">
+                   <Sparkles className="w-4 h-4 text-primary" />
+                   AI Workspace Status
+                </CardTitle>
+             </CardHeader>
+             <CardContent className="pb-6">
+                <div className="space-y-4">
+                   <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-muted-foreground">Analysis Status</span>
+                      <Badge variant={isReady ? "default" : "warning"} className="uppercase font-black text-[9px]">
+                         {isActivelyLoading ? "Processing" : isReady ? "Complete" : "Initial"}
+                      </Badge>
+                   </div>
+                   {isReady && (
+                      <div className="space-y-2">
+                         <div className="flex justify-between text-[10px] font-black uppercase text-muted-foreground">
+                            <span>Confidence Level</span>
+                            <span className="text-primary">{Math.round((analysis?.confidence ?? 0) * 100)}%</span>
+                         </div>
+                         <div className="h-1.5 w-full bg-accent rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary),0.5)] transition-all duration-1000" 
+                              style={{ width: `${(analysis?.confidence ?? 0) * 100}%` }}
+                            />
+                         </div>
+                      </div>
+                   )}
+                </div>
+             </CardContent>
+          </Card>
         </aside>
 
-        <section className="workspace-main">
-          {analysisQuery.error && <div className="error-banner">{t('judge.workspace.analysisError')}</div>}
+        {/* Main Content: Analysis Results & Editor */}
+        <main className="flex-1 space-y-8 w-full">
+          {analysisQuery.error && (
+            <div className="bg-destructive/10 text-destructive p-4 rounded-xl border border-destructive/20 flex items-center gap-3">
+               <AlertCircle className="w-5 h-5" />
+               <span className="font-bold text-sm italic">{t('judge.workspace.analysisError')}</span>
+            </div>
+          )}
 
-          <div className="panel">
-            <h3>{t('judge.workspace.similarPrecedents')}</h3>
-            {isReady ? (
-              <div className="grid-dashboard" style={{ gridTemplateColumns: '1fr' }}>
-                {precedents.map((item) => (
-                <article key={item.caseId} className="case-card" style={{ padding: '1.25rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Link 
-                      to={`/judge/precedents/${item.caseId}`}
-                      className="judicial-title"
-                      style={{ fontSize: '1.1rem', textDecoration: 'none', color: 'var(--emerald-800)' }}
-                    >
-                      {item.title}
-                    </Link>
-                    <span className="badge-emerald" style={{ padding: '0.25rem 0.75rem', borderRadius: '4px' }}>
-                      {(item.similarityScore * 100).toFixed(0)}% match
-                    </span>
+          {/* Analysis View - Conditional on Analysis Ready */}
+          {isReady ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Precedents Card */}
+              <Card className="shadow-sm border-border/50 overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between bg-muted/10 border-b py-4">
+                  <div className="flex items-center gap-2">
+                    <Scale className="w-4 h-4 text-indigo-500" />
+                    <CardTitle className="text-sm">{t('judge.workspace.similarPrecedents')}</CardTitle>
                   </div>
-                </article>
-                ))}
-              </div>
-            ) : (
-              <p style={{ color: 'var(--text-muted)' }}>{t('judge.workspace.waitingAnalysis')}</p>
-            )}
-          </div>
+                  <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-600 border-indigo-500/20">Top 5</Badge>
+                </CardHeader>
+                <CardContent className="p-0">
+                   <div className="divide-y divide-border/50">
+                      {precedents.map((item) => (
+                        <Link 
+                          key={item.caseId}
+                          to={`/judge/precedents/${item.caseId}`}
+                          className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors group"
+                        >
+                          <div className="flex-1 min-w-0 pr-4">
+                             <h6 className="text-[12px] font-bold group-hover:text-primary transition-colors truncate mb-0.5">{item.title}</h6>
+                             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">Reference ID: {item.caseId}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                             <div className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 text-[10px] font-black border border-emerald-500/20">
+                                {Math.round(item.similarityScore * 100)}% Match
+                             </div>
+                             <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                          </div>
+                        </Link>
+                      ))}
+                   </div>
+                </CardContent>
+              </Card>
 
-          <div className="panel">
-            <h3>{t('judge.workspace.lawArticles')}</h3>
-            {isReady ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                {lawArticles.map((article) => (
-                  <span key={article} className="badge-emerald" style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--emerald-200)' }}>
-                    {article}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p style={{ color: 'var(--text-muted)' }}>{t('judge.workspace.waitingAnalysis')}</p>
-            )}
-          </div>
-
-          <div className="panel">
-            <h3>{t('judge.workspace.entitlementCalculation')}</h3>
-            {isReady ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {entitlements.map((entry) => (
-                  <div key={`${entry.label}-${entry.value}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: 'var(--bg-base)', borderRadius: 'var(--radius-md)' }}>
-                    <span style={{ fontWeight: '500' }}>{entry.label}</span>
-                    <strong style={{ color: 'var(--emerald-800)' }}>{entry.value}</strong>
+              {/* Law Articles Card */}
+              <Card className="shadow-sm border-border/50 overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between bg-muted/10 border-b py-4">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-amber-500" />
+                    <CardTitle className="text-sm">{t('judge.workspace.lawArticles')}</CardTitle>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p style={{ color: 'var(--text-muted)' }}>{t('judge.workspace.waitingAnalysis')}</p>
-            )}
-          </div>
+                </CardHeader>
+                <CardContent className="p-6">
+                    <div className="flex flex-wrap gap-2">
+                      {lawArticles.map((article) => (
+                        <div key={article} className="bg-amber-500/5 text-amber-700 border border-amber-500/10 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm">
+                          {article}
+                        </div>
+                      ))}
+                      {lawArticles.length === 0 && <p className="text-xs text-muted-foreground italic">No relevant articles identified.</p>}
+                    </div>
+                </CardContent>
+              </Card>
 
+              {/* Entitlements Card */}
+              <Card className="md:col-span-2 shadow-sm border-border/50 overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between bg-muted/10 border-b py-4">
+                  <div className="flex items-center gap-2">
+                    <Calculator className="w-4 h-4 text-emerald-500" />
+                    <CardTitle className="text-sm">{t('judge.workspace.entitlementCalculation')}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 divide-y divide-border/50 sm:divide-y-0">
+                      {entitlements.map((entry, idx) => (
+                        <div key={`${entry.label}-${idx}`} className="p-6 flex flex-col gap-1 hover:bg-muted/10 transition-colors border-r border-border/50 last:border-r-0">
+                           <span className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">{entry.label}</span>
+                           <strong className="text-lg text-primary font-bold">{entry.value}</strong>
+                        </div>
+                      ))}
+                      {entitlements.length === 0 && (
+                        <div className="col-span-full py-10 text-center text-muted-foreground italic bg-muted/5">
+                           Calculation data unavailable for this case.
+                        </div>
+                      )}
+                    </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <Card className="shadow-sm border-border/50 border-dashed border-2 bg-muted/5">
+               <CardContent className="py-24 text-center">
+                  <BarChart3 className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                  <h4 className="text-lg font-bold mb-2">Analysis Workspace</h4>
+                  <p className="max-w-md mx-auto text-muted-foreground text-sm italic">
+                     {t('judge.workspace.waitingAnalysis')} Run the AI Analysis to populate similar precedents, law articles, and entitlement calculations.
+                  </p>
+                  <Button 
+                    className="mt-6 shadow-md shadow-primary/10" 
+                    variant="outline"
+                    disabled={isActivelyLoading}
+                    onClick={() => runAnalysisMutation.mutate()}
+                  >
+                     <Sparkles className="w-4 h-4 mr-2" />
+                     {isActivelyLoading ? "Analyzing Case Data..." : "Run AI Case Analysis"}
+                  </Button>
+               </CardContent>
+            </Card>
+          )}
+
+          {/* AI Unavailability Warning */}
           {isUnavailable && (
-            <div className="warning-banner" style={{ marginBottom: '2rem', background: '#fff9db', border: '1px solid #ffec99', color: '#947600', padding: '1.25rem', borderRadius: 'var(--radius-md)', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              <div>
-                <strong style={{ display: 'block', marginBottom: '0.25rem' }}>AI Reasoning Unavailable</strong>
-                <p style={{ margin: 0, fontSize: '0.9rem' }}>The AI models are currently busy or disconnected. Basic analysis data is shown above, but a full judgment draft could not be generated.</p>
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-5 flex gap-4 items-start shadow-sm">
+              <div className="p-2 bg-amber-500/20 rounded-lg text-amber-700">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <h5 className="font-bold text-amber-900 text-sm mb-1 uppercase tracking-tighter">AI Reasoning System Offline</h5>
+                <p className="text-amber-800 text-xs leading-relaxed opacity-90">
+                  The primary reasoning engines (JAIS-30B) are currently disconnected or under high load. While preliminary data is visible, the synthesized legal reasoning and draft judgment generation is temporarily unavailable.
+                </p>
               </div>
             </div>
           )}
 
-          <JudgmentEditor
-            draftText={analysis?.draftText ?? ''}
-            confidence={analysis?.confidence ?? 0}
-            isSubmitting={finalizeMutation.isPending}
-            onRegenerate={async () => {
-              await runAnalysisMutation.mutateAsync()
-              await analysisQuery.refetch()
-            }}
-            onFinalize={handleFinalize}
-          />
-
-          <div className="panel">
-            <h3>{t('judge.workspace.feedbackTitle')}</h3>
-
-            <div className="form-grid">
-              <div className="decision-row" style={{ margin: 0, padding: '1.5rem 0', background: 'none', border: 'none', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2.5rem' }}>
-                <label>
-                  <span style={{ display: 'block', marginBottom: '1rem' }}>{t('judge.feedback.legalRelevance')}: <strong style={{ color: 'var(--emerald-700)' }}>{feedback.legal_relevance_score}</strong></span>
-                  <input
-                    type="range"
-                    min={1}
-                    max={5}
-                    step={1}
-                    value={feedback.legal_relevance_score}
-                    onChange={(event) =>
-                      setFeedback((prev) => ({
-                        ...prev,
-                        legal_relevance_score: Number(event.target.value),
-                      }))
-                    }
-                    style={{ height: '6px', background: 'var(--emerald-100)', borderRadius: '999px', appearance: 'none', padding: 0 }}
-                  />
-                </label>
-
-                <label>
-                   <span style={{ display: 'block', marginBottom: '1rem' }}>{t('judge.feedback.reasoningQuality')}: <strong style={{ color: 'var(--emerald-700)' }}>{feedback.reasoning_quality_score}</strong></span>
-                  <input
-                    type="range"
-                    min={1}
-                    max={5}
-                    step={1}
-                    value={feedback.reasoning_quality_score}
-                    onChange={(event) =>
-                      setFeedback((prev) => ({
-                        ...prev,
-                        reasoning_quality_score: Number(event.target.value),
-                      }))
-                    }
-                    style={{ height: '6px', background: 'var(--emerald-100)', borderRadius: '999px', appearance: 'none', padding: 0 }}
-                  />
-                </label>
-
-                <label>
-                   <span style={{ display: 'block', marginBottom: '1rem' }}>{t('judge.feedback.explanationClarity')}: <strong style={{ color: 'var(--emerald-700)' }}>{feedback.explanation_clarity_score}</strong></span>
-                  <input
-                    type="range"
-                    min={1}
-                    max={5}
-                    step={1}
-                    value={feedback.explanation_clarity_score}
-                    onChange={(event) =>
-                      setFeedback((prev) => ({
-                        ...prev,
-                        explanation_clarity_score: Number(event.target.value),
-                      }))
-                    }
-                    style={{ height: '6px', background: 'var(--emerald-100)', borderRadius: '999px', appearance: 'none', padding: 0 }}
-                  />
-                </label>
-              </div>
-
-              <label className="full-width">
-                {t('judge.feedback.feedbackText')}
-                <textarea
-                  rows={4}
-                  value={feedback.feedback_text}
-                  onChange={(event) => setFeedback((prev) => ({ ...prev, feedback_text: event.target.value }))}
-                  placeholder="Share your feedback on the AI results..."
-                />
-              </label>
-
-              <label className="full-width">
-                {t('judge.feedback.suggestedImprovements')}
-                <textarea
-                  rows={4}
-                  value={feedback.suggested_improvements}
-                  onChange={(event) =>
-                    setFeedback((prev) => ({ ...prev, suggested_improvements: event.target.value }))
-                  }
-                  placeholder="How can we improve the accuracy of this analysis?"
-                />
-              </label>
-
-              <div className="panel-actions full-width" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleFeedbackSubmit}
-                  disabled={feedbackMutation.isPending}
-                >
-                  {feedbackMutation.isPending ? t('common.loading') : (
-                    <>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-                      {t('judge.workspace.feedbackTitle')}
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
+          {/* Judgment Editor Workspace */}
+          <div className="space-y-4">
+             <div className="flex items-center gap-2 mb-2">
+                <Scale className="w-5 h-5 text-primary" />
+                <h3 className="text-xl font-bold tracking-tight">Judgment Drafting Workspace</h3>
+             </div>
+             <JudgmentEditor
+               draftText={analysis?.draftText ?? ''}
+               confidence={analysis?.confidence ?? 0}
+               isSubmitting={finalizeMutation.isPending}
+               onRegenerate={async () => {
+                 await runAnalysisMutation.mutateAsync()
+                 await analysisQuery.refetch()
+               }}
+               onFinalize={handleFinalize}
+             />
           </div>
-        </section>
+
+          {/* Feedback Section */}
+          <Card className="shadow-sm border-border/50">
+            <CardHeader className="bg-muted/10 border-b py-4">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-primary" />
+                {t('judge.workspace.feedbackTitle')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8">
+              <div className="space-y-8">
+                {/* Scoring Sliders */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                  {[
+                    { id: 'legal_relevance_score', label: t('judge.feedback.legalRelevance'), icon: Scale },
+                    { id: 'reasoning_quality_score', label: t('judge.feedback.reasoningQuality'), icon: Sparkles },
+                    { id: 'explanation_clarity_score', label: t('judge.feedback.explanationClarity'), icon: BookOpen }
+                  ].map((item) => (
+                    <div key={item.id} className="space-y-4">
+                       <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-muted-foreground uppercase flex items-center gap-2">
+                             <item.icon className="w-3.5 h-3.5 text-primary" />
+                             {item.label}
+                          </span>
+                          <span className="bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-black">{(feedback as any)[item.id]} / 5</span>
+                       </div>
+                       <input
+                        type="range"
+                        min={1}
+                        max={5}
+                        step={1}
+                        value={(feedback as any)[item.id]}
+                        onChange={(event) =>
+                          setFeedback((prev) => ({
+                            ...prev,
+                            [item.id]: Number(event.target.value),
+                          }))
+                        }
+                        className="w-full h-1.5 bg-accent rounded-full appearance-none cursor-pointer accent-primary"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Text Feedback */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-black uppercase text-muted-foreground ml-1">{t('judge.feedback.feedbackText')}</label>
+                    <textarea
+                      rows={4}
+                      className="w-full bg-muted/20 border rounded-xl p-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:italic"
+                      value={feedback.feedback_text}
+                      onChange={(event) => setFeedback((prev) => ({ ...prev, feedback_text: event.target.value }))}
+                      placeholder="e.g. The legal reasoning aligns perfectly with recent DIFC precedents..."
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-black uppercase text-muted-foreground ml-1">{t('judge.feedback.suggestedImprovements')}</label>
+                    <textarea
+                      rows={4}
+                      className="w-full bg-muted/20 border rounded-xl p-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:italic"
+                      value={feedback.suggested_improvements}
+                      onChange={(event) => setFeedback((prev) => ({ ...prev, suggested_improvements: event.target.value }))}
+                      placeholder="e.g. Include citations for the recent commercial law amendments..."
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end border-t pt-6">
+                  <Button
+                    className="gap-2 px-8 shadow-md"
+                    onClick={handleFeedbackSubmit}
+                    disabled={feedbackMutation.isPending}
+                  >
+                    {feedbackMutation.isPending ? "Submitting..." : (
+                      <>
+                        <ThumbsUp className="w-4 h-4" />
+                        {t('judge.workspace.feedbackTitle')}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
       </div>
     </PortalLayout>
   )

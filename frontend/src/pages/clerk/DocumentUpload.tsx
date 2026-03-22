@@ -1,11 +1,31 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { 
+  Upload, 
+  FileText, 
+  Search, 
+  CheckCircle2, 
+  AlertCircle, 
+  Clock, 
+  MoreVertical,
+  ChevronDown,
+  Trash2,
+  FileCheck,
+  Zap,
+  ShieldCheck,
+  ChevronRight
+} from 'lucide-react'
 import PortalLayout from '../../components/layout/PortalLayout'
 import { clerkGetCaseDocuments, clerkGetCases, clerkUploadDocument } from '../../api/clerk'
 import { queryKeys } from '../../api/queryKeys'
 import type { ClerkUploadJob } from '../../types/clerk'
 import type { DocumentType } from '../../types/judge'
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { cn } from '@/lib/utils'
 
 const DOCUMENT_TAGS: DocumentType[] = ['contract', 'financial_record', 'termination_notice', 'witness_statement']
 
@@ -84,113 +104,238 @@ const DocumentUpload = () => {
   }
 
   return (
-    <PortalLayout title={t('clerk.pages.documentsTitle')} subtitle={t('clerk.pages.documentsSubtitle')}>
-      <section className="panel">
-        <div className="form-grid two-col">
-          <label>
-            {t('clerk.forms.caseSelection')}
-            <select value={selectedCaseId} onChange={(event) => setSelectedCaseId(event.target.value)}>
-              <option value="">{t('clerk.forms.selectCase')}</option>
-              {(casesQuery.data?.items ?? []).map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.case_number} - {item.title}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div>
-            <p className="case-id">{selectedCase ? `${selectedCase.case_number} • ${selectedCase.title}` : '-'}</p>
+    <PortalLayout 
+      title={t('clerk.pages.documentsTitle')} 
+      subtitle="Institutional evidence management and high-performance ingestion pipeline."
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column - Controls & Upload */}
+        <div className="lg:col-span-4 space-y-8">
+          <Card className="shadow-lg border-primary/10">
+            <CardHeader className="bg-primary/5 border-b py-5">
+              <div className="flex items-center gap-2">
+                 <Search className="w-5 h-5 text-primary" />
+                 <CardTitle className="text-lg">Target Environment</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">Select Judicial Case</label>
+                  <select 
+                    className="w-full bg-muted/20 border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer font-bold"
+                    value={selectedCaseId} 
+                    onChange={(event) => setSelectedCaseId(event.target.value)}
+                  >
+                    <option value="">{t('clerk.forms.selectCase')}</option>
+                    {(casesQuery.data?.items ?? []).map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.case_number} - {item.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {selectedCase && (
+                  <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 animate-in fade-in slide-in-from-top-2">
+                     <p className="text-[10px] font-black uppercase text-primary mb-1 tracking-tighter">Current Context</p>
+                     <p className="text-sm font-bold truncate">{selectedCase.title}</p>
+                     <p className="text-[11px] text-muted-foreground italic mt-1 font-medium">{selectedCase.case_number}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg border-emerald-500/10 overflow-hidden">
+            <CardHeader className="bg-emerald-500/5 border-b py-5">
+              <div className="flex items-center gap-2">
+                 <Upload className="w-5 h-5 text-emerald-500" />
+                 <CardTitle className="text-lg">Ingestion Zone</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div
+                className={cn(
+                  "p-10 border-b-2 border-dashed transition-all cursor-pointer group flex flex-col items-center justify-center text-center gap-4",
+                  isDragging ? "bg-emerald-500/10 border-emerald-500 scale-[0.98]" : "bg-transparent border-transparent hover:bg-muted/30"
+                )}
+                onDragEnter={(e) => { e.preventDefault(); setIsDragging(true) }}
+                onDragOver={(e) => e.preventDefault()}
+                onDragLeave={(e) => { e.preventDefault(); setIsDragging(false) }}
+                onDrop={(e) => { e.preventDefault(); setIsDragging(false); pushFiles(e.dataTransfer.files) }}
+              >
+                <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center text-muted-foreground group-hover:scale-110 group-hover:text-emerald-500 transition-all">
+                   <FileCheck className="w-8 h-8" />
+                </div>
+                <div>
+                   <p className="font-bold text-sm">{t('clerk.forms.dragDropHelp')}</p>
+                   <p className="text-[11px] text-muted-foreground italic mt-1 font-medium">PDF, DOCX, Images (MAX 50MB)</p>
+                </div>
+                <label className="cursor-pointer">
+                  <Button variant="outline" size="sm" className="pointer-events-none gap-2 mt-2">
+                     <Search className="w-3.5 h-3.5" />
+                     {t('clerk.forms.pickFiles')}
+                  </Button>
+                  <input type="file" multiple className="hidden" onChange={(e) => pushFiles(e.target.files)} />
+                </label>
+              </div>
+
+              {jobs.length > 0 && (
+                <div className="p-6 bg-card space-y-4">
+                  <div className="flex items-center justify-between mb-4">
+                     <h4 className="text-[11px] font-black uppercase text-muted-foreground tracking-widest">Queue ({jobs.length})</h4>
+                     <Button 
+                        size="sm" 
+                        className="h-9 px-6 shadow-lg shadow-emerald-500/20 font-bold gap-2"
+                        disabled={!selectedCaseId || uploadMutation.isPending} 
+                        onClick={runUploads}
+                     >
+                        <Zap className="w-4 h-4" />
+                        {uploadMutation.isPending ? "Processing..." : "Commit Ingestion"}
+                     </Button>
+                  </div>
+                  <ul className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">
+                    {jobs.map((job) => (
+                      <li key={job.id} className="p-4 rounded-xl border bg-muted/5 space-y-3 animate-in fade-in slide-in-from-right-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[13px] font-bold truncate">{job.file.name}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                               <Badge variant="outline" className="text-[9px] uppercase font-black py-0 h-4 border-emerald-500/20 text-emerald-600 bg-emerald-500/5">
+                                  {job.status}
+                               </Badge>
+                               <span className="text-[10px] text-muted-foreground font-medium italic">{(job.file.size / 1024 / 1024).toFixed(2)} MB</span>
+                            </div>
+                          </div>
+                          <select
+                            className="text-[10px] font-black uppercase bg-card border rounded-lg px-2 py-1 outline-none ring-primary/10 focus:ring-2"
+                            value={job.documentType}
+                            onChange={(e) => setJobs(prev => prev.map(item => item.id === job.id ? { ...item, documentType: e.target.value as DocumentType } : item))}
+                          >
+                            {DOCUMENT_TAGS.map((tag) => (
+                              <option key={tag} value={tag}>{t(`judge.documentTypes.${tag}`)}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                           <div 
+                              className={cn("h-full transition-all duration-300", job.status === 'failed' ? "bg-destructive" : "bg-emerald-500")}
+                              style={{ width: `${job.progress}%` }} 
+                           />
+                        </div>
+                        {job.error && <p className="text-[10px] font-bold text-destructive italic">{job.error}</p>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column - Status Table */}
+        <div className="lg:col-span-8 flex flex-col gap-6">
+          <Card className="flex-1 shadow-lg border-border/50 overflow-hidden flex flex-col">
+            <CardHeader className="bg-muted/10 border-b py-5 px-8 flex flex-row items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                   <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                   <CardTitle className="text-lg">{t('clerk.tables.caseDocuments')}</CardTitle>
+                   <CardDescription className="text-xs font-medium italic">Registry of verified judicial materials</CardDescription>
+                </div>
+              </div>
+              <Badge className="bg-primary/5 text-primary border-primary/20 hover:bg-primary/5 font-black uppercase tracking-tighter text-[10px]">
+                 Total Documents: {documentsQuery.data?.items?.length ?? 0}
+              </Badge>
+            </CardHeader>
+            <CardContent className="p-0 flex-1 overflow-y-auto">
+              {!selectedCaseId ? (
+                <div className="h-full min-h-[400px] flex flex-col items-center justify-center text-center p-12 space-y-4">
+                   <div className="w-20 h-20 bg-muted/20 rounded-full flex items-center justify-center text-muted-foreground/30">
+                      <Search className="w-10 h-10" />
+                   </div>
+                   <div className="space-y-1">
+                      <h5 className="font-bold text-foreground">Awaiting Context Selection</h5>
+                      <p className="text-xs text-muted-foreground italic px-8">Please choose a judicial case folder from the left sidebar to access verified evidence and filings.</p>
+                   </div>
+                </div>
+              ) : documentsQuery.data?.items?.length === 0 ? (
+                <div className="h-full min-h-[400px] flex flex-col items-center justify-center text-center p-12 space-y-4 animate-in fade-in duration-700">
+                   <div className="w-20 h-20 bg-emerald-500/5 rounded-full flex items-center justify-center text-emerald-500/20">
+                      <Upload className="w-10 h-10" />
+                   </div>
+                   <div className="space-y-1">
+                      <h5 className="font-bold text-emerald-600">Secure Vault Empty</h5>
+                      <p className="text-xs text-muted-foreground italic px-8">No documents have been committed to this case yet. Use the ingestion zone to add digital materials.</p>
+                   </div>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader className="bg-muted/5 sticky top-0 z-10">
+                    <TableRow>
+                      <TableHead className="w-[45%] pl-8 font-black uppercase text-[10px] tracking-widest">{t('document.fileName')}</TableHead>
+                      <TableHead className="font-black uppercase text-[10px] tracking-widest">{t('document.fileType')}</TableHead>
+                      <TableHead className="pr-8 font-black uppercase text-[10px] tracking-widest">{t('document.processingStatus')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(documentsQuery.data?.items ?? []).map((doc) => (
+                      <TableRow key={doc.id} className="group hover:bg-muted/20 transition-colors">
+                        <TableCell className="pl-8 py-4">
+                           <div className="flex items-center gap-3">
+                              <div className="p-2 bg-muted/30 rounded-lg group-hover:bg-primary/20 transition-colors">
+                                 <FileText className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
+                              </div>
+                              <span className="font-bold text-sm tracking-tight">{doc.file_name}</span>
+                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-tighter border-primary/20 text-primary bg-primary/5">
+                            {t(`judge.documentTypes.${doc.document_type}`)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="pr-8">
+                          <div className="flex items-center gap-2">
+                             {doc.processing_status === 'completed' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> :
+                              doc.processing_status === 'failed' ? <AlertCircle className="w-3.5 h-3.5 text-destructive" /> :
+                              <Clock className="w-3.5 h-3.5 text-amber-500 animate-spin" />}
+                             <span className={cn(
+                               "text-[11px] font-black uppercase tracking-widest",
+                               doc.processing_status === 'completed' ? "text-emerald-600" :
+                               doc.processing_status === 'failed' ? "text-destructive" :
+                               "text-amber-600"
+                             )}>
+                               {t(`judge.documentStatus.${doc.processing_status}`)}
+                             </span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+          
+          <div className="p-6 bg-primary/5 border border-primary/10 rounded-2xl flex items-center justify-between">
+             <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                   <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div>
+                   <h5 className="text-sm font-black uppercase tracking-tight text-primary">Registry Compliance</h5>
+                   <p className="text-[10px] text-muted-foreground font-medium italic leading-none mt-1">All materials are cryptographically signed and stored in DIFC secure vaults.</p>
+                </div>
+             </div>
+             <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group">
+                System Diagnostics
+                <ChevronRight className="w-3 h-3 ml-2 group-hover:translate-x-1 transition-transform" />
+             </Button>
           </div>
         </div>
-      </section>
-
-      <section className="panel">
-        <h3>{t('clerk.forms.uploadZone')}</h3>
-        <div
-          className={isDragging ? 'dropzone active' : 'dropzone'}
-          onDragEnter={(event) => {
-            event.preventDefault()
-            setIsDragging(true)
-          }}
-          onDragOver={(event) => event.preventDefault()}
-          onDragLeave={(event) => {
-            event.preventDefault()
-            setIsDragging(false)
-          }}
-          onDrop={(event) => {
-            event.preventDefault()
-            setIsDragging(false)
-            pushFiles(event.dataTransfer.files)
-          }}
-        >
-          <p>{t('clerk.forms.dragDropHelp')}</p>
-          <label className="btn-secondary file-btn">
-            {t('clerk.forms.pickFiles')}
-            <input type="file" multiple onChange={(event) => pushFiles(event.target.files)} />
-          </label>
-        </div>
-
-        <div className="panel-actions">
-          <button type="button" className="btn-primary" disabled={!selectedCaseId || uploadMutation.isPending} onClick={runUploads}>
-            {uploadMutation.isPending ? t('common.loading') : t('clerk.forms.uploadQueued')}
-          </button>
-        </div>
-
-        <ul className="upload-list">
-          {jobs.map((job) => (
-            <li key={job.id}>
-              <div className="upload-row">
-                <strong>{job.file.name}</strong>
-                <select
-                  value={job.documentType}
-                  onChange={(event) =>
-                    setJobs((prev) =>
-                      prev.map((item) =>
-                        item.id === job.id ? { ...item, documentType: event.target.value as DocumentType } : item
-                      )
-                    )
-                  }
-                >
-                  {DOCUMENT_TAGS.map((tag) => (
-                    <option key={tag} value={tag}>
-                      {t(`judge.documentTypes.${tag}`)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="progress-track">
-                <div className="progress-fill" style={{ width: `${job.progress}%` }} />
-              </div>
-              <p className="case-id">{t(`clerk.uploadStatus.${job.status}`)}{job.error ? ` • ${job.error}` : ''}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="panel">
-        <h3>{t('clerk.tables.caseDocuments')}</h3>
-        {!selectedCaseId ? <p className="empty-state">{t('clerk.forms.selectCaseFirst')}</p> : null}
-        <div className="table-wrap">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>{t('document.fileName')}</th>
-                <th>{t('document.fileType')}</th>
-                <th>{t('document.processingStatus')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(documentsQuery.data?.items ?? []).map((doc) => (
-                <tr key={doc.id}>
-                  <td>{doc.file_name}</td>
-                  <td>{t(`judge.documentTypes.${doc.document_type}`)}</td>
-                  <td>{t(`judge.documentStatus.${doc.processing_status}`)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      </div>
     </PortalLayout>
   )
 }

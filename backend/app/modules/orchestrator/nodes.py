@@ -137,8 +137,14 @@ def _assess_complexity(state: AnalysisState) -> tuple[float, list[str]]:
 def _select_model(state: AnalysisState) -> tuple[str, str, float]:
     score, reasons = _assess_complexity(state)
     reason_str = " | ".join(reasons) if reasons else "no complexity signals"
-    logger.info(f"Model routing → Qwen 1.5B (forced, score={score:.2f}) | Case {state['case_id']} | {reason_str}")
-    return settings.fallback_model_url, "qwen_1.5b", score
+    
+    # Threshold for JAIS 7B is 0.5.
+    if score >= 0.5:
+        logger.info(f"Model routing → JAIS 7B (score={score:.2f}) | Case {state['case_id']} | {reason_str}")
+        return settings.jais_url, "jais", score
+    else:
+        logger.info(f"Model routing → Qwen 1.5B (score={score:.2f}) | Case {state['case_id']} | {reason_str}")
+        return settings.fallback_model_url, "qwen_1.5b", score
 
 
 async def document_agent_node(state: AnalysisState) -> dict[str, Any]:
@@ -564,6 +570,8 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
     system_prompt = (
         "You are an expert UAE Labor Law Judicial Assistant specializing in DIFC Employment Law.\n"
         "Your task is to analyze the case context and generate a high-quality legal reasoning and draft judgment.\n\n"
+        f"IMPORTANT: The analysis is for a case in {state.get('query_language', 'en')} language. "
+        "Please respond in the SAME language as the query (Arabic or English).\n\n"
         "CONTEXT HIERARCHY:\n"
         "1. CASE METADATA (Primary Facts): Foundation of the case (Parties, Description, Notes).\n"
         "2. RELEVANT STATUTES (High Weight): Articles from DIFC Employment Law. These are binding.\n"

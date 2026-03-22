@@ -3,6 +3,20 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/useAuth'
 import ThemeToggle from '../components/layout/ThemeToggle'
+import { 
+  Scale, 
+  Lock, 
+  User, 
+  Globe, 
+  ShieldCheck,
+  ArrowRight,
+  Info
+} from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
+import { motion } from 'framer-motion'
 
 const Login = () => {
   const { t } = useTranslation()
@@ -29,116 +43,148 @@ const Login = () => {
   }
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      minHeight: '100vh',
-      background: 'var(--bg-base)',
-      padding: '1.5rem'
-    }}>
-      <div className="card" style={{
-        width: '100%',
-        maxWidth: '440px',
-        padding: '2.5rem',
-        boxShadow: 'var(--shadow-lg)',
-        background: 'var(--bg-card)',
-        textAlign: 'center'
-      }}>
-        <div style={{ 
-          marginBottom: '2rem',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '1rem'
-        }}>
-          <div style={{ 
-            width: '64px', 
-            height: '64px', 
-            background: 'linear-gradient(135deg, var(--emerald-600), var(--emerald-400))',
-            borderRadius: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 8px 16px rgba(5, 150, 105, 0.2)'
-          }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
-          </div>
-          <h1 className="judicial-title" style={{ fontSize: '1.75rem' }}>
-            {t('common.appName')}
-          </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9375rem' }}>
-            UAE Labor Law Analysis Platform
-          </p>
-        </div>
-        
-        <form onSubmit={handleSubmit} style={{ textAlign: 'left' }}>
-          <div style={{ marginBottom: '1.25rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>
-              Username or Email
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. judge"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </div>
-
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>
-              {t('auth.password')}
-            </label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          {error && (
-            <div className="badge-red" style={{ 
-              padding: '0.75rem', 
-              borderRadius: 'var(--radius-md)',
-              marginBottom: '1.5rem',
-              width: '100%',
-              justifyContent: 'center'
-            }}>
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={isLoading}
-            style={{ width: '100%', padding: '0.85rem' }}
-          >
-            {isLoading ? 'Authenticating...' : t('auth.loginButton')}
-          </button>
-        </form>
-
-        <div style={{ 
-          marginTop: '2.5rem', 
-          padding: '1.25rem',
-          background: 'rgba(5, 150, 105, 0.05)',
-          borderRadius: 'var(--radius-md)',
-          fontSize: '0.8125rem', 
-          color: 'var(--text-secondary)',
-          textAlign: 'left'
-        }}>
-          <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--emerald-700)' }}>Demo Access:</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-            <span><strong>judge</strong> / judge</span>
-            <span><strong>admin</strong> / admin</span>
-            <span><strong>clerk</strong> / clerk</span>
-          </div>
-        </div>
+    <div className="min-h-screen w-full relative overflow-hidden bg-slate-950 flex items-center justify-center p-6 selection:bg-emerald-500/30">
+      {/* Dynamic Background Pattern */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
+         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/20 blur-[120px] rounded-full" />
+         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/20 blur-[120px] rounded-full" />
+         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
       </div>
-      <div style={{ position: 'fixed', bottom: '1.5rem', right: '1.5rem' }}>
+
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="w-full max-w-md relative z-10"
+      >
+        {/* Superior Branding Section */}
+        <div className="text-center mb-10 translate-y-2">
+           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase tracking-widest mb-6 backdrop-blur-sm">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Secure Judicial Portal
+           </div>
+           
+           <div className="flex justify-center mb-6">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-emerald-500/20 blur-2xl rounded-full group-hover:bg-emerald-500/40 transition-all duration-700" />
+                <div className="relative w-20 h-20 bg-gradient-to-br from-emerald-600 to-teal-800 rounded-[24px] flex items-center justify-center shadow-2xl border border-white/10 group-hover:rotate-6 transition-transform">
+                   <Scale className="w-10 h-10 text-white drop-shadow-lg" />
+                </div>
+              </div>
+           </div>
+
+           <h1 className="text-3xl font-black tracking-tight text-white mb-2">
+              {t('common.appName')}
+           </h1>
+           <div className="flex items-center justify-center gap-2 text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] opacity-60">
+              <span>DIFC</span>
+              <div className="w-1 h-1 bg-slate-700 rounded-full" />
+              <span>Labor Law AI</span>
+              <div className="w-1 h-1 bg-slate-700 rounded-full" />
+              <span>v2.4.0</span>
+           </div>
+        </div>
+
+        <Card className="bg-white/5 backdrop-blur-xl border-white/10 shadow-2xl overflow-hidden rounded-[32px]">
+          <CardContent className="p-10">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2 group">
+                <label className="text-[11px] font-black uppercase text-slate-500 ml-1 tracking-tighter flex items-center gap-2">
+                  <User className="w-3 h-3 text-emerald-500" />
+                  Credentials
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Judicial ID or Email"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-sm text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/20 transition-all font-bold placeholder:text-white/20"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                  />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-emerald-500 transition-colors" />
+                </div>
+              </div>
+
+              <div className="space-y-2 group">
+                <label className="text-[11px] font-black uppercase text-slate-500 ml-1 tracking-tighter flex items-center gap-2">
+                   <Lock className="w-3 h-3 text-emerald-500" />
+                   {t('auth.password')}
+                </label>
+                <div className="relative">
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-sm text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/20 transition-all font-bold placeholder:text-white/20"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-emerald-500 transition-colors" />
+                </div>
+              </div>
+
+              {error && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-4 rounded-2xl bg-destructive/20 border border-destructive/20 text-destructive text-xs font-black uppercase tracking-widest text-center"
+                >
+                  {error}
+                </motion.div>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-[13px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 transition-all group"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    Authenticating...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {t('auth.loginButton')}
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-10 pt-8 border-t border-white/5">
+              <div className="flex items-center gap-2 mb-4">
+                 <Info className="w-3.5 h-3.5 text-slate-500" />
+                 <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Environment Access</span>
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                {[
+                  { role: 'judge', pass: 'judge', color: 'bg-indigo-500/20 text-indigo-400' },
+                  { role: 'clerk', pass: 'clerk', color: 'bg-emerald-500/20 text-emerald-400' },
+                  { role: 'admin', pass: 'admin', color: 'bg-amber-500/20 text-amber-400' }
+                ].map(({ role, pass, color }) => (
+                  <div key={role} className={cn("flex items-center justify-between p-3 rounded-xl border border-white/5", color)}>
+                     <span className="text-[10px] font-black uppercase">{role}</span>
+                     <span className="text-[10px] font-bold opacity-60">{pass}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Global Footer */}
+        <div className="mt-8 flex items-center justify-between px-4 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
+           <div className="flex items-center gap-2">
+              <Globe className="w-3.5 h-3.5" />
+              GLOBAL REGION
+           </div>
+           <span>© 2026 DIFC JUDICIARY</span>
+        </div>
+      </motion.div>
+
+      <div className="fixed bottom-8 right-8 z-50">
         <ThemeToggle />
       </div>
     </div>
