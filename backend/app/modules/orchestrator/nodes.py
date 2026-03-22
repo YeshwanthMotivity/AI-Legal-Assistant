@@ -141,10 +141,10 @@ def _select_model(state: AnalysisState) -> tuple[str, str, float]:
     # Threshold for JAIS 7B is 0.5.
     if score >= 0.5:
         logger.info(f"Model routing → JAIS 7B (score={score:.2f}) | Case {state['case_id']} | {reason_str}")
-        return settings.jais_url, "jais", score
+        return settings.jais_url, "jwnder/jais-adaptive:7b", score
     else:
         logger.info(f"Model routing → Qwen 1.5B (score={score:.2f}) | Case {state['case_id']} | {reason_str}")
-        return settings.fallback_model_url, "qwen_1.5b", score
+        return settings.fallback_model_url, "qwen2.5:1.5b-instruct", score
 
 
 async def document_agent_node(state: AnalysisState) -> dict[str, Any]:
@@ -605,6 +605,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             ],
             "temperature": 0.1,
             "max_tokens": NODE_TOKEN_LIMITS["reasoning"],  # 512 — was implicit 2048
+            "stream": False,
             "options": {"num_ctx": 4096},
         }
 

@@ -65,6 +65,7 @@ const extractSimilarPrecedents = (
   fallbackCases: unknown
 ): SimilarPrecedent[] => {
   const candidates = [
+    explainability.similar_precedents,
     explainability.similar_cases,
     explainability.precedents,
     explainability.top_matches,
@@ -104,9 +105,9 @@ const extractLawArticles = (
   }).filter(Boolean)
 
   const preferred = [
+    explainability.law_articles,
     explainability.cited_law_articles,
     explainability.recommended_articles,
-    explainability.law_articles,
     explainability.cited_laws,
     graphLawArticles,
     citedLaws,
