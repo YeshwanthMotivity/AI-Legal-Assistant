@@ -300,7 +300,9 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
             
             if score > 0.6:
                 results.append({
-                    "title": payload.get("case_name", "Unknown Case"),
+                    "id": str(c.id) if hasattr(c, "id") else str(uuid.uuid4()), # Point ID
+                    "case_id": payload.get("case_id", ""),                    # Payload ID
+                    "title": payload.get("case_name") or payload.get("title") or "Unknown Case",
                     "year": payload.get("year", "N/A"),
                     "category": payload.get("category", "Unspecified"),
                     "text": payload.get("raw_text", "")[:500],
@@ -600,7 +602,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
                         else "Approved" if "approve" in content.lower()
                         else "Rejected"
                     ),
-                    "reasoning": content,
+                    "reasoning": content if content.strip() else "Analysis complete. See draft for details.",
                     "cited_laws": [],
                     "cited_cases": [],
                     "confidence": 0.5,
@@ -627,7 +629,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             
             result = {
                 "outcome":        outcome,
-                "reasoning":      str(parsed.get("reasoning", "")).strip(),
+                "reasoning":      str(parsed.get("reasoning", "")).strip() or "Analysis complete. See draft for details.",
                 "cited_laws":     parsed.get("cited_laws", []) if isinstance(parsed.get("cited_laws"), list) else [],
                 "cited_cases":    parsed.get("cited_cases", []) if isinstance(parsed.get("cited_cases"), list) else [],
                 "confidence":     (lambda c: c/100.0 if c > 1.0 else c)(float(parsed.get("confidence", 0.85) or 0.85)),

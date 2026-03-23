@@ -360,9 +360,7 @@ class SimilarityService:
                 detail=f"Similarity KPI logging failed: {exc}",
             ) from exc
 
-
-
-        return SimilarityResponse(
+        return SimilarityResponse(
             case_id=case_id,
             similar_cases=similar_cases,
             run_id=run_id,
@@ -372,33 +370,45 @@ class SimilarityService:
         """Fetch full details of a precedent from Qdrant."""
         client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
         
-        def _qdrant_get():
-            # In difc_precedents, we use 'case_id' in the payload or actual point ID.
-            # Let's try searching by case_id filter first since that's authoritative
-            search_filter = Filter(
-                must=[FieldCondition(key="case_id", match=MatchValue(value=precedent_id))]
-            )
-            results = client.query_points(
-                collection_name="difc_precedents",
-                query_filter=search_filter,
-                limit=1,
-                with_payload=True,
-            )
-            points = results.points if hasattr(results, "points") else results
-            return points[0] if points else None
+        # 1. Try fetching directly by point ID (UUID or int)
+        point = None
+        try:
+            # Check if it looks like a UUID
+            import uuid
+            is_valid_uuid = False
+            try:
+                uuid.UUID(precedent_id)
+                is_valid_uuid = True
+            except ValueError:
+                pass
+                
+            if is_valid_uuid or precedent_id.isdigit():
+                def _get_by_id():
+                    return client.retrieve(collection_name="difc_precedents", ids=[precedent_id])
+                res = await asyncio.get_event_loop().run_in_executor(None, _get_by_id)
+                point = res[0] if res else None
+        except Exception as e:
+            logger.warning(f"Direct ID retrieve failed for {precedent_id}: {e}")
 
-        point = await asyncio.get_event_loop().run_in_executor(None, _qdrant_get)
+        # 2. Fallback: search by case_id filter in payload
         if not point:
-             # Try fetching directly by point ID if the string is a valid UUID/int
-             try:
-                 def _get_by_id():
-                     return client.retrieve(collection_name="difc_precedents", ids=[precedent_id])
-                 res = await asyncio.get_event_loop().run_in_executor(None, _get_by_id)
-                 point = res[0] if res else None
-             except Exception:
-                 pass
+            def _qdrant_filter_search():
+                search_filter = Filter(
+                    must=[FieldCondition(key="case_id", match=MatchValue(value=precedent_id))]
+                )
+                results = client.query_points(
+                    collection_name="difc_precedents",
+                    query_filter=search_filter,
+                    limit=1,
+                    with_payload=True,
+                )
+                points = results.points if hasattr(results, "points") else results
+                return points[0] if points else None
+
+            point = await asyncio.get_event_loop().run_in_executor(None, _qdrant_filter_search)
 
         if not point:
+            logger.error(f"Precedent not found in difc_precedents: {precedent_id}")
             raise HTTPException(status_code=404, detail="Precedent not found")
 
         payload = point.payload if hasattr(point, "payload") else point.get("payload", {})
