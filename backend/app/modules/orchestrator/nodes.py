@@ -515,27 +515,18 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
 
     # ── 2. Prompts ───────────────────────────────────────────────────────────
     system_prompt = (
-        "You are an expert UAE Labor Law Judicial Assistant specializing in DIFC Employment Law.\n"
-        "Your task is to analyze the case context and generate a high-quality legal reasoning and draft judgment.\n\n"
-        f"IMPORTANT: The analysis is for a case in {state.get('query_language', 'en')} language. "
-        "Please respond in the SAME language as the query (Arabic or English).\n\n"
-        "CONTEXT HIERARCHY:\n"
-        "1. CASE METADATA (Primary Facts): Foundation of the case (Parties, Description, Notes).\n"
-        "2. RELEVANT STATUTES (High Weight): Articles from DIFC Employment Law. These are binding.\n"
-        "3. SIMILAR PRECEDENTS (High Weight): Past judicial decisions. Use these to guide the interpretation of laws.\n"
-        "4. DOCUMENT EVIDENCE (Supporting): Fragments from case documents and evidence.\n\n"
-        "RULES:\n"
-        "- Return ONLY valid JSON with the exact schema provided below.\n"
-        "- FORMATTING: The \"draft_judgment\" MUST be formatted in high-quality HTML.\n\n"
+        "You are a DIFC UAE Labor Law expert. Provide a structured legal analysis as JSON.\n"
+        f"Language: {state.get('query_language', 'en')}.\n\n"
         "SCHEMA:\n"
         "{\n"
-        "  \"outcome\": \"Approved\" | \"Rejected\" | \"Partial\",\n"
-        "  \"reasoning\": \"Detailed legal logic...\",\n"
-        "  \"cited_laws\": [\"Article X\"],\n"
-        "  \"cited_cases\": [\"Case Name (Citation)\"],\n"
+        "  \"outcome\": \"Approved\" | \"Rejected\",\n"
+        "  \"reasoning\": \"Clean text explanation (NO JSON inside this field)\",\n"
+        "  \"cited_laws\": [\"Name of law/article\"],\n"
+        "  \"cited_cases\": [\"Citation\"],\n"
         "  \"confidence\": 0.0 to 1.0,\n"
-        "  \"draft_judgment\": \"Full structured draft in HTML...\"\n"
-        "}"
+        "  \"draft_judgment\": \"Formal judgment text (High-quality HTML)\"\n"
+        "}\n\n"
+        "Requirement: Return ONLY the JSON object. Do not include preamble."
     )
     user_prompt = json.dumps(
         {"case_id": state["case_id"], "context": state.get("context", {})},
@@ -600,18 +591,32 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
 
     def _normalize_reasoning(content: str, used_label: str, status: str) -> dict[str, Any]:
         def _cleanse_text(text: Any) -> str:
-            """Remove markdown code blocks or stringify dicts/lists if needed."""
+            """Remove markdown code blocks, stringify dicts/lists, and handle nested JSON strings."""
             if text is None: return ""
-            # If it's a dict/list, flatten it to a string first
+            
+            # If it's already a dict/list, flatten it
             if isinstance(text, (dict, list)):
                 try:
                     return json.dumps(text, indent=2, ensure_ascii=False)
                 except Exception:
                     return str(text)
             
-            text = str(text)
+            text = str(text).strip()
+            # Guard against common hallucination
+            if text.lower() == "[object object]":
+                return "Analysis Details"
+
             # Remove ```json ... ``` or ``` ... ```
             text = re.sub(r"```(?:json)?\s*([\s\S]*?)\s*```", r"\1", text)
+            
+            # Try to parse as JSON if it looks like a nested object inside a string
+            if (text.startswith("{") and text.endswith("}")) or (text.startswith("[") and text.endswith("]")):
+                try:
+                    parsed_nested = json.loads(text)
+                    return json.dumps(parsed_nested, indent=2, ensure_ascii=False)
+                except Exception:
+                    pass
+            
             return text.strip()
 
         parsed = _extract_json_object(content)
@@ -755,12 +760,16 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
     # Use search results from state if the LLM didn't provide specific citations
     # Ensure law articles are always objects with title/content
     def _to_article_obj(item):
+        item_str = str(item).strip()
+        if item_str.lower() == "[object object]":
+            return {"title": "Legal Article", "content": "Refer to context for details."}
+            
         if isinstance(item, dict):
             return {
                 "title": item.get("title") or item.get("law_name") or item.get("article_number") or "Article",
                 "content": item.get("content") or item.get("text") or item.get("raw_text") or "Article Details"
             }
-        return {"title": str(item), "content": "Citations mapped from primary case analysis."}
+        return {"title": item_str, "content": "Citations mapped from primary case analysis."}
 
     raw_laws = reasoning.get("cited_laws") or state.get("laws", [])
     law_articles = [_to_article_obj(l) for l in raw_laws]
@@ -780,10 +789,22 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: judgment_drafting_agent_node starting for case {state['case_id']}")
     reasoning = state.get("reasoning", {})
-    draft_content = str(reasoning.get("draft_judgment") or "").strip()
+    # Use _cleanse_text instead of str() to handle objects correctly
+    raw_draft = reasoning.get("draft_judgment") or ""
+    from app.modules.orchestrator.nodes import _extract_json_object # Re-import or just assume it's in scope if this was a helper
+    # Actually drafting node is at module level, so can't easily reach nested helper.
+    # Let's just use a simple check.
+    if isinstance(raw_draft, (dict, list)):
+        draft_content = json.dumps(raw_draft, indent=2, ensure_ascii=False)
+    else:
+        draft_content = str(raw_draft).strip()
     
-    if not draft_content:
-        draft_content = reasoning.get("reasoning", "No reasoning provided.")
+    if not draft_content or draft_content.lower() == "[object object]":
+        fallback_reasoning = reasoning.get("reasoning", "No reasoning provided.")
+        if isinstance(fallback_reasoning, (dict, list)):
+            draft_content = json.dumps(fallback_reasoning, indent=2, ensure_ascii=False)
+        else:
+            draft_content = str(fallback_reasoning)
 
     # Apply professional Court Template
     court_header = (
