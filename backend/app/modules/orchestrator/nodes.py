@@ -559,8 +559,8 @@ def _select_model(state: AnalysisState) -> tuple[str, str, float]:
     if len(state.get("context", {}).get("case_metadata", {}).get("description", "")) > 1000:
         complexity_score += 0.2
         
-    # Qwen (fast) as primary, JAIS (robust) for complex cases
-    if complexity_score > 0.4:
+    # Qwen (fast) as primary, JAIS (robust) for HIGH complexity cases (>0.7)
+    if complexity_score > 0.7:
         model_url = settings.ollama_url
         model_label = "jwnder/jais-adaptive:7b"
     else:
