@@ -553,9 +553,8 @@ def _select_model(state: AnalysisState) -> tuple[str, str, float]:
     if len(state.get("context", {}).get("case_metadata", {}).get("description", "")) > 1000:
         complexity_score += 0.2
         
-    # User-requested routing
     # Qwen (fast) as primary, JAIS (robust) for complex cases
-    if complexity_score > 0.6:
+    if complexity_score > 0.4:
         model_url = settings.ollama_url
         model_label = "jwnder/jais-adaptive:7b"
     else:
@@ -660,8 +659,9 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             raw_reasoning = parsed.get("reasoning", "")
             raw_draft = parsed.get("draft_judgment", content)
             
-            if "[object Object]" in str(raw_reasoning) or "[object Object]" in str(raw_draft):
-                logger.warning(f"Detection of [object Object] in {used_label} output. Triggering retry/fallback.")
+            # Case-insensitive check
+            if "[object object]" in str(raw_reasoning).lower() or "[object object]" in str(raw_draft).lower():
+                logger.warning(f"Detection of hallucination in {used_label} output. Triggering retry/fallback.")
                 raise ValueError("Hallucination detected")
 
             result = {
@@ -781,8 +781,8 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
             title = str(item)
             content = "Citations mapped from primary case analysis."
             
-        # Hallucination filter
-        if "[object Object]" in title or "[object Object]" in content:
+        # Case-insensitive filter
+        if "[object object]" in title.lower() or "[object object]" in content.lower():
             return None
             
         return {"title": title, "content": content}
