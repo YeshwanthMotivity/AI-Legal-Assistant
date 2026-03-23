@@ -1,8 +1,8 @@
-"""
-FastAPI application factory for AI Judicial Assistant Platform.
-"""
-
+import logging
 from fastapi import FastAPI
+
+# Initialize logging to capture INFO level messages from our modules
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
