@@ -405,47 +405,53 @@ const CaseDetail = () => {
                 <CardContent className="p-0">
                     <div className="divide-y divide-border/30">
                       {precedents.map((item) => (
-                        <Link 
+                        <div 
                           key={item.caseId}
-                          to={`/judge/precedents/${item.caseId}`}
-                          className="flex items-center justify-between p-5 hover:bg-muted/40 transition-all group"
+                          className={cn(
+                            "flex items-center justify-between p-5 transition-all group border-l-4",
+                            comparingId === item.caseId ? "bg-primary/5 border-primary shadow-inner" : "hover:bg-muted/40 border-transparent"
+                          )}
                         >
-                          <div className="flex-1 min-w-0 ltr:pr-6 rtl:pl-6">
-                             <div className="flex items-center gap-2 mb-1">
+                          <div className="flex-1 min-w-0 ltr:pr-6 rtl:pl-6 leading-tight">
+                             <div className="flex items-center gap-2 mb-1.5">
                                 <Badge variant="outline" className="text-[8px] h-3.5 px-1 font-black bg-background shrink-0 uppercase tracking-tighter border-primary/20 text-primary/70">{t('judge.workspace.caseId')}: {item.caseId}</Badge>
-                                <h6 className="text-[13px] font-extrabold group-hover:text-primary transition-colors truncate">{item.title}</h6>
+                                <Link 
+                                  to={`/judge/precedents/${item.caseId}`} 
+                                  state={{ fromCaseId: id }}
+                                  className="text-[13px] font-extrabold group-hover:text-primary transition-colors truncate underline decoration-primary/20 underline-offset-4 hover:decoration-primary"
+                                >
+                                  {item.title}
+                                </Link>
                              </div>
-                             <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1.5">
-                                <Scale className="w-3 h-3 opacity-50" />
+                             <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1.5 opacity-70">
+                                <Scale className="w-3 h-3" />
                                 {t('judge.workspace.judicialRecord')}
                              </p>
                           </div>
-                          <div className="flex items-center gap-3 shrink-0">
-                             <div className="flex flex-col items-end gap-1">
+                          <div className="flex items-center gap-4 shrink-0">
+                             <div className="flex flex-col items-end gap-2">
                                 <div className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 text-[10px] font-black border border-emerald-500/20 shadow-sm">
                                    {Math.round((item.similarityScore || 0) * 100)}% {t('judge.workspace.matchPercentage')}
                                 </div>
                                 <Button 
-                                  variant="outline" 
+                                  variant={comparingId === item.caseId ? "default" : "outline"}
                                   size="sm" 
                                   className={cn(
-                                    "h-6 text-[9px] font-bold px-2",
-                                    comparingId === item.caseId ? "bg-primary text-primary-foreground" : ""
+                                    "h-7 text-[9px] font-black px-3 uppercase tracking-wider shadow-sm",
+                                    comparingId === item.caseId ? "shadow-primary/20 animate-in zoom-in-95" : ""
                                   )}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
+                                  onClick={() => {
                                     setComparingId(comparingId === item.caseId ? null : item.caseId);
                                   }}
                                 >
                                   {comparingId === item.caseId ? t('common.cancel') : t('judge.workspace.caseComparison')}
                                 </Button>
                              </div>
-                             <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                             <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
                           </div>
-                        </Link>
+                        </div>
                       ))}
-                   </div>
+                    </div>
                 </CardContent>
               </Card>
 

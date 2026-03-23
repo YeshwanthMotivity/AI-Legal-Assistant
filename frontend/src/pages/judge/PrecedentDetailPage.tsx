@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { 
   ChevronLeft, 
@@ -11,7 +12,8 @@ import {
   History,
   Info,
   Scale,
-  AlertCircle
+  AlertCircle,
+  ArrowLeftRight
 } from 'lucide-react'
 import { getPrecedent, chatWithPrecedent } from '../../api/judge'
 import { PrecedentDetail } from '../../types/judge'
@@ -22,8 +24,13 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 const PrecedentDetailPage: React.FC = () => {
+  const { t } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
+  
+  // Extract source case ID if coming from active analysis
+  const fromCaseId = (location.state as any)?.fromCaseId
   const [chatMessage, setChatMessage] = useState('')
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([])
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -99,7 +106,20 @@ const PrecedentDetailPage: React.FC = () => {
                 </div>
                 <CardTitle className="text-lg">Case Transcript & Analysis</CardTitle>
               </div>
-              <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter">Reference: {id}</Badge>
+              <div className="flex items-center gap-4">
+                {fromCaseId && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 gap-2 bg-blue-500/10 text-blue-600 border-blue-500/20 hover:bg-blue-500/20 hover:text-blue-700 font-black uppercase text-[10px] tracking-tight shadow-sm"
+                    onClick={() => navigate(`/judge/cases/${fromCaseId}`)}
+                  >
+                    <ArrowLeftRight className="w-3.5 h-3.5" />
+                    {t('judge.workspace.caseComparison')}
+                  </Button>
+                )}
+                <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter">Reference: {id}</Badge>
+              </div>
             </CardHeader>
             <CardContent className="p-8 overflow-y-auto leading-relaxed text-sm font-medium">
               <div className="max-w-4xl mx-auto space-y-6">

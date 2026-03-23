@@ -651,27 +651,47 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         if not settings.gemini_api_key:
             raise ValueError("Gemini API key not configured")
         
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
-        payload = {
-            "system_instruction": {"parts": [{"text": system}]},
-            "contents": [{"parts": [{"text": user}]}],
-            "generationConfig": {
-                "temperature": 0.1,
-                "maxOutputTokens": NODE_TOKEN_LIMITS["reasoning"],
-                "responseMimeType": "application/json"
+        # Try v1beta first, then v1 if 404
+        versions = ["v1beta", "v1"]
+        last_error = None
+
+        for version in versions:
+            url = f"https://generativelanguage.googleapis.com/{version}/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
+            payload = {
+                "system_instruction": {"parts": [{"text": system}]},
+                "contents": [{"parts": [{"text": user}]}],
+                "generationConfig": {
+                    "temperature": 0.1,
+                    "maxOutputTokens": NODE_TOKEN_LIMITS["reasoning"],
+                    "responseMimeType": "application/json"
+                }
             }
-        }
+            
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                try:
+                    logger.info(f"reasoning_agent_node: calling Gemini ({settings.gemini_model}) via {version}")
+                    response = await client.post(url, json=payload)
+                    
+                    if response.status_code == 404:
+                        logger.warning(f"Gemini {version} returned 404 for model {settings.gemini_model}. Trying next version...")
+                        continue
+                        
+                    response.raise_for_status()
+                    data = response.json()
+                    return data["candidates"][0]["content"]["parts"][0]["text"]
+                except httpx.HTTPStatusError as e:
+                    last_error = e
+                    if e.response.status_code == 429:
+                        logger.error(f"Gemini Rate Limit (429) hit for key ending in ...{settings.gemini_api_key[-4:]}")
+                    continue
+                except (KeyError, IndexError):
+                    logger.error(f"Gemini response parsing failed for {version}: {data}")
+                    raise ValueError(f"Invalid Gemini response format in {version}")
+                except Exception as e:
+                    last_error = e
+                    continue
         
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            logger.info(f"reasoning_agent_node: calling Gemini ({settings.gemini_model})")
-            response = await client.post(url, json=payload)
-            response.raise_for_status()
-            data = response.json()
-            try:
-                return data["candidates"][0]["content"]["parts"][0]["text"]
-            except (KeyError, IndexError):
-                logger.error(f"Gemini response parsing failed: {data}")
-                raise ValueError("Invalid Gemini response format")
+        raise last_error or ValueError(f"Gemini call failed for all tried versions ({', '.join(versions)})")
 
     # ── 5. JSON parsing helpers ───────────────────────────────────────────────
     # (parsing logic stays same)
