@@ -5,7 +5,6 @@ from app.modules.orchestrator.nodes import (
     context_builder_node,
     document_agent_node,
     explainability_builder_node,
-    graph_dependent_node,
     judgment_drafting_agent_node,
     reasoning_agent_node,
     search_agent_node,
@@ -35,11 +34,8 @@ graph.add_edge("document_agent_node", "precedent_search_node")
 graph.add_edge("document_agent_node", "law_search_node")
 graph.add_edge("document_agent_node", "calculation_agent_node")
 
-# Dependencies (Level 2)
-graph.add_edge("search_agent_node", "graph_dependent_node")
-
 # Convergence (Level 3)
-graph.add_edge("graph_dependent_node", "context_builder_node")
+graph.add_edge("search_agent_node", "context_builder_node")
 graph.add_edge("precedent_search_node", "context_builder_node")
 graph.add_edge("law_search_node", "context_builder_node")
 graph.add_edge("calculation_agent_node", "context_builder_node")

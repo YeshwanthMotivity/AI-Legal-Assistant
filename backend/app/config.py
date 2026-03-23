@@ -24,10 +24,6 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = 30
     jwt_refresh_token_expire_days: int = 7
     
-    # Neo4j
-    neo4j_uri: str = "bolt://neo4j:7687"
-    neo4j_user: str = "neo4j"
-    neo4j_password: str = "password"
     
     # Qdrant
     qdrant_host: str = "qdrant"

@@ -116,15 +116,7 @@ def _assess_complexity(state: AnalysisState) -> tuple[float, list[str]]:
         score += 0.20
         reasons.append(f"Rich retrieval: {num_precedents} precedents, {num_laws} laws (+0.20)")
 
-    # 4. Conflicting graph + vector results — needs deeper reasoning
-    graph_cases = state.get("graph_results", {}).get("related_cases", [])
-    vector_cases = state.get("precedents", [])
-    if graph_cases and vector_cases:
-        # Both sources returned results — potential conflicts to reconcile
-        score += 0.10
-        reasons.append("Dual-source evidence (graph + vector) (+0.10)")
-
-    # 5. High-value claim — complex financial calculations needed
+    # 4. High-value claim — complex financial calculations needed
     calculation = state.get("calculation", {})
     gratuity = calculation.get("gratuity_estimate", 0.0)
     if gratuity > 50_000:
@@ -239,8 +231,8 @@ async def search_agent_node(state: AnalysisState) -> dict[str, Any]:
             {"chunk_text": item.chunk_text, "score": item.score, "document_id": item.document_id}
             for item in response.results if item.score > 0.6
         ]
-    except Exception:
-        logger.exception("search_agent_node failed")
+    except Exception as e:
+        logger.error(f"Search agent failed for case {state['case_id']}: {e}")
         search_results = []
 
     duration = time.time() - start_time
@@ -451,20 +443,11 @@ async def context_builder_node(state: AnalysisState) -> dict[str, Any]:
     for p in state.get("precedents", []):
         precedents.append(f"Precedent: {p['title']} ({p['year']}) | Match: {p['score']:.2f}\n{p['text']}")
     
-    # From Graph Search (if any)
-    graph_results = state.get("graph_results", {})
-    for rc in graph_results.get("related_cases", []):
-        precedents.append(f"Graph Case: {rc.get('title')} | Outcome: {rc.get('outcome')}")
-
     laws = []
     # From Vector Search (Laws Collection)
     for l in state.get("laws", []):
         laws.append(f"Statute: {l['law_name']} | Match: {l['score']:.2f}\n{l['text']}")
         
-    # From Graph Search
-    for l in graph_results.get("law_articles", []):
-        laws.append(f"Article {l.get('article_number')}: {l.get('title')}\n{l.get('full_text')}")
-
     context = {
         "case_metadata": case_metadata,
         "labor_calculation": state.get("calculation", {}),
@@ -612,10 +595,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
 
         # Build final state payload
         law_articles = [l.get("law_name") for l in state.get("laws", []) if l.get("law_name")]
-        for gl in state.get("graph_results", {}).get("law_articles", []):
-            if gl.get("title") and gl["title"] not in law_articles:
-                law_articles.append(gl["title"])
-
+        
         similar_precedents = [
             {
                 "caseId": p.get("case_id") or p.get("id"),

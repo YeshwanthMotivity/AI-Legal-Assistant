@@ -7,7 +7,6 @@ class AnalysisState(TypedDict):
     search_results: list[dict[str, Any]] # Uploaded doc chunks
     precedents: list[dict[str, Any]]      # Similar court cases
     laws: list[dict[str, Any]]            # Statutory law articles
-    graph_results: dict[str, Any]
     calculation: dict[str, Any]
     context: dict[str, Any]
     reasoning: dict[str, Any]
