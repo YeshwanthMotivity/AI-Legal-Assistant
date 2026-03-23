@@ -654,7 +654,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
 
     except Exception as e_primary:
         logger.warning(f"reasoning_agent_node: {model_label} failed ({repr(e_primary)}) — trying Qwen fallback")
-        if model_url != settings.fallback_model_url:
+        if model_label != FALLBACK_MODEL:
             try:
                 # IMPORTANT: Use the fallback model name explicitly here
                 content = await _call(settings.fallback_model_url, QWEN_TIMEOUT, FALLBACK_MODEL)
