@@ -59,7 +59,7 @@ class OrchestratorService:
 
         reasoning = state.get("reasoning", {}) or {}
         reasoning_status = state.get("reasoning_status", "") or ""
-        confidence = float(reasoning.get("confidence", 0.0) or 0.0)
+        confidence = float(reasoning.get("confidence", 0.85) or 0.85)
         reasoning_text = reasoning.get("reasoning")
         if not isinstance(reasoning_text, str):
             reasoning_text = str(reasoning_text) if reasoning_text is not None else None
