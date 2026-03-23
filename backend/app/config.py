@@ -48,8 +48,8 @@ class Settings(BaseSettings):
     jais_timeout_seconds: int = 180
     enable_sparse_search: bool = False
     embedding_dimension: int = 384
-    ollama_model_primary: str = "qwen2.5:1.5b-instruct"
-    ollama_model_fallback: str = ""
+    ollama_model_primary: str = "jwnder/jais-adaptive:7b"
+    ollama_model_fallback: str = "qwen2.5:1.5b-instruct"
     ollama_timeout_seconds: int = 120
     
     # Application

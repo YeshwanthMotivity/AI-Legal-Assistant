@@ -148,7 +148,7 @@ class LegalStructureParser:
                 response = await client.post(
                     self.url,
                     json={
-                        "model": "jais",
+                        "model": settings.ollama_model_primary,
                         "messages": [
                             {"role": "system", "content": self.SYSTEM_PROMPT},
                             {

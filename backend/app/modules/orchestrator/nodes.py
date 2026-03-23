@@ -141,10 +141,10 @@ def _select_model(state: AnalysisState) -> tuple[str, str, float]:
     # Threshold for JAIS 7B is 0.5.
     if score >= 0.5:
         logger.info(f"Model routing → JAIS 7B (score={score:.2f}) | Case {state['case_id']} | {reason_str}")
-        return settings.jais_url, "jwnder/jais-adaptive:7b", score
+        return settings.jais_url, settings.ollama_model_primary, score
     else:
         logger.info(f"Model routing → Qwen 1.5B (score={score:.2f}) | Case {state['case_id']} | {reason_str}")
-        return settings.fallback_model_url, "qwen2.5:1.5b-instruct", score
+        return settings.fallback_model_url, settings.ollama_model_fallback, score
 
 
 async def document_agent_node(state: AnalysisState) -> dict[str, Any]:
@@ -644,7 +644,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
     # Determine timeouts
     JAIS_HARD_TIMEOUT  = 90
     QWEN_TIMEOUT       = 300
-    FALLBACK_MODEL     = "qwen2.5:1.5b-instruct"
+    FALLBACK_MODEL     = settings.ollama_model_fallback
 
     primary_timeout = JAIS_HARD_TIMEOUT if "jais" in model_url else QWEN_TIMEOUT
 

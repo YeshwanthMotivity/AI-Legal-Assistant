@@ -121,8 +121,8 @@ LAW_PROMPT_AR = """أنت محلل وثائق قانونية. استخرج ال�
 def _select_model(language: str) -> str:
     """Select model based on language."""
     if language == "ar":
-        return "jwnder/jais-adaptive:7b"
-    return "qwen2.5:1.5b-instruct"
+        return settings.ollama_model_primary
+    return settings.ollama_model_fallback
 
 
 def _select_prompt(doc_type: str, language: str) -> str:

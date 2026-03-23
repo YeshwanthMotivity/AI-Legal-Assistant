@@ -155,7 +155,7 @@ async def extract_entities(text: str) -> list[dict]:
             response = await client.post(
                 f"{settings.ollama_url}/api/chat",
                 json={
-                    "model": "qwen2.5:1.5b-instruct",
+                    "model": settings.ollama_model_fallback,
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": text[:4000]}
