@@ -44,8 +44,7 @@ def _parse_date(value: str) -> datetime | None:
             continue
     return None
 # ─────────────────────────────────────────────────────────────────────────────
-# SHARED EMBEDDING HELPER
-# Called once per pipeline run. All search nodes reuse the result.
+# 0. Global Setup: Embeddings & Models
 # ─────────────────────────────────────────────────────────────────────────────
 
 async def _get_single_embedding(text: str) -> list[float]:
@@ -319,10 +318,17 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
             payload = c.payload if hasattr(c, "payload") else c.get("payload", {})
             score = c.score if hasattr(c, "score") else c.get("score", 0.0)
             
+            title = str(payload.get("law_name") or payload.get("title") or "Unknown Law")
+            content = str(payload.get("raw_text") or payload.get("text") or "")
+
+            # Hallucination filter at search level
+            if "[object object]" in title.lower() or "[object object]" in content.lower():
+                continue
+
             if score > 0.6:
                 results.append({
-                    "title": payload.get("law_name") or payload.get("title") or "Unknown Law", # Ensure "title" key
-                    "content": payload.get("raw_text") or payload.get("text") or "", # Ensure "content" key
+                    "title": title,
+                    "content": content,
                     "score": score
                 })
         duration = time.time() - start_time
@@ -707,7 +713,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
     # ── 6. Execution: routed model → Fallback on Hallucination ────────────────
     
     PRIMARY_JAIS = "jwnder/jais-adaptive:7b"
-    timeout = 300
+    timeout = 600
 
     try:
         content = await _call(model_url, timeout, model_label)
@@ -828,8 +834,17 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
             return item.get("title") or item.get("case_name") or item.get("law_name") or str(item)
         return str(item)
 
-    laws_cited = ", ".join([_to_str(l) for l in reasoning.get("cited_laws", [])])
-    cases_cited = ", ".join([_to_str(c) for c in reasoning.get("cited_cases", [])])
+    raw_laws = reasoning.get("cited_laws", [])
+    if not raw_laws:
+        # Fallback to search results if agent didn't cite specific articles
+        raw_laws = state.get("laws", [])
+        
+    raw_cases = reasoning.get("cited_cases", [])
+    if not raw_cases:
+        raw_cases = state.get("precedents", [])
+
+    laws_cited = ", ".join([_to_str(l) for l in raw_laws])
+    cases_cited = ", ".join([_to_str(c) for c in raw_cases])
 
     final_draft = (
         f"{court_header}"
