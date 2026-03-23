@@ -726,9 +726,10 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
     logger.info(f"--- Node: explainability_builder_node starting for case {state['case_id']}")
     reasoning = state.get("reasoning", {})
     # Align with keys expected by OrchestratorService.run_analysis and get_case_analysis
+    # Use search results from state if the LLM didn't provide specific citations
     explainability = {
-        "law_articles": reasoning.get("cited_laws", []),
-        "similar_precedents": reasoning.get("cited_cases", []),
+        "law_articles": reasoning.get("cited_laws") or [l.get("title", l.get("article_number", "Article")) for l in state.get("laws", [])],
+        "similar_precedents": reasoning.get("cited_cases") or state.get("precedents", []),
         "evidence_chunks": [item.get("chunk_text", "") for item in state.get("search_results", [])],
         "confidence_score": (lambda c: c/100.0 if c > 1.0 else c)(float(reasoning.get("confidence", 0.85) or 0.85)),
     }
