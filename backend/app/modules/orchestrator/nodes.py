@@ -357,20 +357,10 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
                     "score": score
                 })
         duration = time.time() - start_time
-        logger.info(f"--- Node: law_search_node finished in {duration:.2f}s")
-        return {"laws": results[:5]}
-    except Exception:
-        logger.exception("Law search failed")
-        return {"laws": []}
-
-
-    return {
-        "graph_results": {
-            "law_articles": [],
-            "related_cases": [],
-            "graph_confidence": 0.0,
-        }
-    }
+    return {"laws": results[:5]}
+except Exception:
+    logger.exception("Law search failed")
+    return {"laws": []}
 
 
 async def _citation_bridge_async(extended_citations: list[str], case_id: str) -> list[dict[str, Any]]:
