@@ -257,26 +257,38 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
         client = AsyncQdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
         # Self-matching protection: Filter out this case_id
         must_not = [FieldCondition(key="case_id", match=MatchValue(value=state["case_id"]))]
+        # 1. Try with strict language filter
         must = []
         if state.get("query_language"):
             must.append(FieldCondition(key="language", match=MatchValue(value=state["query_language"])))
             
-        common_filter = Filter(
-            must=must,
-            must_not=must_not
-        )
-        
         result = await client.query_points(
             collection_name="difc_precedents",
             query=query_embedding,
-            query_filter=common_filter,
+            query_filter=Filter(must=must, must_not=must_not),
             limit=10,
             with_payload=True,
         )
-        await client.close()
-        return result.points if hasattr(result, "points") else (
+        points = result.points if hasattr(result, "points") else (
             result.get("points", []) if isinstance(result, dict) else result
         )
+
+        # 2. Relaxed fallback: if zero results AND we had a language filter, try without it
+        if not points and must:
+            logger.info(f"--- Node: precedent_search_node found 0 results for language '{state['query_language']}', trying without filter")
+            result = await client.query_points(
+                collection_name="difc_precedents",
+                query=query_embedding,
+                query_filter=Filter(must_not=must_not),
+                limit=10,
+                with_payload=True,
+            )
+            points = result.points if hasattr(result, "points") else (
+                result.get("points", []) if isinstance(result, dict) else result
+            )
+
+        await client.close()
+        return points
 
     try:
         candidates = await _qdrant_search()
@@ -317,23 +329,37 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
     async def _qdrant_search():
         from qdrant_client import AsyncQdrantClient
         client = AsyncQdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+        # 1. Try with strict language filter
         must = []
         if state.get("query_language"):
             must.append(FieldCondition(key="language", match=MatchValue(value=state["query_language"])))
-
-        common_filter = Filter(must=must)
-        
+            
         result = await client.query_points(
             collection_name="difc_laws",
             query=query_embedding,
-            query_filter=common_filter,
+            query_filter=Filter(must=must),
             limit=10,
             with_payload=True,
         )
-        await client.close()
-        return result.points if hasattr(result, "points") else (
+        points = result.points if hasattr(result, "points") else (
             result.get("points", []) if isinstance(result, dict) else result
         )
+
+        # 2. Relaxed fallback
+        if not points and must:
+            logger.info(f"--- Node: law_search_node found 0 results for language '{state['query_language']}', trying without filter")
+            result = await client.query_points(
+                collection_name="difc_laws",
+                query=query_embedding,
+                limit=10,
+                with_payload=True,
+            )
+            points = result.points if hasattr(result, "points") else (
+                result.get("points", []) if isinstance(result, dict) else result
+            )
+
+        await client.close()
+        return points
 
     try:
         candidates = await _qdrant_search()
@@ -455,7 +481,12 @@ async def context_builder_node(state: AnalysisState) -> dict[str, Any]:
         "document_evidence_fragments": search_texts
     }
     
-    logger.debug(f"Built multi-source context for case {case_id}")
+    logger.info(
+        f"Built context for case {case_id}: "
+        f"{len(search_texts)} fragments, "
+        f"{len(precedents)} precedents, "
+        f"{len(laws)} statutes"
+    )
     duration = time.time() - start_time
     logger.info(f"--- Node: context_builder_node finished in {duration:.2f}s")
     return {"context": context}
@@ -717,7 +748,7 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
     final_draft = (
         f"{court_header}"
         "1. DISPOSITION AND OUTCOME\n"
-        f"The Tribunal's decision is: {reasoning.get('outcome', 'PENDING')}\n\n"
+        f"The Tribunal's decision is: {reasoning.get('outcome') or 'PENDING'}\n\n"
         "2. LEGAL REASONING\n"
         f"{draft_content}\n\n"
         "3. CITED AUTHORITIES\n"
