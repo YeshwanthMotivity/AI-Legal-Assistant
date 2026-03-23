@@ -832,12 +832,18 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: judgment_drafting_agent_node starting for case {state['case_id']}")
     reasoning = state.get("reasoning", {})
-    # Use _cleanse_text correctly
     raw_draft = reasoning.get("draft_judgment") or ""
     draft_content = _cleanse_text(raw_draft)
     
-    if not draft_content or draft_content.lower() == "[object object]":
+    if not draft_content or _is_hallucination(draft_content):
         draft_content = _cleanse_text(reasoning.get("reasoning", "No reasoning provided."))
+
+    def _to_str(item):
+        if isinstance(item, dict):
+            # Check most common keys for laws and precedents
+            return (item.get("title") or item.get("case_name") or 
+                    item.get("law_name") or item.get("article_number") or str(item))
+        return str(item)
 
     # Deduplicate and Filter Citations
     raw_laws = reasoning.get("cited_laws", [])
