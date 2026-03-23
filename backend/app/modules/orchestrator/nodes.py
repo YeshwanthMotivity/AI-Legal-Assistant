@@ -364,9 +364,6 @@ async def _citation_bridge_sync_fallback(extended_citations: list[str], case_id:
     """Neo4j removed — returns empty list."""
     return []
 
-async def graph_dependent_node(state: AnalysisState) -> dict[str, Any]:
-    return {"graph_results": state.get("graph_results") or {"law_articles": [], "related_cases": [], "graph_confidence": 0.0}}
-
 async def calculation_agent_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: calculation_agent_node starting for case {state['case_id']}")
