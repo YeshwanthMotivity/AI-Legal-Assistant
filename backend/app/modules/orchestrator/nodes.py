@@ -372,8 +372,8 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
             
             if score > 0.6:
                 results.append({
-                    "law_name": payload.get("law_name", "Unknown Law"),
-                    "text": payload.get("raw_text", ""),
+                    "title": payload.get("law_name") or payload.get("title") or "Unknown Law", # Ensure "title" key
+                    "content": payload.get("raw_text") or payload.get("text") or "", # Ensure "content" key
                     "score": score
                 })
         duration = time.time() - start_time
@@ -592,21 +592,29 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             return None
 
     def _normalize_reasoning(content: str, used_label: str, status: str) -> dict[str, Any]:
+        def _cleanse_text(text: str) -> str:
+            """Remove markdown code blocks if the LLM wrapped its JSON/Text in them."""
+            if not text: return ""
+            # Remove ```json ... ``` or ``` ... ```
+            text = re.sub(r"```(?:json)?\s*([\s\S]*?)\s*```", r"\1", text)
+            return text.strip()
+
         parsed = _extract_json_object(content)
         if not parsed:
             if content and len(content) > 50:
                 logger.warning(f"{used_label} returned non-JSON, using as raw reasoning.")
+                cleansed_content = _cleanse_text(content)
                 result = {
                     "outcome": (
-                        "Partial" if "partial" in content.lower()
-                        else "Approved" if "approve" in content.lower()
+                        "Partial" if "partial" in cleansed_content.lower()
+                        else "Approved" if "approve" in cleansed_content.lower()
                         else "Rejected"
                     ),
-                    "reasoning": content if content.strip() else "Analysis complete. See draft for details.",
+                    "reasoning": cleansed_content if cleansed_content.strip() else "Analysis complete. See draft for details.",
                     "cited_laws": [],
                     "cited_cases": [],
                     "confidence": 0.5,
-                    "draft_judgment": content,
+                    "draft_judgment": cleansed_content,
                 }
             else:
                 result = {
@@ -629,13 +637,13 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             
             result = {
                 "outcome":        outcome,
-                "reasoning":      str(parsed.get("reasoning", "")).strip() or "Analysis complete. See draft for details.",
+                "reasoning":      _cleanse_text(str(parsed.get("reasoning", ""))) or "Analysis complete. See draft for details.",
                 "cited_laws":     parsed.get("cited_laws", []) if isinstance(parsed.get("cited_laws"), list) else [],
                 "cited_cases":    parsed.get("cited_cases", []) if isinstance(parsed.get("cited_cases"), list) else [],
                 "confidence":     (lambda c: c/100.0 if c > 1.0 else c)(float(parsed.get("confidence", 0.85) or 0.85)),
-                "draft_judgment": str(parsed.get("draft_judgment", content)).strip(),
+                "draft_judgment": _cleanse_text(str(parsed.get("draft_judgment", content))),
             }
-            if not result["draft_judgment"]:
+            if not result["draft_judgment"] or len(result["draft_judgment"]) < 20:
                 result["draft_judgment"] = result["reasoning"]
 
         result["model_used"] = used_label
@@ -730,7 +738,7 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
     # Align with keys expected by OrchestratorService.run_analysis and get_case_analysis
     # Use search results from state if the LLM didn't provide specific citations
     explainability = {
-        "law_articles": reasoning.get("cited_laws") or [l.get("title", l.get("article_number", "Article")) for l in state.get("laws", [])],
+        "law_articles": reasoning.get("cited_laws") or state.get("laws", []),
         "similar_precedents": reasoning.get("cited_cases") or state.get("precedents", []),
         "evidence_chunks": [item.get("chunk_text", "") for item in state.get("search_results", [])],
         "confidence_score": (lambda c: c/100.0 if c > 1.0 else c)(float(reasoning.get("confidence", 0.85) or 0.85)),

@@ -394,22 +394,30 @@ const CaseDetail = () => {
                   <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-600 border-indigo-500/20">Top 5</Badge>
                 </CardHeader>
                 <CardContent className="p-0">
-                   <div className="divide-y divide-border/50">
+                    <div className="divide-y divide-border/30">
                       {precedents.map((item) => (
                         <Link 
                           key={item.caseId}
                           to={`/judge/precedents/${item.caseId}`}
-                          className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors group"
+                          className="flex items-center justify-between p-5 hover:bg-muted/40 transition-all group"
                         >
-                          <div className="flex-1 min-w-0 pr-4">
-                             <h6 className="text-[12px] font-bold group-hover:text-primary transition-colors truncate mb-0.5">{item.title}</h6>
-                             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">Reference ID: {item.caseId}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                             <div className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 text-[10px] font-black border border-emerald-500/20">
-                                {Math.round(item.similarityScore * 100)}% Match
+                          <div className="flex-1 min-w-0 pr-6">
+                             <div className="flex items-center gap-2 mb-1">
+                                <Badge variant="outline" className="text-[8px] h-3.5 px-1 font-black bg-background shrink-0 uppercase tracking-tighter border-primary/20 text-primary/70">Ref: {item.caseId}</Badge>
+                                <h6 className="text-[13px] font-extrabold group-hover:text-primary transition-colors truncate">{item.title}</h6>
                              </div>
-                             <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                             <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1.5">
+                                <Scale className="w-3 h-3 opacity-50" />
+                                Official DIFC Judicial Record
+                             </p>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                             <div className="flex flex-col items-end">
+                                <div className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 text-[10px] font-black border border-emerald-500/20 shadow-sm">
+                                   {Math.round((item.similarityScore || 0) * 100)}% Match
+                                </div>
+                             </div>
+                             <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                           </div>
                         </Link>
                       ))}
@@ -426,13 +434,26 @@ const CaseDetail = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="p-6">
-                    <div className="flex flex-wrap gap-2">
-                      {lawArticles.map((article) => (
-                        <div key={article} className="bg-amber-500/5 text-amber-700 border border-amber-500/10 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm">
-                          {article}
+                    <div className="grid grid-cols-1 gap-4">
+                      {lawArticles.map((article: any, idx: number) => (
+                        <div key={idx} className="bg-amber-500/5 border border-amber-500/10 p-4 rounded-xl shadow-sm hover:shadow-md transition-all">
+                          <div className="flex items-center gap-2 mb-2">
+                             <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                             <h5 className="font-black text-amber-900 text-xs uppercase tracking-tight">
+                               {typeof article === 'string' ? article : article.title || article.article_number || 'Article'}
+                             </h5>
+                          </div>
+                          <p className="text-[11px] text-amber-800/80 leading-relaxed italic font-medium">
+                            {typeof article === 'object' ? article.content || article.text : "Citations mapped from primary case analysis."}
+                          </p>
                         </div>
                       ))}
-                      {lawArticles.length === 0 && <p className="text-xs text-muted-foreground italic">No relevant articles identified.</p>}
+                      {lawArticles.length === 0 && (
+                        <div className="py-10 text-center flex flex-col items-center gap-2 bg-muted/5 rounded-xl border border-dashed">
+                           <BookOpen className="w-8 h-8 text-muted-foreground/20" />
+                           <p className="text-xs text-muted-foreground italic">No relevant articles identified.</p>
+                        </div>
+                      )}
                     </div>
                 </CardContent>
               </Card>

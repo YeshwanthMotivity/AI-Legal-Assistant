@@ -433,24 +433,46 @@ class SimilarityService:
             f"{detail.text}"
         )
         
-        # Use primary model for chat
+        # Use Ollama native API for better compatibility with local LLM servers
         async with httpx.AsyncClient(timeout=120.0) as client:
             try:
-                # Assuming the JAIS_URL follows OpenAI-like chat completions API
-                response = await client.post(
-                    f"{settings.jais_url}/v1/chat/completions",
-                    json={
+                # Try Ollama native /api/chat first
+                url = f"{settings.jais_url}/api/chat"
+                payload = {
+                    "model": settings.ollama_model_primary,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": request.message}
+                    ],
+                    "stream": False
+                }
+                
+                response = await client.post(url, json=payload)
+                
+                if response.status_code == 404:
+                    # Fallback to OpenAI-compatible endpoint if native fails
+                    url = f"{settings.jais_url}/v1/chat/completions"
+                    payload = {
                         "model": "primary",
                         "messages": [
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": request.message}
-                        ],
-                        "temperature": 0.1
+                        ]
                     }
-                )
+                    response = await client.post(url, json=payload)
+
                 response.raise_for_status()
                 data = response.json()
-                answer = data["choices"][0]["message"]["content"]
+                
+                # Handle both Ollama native and OpenAI-compatible formats
+                if "message" in data and "content" in data["message"]:
+                    answer = data["message"]["content"]
+                elif "choices" in data and len(data["choices"]) > 0:
+                    answer = data["choices"][0]["message"]["content"]
+                else:
+                    logger.warning(f"Unexpected chat response format: {data}")
+                    answer = str(data)
+                    
                 return PrecedentChatResponse(response=answer)
             except Exception as e:
                 logger.error(f"Precedent chat failed: {e}")

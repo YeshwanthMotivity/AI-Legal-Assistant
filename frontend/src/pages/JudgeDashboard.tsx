@@ -149,7 +149,11 @@ export default function JudgeDashboard(): ReactNode {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-               <Button className="w-full justify-start gap-3 bg-card hover:bg-accent text-foreground border shadow-sm h-12" variant="outline">
+               <Button 
+                 className="w-full justify-start gap-3 bg-card hover:bg-accent text-foreground border shadow-sm h-12" 
+                 variant="outline"
+                 onClick={() => navigate('/judge/cases/new')}
+               >
                   <Plus className="w-4 h-4 text-primary" />
                   Create New Case
                </Button>
@@ -157,7 +161,11 @@ export default function JudgeDashboard(): ReactNode {
                   <Search className="w-4 h-4 text-primary" />
                   Search Precedents
                </Button>
-               <Button className="w-full justify-start gap-3 bg-card hover:bg-accent text-foreground border shadow-sm h-12" variant="outline">
+               <Button 
+                className="w-full justify-start gap-3 bg-card hover:bg-accent text-foreground border shadow-sm h-12" 
+                variant="outline"
+                onClick={() => alert("Legal Drafting Templates feature is coming soon in the next update!")}
+               >
                   <Briefcase className="w-4 h-4 text-primary" />
                   Drafting Templates
                </Button>

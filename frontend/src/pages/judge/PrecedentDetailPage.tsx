@@ -147,9 +147,20 @@ const PrecedentDetailPage: React.FC = () => {
                     </p>
                   </div>
                   <div className="flex flex-wrap justify-center gap-2 pt-4">
-                     {['Summary', 'Impact', 'Key Ruling'].map(tag => (
-                       <button key={tag} className="px-3 py-1 bg-muted/50 border rounded-full text-[10px] font-black uppercase hover:bg-primary/10 hover:text-primary transition-all">
-                          {tag}
+                     {[
+                       { label: 'Summary', query: 'Can you provide a concise summary of the legal reasoning in this case?' },
+                       { label: 'Impact', query: 'What was the legal impact and precedent set by this ruling?' },
+                       { label: 'Key Ruling', query: 'What are the key judicial findings or specific findings in this case?' }
+                     ].map(item => (
+                       <button 
+                         key={item.label} 
+                         onClick={() => {
+                           setMessages((prev) => [...prev, { role: 'user', content: item.query }]);
+                           chatMutation.mutate(item.query);
+                         }}
+                         className="px-4 py-1.5 bg-muted/50 border rounded-full text-[10px] font-black uppercase hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all shadow-sm active:scale-95"
+                       >
+                          {item.label}
                        </button>
                      ))}
                   </div>

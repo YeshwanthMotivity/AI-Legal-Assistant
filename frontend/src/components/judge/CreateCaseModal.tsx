@@ -69,14 +69,14 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="md:col-span-2 space-y-2">
-                <label className="text-xs font-black uppercase text-muted-foreground ml-1">
+          <div className="p-8 max-h-[70vh] overflow-y-auto scrollbar-thin">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              <div className="md:col-span-2 space-y-2.5">
+                <label className="text-[11px] font-black uppercase text-muted-foreground ml-1 tracking-tight">
                   {t('judge.form.title')}
                 </label>
                 <input 
-                  className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  className="w-full bg-background border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-sm"
                   value={title} 
                   onChange={(event) => setTitle(event.target.value)} 
                   placeholder="e.g. Landmark Construction vs. City Planning"
@@ -84,12 +84,12 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase text-muted-foreground ml-1">
+              <div className="space-y-2.5">
+                <label className="text-[11px] font-black uppercase text-muted-foreground ml-1 tracking-tight">
                   {t('judge.form.caseType')}
                 </label>
                 <select 
-                  className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer"
+                  className="w-full bg-background border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer shadow-sm"
                   value={caseType} 
                   onChange={(event) => setCaseType(event.target.value as CaseType)} 
                   required
@@ -102,25 +102,25 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
                 </select>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase text-muted-foreground ml-1">
+              <div className="space-y-2.5">
+                <label className="text-[11px] font-black uppercase text-muted-foreground ml-1 tracking-tight">
                   {t('judge.form.filingDate')}
                 </label>
                 <input 
                   type="date" 
-                  className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                  className="w-full bg-background border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none shadow-sm"
                   value={filingDate} 
                   onChange={(event) => setFilingDate(event.target.value)} 
                   required 
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase text-muted-foreground ml-1">
+              <div className="space-y-2.5">
+                <label className="text-[11px] font-black uppercase text-muted-foreground ml-1 tracking-tight">
                   {t('judge.form.claimant')}
                 </label>
                 <input 
-                  className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                  className="w-full bg-background border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none shadow-sm"
                   value={claimant} 
                   onChange={(event) => setClaimant(event.target.value)} 
                   placeholder="Claimant Name"
@@ -128,12 +128,12 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase text-muted-foreground ml-1">
+              <div className="space-y-2.5">
+                <label className="text-[11px] font-black uppercase text-muted-foreground ml-1 tracking-tight">
                   {t('judge.form.respondent')}
                 </label>
                 <input 
-                  className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                  className="w-full bg-background border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none shadow-sm"
                   value={respondent} 
                   onChange={(event) => setRespondent(event.target.value)} 
                   placeholder="Respondent Name"
@@ -141,12 +141,12 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
                 />
               </div>
 
-              <div className="md:col-span-2 space-y-2">
-                <label className="text-xs font-black uppercase text-muted-foreground ml-1">
+              <div className="md:col-span-2 space-y-2.5">
+                <label className="text-[11px] font-black uppercase text-muted-foreground ml-1 tracking-tight">
                   {t('judge.form.notes')}
                 </label>
                 <textarea 
-                  className="w-full bg-background border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none min-h-[120px]"
+                  className="w-full bg-background border rounded-xl px-4 py-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none min-h-[140px] shadow-sm"
                   value={notes} 
                   onChange={(event) => setNotes(event.target.value)} 
                   placeholder="Detailed case description and notes..."
