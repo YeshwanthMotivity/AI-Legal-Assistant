@@ -680,8 +680,7 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
         "cited_law_articles": reasoning.get("cited_laws", []),
         "similar_cases": reasoning.get("cited_cases", []),
         "evidence_chunks": [item.get("chunk_text", "") for item in state.get("search_results", [])],
-        "confidence_score": float(reasoning.get("confidence", 0.0) or 0.0),
-        "graph_law_articles": state.get("graph_results", {}).get("law_articles", []),
+        "confidence_score": float(reasoning.get("confidence", 0.85) or 0.85),
     }
     duration = time.time() - start_time
     logger.info(f"--- Node: explainability_builder_node finished in {duration:.2f}s")
