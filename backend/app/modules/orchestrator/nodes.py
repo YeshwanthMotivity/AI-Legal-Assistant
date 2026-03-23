@@ -653,11 +653,11 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             
             result = {
                 "outcome":        outcome,
-                "reasoning":      _cleanse_text(str(parsed.get("reasoning", ""))) or "Analysis complete. See draft for details.",
+                "reasoning":      _cleanse_text(parsed.get("reasoning", "")) or "Analysis complete. See draft for details.",
                 "cited_laws":     parsed.get("cited_laws", []) if isinstance(parsed.get("cited_laws"), list) else [],
                 "cited_cases":    parsed.get("cited_cases", []) if isinstance(parsed.get("cited_cases"), list) else [],
-                "confidence":     (lambda c: c/100.0 if c > 1.0 else c)(float(parsed.get("confidence", 0.85) or 0.85)),
-                "draft_judgment": _cleanse_text(str(parsed.get("draft_judgment", content))),
+                "confidence":     (lambda c: c/100.0 if c > 1.0 else c)(float(str(parsed.get("confidence", 0.85)).replace("%","") or 0.85)),
+                "draft_judgment": _cleanse_text(parsed.get("draft_judgment", content)),
             }
             if not result["draft_judgment"] or len(result["draft_judgment"]) < 20:
                 result["draft_judgment"] = result["reasoning"]
@@ -753,11 +753,23 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
     reasoning = state.get("reasoning", {})
     # Align with keys expected by OrchestratorService.run_analysis and get_case_analysis
     # Use search results from state if the LLM didn't provide specific citations
+    # Ensure law articles are always objects with title/content
+    def _to_article_obj(item):
+        if isinstance(item, dict):
+            return {
+                "title": item.get("title") or item.get("law_name") or item.get("article_number") or "Article",
+                "content": item.get("content") or item.get("text") or item.get("raw_text") or "Article Details"
+            }
+        return {"title": str(item), "content": "Citations mapped from primary case analysis."}
+
+    raw_laws = reasoning.get("cited_laws") or state.get("laws", [])
+    law_articles = [_to_article_obj(l) for l in raw_laws]
+
     explainability = {
-        "law_articles": reasoning.get("cited_laws") or state.get("laws", []),
+        "law_articles": law_articles,
         "similar_precedents": reasoning.get("cited_cases") or state.get("precedents", []),
         "evidence_chunks": [item.get("chunk_text", "") for item in state.get("search_results", [])],
-        "confidence_score": (lambda c: c/100.0 if c > 1.0 else c)(float(reasoning.get("confidence", 0.85) or 0.85)),
+        "confidence_score": (lambda c: c/100.0 if c > 1.0 else c)(float(str(reasoning.get("confidence", 0.85)).replace("%","") or 0.85)),
     }
     duration = time.time() - start_time
     logger.info(f"--- Node: explainability_builder_node finished in {duration:.2f}s")
@@ -782,6 +794,15 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
         "--------------------------------------------------\n\n"
     )
     
+    # Ensure citations are joined as strings even if they are objects
+    def _to_str(item):
+        if isinstance(item, dict):
+            return item.get("title") or item.get("case_name") or item.get("law_name") or str(item)
+        return str(item)
+
+    laws_cited = ", ".join([_to_str(l) for l in reasoning.get("cited_laws", [])])
+    cases_cited = ", ".join([_to_str(c) for c in reasoning.get("cited_cases", [])])
+
     final_draft = (
         f"{court_header}"
         "1. DISPOSITION AND OUTCOME\n"
@@ -789,8 +810,8 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
         "2. LEGAL REASONING\n"
         f"{draft_content}\n\n"
         "3. CITED AUTHORITIES\n"
-        f"Laws: {', '.join(reasoning.get('cited_laws', []))}\n"
-        f"Precedents: {', '.join(reasoning.get('cited_cases', []))}\n\n"
+        f"Laws: {laws_cited}\n"
+        f"Precedents: {cases_cited}\n\n"
         "--- End of Draft ---"
     )
 

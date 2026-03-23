@@ -437,7 +437,7 @@ class SimilarityService:
         async with httpx.AsyncClient(timeout=120.0) as client:
             try:
                 # Try Ollama native /api/chat first
-                url = f"{settings.jais_url}/api/chat"
+                url = f"{settings.ollama_url}/api/chat"
                 payload = {
                     "model": settings.ollama_model_primary,
                     "messages": [
@@ -451,7 +451,7 @@ class SimilarityService:
                 
                 if response.status_code == 404:
                     # Fallback to OpenAI-compatible endpoint if native fails
-                    url = f"{settings.jais_url}/v1/chat/completions"
+                    url = f"{settings.ollama_url}/v1/chat/completions"
                     payload = {
                         "model": "primary",
                         "messages": [
