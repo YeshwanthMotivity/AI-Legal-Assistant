@@ -203,7 +203,7 @@ const CaseDetail = () => {
       compensation_amount: payload.compensationAmount,
       reasoning: payload.reasoning,
       legal_precedents: precedents.map((item) => item.caseId),
-      articles_cited: lawArticles,
+      articles_cited: lawArticles.map((a: any) => typeof a === 'string' ? a : (a.title || a.law_name || a.article_number || 'Legal Article')),
     })
   }
 
