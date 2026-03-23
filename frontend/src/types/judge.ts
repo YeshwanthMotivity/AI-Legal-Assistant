@@ -63,11 +63,16 @@ export interface EntitlementItem {
   value: string
 }
 
+export interface LawArticle {
+  title: string
+  content: string
+}
+
 export interface NormalizedCaseAnalysis {
   status: string
   outcome?: string
   reasoning?: string
-  lawArticles: string[]
+  lawArticles: (string | LawArticle)[]
   similarPrecedents: SimilarPrecedent[]
   entitlementBreakdown: EntitlementItem[]
   confidence: number

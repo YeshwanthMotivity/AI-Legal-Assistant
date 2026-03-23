@@ -110,8 +110,23 @@ const PrecedentDetailPage: React.FC = () => {
                       <p className="text-[11px] text-muted-foreground italic">Official transcript from the DIFC Court of First Instance</p>
                    </div>
                 </div>
-                <div className="whitespace-pre-wrap text-foreground/90 selection:bg-primary/20">
-                  {precedent.text}
+                <div className="text-foreground/90 selection:bg-primary/20 space-y-4">
+                  {precedent.text.split('\n').filter(p => p.trim()).map((paragraph, idx) => {
+                    const trimmed = paragraph.trim();
+                    const isNumbered = /^\d+\./.test(trimmed);
+                    
+                    return (
+                      <p 
+                        key={idx} 
+                        className={cn(
+                          "transition-colors hover:text-foreground",
+                          isNumbered && "pl-4 border-l-2 border-primary/20 font-semibold text-foreground py-1 bg-primary/5 rounded-r-lg"
+                        )}
+                      >
+                        {trimmed}
+                      </p>
+                    );
+                  })}
                 </div>
               </div>
             </CardContent>

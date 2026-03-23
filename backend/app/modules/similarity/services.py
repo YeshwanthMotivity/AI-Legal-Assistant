@@ -436,7 +436,18 @@ class SimilarityService:
         # Use Ollama native API for better compatibility with local LLM servers
         async with httpx.AsyncClient(timeout=120.0) as client:
             try:
-                # Try Ollama native /api/chat first
+                # 1. Reachability Pre-check
+                try:
+                    health_check = await client.get(f"{settings.ollama_url}/api/tags", timeout=10.0)
+                    health_check.raise_for_status()
+                except Exception as health_err:
+                    logger.error(f"Ollama health check failed at {settings.ollama_url}: {health_err}")
+                    raise HTTPException(
+                        status_code=502, 
+                        detail=f"AI Service (Ollama) unreachable at {settings.ollama_url}. Please ensure Ollama is running and the model is loaded."
+                    )
+
+                # 2. Try Ollama native /api/chat
                 url = f"{settings.ollama_url}/api/chat"
                 payload = {
                     "model": settings.ollama_model_primary,
@@ -447,10 +458,12 @@ class SimilarityService:
                     "stream": False
                 }
                 
-                response = await client.post(url, json=payload)
+                logger.info(f"Sending chat request to Ollama: {url} (model={settings.ollama_model_primary})")
+                response = await client.post(url, json=payload, timeout=60.0)
                 
                 if response.status_code == 404:
                     # Fallback to OpenAI-compatible endpoint if native fails
+                    logger.info("Native Ollama chat failed (404), falling back to v1/chat/completions")
                     url = f"{settings.ollama_url}/v1/chat/completions"
                     payload = {
                         "model": "primary",
@@ -459,7 +472,7 @@ class SimilarityService:
                             {"role": "user", "content": request.message}
                         ]
                     }
-                    response = await client.post(url, json=payload)
+                    response = await client.post(url, json=payload, timeout=60.0)
 
                 response.raise_for_status()
                 data = response.json()
@@ -474,7 +487,9 @@ class SimilarityService:
                     answer = str(data)
                     
                 return PrecedentChatResponse(response=answer)
+            except HTTPException:
+                raise
             except Exception as e:
-                logger.error(f"Precedent chat failed: {e}")
-                raise HTTPException(status_code=502, detail="AI service failed to respond")
+                logger.error(f"Precedent chat failed: {e}", exc_info=True)
+                raise HTTPException(status_code=502, detail=f"AI service failed to respond: {str(e)}")
 

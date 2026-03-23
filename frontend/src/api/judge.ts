@@ -9,6 +9,7 @@ import type {
   EntitlementItem,
   FeedbackRequest,
   JudgmentRequest,
+  LawArticle,
   PrecedentChatResponse,
   PrecedentDetail,
   SimilarPrecedent,
@@ -97,24 +98,29 @@ const extractSimilarPrecedents = (
 const extractLawArticles = (
   explainability: Record<string, unknown>,
   citedLaws: unknown
-): string[] => {
-  const graphLawArticles = toArray(explainability.graph_law_articles).map((entry) => {
-    if (typeof entry === 'string') return entry
-    const row = asRecord(entry)
-    return String(row.article ?? row.article_number ?? row.id ?? row.title ?? '').trim()
-  }).filter(Boolean)
-
+): (string | LawArticle)[] => {
   const preferred = [
     explainability.law_articles,
     explainability.cited_law_articles,
     explainability.recommended_articles,
     explainability.cited_laws,
-    graphLawArticles,
     citedLaws,
   ]
 
-  const firstArray = preferred.find((item) => Array.isArray(item))
-  return toStringArray(firstArray)
+  const firstArray = preferred.find(Array.isArray) as unknown[] | undefined
+  if (!firstArray) return []
+
+  return firstArray.map((entry) => {
+    if (typeof entry === 'string') return entry
+    const row = asRecord(entry)
+    if (row.title || row.content) {
+      return {
+        title: String(row.title ?? row.law_name ?? row.article_number ?? 'Legal Article'),
+        content: String(row.content ?? row.text ?? row.summary ?? 'Citations mapped from primary case analysis.'),
+      }
+    }
+    return String(row.article ?? row.id ?? '').trim()
+  }).filter(Boolean) as (string | LawArticle)[]
 }
 
 const extractEntitlements = (explainability: Record<string, unknown>): EntitlementItem[] => {
@@ -147,17 +153,41 @@ const sanitizeDraftText = (value: string): string => {
   const content = value.trim()
   if (!content) return ''
 
+  let cleanContent = content
   const patterns = [/^\{[\s\S]*"case_id"\s*:/, /^AI Draft:\s*$/i]
   const hasContextBlob = patterns.some((pattern) => pattern.test(content)) || content.includes('"context"')
-  if (!hasContextBlob) return content
-
-  const marker = 'Preliminary legal analysis'
-  const markerIndex = content.indexOf(marker)
-  if (markerIndex >= 0) {
-    return content.slice(markerIndex).trim()
+  
+  if (hasContextBlob) {
+    const marker = 'Preliminary legal analysis'
+    const markerIndex = content.indexOf(marker)
+    if (markerIndex >= 0) {
+      cleanContent = content.slice(markerIndex).trim()
+    } else {
+      cleanContent = content.replace(/\{[\s\S]*?\}\s*/g, '').trim()
+    }
   }
 
-  return content.replace(/\{[\s\S]*?\}\s*/g, '').trim()
+  // Convert plain text to structured HTML for Quill
+  const lines = cleanContent.split('\n')
+  const htmlLines = lines.map(line => {
+    const trimmed = line.trim()
+    if (!trimmed) return '<p><br></p>'
+    // Numbered section headers like "1. DISPOSITION AND OUTCOME"
+    if (/^\d+\.\s+[A-Z\s,]+$/.test(trimmed)) {
+      return `<h3><strong>${trimmed}</strong></h3>`
+    }
+    // Bullet points
+    if (trimmed.startsWith('•') || trimmed.startsWith('-')) {
+      return `<p>${trimmed}</p>`
+    }
+    // Bold key-value lines like "Employee Name: Ahmed"
+    if (trimmed.includes(':') && trimmed.split(':')[0].length < 40) {
+      const [key, ...rest] = trimmed.split(':')
+      return `<p><strong>${key}:</strong>${rest.join(':')}</p>`
+    }
+    return `<p>${trimmed}</p>`
+  })
+  return htmlLines.join('')
 }
 
 const normalizeCaseAnalysis = (raw: RawCaseAnalysisResponse): CaseAnalysisResponse => {
