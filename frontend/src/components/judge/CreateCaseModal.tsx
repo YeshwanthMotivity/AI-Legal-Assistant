@@ -63,7 +63,7 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
       />
       
       {/* Modal Container */}
-      <div className="relative w-full max-w-2xl bg-card border rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+      <div className="relative w-full max-w-3xl bg-card border rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
         <div className="flex items-center justify-between p-8 border-b bg-muted/5">
           <div>
             <h2 className="text-2xl font-black tracking-tight text-foreground">{t('judge.form.createNewCase')}</h2>
@@ -75,8 +75,8 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-          <div className="p-8 overflow-y-auto scrollbar-thin max-h-[65vh]">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+          <div className="p-8 overflow-y-auto scrollbar-thin max-h-[70vh]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
               <div className="md:col-span-2 space-y-2.5">
                 <label className="text-[11px] font-black uppercase text-muted-foreground ml-1 tracking-tight">
                   {t('judge.form.title')}

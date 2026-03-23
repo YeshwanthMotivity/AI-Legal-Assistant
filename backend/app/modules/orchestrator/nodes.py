@@ -85,58 +85,7 @@ NODE_TOKEN_LIMITS: dict[str, int] = {
 # Returns 0.0 (simple) → 1.0 (complex). Threshold ≥ 0.5 triggers JAIS 7B.
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _assess_complexity(state: AnalysisState) -> tuple[float, list[str]]:
-    """
-    Score query complexity to decide which model to use.
-    Returns (score, list_of_reasons_for_logging).
-    """
-    score = 0.0
-    reasons: list[str] = []
-
-    # 1. Arabic content — JAIS is specifically trained on Arabic legal text
-    #    Reuse query_language already detected in document_agent_node (free)
-    if state.get("query_language") == "ar":
-        score += 0.35
-        reasons.append("Arabic query (+0.35)")
-
-    # 2. Query length — longer queries imply more nuanced fact patterns
-    query = state.get("query_text", "")
-    word_count = len(query.split())
-    if word_count > 80:
-        score += 0.25
-        reasons.append(f"Long query {word_count} words (+0.25)")
-    elif word_count > 40:
-        score += 0.10
-        reasons.append(f"Medium query {word_count} words (+0.10)")
-
-    # 3. Multiple retrieved evidence sources — complex fact patterns
-    num_precedents = len(state.get("precedents", []))
-    num_laws = len(state.get("laws", []))
-    if num_precedents >= 3 or num_laws >= 3:
-        score += 0.20
-        reasons.append(f"Rich retrieval: {num_precedents} precedents, {num_laws} laws (+0.20)")
-
-    # 4. High-value claim — complex financial calculations needed
-    calculation = state.get("calculation", {})
-    gratuity = calculation.get("gratuity_estimate", 0.0)
-    if gratuity > 50_000:
-        score += 0.10
-        reasons.append(f"High-value claim AED {gratuity:,.0f} (+0.10)")
-
-    return min(score, 1.0), reasons
-
-
-def _select_model(state: AnalysisState) -> tuple[str, str, float]:
-    score, reasons = _assess_complexity(state)
-    reason_str = " | ".join(reasons) if reasons else "no complexity signals"
-    
-    # Threshold for JAIS 7B is 0.5.
-    if score >= 0.5:
-        logger.info(f"Model routing → JAIS 7B (score={score:.2f}) | Case {state['case_id']} | {reason_str}")
-        return settings.jais_url, settings.ollama_model_primary, score
-    else:
-        logger.info(f"Model routing → Qwen 1.5B (score={score:.2f}) | Case {state['case_id']} | {reason_str}")
-        return settings.fallback_model_url, settings.ollama_model_fallback, score
+# (Removed redundant complexity scoring block and moved definition closer to usage)
 
 
 async def document_agent_node(state: AnalysisState) -> dict[str, Any]:
@@ -537,30 +486,83 @@ def _cleanse_text(text: Any) -> str:
     """Remove markdown code blocks, stringify dicts/lists, and handle nested JSON strings."""
     if text is None: return ""
     
-    # If it's already a dict/list, flatten it
+    if not text:
+        return ""
+    
+    # If it is a dict or list, we must flatten it to a readable sentence/bullet list
+    # instead of just doing json.dumps (which looks bad to users)
     if isinstance(text, (dict, list)):
-        try:
-            return json.dumps(text, indent=2, ensure_ascii=False)
-        except Exception:
-            return str(text)
-    
-    text = str(text).strip()
-    # Guard against common hallucination
-    if text.lower() == "[object object]":
-        return "Analysis Details"
+        return _flatten_to_text(text)
 
-    # Remove ```json ... ``` or ``` ... ```
-    text = re.sub(r"```(?:json)?\s*([\s\S]*?)\s*```", r"\1", text)
+    text = str(text).strip()
     
-    # Try to parse as JSON if it looks like a nested object inside a string
-    if (text.startswith("{") and text.endswith("}")) or (text.startswith("[") and text.endswith("]")):
+    # Guard against common hallucination
+    obj_pattern = re.compile(r'\[object\s+object\]', re.IGNORECASE)
+    if obj_pattern.search(text):
+        if len(text) < 20: return "" # Discard if mostly hallucinated
+        text = obj_pattern.sub("", text)
+
+    # Remove markdown code blocks
+    text = re.sub(r"```(?:json)?\s*([\s\S]*?)\s*```", r"\1", text)
+    text = text.replace('```', '')
+    
+    # Recursive JSON attempt (in case of double encoded strings)
+    if text.startswith("{") or text.startswith("["):
         try:
             parsed_nested = json.loads(text)
-            return json.dumps(parsed_nested, indent=2, ensure_ascii=False)
-        except Exception:
+            return _flatten_to_text(parsed_nested)
+        except:
             pass
     
     return text.strip()
+
+
+def _flatten_to_text(data: Any, indent: int = 0) -> str:
+    """Converts structured dicts/lists into clean, human-readable legal text."""
+    if not data: return ""
+    if indent > 5: return str(data) # Avoid deep recursion
+    
+    if isinstance(data, dict):
+        lines = []
+        for key, value in data.items():
+            k = str(key).replace("_", " ").title()
+            if isinstance(value, (dict, list)):
+                v = _flatten_to_text(value, indent + 1)
+                lines.append(f"{'  ' * indent}• {k}:\n{v}")
+            else:
+                lines.append(f"{'  ' * indent}• {k}: {value}")
+        return "\n".join(lines)
+        
+    if isinstance(data, list):
+        if all(isinstance(i, (str, int, float)) for i in data):
+            return "\n".join([f"{'  ' * indent}- {i}" for i in data])
+        return "\n".join([_flatten_to_text(i, indent + 1) for i in data])
+        
+    return str(data)
+
+
+def _select_model(state: AnalysisState) -> tuple[str, str, float]:
+    """Determines the best model for the case complexity."""
+    precedents = state.get("precedents", [])
+    laws = state.get("laws", [])
+    
+    # Base complexity score
+    complexity_score = 0.3
+    if len(precedents) > 3: complexity_score += 0.2
+    if len(laws) > 5: complexity_score += 0.2
+    if len(state.get("context", {}).get("case_metadata", {}).get("description", "")) > 1000:
+        complexity_score += 0.2
+        
+    # User-requested routing
+    # Qwen (fast) as primary, JAIS (robust) for complex cases
+    if complexity_score > 0.6:
+        model_url = settings.ollama_url
+        model_label = "jwnder/jais-adaptive:7b"
+    else:
+        model_url = settings.ollama_url
+        model_label = "qwen2.5:1.5b-instruct"
+        
+    return model_url, model_label, complexity_score
 
 
 async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
@@ -572,18 +574,18 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
 
     # ── 2. Prompts ───────────────────────────────────────────────────────────
     system_prompt = (
-        "You are a DIFC UAE Labor Law expert. Provide a structured legal analysis as JSON.\n"
+        "You are a Chief Legal Officer for DIFC UAE Labor Law. Provide a precise, professional legal analysis in JSON format.\n"
         f"Language: {state.get('query_language', 'en')}.\n\n"
-        "SCHEMA:\n"
+        "RESPONSE SCHEMA (STRICT):\n"
         "{\n"
         "  \"outcome\": \"Approved\" | \"Rejected\",\n"
-        "  \"reasoning\": \"Clean text explanation (NO JSON inside this field)\",\n"
-        "  \"cited_laws\": [\"Name of law/article\"],\n"
-        "  \"cited_cases\": [\"Citation\"],\n"
+        "  \"reasoning\": \"Step-by-step legal justification. USE PLAIN TEXT ONLY. NO JSON OR OBJECTS INSIDE.\",\n"
+        "  \"cited_laws\": [\"Exact name/Article number of applicable UAE/DIFC Laws\"],\n"
+        "  \"cited_cases\": [\"Case References or Precedents\"],\n"
         "  \"confidence\": 0.0 to 1.0,\n"
-        "  \"draft_judgment\": \"Formal judgment text (High-quality HTML)\"\n"
+        "  \"draft_judgment\": \"Formal court-ready text. High-quality legal English. NO JSON structures.\"\n"
         "}\n\n"
-        "Requirement: Return ONLY the JSON object. Do not include preamble."
+        "CRITICAL: If you do not have a specific value, return an empty string or empty list, NEVER return '[object Object]'."
     )
     user_prompt = json.dumps(
         {"case_id": state["case_id"], "context": state.get("context", {})},
@@ -654,13 +656,21 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             if not outcome and "Rejected" in str(parsed): outcome = "Rejected"
             if not outcome: outcome = "Approved"
             
+            # Check for hallucinations even in parsed data
+            raw_reasoning = parsed.get("reasoning", "")
+            raw_draft = parsed.get("draft_judgment", content)
+            
+            if "[object Object]" in str(raw_reasoning) or "[object Object]" in str(raw_draft):
+                logger.warning(f"Detection of [object Object] in {used_label} output. Triggering retry/fallback.")
+                raise ValueError("Hallucination detected")
+
             result = {
                 "outcome":        outcome,
-                "reasoning":      _cleanse_text(parsed.get("reasoning", "")) or "Analysis complete. See draft for details.",
+                "reasoning":      _cleanse_text(raw_reasoning) or "Analysis complete. See draft for details.",
                 "cited_laws":     parsed.get("cited_laws", []) if isinstance(parsed.get("cited_laws"), list) else [],
                 "cited_cases":    parsed.get("cited_cases", []) if isinstance(parsed.get("cited_cases"), list) else [],
                 "confidence":     (lambda c: c/100.0 if c > 1.0 else c)(float(str(parsed.get("confidence", 0.85)).replace("%","") or 0.85)),
-                "draft_judgment": _cleanse_text(parsed.get("draft_judgment", content)),
+                "draft_judgment": _cleanse_text(raw_draft),
             }
             if not result["draft_judgment"] or len(result["draft_judgment"]) < 20:
                 result["draft_judgment"] = result["reasoning"]
@@ -694,31 +704,33 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             "complexity_score":  round(complexity_score, 2),
         }
 
-    # ── 6. Execution: routed model → Qwen fallback → error ───────────────────
-
-    # Determine timeouts
-    JAIS_HARD_TIMEOUT  = 90
-    QWEN_TIMEOUT       = 300
-    FALLBACK_MODEL     = settings.ollama_model_fallback
-
-    primary_timeout = JAIS_HARD_TIMEOUT if "jais" in model_url else QWEN_TIMEOUT
+    # ── 6. Execution: routed model → Fallback on Hallucination ────────────────
+    
+    PRIMARY_JAIS = "jwnder/jais-adaptive:7b"
+    timeout = 300
 
     try:
-        content = await _call(model_url, primary_timeout, model_label)
-        return _normalize_reasoning(content, model_label, "ok")
+        content = await _call(model_url, timeout, model_label)
+        try:
+            return _normalize_reasoning(content, model_label, "ok")
+        except ValueError as e:
+            # If Qwen hallucinated [object Object], retry with JAIS
+            if "Hallucination" in str(e) and model_label != PRIMARY_JAIS:
+                logger.warning(f"Detection of [object Object] in {model_label} output. Triggering JAIS-7B fallback.")
+                content = await _call(model_url, timeout, PRIMARY_JAIS)
+                return _normalize_reasoning(content, PRIMARY_JAIS, "hallucination_fallback")
+            raise
 
-    except Exception as e_primary:
-        logger.warning(f"reasoning_agent_node: {model_label} failed ({repr(e_primary)}) — trying Qwen fallback")
-        if model_label != FALLBACK_MODEL:
+    except Exception as e:
+        logger.error(f"reasoning_agent_node failed: {repr(e)}")
+        # If we failed on Qwen, try JAIS as last resort
+        if model_label != PRIMARY_JAIS:
             try:
-                # IMPORTANT: Use the fallback model name explicitly here
-                content = await _call(settings.fallback_model_url, QWEN_TIMEOUT, FALLBACK_MODEL)
-                return _normalize_reasoning(content, FALLBACK_MODEL, "error_fallback")
-            except Exception as e_fallback:
-                logger.error(f"Both models failed: primary={repr(e_primary)}, fallback={repr(e_fallback)}")
-                return _error_result(state, start_time, complexity_score, repr(e_fallback))
-        else:
-            return _error_result(state, start_time, complexity_score, repr(e_primary))
+                content = await _call(model_url, timeout, PRIMARY_JAIS)
+                return _normalize_reasoning(content, PRIMARY_JAIS, "error_fallback")
+            except Exception as e2:
+                return _error_result(state, start_time, complexity_score, repr(e2))
+        return _error_result(state, start_time, complexity_score, repr(e))
 
 
 def _error_result(
@@ -758,19 +770,26 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
     # Use search results from state if the LLM didn't provide specific citations
     # Ensure law articles are always objects with title/content
     def _to_article_obj(item):
-        item_str = str(item).strip()
-        if item_str.lower() == "[object object]":
-            return {"title": "Legal Article", "content": "Refer to context for details."}
-            
+        if not item: return None
+        
+        # If it's a dict, extract fields
         if isinstance(item, dict):
-            return {
-                "title": item.get("title") or item.get("law_name") or item.get("article_number") or "Article",
-                "content": item.get("content") or item.get("text") or item.get("raw_text") or "Article Details"
-            }
-        return {"title": item_str, "content": "Citations mapped from primary case analysis."}
+            title = str(item.get("title") or item.get("law_name") or item.get("article_number") or "Legal Article")
+            content = str(item.get("content") or item.get("text") or item.get("summary") or "Citation mapped from analysis.")
+        else:
+            # It's a string
+            title = str(item)
+            content = "Citations mapped from primary case analysis."
+            
+        # Hallucination filter
+        if "[object Object]" in title or "[object Object]" in content:
+            return None
+            
+        return {"title": title, "content": content}
 
     raw_laws = reasoning.get("cited_laws") or state.get("laws", [])
-    law_articles = [_to_article_obj(l) for l in raw_laws]
+    # Filter out Nones from the list comprehension
+    law_articles = [obj for l in raw_laws if (obj := _to_article_obj(l)) is not None]
 
     explainability = {
         "law_articles": law_articles,
