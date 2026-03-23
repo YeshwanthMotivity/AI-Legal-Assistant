@@ -419,6 +419,10 @@ class SimilarityService:
             category=payload.get("category"),
             text=payload.get("raw_text") or payload.get("text") or "No text available",
             outcome=payload.get("outcome"),
+            case_type=payload.get("case_type") or payload.get("type"),
+            summary=payload.get("summary") or payload.get("brief") or payload.get("description"),
+            cited_laws=payload.get("cited_laws") or [],
+            compensation=payload.get("compensation_amount") or payload.get("compensation") or payload.get("award"),
         )
 
     async def precedent_chat(self, precedent_id: str, request: PrecedentChatRequest) -> PrecedentChatResponse:

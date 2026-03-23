@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
 import { Link } from 'react-router-dom';
 import { 
@@ -17,15 +18,16 @@ import { Button } from '@/components/ui/button';
 
 export default function ClerkDashboard(): ReactNode {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   return (
-    <PortalLayout title="Clerk Dashboard" subtitle={`Welcome, ${user?.email || 'Legal Assistant'}`}>
+    <PortalLayout title={t('clerk.dashboard.title')} subtitle={`${t('common.welcome')}, ${user?.email || 'Legal Assistant'}`}>
       
       {/* Quick Stats Banner */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <StatCard label="Pending Uploads" value="12" icon={Upload} className="border-l-4 border-l-amber-500" />
-        <StatCard label="Active Cases" value="48" icon={Briefcase} className="border-l-4 border-l-primary" />
-        <StatCard label="Completed Tasks" value="124" icon={CheckCircle2} className="border-l-4 border-l-emerald-500" />
+        <StatCard label={t('clerk.dashboard.pendingUploads')} value="12" icon={Upload} className="border-l-4 border-l-amber-500" />
+        <StatCard label={t('clerk.dashboard.activeCases')} value="48" icon={Briefcase} className="border-l-4 border-l-primary" />
+        <StatCard label={t('clerk.dashboard.completedTasks')} value="124" icon={CheckCircle2} className="border-l-4 border-l-emerald-500" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -38,24 +40,24 @@ export default function ClerkDashboard(): ReactNode {
                      <FileText className="w-6 h-6" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl">Case Management</CardTitle>
-                    <CardDescription className="text-xs font-medium uppercase tracking-wider mt-1 opacity-70">Document Control Center</CardDescription>
+                    <CardTitle className="text-xl">{t('clerk.dashboard.caseManagement')}</CardTitle>
+                    <CardDescription className="text-xs font-medium uppercase tracking-wider mt-1 opacity-70">{t('clerk.dashboard.docControlCenter')}</CardDescription>
                   </div>
                 </div>
                 <Link to="/clerk/cases">
-                   <Button variant="ghost" size="icon" className="group-hover:translate-x-1 transition-transform">
-                      <ArrowRight className="w-5 h-5" />
+                   <Button variant="ghost" size="icon" className="group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
+                      <ArrowRight className="w-5 h-5 rtl:rotate-180" />
                    </Button>
                 </Link>
               </div>
            </CardHeader>
            <CardContent className="p-8">
               <p className="text-muted-foreground text-sm leading-relaxed mb-6 italic">
-                 Track and manage all judicial case documents. verify metadata, monitor processing status, and ensure data integrity for the judge's review.
+                 {t('clerk.dashboard.caseMgmtDesc')}
               </p>
               <Link to="/clerk/cases">
-                <Button className="w-full h-11 shadow-lg shadow-primary/20 gap-2">
-                   Open Workspace
+                <Button className="w-full h-11 shadow-lg shadow-primary/20 gap-2 font-bold">
+                   {t('clerk.dashboard.openWorkspace')}
                 </Button>
               </Link>
            </CardContent>
@@ -70,24 +72,24 @@ export default function ClerkDashboard(): ReactNode {
                      <Upload className="w-6 h-6" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl">Direct Ingestion</CardTitle>
-                    <CardDescription className="text-xs font-medium uppercase tracking-wider mt-1 opacity-70">Bulk Evidence Processing</CardDescription>
+                    <CardTitle className="text-xl">{t('clerk.dashboard.directIngestion')}</CardTitle>
+                    <CardDescription className="text-xs font-medium uppercase tracking-wider mt-1 opacity-70">{t('clerk.dashboard.bulkEvidence')}</CardDescription>
                   </div>
                 </div>
                 <Link to="/clerk/documents">
-                   <Button variant="ghost" size="icon" className="group-hover:translate-x-1 transition-transform">
-                      <ArrowRight className="w-5 h-5" />
+                   <Button variant="ghost" size="icon" className="group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
+                      <ArrowRight className="w-5 h-5 rtl:rotate-180" />
                    </Button>
                 </Link>
               </div>
            </CardHeader>
            <CardContent className="p-8">
               <p className="text-muted-foreground text-sm leading-relaxed mb-6 italic">
-                 Streamline the ingestion of physical evidence and legal filings. Supporting high-resolution OCR for both Arabic and English procedural documents.
+                 {t('clerk.dashboard.ingestionDesc')}
               </p>
               <Link to="/clerk/documents">
-                <Button variant="secondary" className="w-full h-11 border-emerald-500/20 text-emerald-700 bg-emerald-500/5 hover:bg-emerald-500/10 gap-2">
-                   Start Bulk Upload
+                <Button variant="secondary" className="w-full h-11 border-emerald-500/20 text-emerald-700 bg-emerald-500/5 hover:bg-emerald-500/10 gap-2 font-bold">
+                   {t('clerk.dashboard.startBulkUpload')}
                 </Button>
               </Link>
            </CardContent>
@@ -99,13 +101,13 @@ export default function ClerkDashboard(): ReactNode {
          <div className="flex items-center gap-4">
             <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
             <div>
-               <h4 className="text-sm font-bold tracking-tight">AI Reasoning Nodes: ONLINE</h4>
-               <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest leading-none mt-0.5">Latency: 24ms | Model Cluster: JAIS-7B Optimized</p>
+               <h4 className="text-sm font-bold tracking-tight">{t('clerk.dashboard.aiNodesOnline')}</h4>
+               <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest leading-none mt-0.5">{t('clerk.dashboard.latencyInfo')}</p>
             </div>
          </div>
          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground text-xs uppercase font-black hover:text-primary transition-colors">
             <Settings className="w-4 h-4" />
-            Hardware Diagnostics
+            {t('clerk.dashboard.hardwareDiagnostics')}
          </Button>
       </div>
     </PortalLayout>

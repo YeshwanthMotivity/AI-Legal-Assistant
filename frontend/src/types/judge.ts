@@ -143,6 +143,10 @@ export interface PrecedentDetail {
   category?: string
   text: string
   outcome?: string
+  case_type?: string
+  summary?: string
+  cited_laws?: string[]
+  compensation?: string
 }
 
 export interface PrecedentChatResponse {

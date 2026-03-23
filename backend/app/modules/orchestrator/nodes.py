@@ -758,32 +758,22 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             "complexity_score":  round(complexity_score, 2),
         }
 
-    # ── 6. Execution: routed model → Fallback on Hallucination ────────────────
+    # ── 6. Execution: Gemini (Primary) → Qwen-1.5B (Fallback) ──────────────────
     
-    PRIMARY_JAIS = "jwnder/jais-adaptive:7b"
-    timeout = 600
-
-    try:
-        content = await _call(model_url, timeout, model_label)
+    # Try Gemini first
+    if settings.gemini_api_key:
         try:
-            return _normalize_reasoning(content, model_label, "ok")
-        except ValueError as e:
-            # If Qwen hallucinated [object Object], retry with JAIS
-            if "Hallucination" in str(e) and model_label != PRIMARY_JAIS:
-                logger.warning(f"Detection of [object Object] in {model_label} output. Triggering JAIS-7B fallback.")
-                content = await _call(model_url, timeout, PRIMARY_JAIS)
-                return _normalize_reasoning(content, PRIMARY_JAIS, "hallucination_fallback")
-            raise
+            content = await _call_gemini(system_prompt, user_prompt)
+            return _normalize_reasoning(content, f"gemini:{settings.gemini_model}", "ok")
+        except Exception as e:
+            logger.error(f"Gemini reasoning failed: {repr(e)}. Falling back to local Qwen.")
 
+    # Fallback to Qwen via Ollama
+    fallback_model = "qwen2.5:1.5b-instruct"
+    try:
+        content = await _call_ollama(settings.ollama_url, 120, fallback_model)
+        return _normalize_reasoning(content, fallback_model, "fallback_ok")
     except Exception as e:
-        logger.error(f"reasoning_agent_node failed: {repr(e)}")
-        # If we failed on Qwen, try JAIS as last resort
-        if model_label != PRIMARY_JAIS:
-            try:
-                content = await _call(model_url, timeout, PRIMARY_JAIS)
-                return _normalize_reasoning(content, PRIMARY_JAIS, "error_fallback")
-            except Exception as e2:
-                return _error_result(state, start_time, complexity_score, repr(e2))
         return _error_result(state, start_time, complexity_score, repr(e))
 
 

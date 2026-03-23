@@ -22,6 +22,10 @@ class PrecedentDetail(BaseModel):
     category: str | None = None
     text: str
     outcome: str | None = None
+    case_type: str | None = None
+    summary: str | None = None
+    cited_laws: list[str] = []
+    compensation: str | None = None
 
 
 class PrecedentChatRequest(BaseModel):
