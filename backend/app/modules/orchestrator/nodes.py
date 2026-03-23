@@ -540,7 +540,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         logger.info(f"reasoning_agent_node: calling {model_name} at {url} (timeout={timeout_seconds}s)")
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
             response = await client.post(
-                f"{url}/api/generate",
+                f"{settings.ollama_url}/api/generate",
                 json=_build_payload(model_name, system_prompt, user_prompt),
             )
             response.raise_for_status()

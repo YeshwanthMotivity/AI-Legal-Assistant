@@ -122,8 +122,7 @@ class LegalStructureParser:
     )
 
     def __init__(self, timeout: float = 120.0):
-        # FIXED: was 2.0 — a 7B LLM needs 10-60 seconds minimum
-        self.url = "http://10.10.0.1:11434/api/chat"
+        self.url = f"{settings.ollama_url}/api/chat"
         self.timeout = timeout
 
     async def parse(self, text: str) -> Dict[str, Any]:

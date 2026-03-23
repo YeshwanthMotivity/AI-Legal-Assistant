@@ -11,7 +11,7 @@ import re
 import httpx
 from app.config import settings
 
-OLLAMA_BASE_URL = "http://10.10.0.1:11434"
+# Removed OLLAMA_BASE_URL (using settings.ollama_url)
 
 logger = logging.getLogger(__name__)
 
@@ -186,7 +186,7 @@ async def extract_structure(
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(
-                f"{OLLAMA_BASE_URL}/api/chat",
+                f"{settings.ollama_url}/api/chat",
                 json=payload
             )
             response.raise_for_status()

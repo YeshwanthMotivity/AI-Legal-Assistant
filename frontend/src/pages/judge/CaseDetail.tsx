@@ -321,7 +321,7 @@ const CaseDetail = () => {
                         variant={doc.processing_status === 'complete' ? 'success' : doc.processing_status === 'failed' ? 'destructive' : 'warning'}
                         className="px-1.5 h-4 text-[9px] font-black uppercase tracking-tighter"
                       >
-                         {t(`judge.documentStatus.${doc.processing_status}`)}
+                         {t(`judge.documentStatus.${doc.processing_status.toLowerCase()}`)}
                       </Badge>
                     </div>
                   ))}

@@ -153,7 +153,7 @@ async def extract_entities(text: str) -> list[dict]:
         # FIXED: was 2.0 — LLM needs time to process legal text
         async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.post(
-                "http://10.10.0.1:11434/api/chat",
+                f"{settings.ollama_url}/api/chat",
                 json={
                     "model": "qwen2.5:1.5b-instruct",
                     "messages": [

@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     minio_port: int = 9000
     
     # Service URLs
+    ollama_url: str = "http://localhost:11434"
     bge_m3_url: str = "http://bge_m3:8001"
     bge_reranker_url: str = "http://bge_reranker:8002"
     jais_url: str = "http://jais:8003"
