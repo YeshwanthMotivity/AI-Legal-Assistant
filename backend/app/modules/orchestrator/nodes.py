@@ -412,6 +412,14 @@ async def calculation_agent_node(state: AnalysisState) -> dict[str, Any]:
     notice_pay = salary if terminated_without_notice else 0.0
     unpaid_wages_flag = bool(_first_entity(entities, "salary"))
 
+    # Build modern breakdown list for UI
+    breakdown = [
+        {"label": "Monthly Salary", "value": f"AED {salary:,.2f}"},
+        {"label": "Years of Service", "value": f"{years_served:.2f} years"},
+        {"label": "Gratuity Estimate", "value": f"AED {gratuity:,.2f}"},
+        {"label": "Notice Compensation", "value": f"AED {notice_pay:,.2f}"},
+    ]
+
     res = {
         "calculation": {
             "monthly_salary": salary,
@@ -419,6 +427,7 @@ async def calculation_agent_node(state: AnalysisState) -> dict[str, Any]:
             "gratuity_estimate": round(gratuity, 2),
             "notice_period_compensation": round(notice_pay, 2),
             "unpaid_wages_flag": unpaid_wages_flag,
+            "breakdown": breakdown,
         }
     }
     duration = time.time() - start_time
@@ -621,8 +630,8 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
                 "reasoning":      str(parsed.get("reasoning", "")).strip(),
                 "cited_laws":     parsed.get("cited_laws", []) if isinstance(parsed.get("cited_laws"), list) else [],
                 "cited_cases":    parsed.get("cited_cases", []) if isinstance(parsed.get("cited_cases"), list) else [],
-                "confidence":     float(parsed.get("confidence", 0.85) or 0.85),
-                "draft_judgment": str(parsed.get("draft_judgment", "")).strip(),
+                "confidence":     (lambda c: c/100.0 if c > 1.0 else c)(float(parsed.get("confidence", 0.85) or 0.85)),
+                "draft_judgment": str(parsed.get("draft_judgment", content)).strip(),
             }
             if not result["draft_judgment"]:
                 result["draft_judgment"] = result["reasoning"]
@@ -716,11 +725,12 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: explainability_builder_node starting for case {state['case_id']}")
     reasoning = state.get("reasoning", {})
+    # Align with keys expected by OrchestratorService.run_analysis and get_case_analysis
     explainability = {
-        "cited_law_articles": reasoning.get("cited_laws", []),
-        "similar_cases": reasoning.get("cited_cases", []),
+        "law_articles": reasoning.get("cited_laws", []),
+        "similar_precedents": reasoning.get("cited_cases", []),
         "evidence_chunks": [item.get("chunk_text", "") for item in state.get("search_results", [])],
-        "confidence_score": float(reasoning.get("confidence", 0.85) or 0.85),
+        "confidence_score": (lambda c: c/100.0 if c > 1.0 else c)(float(reasoning.get("confidence", 0.85) or 0.85)),
     }
     duration = time.time() - start_time
     logger.info(f"--- Node: explainability_builder_node finished in {duration:.2f}s")

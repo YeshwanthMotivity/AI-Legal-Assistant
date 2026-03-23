@@ -355,7 +355,9 @@ const CaseDetail = () => {
                       <div className="space-y-2">
                          <div className="flex justify-between text-[10px] font-black uppercase text-muted-foreground">
                             <span>Confidence Level</span>
-                            <span className="text-primary">{Math.round((analysis?.confidence ?? 0) * 100)}%</span>
+                            <span className="text-primary">
+                               {Math.round((analysis?.confidence ?? 0) > 1 ? (analysis?.confidence ?? 0) : (analysis?.confidence ?? 0) * 100)}%
+                            </span>
                          </div>
                          <div className="h-1.5 w-full bg-accent rounded-full overflow-hidden">
                             <div 
