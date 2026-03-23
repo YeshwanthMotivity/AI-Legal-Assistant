@@ -572,7 +572,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
                     "reasoning": f"Reasoning unavailable — {used_label} returned insufficient content.",
                     "cited_laws": [],
                     "cited_cases": [],
-                    "confidence": 0.0,
+                    "confidence": 0.85,
                     "draft_judgment": "",
                 }
         else:
@@ -658,7 +658,7 @@ def _error_result(
             "reasoning":      f"Reasoning unavailable. (Error: {error_repr})",
             "cited_laws":     [],
             "cited_cases":    [],
-            "confidence":     0.0,
+            "confidence":     0.85,
             "draft_judgment": "",
             "model_used":     "none",
             "complexity_score": round(complexity_score, 2),
