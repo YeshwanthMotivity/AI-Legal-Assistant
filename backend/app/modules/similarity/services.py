@@ -422,7 +422,7 @@ class SimilarityService:
         )
 
     async def precedent_chat(self, precedent_id: str, request: PrecedentChatRequest) -> PrecedentChatResponse:
-        """Start a conversation about a specific precedent."""
+        """Start a conversation about a specific precedent (Gemini Primary, Qwen Fallback)."""
         detail = await self.get_precedent(precedent_id)
         
         system_prompt = (
@@ -433,24 +433,34 @@ class SimilarityService:
             f"{detail.text}"
         )
         
-        # Use Ollama native API for better compatibility with local LLM servers
+        # 1. Try Gemini (Primary)
+        if settings.gemini_api_key:
+            try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
+                payload = {
+                    "system_instruction": {"parts": [{"text": system_prompt}]},
+                    "contents": [{"parts": [{"text": request.message}]}],
+                    "generationConfig": {
+                        "temperature": 0.1,
+                        "maxOutputTokens": 2048,
+                    }
+                }
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    logger.info(f"Precedent Chat: calling Gemini ({settings.gemini_model})")
+                    response = await client.post(url, json=payload)
+                    response.raise_for_status()
+                    data = response.json()
+                    answer = data["candidates"][0]["content"]["parts"][0]["text"]
+                    return PrecedentChatResponse(response=answer)
+            except Exception as e:
+                logger.error(f"Gemini Precedent Chat failed: {repr(e)}. Falling back to local model.")
+
+        # 2. Fallback to Ollama (Qwen)
         async with httpx.AsyncClient(timeout=120.0) as client:
             try:
-                # 1. Reachability Pre-check
-                try:
-                    health_check = await client.get(f"{settings.ollama_url}/api/tags", timeout=10.0)
-                    health_check.raise_for_status()
-                except Exception as health_err:
-                    logger.error(f"Ollama health check failed at {settings.ollama_url}: {health_err}")
-                    raise HTTPException(
-                        status_code=502, 
-                        detail=f"AI Service (Ollama) unreachable at {settings.ollama_url}. Please ensure Ollama is running and the model is loaded."
-                    )
-
-                # 2. Try Ollama native /api/chat
                 url = f"{settings.ollama_url}/api/chat"
                 payload = {
-                    "model": settings.ollama_model_primary,
+                    "model": "qwen2.5:1.5b-instruct",
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": request.message}
@@ -458,38 +468,14 @@ class SimilarityService:
                     "stream": False
                 }
                 
-                logger.info(f"Sending chat request to Ollama: {url} (model={settings.ollama_model_primary})")
-                response = await client.post(url, json=payload, timeout=600.0)
-                
-                if response.status_code == 404:
-                    # Fallback to OpenAI-compatible endpoint if native fails
-                    logger.info("Native Ollama chat failed (404), falling back to v1/chat/completions")
-                    url = f"{settings.ollama_url}/v1/chat/completions"
-                    payload = {
-                        "model": "primary",
-                        "messages": [
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": request.message}
-                        ]
-                    }
-                    response = await client.post(url, json=payload, timeout=600.0)
-
+                logger.info(f"Sending chat request to Ollama fallback (qwen2.5:1.5b-instruct)")
+                response = await client.post(url, json=payload, timeout=120.0)
                 response.raise_for_status()
                 data = response.json()
                 
-                # Handle both Ollama native and OpenAI-compatible formats
-                if "message" in data and "content" in data["message"]:
-                    answer = data["message"]["content"]
-                elif "choices" in data and len(data["choices"]) > 0:
-                    answer = data["choices"][0]["message"]["content"]
-                else:
-                    logger.warning(f"Unexpected chat response format: {data}")
-                    answer = str(data)
-                    
+                answer = data.get("message", {}).get("content", str(data))
                 return PrecedentChatResponse(response=answer)
-            except HTTPException:
-                raise
             except Exception as e:
-                logger.error(f"Precedent chat failed: {e}", exc_info=True)
+                logger.error(f"Precedent chat fallback failed: {e}")
                 raise HTTPException(status_code=502, detail=f"AI service failed to respond: {str(e)}")
 

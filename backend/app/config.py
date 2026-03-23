@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     ollama_model_fallback: str = "qwen2.5:1.5b-instruct"
     ollama_timeout_seconds: int = 120
     
+    # Gemini
+    gemini_api_key: str | None = None
+    gemini_model: str = "gemini-2.0-flash"
+    
     # Application
     debug: bool = True
     app_name: str = "AI Judicial Assistant"

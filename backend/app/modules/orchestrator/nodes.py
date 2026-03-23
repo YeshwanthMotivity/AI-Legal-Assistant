@@ -626,18 +626,52 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             },
         }
 
-    # ── 4. Single HTTP caller with explicit timeout ───────────────────────────
-    async def _call(url: str, timeout_seconds: int, model_name: str) -> str:
-        logger.info(f"reasoning_agent_node: calling {model_name} at {url} (timeout={timeout_seconds}s)")
+    # ── 4. Model Callers ──────────────────────────────────────────────────────
+    async def _call_ollama(url: str, timeout_seconds: int, model_name: str) -> str:
+        logger.info(f"reasoning_agent_node: calling Ollama/{model_name} at {url}")
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
-            response = await client.post(
-                f"{settings.ollama_url}/api/generate",
-                json=_build_payload(model_name, system_prompt, user_prompt),
-            )
+            # Use /api/generate
+            prompt = f"System: {system_prompt}\n\nUser Context: {user_prompt}\n\nAssistant Response (JSON ONLY):"
+            payload = {
+                "model": model_name,
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "num_ctx": 4096,
+                    "temperature": 0.1,
+                    "num_predict": NODE_TOKEN_LIMITS["reasoning"]
+                },
+            }
+            response = await client.post(f"{url}/api/generate", json=payload)
             response.raise_for_status()
             data = response.json()
-            # /api/generate returns the response in the "response" field
-            return str(data.get("response", data.get("message", {}).get("content", "")))
+            return str(data.get("response", ""))
+
+    async def _call_gemini(system: str, user: str) -> str:
+        if not settings.gemini_api_key:
+            raise ValueError("Gemini API key not configured")
+        
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
+        payload = {
+            "system_instruction": {"parts": [{"text": system}]},
+            "contents": [{"parts": [{"text": user}]}],
+            "generationConfig": {
+                "temperature": 0.1,
+                "maxOutputTokens": NODE_TOKEN_LIMITS["reasoning"],
+                "responseMimeType": "application/json"
+            }
+        }
+        
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            logger.info(f"reasoning_agent_node: calling Gemini ({settings.gemini_model})")
+            response = await client.post(url, json=payload)
+            response.raise_for_status()
+            data = response.json()
+            try:
+                return data["candidates"][0]["content"]["parts"][0]["text"]
+            except (KeyError, IndexError):
+                logger.error(f"Gemini response parsing failed: {data}")
+                raise ValueError("Invalid Gemini response format")
 
     # ── 5. JSON parsing helpers ───────────────────────────────────────────────
     # (parsing logic stays same)
@@ -681,7 +715,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             
             # Case-insensitive check
             if "[object object]" in str(raw_reasoning).lower() or "[object object]" in str(raw_draft).lower():
-                logger.warning(f"Detection of hallucination in {used_label} output. Triggering retry/fallback.")
+                logger.warning(f"Detection of [object Object] in {used_label} output. Triggering retry/fallback.")
                 raise ValueError("Hallucination detected")
 
             result = {
