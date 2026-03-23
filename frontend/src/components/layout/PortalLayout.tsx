@@ -84,9 +84,9 @@ const PortalLayout = ({ title, subtitle, children }: PortalLayoutProps) => {
   const menuItems = getMenuItems()
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background text-foreground">
       {/* Sidebar */}
-      <aside className="w-64 border-r bg-card flex flex-col fixed h-full z-20">
+      <aside className="w-64 border-r bg-card flex flex-col fixed h-full z-30 shadow-sm">
         <div className="p-6 flex items-center gap-3">
           <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground font-bold text-xl shadow-lg">
             L
@@ -94,7 +94,7 @@ const PortalLayout = ({ title, subtitle, children }: PortalLayoutProps) => {
           <span className="font-bold text-xl tracking-tight">Legal AI</span>
         </div>
 
-        <nav className="flex-1 px-4 py-4">
+        <nav className="flex-1 px-4 py-4 overflow-y-auto">
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-4">
             {t('common.main_menu') || 'Main Menu'}
           </div>
@@ -109,7 +109,7 @@ const PortalLayout = ({ title, subtitle, children }: PortalLayoutProps) => {
           ))}
         </nav>
 
-        <div className="p-4 border-t bg-accent/30">
+        <div className="p-4 border-t bg-accent/30 mt-auto">
           <div className="flex items-center gap-3 mb-4 px-2">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
               {user?.username?.[0].toUpperCase()}
@@ -131,33 +131,35 @@ const PortalLayout = ({ title, subtitle, children }: PortalLayoutProps) => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 ml-64 p-8 transition-all">
-        <header className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight mb-1">
-              {title}
-            </h1>
-            {subtitle && (
-              <p className="text-muted-foreground">
-                {subtitle}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 mr-4">
-              <Search className="w-4 h-4 text-muted-foreground" />
-              <Bell className="w-4 h-4 text-muted-foreground" />
-              <Settings className="w-4 h-4 text-muted-foreground" />
+      <main className="flex-1 pl-64 transition-all min-h-screen">
+        <div className="p-8 max-w-7xl mx-auto">
+          <header className="mb-8 flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight mb-1">
+                {title}
+              </h1>
+              {subtitle && (
+                <p className="text-muted-foreground">
+                  {subtitle}
+                </p>
+              )}
             </div>
-            <div className="flex items-center gap-2 border-l pl-4">
-              <ThemeToggle />
-              <LanguageToggle />
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 mr-4">
+                <Search className="w-4 h-4 text-muted-foreground cursor-pointer hover:text-primary transition-colors" />
+                <Bell className="w-4 h-4 text-muted-foreground cursor-pointer hover:text-primary transition-colors" />
+                <Settings className="w-4 h-4 text-muted-foreground cursor-pointer hover:text-primary transition-colors" />
+              </div>
+              <div className="flex items-center gap-2 border-l pl-4">
+                <ThemeToggle />
+                <LanguageToggle />
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
 
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {children}
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {children}
+          </div>
         </div>
       </main>
     </div>

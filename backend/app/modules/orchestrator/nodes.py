@@ -364,50 +364,11 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
         return {"laws": []}
 
 
-async def graph_independent_node(state: AnalysisState) -> dict[str, Any]:
-    """Runs in parallel with search nodes. Does not depend on search results."""
-    start_time = time.time()
-    logger.info(f"--- Node: graph_independent_node starting for case {state['case_id']}")
-    db: AsyncSession = state["db"]
-    from app.modules.graph.schemas import GraphQueryIntent
-    from app.modules.graph.services import GraphQueryService
-
-    service = GraphQueryService(db)
-    try:
-        # Step: Parallel Neo4j queries via gather
-        laws_response, cases_response = await asyncio.gather(
-            service.query(state["case_id"], GraphQueryIntent.FIND_RELEVANT_LAWS),
-            service.query(state["case_id"], GraphQueryIntent.FIND_RELATED_CASES),
-            return_exceptions=True
-        )
-        
-        law_articles = []
-        if not isinstance(laws_response, Exception) and laws_response:
-            law_articles = [item.model_dump() for item in laws_response.law_articles]
-             
-        related_cases = []
-        if not isinstance(cases_response, Exception) and cases_response:
-            related_cases = [item.model_dump() for item in cases_response.related_cases]
-             
-        graph_confidence = 0.0
-        if not isinstance(laws_response, Exception) and laws_response:
-            graph_confidence = max(graph_confidence, laws_response.graph_confidence)
-        if not isinstance(cases_response, Exception) and cases_response:
-            graph_confidence = max(graph_confidence, cases_response.graph_confidence)
-
-    except Exception:
-        logger.exception("Graph independent search failed")
-        law_articles = []
-        related_cases = []
-        graph_confidence = 0.0
-
-    duration = time.time() - start_time
-    logger.info(f"--- Node: graph_independent_node finished in {duration:.2f}s")
     return {
         "graph_results": {
-            "law_articles": law_articles,
-            "related_cases": related_cases,
-            "graph_confidence": graph_confidence,
+            "law_articles": [],
+            "related_cases": [],
+            "graph_confidence": 0.0,
         }
     }
 
@@ -421,34 +382,7 @@ async def _citation_bridge_sync_fallback(extended_citations: list[str], case_id:
     return []
 
 async def graph_dependent_node(state: AnalysisState) -> dict[str, Any]:
-    """Runs AFTER search_agent_node. Performs citation-based graph lookups if needed."""
-    start_time = time.time()
-    logger.info(f"--- Node: graph_dependent_node starting for case {state['case_id']}")
-    
-    current_graph = state.get("graph_results") or {"law_articles": [], "related_cases": [], "graph_confidence": 0.0}
-    
-    # Extract citations
-    search_results = state.get("search_results", [])
-    extended_citations = []
-    for res in search_results:
-        text = res.get("chunk_text", "")
-        if text:
-            found = re.findall(r"Article\s*\(?(\d+)\)?", text, re.IGNORECASE)
-            extended_citations.extend(found)
-    
-    # Gate: only run bridge if primary search found no cases
-    if not current_graph["related_cases"] and extended_citations:
-        bridge_cases = await _citation_bridge_async(extended_citations, state["case_id"])
-        
-        existing_ids = {c.get("case_id") for c in current_graph["related_cases"]}
-        for bc in bridge_cases:
-            if bc["case_id"] not in existing_ids:
-                current_graph["related_cases"].append(bc)
-                current_graph["graph_confidence"] = max(current_graph["graph_confidence"], 0.7)
-
-    duration = time.time() - start_time
-    logger.info(f"--- Node: graph_dependent_node finished in {duration:.2f}s")
-    return {"graph_results": current_graph}
+    return {"graph_results": state.get("graph_results") or {"law_articles": [], "related_cases": [], "graph_confidence": 0.0}}
 
 async def calculation_agent_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
@@ -596,32 +530,35 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
     )
 
     # ── 3. Build payload with per-node token limit ────────────────────────────
-    def _build_payload(model_label_override: str | None = None) -> dict:
+    def _build_payload(model_name: str, system: str, user: str) -> dict:
+        # Use /api/generate as requested by user
+        prompt = f"System: {system}\n\nUser Context: {user}\n\nAssistant Response (JSON ONLY):"
         return {
-            "model": model_label_override or model_label,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user",   "content": user_prompt},
-            ],
-            "temperature": 0.1,
-            "max_tokens": NODE_TOKEN_LIMITS["reasoning"],  # 512 — was implicit 2048
+            "model": model_name,
+            "prompt": prompt,
             "stream": False,
-            "options": {"num_ctx": 4096},
+            "options": {
+                "num_ctx": 4096,
+                "temperature": 0.1,
+                "num_predict": NODE_TOKEN_LIMITS["reasoning"]
+            },
         }
 
     # ── 4. Single HTTP caller with explicit timeout ───────────────────────────
-    async def _call(url: str, timeout_seconds: int, label: str) -> str:
-        logger.info(f"reasoning_agent_node: calling {label} (timeout={timeout_seconds}s)")
+    async def _call(url: str, timeout_seconds: int, model_name: str) -> str:
+        logger.info(f"reasoning_agent_node: calling {model_name} at {url} (timeout={timeout_seconds}s)")
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
             response = await client.post(
-                f"{url}/api/chat",
-                json=_build_payload(),
+                f"{url}/api/generate",
+                json=_build_payload(model_name, system_prompt, user_prompt),
             )
             response.raise_for_status()
             data = response.json()
-            return str(data["message"]["content"])
+            # /api/generate returns the response in the "response" field
+            return str(data.get("response", data.get("message", {}).get("content", "")))
 
     # ── 5. JSON parsing helpers ───────────────────────────────────────────────
+    # (parsing logic stays same)
     def _extract_json_object(raw: str) -> dict[str, Any] | None:
         raw = (raw or "").strip()
         if not raw:
@@ -714,42 +651,23 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
     # ── 6. Execution: routed model → Qwen fallback → error ───────────────────
 
     # Determine timeouts
-    # JAIS gets a hard 90s cap — if it hasn't responded by then, Qwen takes over.
-    # Qwen gets the configured timeout (default 120s from settings).
-    JAIS_HARD_TIMEOUT  = 90   # seconds — tune this based on your p95 JAIS latency
-    QWEN_TIMEOUT       = 300  # 5 minutes for CPU inference
+    JAIS_HARD_TIMEOUT  = 90
+    QWEN_TIMEOUT       = 300
+    FALLBACK_MODEL     = "qwen2.5:1.5b-instruct"
 
-    # Use primary timeout based on where we are routing
     primary_timeout = JAIS_HARD_TIMEOUT if "jais" in model_url else QWEN_TIMEOUT
 
     try:
         content = await _call(model_url, primary_timeout, model_label)
         return _normalize_reasoning(content, model_label, "ok")
 
-    except httpx.TimeoutException:
-        # JAIS hit the hard timeout — fall through to Qwen immediately
-        elapsed = time.time() - start_time
-        logger.warning(
-            f"reasoning_agent_node: {model_label} timed out after {elapsed:.1f}s "
-            f"(limit={primary_timeout}s) — falling back to Qwen 1.5B"
-        )
-        # Only fall back to Qwen if we weren't already using it
-        if model_url != settings.fallback_model_url:
-            try:
-                content = await _call(settings.fallback_model_url, QWEN_TIMEOUT, "qwen_1.5b_timeout_fallback")
-                return _normalize_reasoning(content, "qwen_1.5b_timeout_fallback", "timeout_fallback")
-            except Exception as e_fallback:
-                logger.error(f"Qwen timeout fallback also failed: {repr(e_fallback)}")
-                return _error_result(state, start_time, complexity_score, repr(e_fallback))
-        else:
-            return _error_result(state, start_time, complexity_score, "Qwen timed out")
-
     except Exception as e_primary:
         logger.warning(f"reasoning_agent_node: {model_label} failed ({repr(e_primary)}) — trying Qwen fallback")
         if model_url != settings.fallback_model_url:
             try:
-                content = await _call(settings.fallback_model_url, QWEN_TIMEOUT, "qwen_1.5b_error_fallback")
-                return _normalize_reasoning(content, "qwen_1.5b_error_fallback", "error_fallback")
+                # IMPORTANT: Use the fallback model name explicitly here
+                content = await _call(settings.fallback_model_url, QWEN_TIMEOUT, FALLBACK_MODEL)
+                return _normalize_reasoning(content, FALLBACK_MODEL, "error_fallback")
             except Exception as e_fallback:
                 logger.error(f"Both models failed: primary={repr(e_primary)}, fallback={repr(e_fallback)}")
                 return _error_result(state, start_time, complexity_score, repr(e_fallback))
