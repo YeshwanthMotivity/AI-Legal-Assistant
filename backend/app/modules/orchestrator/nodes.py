@@ -506,6 +506,63 @@ async def context_builder_node(state: AnalysisState) -> dict[str, Any]:
 
 
 
+def _extract_json_object(raw: str) -> dict[str, Any] | None:
+    """Find and parse the largest JSON object in a string, with basic malformation recovery."""
+    raw = (raw or "").strip()
+    if not raw:
+        return None
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, dict):
+            return parsed
+    except Exception:
+        pass
+    # Try finding the largest substring that looks like a JSON object
+    match = re.search(r"\{[\s\S]*\}", raw)
+    if not match:
+        return None
+    json_str = match.group(0)
+    try:
+        parsed = json.loads(json_str)
+        return parsed if isinstance(parsed, dict) else None
+    except Exception:
+        # Fallback: try to fix common small model mistakes (missing trailing brace, etc)
+        try:
+            parsed = json.loads(json_str + "}")
+            return parsed if isinstance(parsed, dict) else None
+        except Exception:
+            return None
+
+def _cleanse_text(text: Any) -> str:
+    """Remove markdown code blocks, stringify dicts/lists, and handle nested JSON strings."""
+    if text is None: return ""
+    
+    # If it's already a dict/list, flatten it
+    if isinstance(text, (dict, list)):
+        try:
+            return json.dumps(text, indent=2, ensure_ascii=False)
+        except Exception:
+            return str(text)
+    
+    text = str(text).strip()
+    # Guard against common hallucination
+    if text.lower() == "[object object]":
+        return "Analysis Details"
+
+    # Remove ```json ... ``` or ``` ... ```
+    text = re.sub(r"```(?:json)?\s*([\s\S]*?)\s*```", r"\1", text)
+    
+    # Try to parse as JSON if it looks like a nested object inside a string
+    if (text.startswith("{") and text.endswith("}")) or (text.startswith("[") and text.endswith("]")):
+        try:
+            parsed_nested = json.loads(text)
+            return json.dumps(parsed_nested, indent=2, ensure_ascii=False)
+        except Exception:
+            pass
+    
+    return text.strip()
+
+
 async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: reasoning_agent_node starting for case {state['case_id']}")
@@ -563,62 +620,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
 
     # ── 5. JSON parsing helpers ───────────────────────────────────────────────
     # (parsing logic stays same)
-    def _extract_json_object(raw: str) -> dict[str, Any] | None:
-        raw = (raw or "").strip()
-        if not raw:
-            return None
-        try:
-            parsed = json.loads(raw)
-            if isinstance(parsed, dict):
-                return parsed
-        except Exception:
-            pass
-        # Try finding the largest substring that looks like a JSON object
-        match = re.search(r"\{[\s\S]*\}", raw)
-        if not match:
-            return None
-        json_str = match.group(0)
-        try:
-            parsed = json.loads(json_str)
-            return parsed if isinstance(parsed, dict) else None
-        except Exception:
-            # Fallback: try to fix common small model mistakes (missing trailing brace, etc)
-            try:
-                parsed = json.loads(json_str + "}")
-                return parsed if isinstance(parsed, dict) else None
-            except Exception:
-                return None
-
     def _normalize_reasoning(content: str, used_label: str, status: str) -> dict[str, Any]:
-        def _cleanse_text(text: Any) -> str:
-            """Remove markdown code blocks, stringify dicts/lists, and handle nested JSON strings."""
-            if text is None: return ""
-            
-            # If it's already a dict/list, flatten it
-            if isinstance(text, (dict, list)):
-                try:
-                    return json.dumps(text, indent=2, ensure_ascii=False)
-                except Exception:
-                    return str(text)
-            
-            text = str(text).strip()
-            # Guard against common hallucination
-            if text.lower() == "[object object]":
-                return "Analysis Details"
-
-            # Remove ```json ... ``` or ``` ... ```
-            text = re.sub(r"```(?:json)?\s*([\s\S]*?)\s*```", r"\1", text)
-            
-            # Try to parse as JSON if it looks like a nested object inside a string
-            if (text.startswith("{") and text.endswith("}")) or (text.startswith("[") and text.endswith("]")):
-                try:
-                    parsed_nested = json.loads(text)
-                    return json.dumps(parsed_nested, indent=2, ensure_ascii=False)
-                except Exception:
-                    pass
-            
-            return text.strip()
-
         parsed = _extract_json_object(content)
         if not parsed:
             if content and len(content) > 50:
@@ -648,13 +650,9 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         else:
             # Robust outcome extraction
             outcome = parsed.get("outcome")
-            if not outcome:
-                # Try to guess from reasoning if missing in JSON
-                reasoning_val = parsed.get("reasoning", "")
-                reasoning_text = str(reasoning_val).lower() if not isinstance(reasoning_val, (dict, list)) else ""
-                if "approve" in reasoning_text: outcome = "Approved"
-                elif "reject" in reasoning_text: outcome = "Rejected"
-                elif "partial" in reasoning_text: outcome = "Partial"
+            if not outcome and "Approved" in str(parsed): outcome = "Approved"
+            if not outcome and "Rejected" in str(parsed): outcome = "Rejected"
+            if not outcome: outcome = "Approved"
             
             result = {
                 "outcome":        outcome,
@@ -789,22 +787,12 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: judgment_drafting_agent_node starting for case {state['case_id']}")
     reasoning = state.get("reasoning", {})
-    # Use _cleanse_text instead of str() to handle objects correctly
+    # Use _cleanse_text correctly
     raw_draft = reasoning.get("draft_judgment") or ""
-    from app.modules.orchestrator.nodes import _extract_json_object # Re-import or just assume it's in scope if this was a helper
-    # Actually drafting node is at module level, so can't easily reach nested helper.
-    # Let's just use a simple check.
-    if isinstance(raw_draft, (dict, list)):
-        draft_content = json.dumps(raw_draft, indent=2, ensure_ascii=False)
-    else:
-        draft_content = str(raw_draft).strip()
+    draft_content = _cleanse_text(raw_draft)
     
     if not draft_content or draft_content.lower() == "[object object]":
-        fallback_reasoning = reasoning.get("reasoning", "No reasoning provided.")
-        if isinstance(fallback_reasoning, (dict, list)):
-            draft_content = json.dumps(fallback_reasoning, indent=2, ensure_ascii=False)
-        else:
-            draft_content = str(fallback_reasoning)
+        draft_content = _cleanse_text(reasoning.get("reasoning", "No reasoning provided."))
 
     # Apply professional Court Template
     court_header = (
