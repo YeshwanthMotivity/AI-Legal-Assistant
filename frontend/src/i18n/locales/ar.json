@@ -13,7 +13,8 @@
     "search": "بحث",
     "filter": "تصفية",
     "actions": "الإجراءات",
-    "language": "اللغة"
+    "language": "اللغة",
+    "main_menu": "القائمة الرئيسية"
   },
   "auth": {
     "login": "تسجيل الدخول",

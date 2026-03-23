@@ -490,7 +490,7 @@ const CaseDetail = () => {
               <div className="flex-1">
                 <h5 className="font-bold text-amber-900 text-sm mb-1 uppercase tracking-tighter">AI Reasoning System Offline</h5>
                 <p className="text-amber-800 text-xs leading-relaxed opacity-90">
-                  The primary reasoning engines (JAIS-30B) are currently disconnected or under high load. While preliminary data is visible, the synthesized legal reasoning and draft judgment generation is temporarily unavailable.
+                  The primary reasoning engines (JAIS-7B) are currently disconnected or under high load. While preliminary data is visible, the synthesized legal reasoning and draft judgment generation is temporarily unavailable.
                 </p>
               </div>
             </div>

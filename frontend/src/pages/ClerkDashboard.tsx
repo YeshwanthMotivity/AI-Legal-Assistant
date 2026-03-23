@@ -100,7 +100,7 @@ export default function ClerkDashboard(): ReactNode {
             <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
             <div>
                <h4 className="text-sm font-bold tracking-tight">AI Reasoning Nodes: ONLINE</h4>
-               <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest leading-none mt-0.5">Latency: 24ms | Model Cluster: JAIS-30B Optimized</p>
+               <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest leading-none mt-0.5">Latency: 24ms | Model Cluster: JAIS-7B Optimized</p>
             </div>
          </div>
          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground text-xs uppercase font-black hover:text-primary transition-colors">

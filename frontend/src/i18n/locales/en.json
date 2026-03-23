@@ -13,7 +13,8 @@
     "search": "Search",
     "filter": "Filter",
     "actions": "Actions",
-    "language": "Language"
+    "language": "Language",
+    "main_menu": "Main Menu"
   },
   "auth": {
     "login": "Login",

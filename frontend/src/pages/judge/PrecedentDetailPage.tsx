@@ -128,7 +128,7 @@ const PrecedentDetailPage: React.FC = () => {
                 </div>
                 <div>
                    <CardTitle className="text-sm font-bold">Intelligent Discovery</CardTitle>
-                   <p className="text-[10px] text-muted-foreground font-bold uppercase">Powered by JAIS-30B</p>
+                   <p className="text-[10px] text-muted-foreground font-bold uppercase">Powered by JAIS-7B</p>
                 </div>
               </div>
             </CardHeader>
