@@ -480,7 +480,7 @@ async def context_builder_node(state: AnalysisState) -> dict[str, Any]:
     laws = []
     # From Vector Search (Laws Collection)
     for l in state.get("laws", []):
-        laws.append(f"Statute: {l['law_name']} | Match: {l['score']:.2f}\n{l['text']}")
+        laws.append(f"Statute: {l.get('title') or l.get('law_name')} | Match: {l.get('score', 0):.2f}\n{l.get('content') or l.get('text')}")
         
     context = {
         "case_metadata": case_metadata,

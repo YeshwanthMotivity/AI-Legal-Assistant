@@ -55,21 +55,27 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
   if (!isOpen) return null
 
   return (
-    <dialog 
-      id="create-case-modal-judge" 
-      className="modal bg-transparent backdrop:bg-black/50 p-0 rounded-2xl border shadow-2xl w-full max-w-2xl overflow-hidden"
-      open={isOpen}
-    >
-      <div className="bg-card">
-        <div className="p-6 border-b flex justify-between items-center bg-muted/20">
-          <h3 className="text-xl font-bold">{t('judge.dashboard.createCase')}</h3>
-          <Button variant="ghost" size="icon" onClick={handleClose}>
+    <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-background/80 backdrop-blur-sm transition-opacity" 
+        onClick={handleClose}
+      />
+      
+      {/* Modal Container */}
+      <div className="relative w-full max-w-2xl bg-card border rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between p-8 border-b bg-muted/5">
+          <div>
+            <h2 className="text-2xl font-black tracking-tight text-foreground">{t('judge.form.createNewCase')}</h2>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Judicial Case Management</p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={handleClose} className="rounded-full">
             <Plus className="w-5 h-5 rotate-45" />
           </Button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="p-8 max-h-[70vh] overflow-y-auto scrollbar-thin">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="p-8 overflow-y-auto scrollbar-thin max-h-[65vh]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
               <div className="md:col-span-2 space-y-2.5">
                 <label className="text-[11px] font-black uppercase text-muted-foreground ml-1 tracking-tight">
@@ -156,22 +162,31 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
             </div>
           </div>
 
-          <div className="p-6 border-t bg-muted/10 flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={handleClose}>
+          <div className="p-8 border-t bg-muted/5 flex justify-end gap-3">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleClose}
+              className="px-8 rounded-xl font-bold h-12"
+            >
               {t('common.cancel')}
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="min-w-[120px]">
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="px-10 rounded-xl font-black h-12 shadow-lg shadow-primary/20"
+            >
               {isSubmitting ? t('common.loading') : (
-                <>
-                  <Plus className="w-4 h-4 mr-2" />
-                  {t('common.submit')}
-                </>
+                <div className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  {t('judge.form.submit')}
+                </div>
               )}
             </Button>
           </div>
         </form>
       </div>
-    </dialog>
+    </div>
   )
 }
 
