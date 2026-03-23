@@ -121,7 +121,7 @@ class CaseAnalysisDetail(BaseModel):
     reasoning: Optional[str] = None
     cited_laws: List[str] = Field(default_factory=list)
     cited_cases: List[str] = Field(default_factory=list)
-    lawArticles: List[str] = Field(default_factory=list)
+    lawArticles: List[Any] = Field(default_factory=list)
     similarPrecedents: List[dict] = Field(default_factory=list)
     entitlementBreakdown: List[dict] = Field(default_factory=list)
     confidence: Optional[float] = None
