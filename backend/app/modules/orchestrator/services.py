@@ -60,11 +60,10 @@ class OrchestratorService:
         reasoning = state.get("reasoning", {}) or {}
         reasoning_status = state.get("reasoning_status", "") or ""
         confidence = float(reasoning.get("confidence", 0.85) or 0.85)
-        reasoning_text = reasoning.get("reasoning")
-        if not isinstance(reasoning_text, str):
-            reasoning_text = str(reasoning_text) if reasoning_text is not None else None
-        cited_laws = reasoning.get("cited_laws", []) or []
-        cited_cases = reasoning.get("cited_cases", []) or []
+        from app.modules.orchestrator.nodes import _is_hallucination
+        
+        cited_laws = [l for l in (reasoning.get("cited_laws", []) or []) if not _is_hallucination(str(l))]
+        cited_cases = [c for c in (reasoning.get("cited_cases", []) or []) if not _is_hallucination(str(c))]
         if not isinstance(cited_laws, list):
             cited_laws = []
         if not isinstance(cited_cases, list):
@@ -73,10 +72,10 @@ class OrchestratorService:
         explain = state.get("explainability", {})
         await self.judgment_repository.upsert_analysis(
             case_id=case_id,
-            draft_text=state.get("draft_text", "") or reasoning.get("draft_judgment", ""),
+            draft_text=(state.get("draft_text", "") or reasoning.get("draft_judgment", "") or "").strip(),
             ai_confidence_score=confidence,
             outcome=reasoning.get("outcome"),
-            reasoning=reasoning_text,
+            reasoning=str(reasoning_text or "").strip(),
             cited_laws=cited_laws,
             cited_cases=cited_cases,
             law_articles=explain.get("law_articles", []),

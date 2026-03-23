@@ -146,7 +146,7 @@ class CaseService:
                     reasoning=judgment.reasoning,
                     cited_laws=judgment.articles_cited or [],
                     cited_cases=judgment.legal_precedents or [],
-                    lawArticles=explain.get("law_articles") or judgment.articles_cited or [],
+                    lawArticles=explain.get("law_articles") or [],
                     similarPrecedents=explain.get("similar_precedents") or [],
                     entitlementBreakdown=explain.get("entitlement_breakdown") or [],
                     confidence=judgment.ai_confidence_score if (judgment and judgment.ai_confidence_score is not None) else 0.85,

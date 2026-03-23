@@ -817,7 +817,9 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
 
     explainability = {
         "law_articles": law_articles,
+        "laws": law_articles, # Duplicate for frontend compatibility
         "similar_precedents": reasoning.get("cited_cases") or state.get("precedents", []),
+        "similarPrecedents": reasoning.get("cited_cases") or state.get("precedents", []), # Frontend compatibility
         "evidence_chunks": [item.get("chunk_text", "") for item in state.get("search_results", [])],
         "confidence_score": (lambda c: c/100.0 if c > 1.0 else c)(float(str(reasoning.get("confidence", 0.85)).replace("%","") or 0.85)),
     }
@@ -837,43 +839,60 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
     if not draft_content or draft_content.lower() == "[object object]":
         draft_content = _cleanse_text(reasoning.get("reasoning", "No reasoning provided."))
 
-    # Apply professional Court Template
-    court_header = (
-        "DIFC COURTS - SMALL CLAIMS TRIBUNAL\n"
-        f"CASE ID: {state['case_id']}\n"
-        "--------------------------------------------------\n"
-        "AI-ASSISTED JUDGMENT DRAFT\n"
-        "--------------------------------------------------\n\n"
-    )
-    
-    # Ensure citations are joined as strings even if they are objects
-    def _to_str(item):
-        if isinstance(item, dict):
-            return item.get("title") or item.get("case_name") or item.get("law_name") or str(item)
-        return str(item)
-
+    # Deduplicate and Filter Citations
     raw_laws = reasoning.get("cited_laws", [])
     if not raw_laws:
-        # Fallback to search results if agent didn't cite specific articles
         raw_laws = state.get("laws", [])
         
     raw_cases = reasoning.get("cited_cases", [])
     if not raw_cases:
         raw_cases = state.get("precedents", [])
 
-    laws_cited = ", ".join([_to_str(l) for l in raw_laws])
-    cases_cited = ", ".join([_to_str(c) for c in raw_cases])
+    # Filter out hallucinations and deduplicate by string representation
+    unique_laws = []
+    seen_laws = set()
+    for l in raw_laws:
+        s = _to_str(l)
+        if s and not _is_hallucination(s) and s not in seen_laws:
+            unique_laws.append(s)
+            seen_laws.add(s)
+
+    unique_cases = []
+    seen_cases = set()
+    for c in raw_cases:
+        s = _to_str(c)
+        if s and not _is_hallucination(s) and s not in seen_cases:
+            unique_cases.append(s)
+            seen_cases.add(s)
+
+    # Build HTML sections
+    law_items = "".join([f"<li>{l}</li>" for l in unique_laws]) or "<li>No specific articles cited.</li>"
+    case_items = "".join([f"<li>{c}</li>" for c in unique_cases]) or "<li>No specific precedents cited.</li>"
 
     final_draft = (
-        f"{court_header}"
-        "1. DISPOSITION AND OUTCOME\n"
-        f"The Tribunal's decision is: {reasoning.get('outcome') or 'PENDING'}\n\n"
-        "2. LEGAL REASONING\n"
-        f"{draft_content}\n\n"
-        "3. CITED AUTHORITIES\n"
-        f"Laws: {laws_cited}\n"
-        f"Precedents: {cases_cited}\n\n"
-        "--- End of Draft ---"
+        f"<div style='font-family: serif; color: #1a1a1a;'>"
+        f"<div style='text-align: center; border-bottom: 2px solid #333; margin-bottom: 20px; padding-bottom: 10px;'>"
+        f"<h2 style='margin: 0; font-size: 18px;'>DIFC COURTS - SMALL CLAIMS TRIBUNAL</h2>"
+        f"<p style='margin: 5px 0; font-size: 14px;'>CASE ID: {state['case_id']}</p>"
+        f"<h3 style='margin: 10px 0; color: #b45309;'>AI-ASSISTED JUDGMENT DRAFT</h3>"
+        f"</div>"
+        
+        f"<h3>1. DISPOSITION AND OUTCOME</h3>"
+        f"<p><strong>The Tribunal's decision is:</strong> {reasoning.get('outcome') or 'PENDING'}</p>"
+        
+        f"<h3>2. LEGAL REASONING</h3>"
+        f"<div style='line-height: 1.6; white-space: pre-wrap;'>{draft_content}</div>"
+        
+        f"<h3>3. CITED AUTHORITIES</h3>"
+        f"<h4>Statutory Provisions:</h4>"
+        f"<ul>{law_items}</ul>"
+        f"<h4>Judicial Precedents:</h4>"
+        f"<ul>{case_items}</ul>"
+        
+        f"<div style='margin-top: 30px; padding-top: 10px; border-top: 1px dashed #ccc; font-size: 12px; color: #666; text-align: center;'>"
+        f"--- End of AI Draft ---"
+        f"</div>"
+        f"</div>"
     )
 
     from app.modules.ingestion.minio_client import upload_file
