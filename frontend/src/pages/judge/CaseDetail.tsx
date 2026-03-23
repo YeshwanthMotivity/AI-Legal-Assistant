@@ -444,6 +444,10 @@ const CaseDetail = () => {
                           ? (article.content || article.text || article.description || "Article details mapped from Case Analysis.") 
                           : "Citations mapped from primary case analysis.";
                         
+                        const displayContent = content.length > 180 
+                          ? content.slice(0, 180).trimEnd() + '...' 
+                          : content;
+                        
                         return (
                           <div key={idx} className="bg-amber-500/5 border border-amber-500/10 p-4 rounded-xl shadow-sm hover:shadow-md transition-all">
                             <div className="flex items-center gap-2 mb-2">
@@ -453,7 +457,7 @@ const CaseDetail = () => {
                                </h5>
                             </div>
                             <p className="text-[11px] text-amber-800/80 leading-relaxed italic font-medium">
-                              {content}
+                              {displayContent}
                             </p>
                           </div>
                         );

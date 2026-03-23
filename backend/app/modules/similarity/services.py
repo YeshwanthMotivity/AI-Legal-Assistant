@@ -459,7 +459,7 @@ class SimilarityService:
                 }
                 
                 logger.info(f"Sending chat request to Ollama: {url} (model={settings.ollama_model_primary})")
-                response = await client.post(url, json=payload, timeout=60.0)
+                response = await client.post(url, json=payload, timeout=600.0)
                 
                 if response.status_code == 404:
                     # Fallback to OpenAI-compatible endpoint if native fails
@@ -472,7 +472,7 @@ class SimilarityService:
                             {"role": "user", "content": request.message}
                         ]
                     }
-                    response = await client.post(url, json=payload, timeout=60.0)
+                    response = await client.post(url, json=payload, timeout=600.0)
 
                 response.raise_for_status()
                 data = response.json()

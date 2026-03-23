@@ -167,25 +167,36 @@ const sanitizeDraftText = (value: string): string => {
     }
   }
 
+  // Normalize bullets & clean whitespace
+  const normalized = cleanContent
+    .replace(/•\s*/g, '\n• ')
+    .replace(/\n{3,}/g, '\n\n')
+
   // Convert plain text to structured HTML for Quill
-  const lines = cleanContent.split('\n')
+  const lines = normalized.split('\n')
   const htmlLines = lines.map(line => {
     const trimmed = line.trim()
     if (!trimmed) return '<p><br></p>'
+    
     // Numbered section headers like "1. DISPOSITION AND OUTCOME"
     if (/^\d+\.\s+[A-Z\s,]+$/.test(trimmed)) {
-      return `<h3><strong>${trimmed}</strong></h3>`
+      return `<h3 style="margin-top: 20px; margin-bottom: 8px; border-bottom: 2px solid #f1f5f9; padding-bottom: 4px;"><strong>${trimmed}</strong></h3>`
     }
-    // Bullet points
+    
+    // Bullet points or key-value highlights
     if (trimmed.startsWith('•') || trimmed.startsWith('-')) {
-      return `<p>${trimmed}</p>`
+      // Highlight potential case slugs in monospace
+      const highlighted = trimmed.replace(/([a-z0-0]+-case[a-z0-9-]+)/gi, '<code style="background: #f1f5f9; padding: 1px 4px; border-radius: 4px; font-family: monospace; font-size: 0.9em; color: #475569;">$1</code>')
+      return `<p style="margin-bottom: 4px;">${highlighted}</p>`
     }
+    
     // Bold key-value lines like "Employee Name: Ahmed"
     if (trimmed.includes(':') && trimmed.split(':')[0].length < 40) {
       const [key, ...rest] = trimmed.split(':')
-      return `<p><strong>${key}:</strong>${rest.join(':')}</p>`
+      return `<p style="margin-bottom: 4px;"><strong>${key}:</strong>${rest.join(':')}</p>`
     }
-    return `<p>${trimmed}</p>`
+    
+    return `<p style="margin-bottom: 4px;">${trimmed}</p>`
   })
   return htmlLines.join('')
 }

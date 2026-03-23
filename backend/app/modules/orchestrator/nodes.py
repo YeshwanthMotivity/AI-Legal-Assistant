@@ -809,7 +809,13 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
         if _is_hallucination(title) or _is_hallucination(content):
             return None
             
-        return {"title": title, "content": content}
+        # Truncate content to first 2 sentences max
+        sentences = content.split('. ')
+        short_content = '. '.join(sentences[:2]).strip()
+        if short_content and not short_content.endswith('.'):
+            short_content += '.'
+            
+        return {"title": title, "content": short_content or content}
 
     raw_laws = reasoning.get("cited_laws") or state.get("laws", [])
     # Filter out Nones from the list comprehension
