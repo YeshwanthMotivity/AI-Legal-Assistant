@@ -435,19 +435,29 @@ const CaseDetail = () => {
                 </CardHeader>
                 <CardContent className="p-6">
                     <div className="grid grid-cols-1 gap-4">
-                      {lawArticles.map((article: any, idx: number) => (
-                        <div key={idx} className="bg-amber-500/5 border border-amber-500/10 p-4 rounded-xl shadow-sm hover:shadow-md transition-all">
-                          <div className="flex items-center gap-2 mb-2">
-                             <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                             <h5 className="font-black text-amber-900 text-xs uppercase tracking-tight">
-                               {typeof article === 'string' ? article : article.title || article.article_number || 'Article'}
-                             </h5>
+                      {lawArticles.map((article: any, idx: number) => {
+                        const isObj = typeof article === 'object' && article !== null;
+                        const title = isObj 
+                          ? (article.title || article.law_name || article.article_number || `Article ${idx + 1}`) 
+                          : String(article);
+                        const content = isObj 
+                          ? (article.content || article.text || article.description || "Article details mapped from Case Analysis.") 
+                          : "Citations mapped from primary case analysis.";
+                        
+                        return (
+                          <div key={idx} className="bg-amber-500/5 border border-amber-500/10 p-4 rounded-xl shadow-sm hover:shadow-md transition-all">
+                            <div className="flex items-center gap-2 mb-2">
+                               <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                               <h5 className="font-black text-amber-900 text-xs uppercase tracking-tight">
+                                 {title}
+                               </h5>
+                            </div>
+                            <p className="text-[11px] text-amber-800/80 leading-relaxed italic font-medium">
+                              {content}
+                            </p>
                           </div>
-                          <p className="text-[11px] text-amber-800/80 leading-relaxed italic font-medium">
-                            {typeof article === 'object' ? article.content || article.text : "Citations mapped from primary case analysis."}
-                          </p>
-                        </div>
-                      ))}
+                        );
+                      })}
                       {lawArticles.length === 0 && (
                         <div className="py-10 text-center flex flex-col items-center gap-2 bg-muted/5 rounded-xl border border-dashed">
                            <BookOpen className="w-8 h-8 text-muted-foreground/20" />

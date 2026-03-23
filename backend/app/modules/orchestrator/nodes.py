@@ -582,19 +582,34 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
                 return parsed
         except Exception:
             pass
+        # Try finding the largest substring that looks like a JSON object
         match = re.search(r"\{[\s\S]*\}", raw)
         if not match:
             return None
+        json_str = match.group(0)
         try:
-            parsed = json.loads(match.group(0))
+            parsed = json.loads(json_str)
             return parsed if isinstance(parsed, dict) else None
         except Exception:
-            return None
+            # Fallback: try to fix common small model mistakes (missing trailing brace, etc)
+            try:
+                parsed = json.loads(json_str + "}")
+                return parsed if isinstance(parsed, dict) else None
+            except Exception:
+                return None
 
     def _normalize_reasoning(content: str, used_label: str, status: str) -> dict[str, Any]:
-        def _cleanse_text(text: str) -> str:
-            """Remove markdown code blocks if the LLM wrapped its JSON/Text in them."""
-            if not text: return ""
+        def _cleanse_text(text: Any) -> str:
+            """Remove markdown code blocks or stringify dicts/lists if needed."""
+            if text is None: return ""
+            # If it's a dict/list, flatten it to a string first
+            if isinstance(text, (dict, list)):
+                try:
+                    return json.dumps(text, indent=2, ensure_ascii=False)
+                except Exception:
+                    return str(text)
+            
+            text = str(text)
             # Remove ```json ... ``` or ``` ... ```
             text = re.sub(r"```(?:json)?\s*([\s\S]*?)\s*```", r"\1", text)
             return text.strip()
@@ -630,7 +645,8 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             outcome = parsed.get("outcome")
             if not outcome:
                 # Try to guess from reasoning if missing in JSON
-                reasoning_text = str(parsed.get("reasoning", "")).lower()
+                reasoning_val = parsed.get("reasoning", "")
+                reasoning_text = str(reasoning_val).lower() if not isinstance(reasoning_val, (dict, list)) else ""
                 if "approve" in reasoning_text: outcome = "Approved"
                 elif "reject" in reasoning_text: outcome = "Rejected"
                 elif "partial" in reasoning_text: outcome = "Partial"

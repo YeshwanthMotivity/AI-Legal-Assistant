@@ -214,12 +214,14 @@
       "failed": "Failed"
     },
     "form": {
+      "createNewCase": "Create New Case",
       "title": "Title",
       "caseType": "Case Type",
       "claimant": "Claimant",
       "respondent": "Respondent",
       "filingDate": "Filing Date",
-      "notes": "Notes"
+      "notes": "Notes",
+      "submit": "Submit"
     },
     "caseTypes": {
       "unpaid_wages": "Unpaid Wages",
