@@ -43,6 +43,19 @@ def _parse_date(value: str) -> datetime | None:
         except ValueError:
             continue
     return None
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 0. Global Setup: Hallucination Guards
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _is_hallucination(text: str) -> bool:
+    """Detects any variation of [object Object] or similar LLM artifacts."""
+    if not text:
+        return False
+    # Catch [object Object], [OBJECT OBJECT], [ object object ], etc.
+    pattern = r'\[\s*object\s+object\s*\]'
+    return bool(re.search(pattern, text, re.IGNORECASE))
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 0. Global Setup: Embeddings & Models
 # ─────────────────────────────────────────────────────────────────────────────
@@ -322,7 +335,7 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
             content = str(payload.get("raw_text") or payload.get("text") or "")
 
             # Hallucination filter at search level
-            if "[object object]" in title.lower() or "[object object]" in content.lower():
+            if _is_hallucination(title) or _is_hallucination(content):
                 continue
 
             if score > 0.6:
@@ -502,11 +515,12 @@ def _cleanse_text(text: Any) -> str:
 
     text = str(text).strip()
     
-    # Guard against common hallucination
-    obj_pattern = re.compile(r'\[object\s+object\]', re.IGNORECASE)
-    if obj_pattern.search(text):
-        if len(text) < 20: return "" # Discard if mostly hallucinated
-        text = obj_pattern.sub("", text)
+    # Guard against common hallucination artifacts
+    if _is_hallucination(text):
+        if len(text) < 50: 
+            return "" # Discard if exclusively hallucination
+        # Replace the artifact part
+        text = re.sub(r'\[\s*object\s+object\s*\]', "", text, flags=re.IGNORECASE)
 
     # Remove markdown code blocks
     text = re.sub(r"```(?:json)?\s*([\s\S]*?)\s*```", r"\1", text)
@@ -780,15 +794,19 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
         
         # If it's a dict, extract fields
         if isinstance(item, dict):
-            title = str(item.get("title") or item.get("law_name") or item.get("article_number") or "Legal Article")
-            content = str(item.get("content") or item.get("text") or item.get("summary") or "Citation mapped from analysis.")
+            # Cleanse input fields from potential LLM artifacts
+            raw_title = item.get("law_name") or item.get("title") or item.get("article_number") or "Legal Article"
+            raw_content = item.get("content") or item.get("text") or item.get("summary") or "Citation mapped from analysis."
+            
+            title = _cleanse_text(raw_title)
+            content = _cleanse_text(raw_content)
         else:
             # It's a string
             title = str(item)
             content = "Citations mapped from primary case analysis."
             
         # Case-insensitive filter
-        if "[object object]" in title.lower() or "[object object]" in content.lower():
+        if _is_hallucination(title) or _is_hallucination(content):
             return None
             
         return {"title": title, "content": content}
