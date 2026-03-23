@@ -132,7 +132,8 @@ const PrecedentDetailPage: React.FC = () => {
                 </div>
                 <div className="text-foreground/90 selection:bg-primary/20 space-y-4">
                   {precedent.text
-                    .replace(/(\s\d+\.\s+)/g, '\n$1')
+                    .replace(/(\b\d{3,}\.\s)/g, '\n$1')
+                    .replace(/(\b[A-Z][a-z]+\s+\d+\.\s)/g, '\n$1')
                     .split('\n')
                     .filter(p => p.trim())
                     .map((paragraph, idx) => {

@@ -460,7 +460,7 @@ class SimilarityService:
                 logger.error(f"Gemini Precedent Chat failed: {repr(e)}. Falling back to local model.")
 
         # 2. Fallback to Ollama (Qwen)
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=300.0) as client:
             try:
                 url = f"{settings.ollama_url}/api/chat"
                 payload = {
@@ -473,7 +473,7 @@ class SimilarityService:
                 }
                 
                 logger.info(f"Sending chat request to Ollama fallback (qwen2.5:1.5b-instruct)")
-                response = await client.post(url, json=payload, timeout=120.0)
+                response = await client.post(url, json=payload, timeout=300.0)
                 response.raise_for_status()
                 data = response.json()
                 

@@ -853,11 +853,12 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
         if _is_hallucination(title) or _is_hallucination(content):
             return None
             
-        # Truncate content to first 2 sentences max
-        sentences = content.split('. ')
-        short_content = '. '.join(sentences[:2]).strip()
-        if short_content and not short_content.endswith('.'):
-            short_content += '.'
+        # Truncate content to char limit for consistent UI layout
+        max_chars = 200
+        if len(content) > max_chars:
+            short_content = content[:max_chars].rsplit(' ', 1)[0] + '...'
+        else:
+            short_content = content
             
         return {"title": title, "content": short_content or content}
 

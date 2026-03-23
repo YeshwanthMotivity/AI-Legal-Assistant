@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import ConfigDict, field_validator
+from pydantic import ConfigDict, field_validator, Field
 
 
 class Settings(BaseSettings):
@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     ollama_timeout_seconds: int = 120
     
     # Gemini
-    gemini_api_key: str | None = None
+    gemini_api_key: str | None = Field(default=None, env="GEMINI_API_KEY")
     gemini_model: str = "gemini-2.0-flash"
     
     # Application
