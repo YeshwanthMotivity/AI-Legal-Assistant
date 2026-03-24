@@ -59,18 +59,18 @@ const PortalLayout = ({ title, subtitle, children }: PortalLayoutProps) => {
     switch (user?.role) {
       case 'clerk':
         return [
-          { icon: LayoutDashboard, label: 'Dashboard', href: '/clerk/dashboard' },
+          { icon: LayoutDashboard, label: t('nav.dashboard'), href: '/clerk/dashboard' },
           { icon: Briefcase, label: t('clerk.nav.cases'), href: '/clerk/cases' },
           { icon: FileText, label: t('clerk.nav.documents'), href: '/clerk/documents' },
         ]
       case 'judge':
         return [
-          { icon: LayoutDashboard, label: 'Dashboard', href: '/judge/dashboard' },
+          { icon: LayoutDashboard, label: t('nav.dashboard'), href: '/judge/dashboard' },
           { icon: Gavel, label: t('judge.nav.cases'), href: '/judge/cases' }
         ]
       case 'admin':
         return [
-          { icon: LayoutDashboard, label: 'Dashboard', href: '/admin/dashboard' },
+          { icon: LayoutDashboard, label: t('nav.dashboard'), href: '/admin/dashboard' },
           { icon: ShieldCheck, label: t('admin.nav.metrics'), href: '/admin/metrics' },
           { icon: Users, label: t('admin.nav.users'), href: '/admin/users' },
           { icon: Briefcase, label: t('admin.nav.assignments'), href: '/admin/assignments' },

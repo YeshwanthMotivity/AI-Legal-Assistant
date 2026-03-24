@@ -8,7 +8,9 @@ import {
   Save, 
   RefreshCcw,
   Sliders,
-  Database
+  Database,
+  Shield,
+  CheckCircle
 } from 'lucide-react';
 import PortalLayout from '../../components/layout/PortalLayout';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
@@ -164,20 +166,22 @@ export default function GlobalConfig(): ReactNode {
                     <Globe className="w-3.5 h-3.5" />
                     Default Workspace Language
                   </label>
-                  <div className="flex gap-3">
+                  <div className="flex bg-accent/20 p-1.5 rounded-2xl border w-full max-w-sm gap-2 mt-4 ml-1">
                     <Button 
-                      variant={config.defaultLanguage === 'en' ? 'default' : 'outline'} 
-                      className="flex-1 rounded-xl h-11"
+                      variant={config.defaultLanguage === 'en' ? 'default' : 'ghost'} 
+                      className={`flex-1 rounded-xl h-11 transition-all ${config.defaultLanguage === 'en' ? 'shadow-md border border-primary/20' : ''}`}
                       onClick={() => setConfig({...config, defaultLanguage: 'en'})}
                     >
                       English (UK)
+                      {config.defaultLanguage === 'en' && <CheckCircle className="ml-2 w-4 h-4" />}
                     </Button>
                     <Button 
-                      variant={config.defaultLanguage === 'ar' ? 'default' : 'outline'} 
-                      className="flex-1 rounded-xl h-11"
+                      variant={config.defaultLanguage === 'ar' ? 'default' : 'ghost'} 
+                      className={`flex-1 rounded-xl h-11 transition-all ${config.defaultLanguage === 'ar' ? 'shadow-md border border-primary/20' : ''}`}
                       onClick={() => setConfig({...config, defaultLanguage: 'ar'})}
                     >
                       Arabic (العربية)
+                      {config.defaultLanguage === 'ar' && <CheckCircle className="ml-2 w-4 h-4" />}
                     </Button>
                   </div>
                 </div>

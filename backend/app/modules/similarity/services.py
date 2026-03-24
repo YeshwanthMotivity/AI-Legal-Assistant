@@ -2,6 +2,7 @@ import asyncio
 import uuid
 import httpx
 import logging
+import re
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from qdrant_client import QdrantClient

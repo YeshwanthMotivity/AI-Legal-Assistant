@@ -1,4 +1,4 @@
-import { ReactNode, useMemo } from 'react';
+import { useState, ReactNode, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -11,23 +11,25 @@ import {
   Calendar,
   ArrowRight,
   Plus,
-  Search,
-  Briefcase
+  Briefcase,
+  X
 } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
 import PortalLayout from '../components/layout/PortalLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
 import StatCard from '../components/StatCard';
 import { getJudgeCases } from '../api/judge';
-import { queryKeys } from '../api/queryKeys';
 import { useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { TEMPLATE_LABELS, TEMPLATE_LABELS_AR } from '../constants/judgmentTemplates';
 
 export default function JudgeDashboard(): ReactNode {
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const [showTemplates, setShowTemplates] = useState(false);
 
   const casesQuery = useQuery({
     queryKey: ['judge-cases'],
@@ -131,7 +133,7 @@ export default function JudgeDashboard(): ReactNode {
             ) : (
               <div className="py-20 text-center">
                 <Gavel className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-muted-foreground text-sm italic">No active cases found.</p>
+                <p className="text-muted-foreground text-sm italic">{t('judge.dashboard.noCases')}</p>
               </div>
             )}
           </CardContent>
@@ -143,7 +145,7 @@ export default function JudgeDashboard(): ReactNode {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-primary" />
-                Quick Actions
+                {t('common.actions')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -153,29 +155,30 @@ export default function JudgeDashboard(): ReactNode {
                  onClick={() => navigate('/judge/cases/new')}
                >
                   <Plus className="w-4 h-4 text-primary" />
-                  Create New Case
+                  {t('judge.dashboard.createCase')}
                </Button>
+               
                <Button 
                 className="w-full justify-start gap-3 bg-card hover:bg-accent text-foreground border shadow-sm h-12" 
                 variant="outline"
-                onClick={() => navigate('/judge/cases')}
+                onClick={() => setShowTemplates(true)}
                >
                   <Briefcase className="w-4 h-4 text-primary" />
-                  Drafting Templates
+                  {t('judge.workspace.judgmentDraft')}
                </Button>
             </CardContent>
           </Card>
 
           <Card className="shadow-sm border-border/50">
             <CardHeader>
-              <CardTitle className="text-base">AI Analysis Stats</CardTitle>
-              <CardDescription>Model performance & usage</CardDescription>
+              <CardTitle className="text-base">{t('judge.workspace.aiStatus')}</CardTitle>
+              <CardDescription>{t('clerk.dashboard.aiNodesOnline')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-bold uppercase text-muted-foreground">
-                    <span>Confidence Score</span>
+                    <span>{t('judge.workspace.aiConfidence')}</span>
                     <span>88%</span>
                   </div>
                   <div className="h-1.5 w-full bg-accent rounded-full overflow-hidden">
@@ -184,7 +187,7 @@ export default function JudgeDashboard(): ReactNode {
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-bold uppercase text-muted-foreground">
-                    <span>Model Throughput</span>
+                    <span>{t('judge.dashboard.performance')}</span>
                     <span>94%</span>
                   </div>
                   <div className="h-1.5 w-full bg-accent rounded-full overflow-hidden">
@@ -196,6 +199,69 @@ export default function JudgeDashboard(): ReactNode {
           </Card>
         </div>
       </div>
+
+      {/* Template Preview Overlay */}
+      <AnimatePresence>
+        {showTemplates && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              onClick={() => setShowTemplates(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-4xl bg-background border shadow-2xl rounded-3xl overflow-hidden flex flex-col max-h-[85vh]"
+            >
+              <div className="p-8 border-b bg-muted/30 flex items-center justify-between">
+                <div>
+                   <h3 className="text-2xl font-black tracking-tight">{t('judge.workspace.judgmentDraft')} — {t('common.actions')}</h3>
+                   <p className="text-sm text-muted-foreground mt-1 italic">
+                     Select a standard DIFC court template to see a sample of the structured layout.
+                   </p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setShowTemplates(false)} className="rounded-full">
+                   <X className="w-5 h-5" />
+                </Button>
+              </div>
+              
+              <div className="p-8 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Object.entries(i18n.language === 'ar' ? TEMPLATE_LABELS_AR : TEMPLATE_LABELS).map(([key, label]) => (
+                  <Card key={key} className="p-5 hover:border-primary/50 transition-all cursor-default bg-card shadow-sm border-border/50">
+                    <div className="flex items-center gap-3 mb-4">
+                       <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
+                          <FileText className="w-6 h-6" />
+                       </div>
+                       <h4 className="font-bold text-base tracking-tight">{label}</h4>
+                    </div>
+                    <div className="bg-muted/40 p-5 rounded-2xl text-[10px] space-y-3 opacity-50 pointer-events-none select-none border border-border/50">
+                       <div className="h-4 bg-muted-foreground/20 w-3/4 rounded-full mx-auto" />
+                       <div className="space-y-2">
+                          <div className="h-3 bg-muted-foreground/10 w-full rounded-full" />
+                          <div className="h-3 bg-muted-foreground/10 w-5/6 rounded-full" />
+                          <div className="h-3 bg-muted-foreground/10 w-4/6 rounded-full" />
+                       </div>
+                       <div className="mt-6 border-t border-border/50 pt-4 h-12 w-full bg-primary/5 rounded-xl font-black flex items-center justify-center uppercase tracking-widest text-[9px] text-primary/60">
+                          Sample Structure
+                       </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+
+              <div className="p-6 border-t bg-muted/10 flex justify-end">
+                 <Button onClick={() => setShowTemplates(false)} className="px-8 font-bold">
+                    Close Preview
+                 </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </PortalLayout>
   );
 }

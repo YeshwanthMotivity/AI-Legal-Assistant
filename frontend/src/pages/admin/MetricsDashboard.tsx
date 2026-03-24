@@ -17,7 +17,8 @@ import {
   AlertCircle,
   BarChart3,
   FlaskConical,
-  GanttChart
+  GanttChart,
+  Plus
 } from 'lucide-react'
 import PortalLayout from '../../components/layout/PortalLayout'
 import {
@@ -55,6 +56,7 @@ const MetricsDashboard = () => {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [docsProcessed, setDocsProcessed] = useState(0)
+  const [isGateOpen, setIsGateOpen] = useState(false)
   const [benchmarkMode, setBenchmarkMode] = useState<'dense_baseline' | 'hybrid'>('dense_baseline')
   const [gateForm, setGateForm] = useState({ phase: 'phase_2', mode: 'hybrid', rationale: '', judge_sign_off: '' })
 
@@ -100,7 +102,10 @@ const MetricsDashboard = () => {
 
   const submitGateMut = useMutation({
     mutationFn: (payload: ReleaseGateRequest) => adminSubmitReleaseGate(payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-release-gates'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-release-gates'] })
+      setIsGateOpen(false)
+    },
   })
 
   // ── derived stats ─────────────────────────────────────────────────────
@@ -353,12 +358,10 @@ const MetricsDashboard = () => {
       {/* Benchmark section */}
       <Card className="mb-8 shadow-sm border border-border/50 overflow-hidden">
         <CardHeader className="bg-muted/30 border-b flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <FlaskConical className="w-5 h-5 text-primary" />
-              🧪 Evaluation Benchmark (UAE Labour Law)
-            </CardTitle>
-          </div>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <FlaskConical className="w-5 h-5 text-primary" />
+            🧪 Evaluation Benchmark (UAE Labour Law)
+          </CardTitle>
           <div className="flex gap-2">
             <select
               value={benchmarkMode}
@@ -410,7 +413,7 @@ const MetricsDashboard = () => {
       </Card>
 
       {/* Release Gate section */}
-      <Card className="shadow-sm border border-border/50">
+      <Card className="shadow-sm border border-border/50 mb-12">
         <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10">
           <div>
             <CardTitle className="text-lg flex items-center gap-2">
@@ -419,7 +422,8 @@ const MetricsDashboard = () => {
             </CardTitle>
             <CardDescription>Decisions for phase promotion to production</CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={() => (document.getElementById('gate-modal') as any)?.showModal()}>
+          <Button variant="outline" size="sm" onClick={() => setIsGateOpen(true)}>
+             <Plus className="w-4 h-4 mr-2" />
              Record New Decision
           </Button>
         </CardHeader>
@@ -467,88 +471,96 @@ const MetricsDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Simple Modal for Gate Recording using native HTML dialog (improved over original details) */}
-      <dialog id="gate-modal" className="modal bg-transparent backdrop:bg-black/50 p-0 rounded-2xl border shadow-2xl w-full max-w-md">
-        <div className="bg-card p-6">
-          <h3 className="text-xl font-bold mb-4">Record Release Decision</h3>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Phase</label>
-                <select
-                  value={gateForm.phase}
-                  onChange={(e: any) => setGateForm((f: any) => ({ ...f, phase: e.target.value }))}
-                  className="w-full bg-background border rounded-lg px-3 py-2 text-sm"
-                >
-                  <option value="phase_1">Phase 1 — Entities</option>
-                  <option value="phase_2">Phase 2 — Retrieval</option>
-                  <option value="phase_3">Phase 3 — Similarity</option>
-                  <option value="phase_5">Phase 5 — AI Agent</option>
-                </select>
+      {/* FIXED OVERLAY MODAL */}
+      {isGateOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg bg-card border shadow-2xl rounded-3xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b flex justify-between items-center bg-muted/20">
+              <div>
+                <h3 className="text-xl font-bold">Record Release Decision</h3>
+                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-0.5">Model Governance Gate</p>
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Mode</label>
-                <select
-                  value={gateForm.mode}
-                  onChange={(e: any) => setGateForm((f: any) => ({ ...f, mode: e.target.value }))}
-                  className="w-full bg-background border rounded-lg px-3 py-2 text-sm"
-                >
-                  <option value="dense_baseline">Dense Baseline</option>
-                  <option value="hybrid">Hybrid</option>
-                </select>
+              <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsGateOpen(false)}>
+                <Plus className="w-5 h-5 rotate-45" />
+              </Button>
+            </div>
+            
+            <div className="p-8 space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Phase</label>
+                  <select
+                    value={gateForm.phase}
+                    onChange={(e: any) => setGateForm((f: any) => ({ ...f, phase: e.target.value }))}
+                    className="w-full bg-background border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  >
+                    <option value="phase_1">Phase 1 — Entities</option>
+                    <option value="phase_2">Phase 2 — Retrieval</option>
+                    <option value="phase_3">Phase 3 — Similarity</option>
+                    <option value="phase_5">Phase 5 — AI Agent</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Mode</label>
+                  <select
+                    value={gateForm.mode}
+                    onChange={(e: any) => setGateForm((f: any) => ({ ...f, mode: e.target.value }))}
+                    className="w-full bg-background border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  >
+                    <option value="dense_baseline">Dense Baseline</option>
+                    <option value="hybrid">Hybrid</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Judge Sign-off</label>
+                <input
+                  placeholder="Name of approving judge"
+                  value={gateForm.judge_sign_off}
+                  onChange={(e: any) => setGateForm((f: any) => ({ ...f, judge_sign_off: e.target.value }))}
+                  className="w-full bg-background border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                 <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Rationale</label>
+                 <textarea
+                  placeholder="Technical justification for promotion..."
+                  value={gateForm.rationale}
+                  rows={4}
+                  onChange={(e: any) => setGateForm((f: any) => ({ ...f, rationale: e.target.value }))}
+                  className="w-full bg-background border rounded-xl px-4 py-2.5 text-sm resize-none focus:ring-2 focus:ring-primary/20 outline-none"
+                />
               </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Judge Sign-off</label>
-              <input
-                placeholder="Name of approving judge"
-                value={gateForm.judge_sign_off}
-                onChange={(e: any) => setGateForm((f: any) => ({ ...f, judge_sign_off: e.target.value }))}
-                className="w-full bg-background border rounded-lg px-3 py-2 text-sm"
-              />
-            </div>
-            <div className="space-y-1">
-               <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Rationale</label>
-               <textarea
-                placeholder="Technical justification for promotion..."
-                value={gateForm.rationale}
-                rows={3}
-                onChange={(e: any) => setGateForm((f: any) => ({ ...f, rationale: e.target.value }))}
-                className="w-full bg-background border rounded-lg px-3 py-2 text-sm resize-none"
-              />
-            </div>
-            <div className="flex gap-2 pt-2">
+
+            <div className="p-6 border-t bg-muted/10 flex gap-3">
               <Button 
                 variant="outline" 
-                className="flex-1"
-                onClick={() => (document.getElementById('gate-modal') as any)?.close()}
+                className="flex-1 rounded-xl h-11 font-bold"
+                onClick={() => setIsGateOpen(false)}
               >
                 Cancel
               </Button>
               <Button 
-                className="flex-1 bg-amber-500 hover:bg-amber-600 border-none"
+                className="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl h-11 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-amber-500/20"
                 disabled={submitGateMut.isPending || !gateForm.judge_sign_off || !gateForm.rationale}
-                onClick={() => {
-                  submitGateMut.mutate({ ...gateForm, status: 'deferred' });
-                  (document.getElementById('gate-modal') as any)?.close();
-                }}
+                onClick={() => submitGateMut.mutate({ ...gateForm, status: 'deferred' })}
               >
                 ⏸ Defer
               </Button>
               <Button 
-                className="flex-1"
+                className="flex-1 rounded-xl h-11 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20"
                 disabled={submitGateMut.isPending || !gateForm.judge_sign_off || !gateForm.rationale}
-                onClick={() => {
-                  submitGateMut.mutate({ ...gateForm, status: 'approved' });
-                  (document.getElementById('gate-modal') as any)?.close();
-                }}
+                onClick={() => submitGateMut.mutate({ ...gateForm, status: 'approved' })}
               >
-                ✔ Approve
+                ✓ Approve
               </Button>
             </div>
           </div>
         </div>
-      </dialog>
+      )}
     </PortalLayout>
   )
 }

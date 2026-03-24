@@ -106,7 +106,7 @@ const DocumentUpload = () => {
   return (
     <PortalLayout 
       title={t('clerk.pages.documentsTitle')} 
-      subtitle="Institutional evidence management and high-performance ingestion pipeline."
+      subtitle={t('clerk.pages.documentsSubtitle')}
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column - Controls & Upload */}
@@ -115,13 +115,13 @@ const DocumentUpload = () => {
             <CardHeader className="bg-primary/5 border-b py-5">
               <div className="flex items-center gap-2">
                  <Search className="w-5 h-5 text-primary" />
-                 <CardTitle className="text-lg">Target Environment</CardTitle>
+                 <CardTitle className="text-lg">{t('clerk.forms.caseSelection')}</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="p-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">Select Judicial Case</label>
+                  <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">{t('clerk.forms.selectCase')}</label>
                   <select 
                     className="w-full bg-muted/20 border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer font-bold"
                     value={selectedCaseId} 
@@ -137,7 +137,7 @@ const DocumentUpload = () => {
                 </div>
                 {selectedCase && (
                   <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 animate-in fade-in slide-in-from-top-2">
-                     <p className="text-[10px] font-black uppercase text-primary mb-1 tracking-tighter">Current Context</p>
+                     <p className="text-[10px] font-black uppercase text-primary mb-1 tracking-tighter">{t('clerk.forms.metadataEditor')}</p>
                      <p className="text-sm font-bold truncate">{selectedCase.title}</p>
                      <p className="text-[11px] text-muted-foreground italic mt-1 font-medium">{selectedCase.case_number}</p>
                   </div>
@@ -150,7 +150,7 @@ const DocumentUpload = () => {
             <CardHeader className="bg-emerald-500/5 border-b py-5">
               <div className="flex items-center gap-2">
                  <Upload className="w-5 h-5 text-emerald-500" />
-                 <CardTitle className="text-lg">Ingestion Zone</CardTitle>
+                 <CardTitle className="text-lg">{t('clerk.forms.uploadZone')}</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -176,7 +176,13 @@ const DocumentUpload = () => {
                      <Search className="w-3.5 h-3.5" />
                      {t('clerk.forms.pickFiles')}
                   </Button>
-                  <input type="file" multiple className="hidden" onChange={(e) => pushFiles(e.target.files)} />
+                  <input 
+                    type="file" 
+                    multiple 
+                    accept=".pdf,.docx,image/*"
+                    className="hidden" 
+                    onChange={(e) => pushFiles(e.target.files)} 
+                  />
                 </label>
               </div>
 
