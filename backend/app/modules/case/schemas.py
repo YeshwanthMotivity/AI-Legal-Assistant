@@ -118,6 +118,8 @@ class CaseAnalyzeResponse(BaseModel):
 class CaseAnalysisDetail(BaseModel):
     status: str
     outcome: Optional[str] = None
+    summary: Optional[str] = None
+    facts: List[str] = Field(default_factory=list)
     reasoning: Optional[str] = None
     cited_laws: List[str] = Field(default_factory=list)
     cited_cases: List[str] = Field(default_factory=list)

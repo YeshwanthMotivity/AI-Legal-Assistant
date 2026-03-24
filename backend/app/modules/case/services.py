@@ -147,6 +147,8 @@ class CaseService:
                     reasoning=judgment.reasoning,
                     cited_laws=judgment.articles_cited or [],
                     cited_cases=judgment.legal_precedents or [],
+                    summary=explain.get("summary"),
+                    facts=explain.get("facts") or [],
                     lawArticles=explain.get("law_articles") or [],
                     similarPrecedents=explain.get("similar_precedents") or [],
                     entitlementBreakdown=explain.get("entitlement_breakdown") or [],

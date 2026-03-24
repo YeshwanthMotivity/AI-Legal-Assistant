@@ -357,15 +357,22 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
     async def _qdrant_search():
         from qdrant_client import AsyncQdrantClient
         client = AsyncQdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
-        # 1. Try with strict language filter
+        
         must = []
+        must_not = []
         if state.get("query_language"):
             must.append(FieldCondition(key="language", match=MatchValue(value=state["query_language"])))
             
+        qt = str(state.get("query_text", "")).lower()
+        if "adgm" not in qt and "federal" not in qt:
+            must_not.append(FieldCondition(key="category", match=MatchValue(value="ADGM_Employment_Law")))
+            must_not.append(FieldCondition(key="category", match=MatchValue(value="Federal_Labour_Law")))
+            
+        qfilter = Filter(must=must, must_not=must_not) if (must or must_not) else None
         result = await client.query_points(
             collection_name="difc_laws",
             query=query_embedding,
-            query_filter=Filter(must=must),
+            query_filter=qfilter,
             limit=10,
             with_payload=True,
         )
@@ -373,12 +380,13 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
             result.get("points", []) if isinstance(result, dict) else result
         )
 
-        # 2. Relaxed fallback
         if not points and must:
-            logger.info(f"--- Node: law_search_node found 0 results for language '{state['query_language']}', trying without filter")
+            logger.info(f"--- Node: law_search_node found 0 results for language '{state['query_language']}', trying without language filter")
+            qfilter_fallback = Filter(must_not=must_not) if must_not else None
             result = await client.query_points(
                 collection_name="difc_laws",
                 query=query_embedding,
+                query_filter=qfilter_fallback,
                 limit=10,
                 with_payload=True,
             )
@@ -678,14 +686,16 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         f"Language: {state.get('query_language', 'en')}.\n\n"
         "RESPONSE SCHEMA (STRICT):\n"
         "{\n"
-        "  \"outcome\": \"Approved\" | \"Rejected\",\n"
+        "  \"outcome\": \"Approved\" | \"Rejected\" | \"Partial\",\n"
+        "  \"summary\": \"Case Metadata and Parties summary using EXACT Markdown requested (e.g. 📌 Case Metadata...)\",\n"
+        "  \"facts\": [\"String array of Key Facts and Court Analysis formatted cleanly with emojis (e.g. Issue 1:, 📌 Final Decision)\"],\n"
         "  \"reasoning\": \"Step-by-step legal justification. USE PLAIN TEXT ONLY. NO JSON OR OBJECTS INSIDE.\",\n"
         "  \"cited_laws\": [\"Exact name/Article number of applicable UAE/DIFC Laws\"],\n"
         "  \"cited_cases\": [\"Case References or Precedents\"],\n"
         "  \"confidence\": 0.0 to 1.0,\n"
-        "  \"draft_judgment\": \"Formal court-ready text. High-quality legal English. NO JSON structures.\"\n"
+        "  \"draft_judgment\": \"Clean structured Markdown like:\\n🧾 JUDGMENT SUMMARY\\nCourt: ...\\nDecision: ...\\n🔹 Findings\\n...\\n🔹 Orders\\n...\\n🔹 Legal Basis\\n...\"\n"
         "}\n\n"
-        "CRITICAL: If you do not have a specific value, return an empty string or empty list, NEVER return '[object Object]'."
+        "CRITICAL: If you do not have a specific value, return an empty string or empty list, NEVER return '[object Object]'. ALWAYS respect the markdown output format requirements."
     )
     user_prompt = json.dumps(
         {"case_id": state["case_id"], "context": state.get("context", {})},
@@ -776,6 +786,8 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
 
             result = {
                 "outcome":        outcome,
+                "summary":        _cleanse_text(parsed.get("summary", "")),
+                "facts":          [_cleanse_text(f) for f in parsed.get("facts", [])] if isinstance(parsed.get("facts"), list) else [],
                 "reasoning":      _cleanse_text(raw_reasoning) or "Analysis complete. See draft for details.",
                 "cited_laws":     parsed.get("cited_laws", []) if isinstance(parsed.get("cited_laws"), list) else [],
                 "cited_cases":    parsed.get("cited_cases", []) if isinstance(parsed.get("cited_cases"), list) else [],
@@ -892,6 +904,8 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
     law_articles = [obj for l in raw_laws if (obj := _to_article_obj(l)) is not None]
 
     explainability = {
+        "summary": reasoning.get("summary", ""),
+        "facts": reasoning.get("facts", []),
         "law_articles": law_articles,
         "laws": law_articles, # Duplicate for frontend compatibility
         "similar_precedents": reasoning.get("cited_cases") or state.get("precedents", []),
