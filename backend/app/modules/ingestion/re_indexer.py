@@ -43,7 +43,7 @@ async def re_index_all():
 
                 # 2. Extract structured data pattern (simulation for chunker)
                 structured_data = {
-                    "text": doc.ocr_text,
+                    "raw_text": doc.ocr_text,
                     "metadata": {
                         "filename": doc.file_name,
                         "case_id": doc.case_id,
