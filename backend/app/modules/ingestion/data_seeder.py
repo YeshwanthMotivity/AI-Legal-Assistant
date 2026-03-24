@@ -42,7 +42,7 @@ def detect_language(file_name: str) -> str:
         return "ar"
     return "en"
 
-async def seed_judgments(db: AsyncSession, limit: int = None):
+async def seed_judgments(db: AsyncSession, limit: int = None, force: bool = False):
     judgment_dir = os.path.join(DATA_ROOT, "Court_Judgments")
 
     if not os.path.exists(judgment_dir):
@@ -89,6 +89,7 @@ async def seed_judgments(db: AsyncSession, limit: int = None):
                     "category": folder_name,
                     "case_name": os.path.splitext(file_name)[0],
                 },
+                force=force
             )
 
             count += 1
@@ -96,7 +97,7 @@ async def seed_judgments(db: AsyncSession, limit: int = None):
             if limit and count >= limit:
                 return
 
-async def seed_laws(db: AsyncSession, limit: int = None):
+async def seed_laws(db: AsyncSession, limit: int = None, force: bool = False):
     laws_dir = os.path.join(DATA_ROOT, "Laws")
 
     if not os.path.exists(laws_dir):
@@ -142,6 +143,7 @@ async def seed_laws(db: AsyncSession, limit: int = None):
                     "jurisdiction": "UAE/DIFC",
                     "is_law": True,
                 },
+                force=force
             )
 
             count += 1
@@ -155,7 +157,8 @@ async def process_file(
     case_type: CaseType, 
     doc_type: DocumentType, 
     collection_name: str = "legal_chunks",
-    extra_metadata: dict = None
+    extra_metadata: dict = None,
+    force: bool = False
 ):
     file_name = os.path.basename(file_path)
 
@@ -164,8 +167,21 @@ async def process_file(
     result = await db.execute(select(Document).where(Document.storage_key == file_path))
     existing = result.scalars().first()
     if existing:
-        logger.info(f"Skipping {file_path} — already ingested")
-        return
+        if not force:
+            logger.info(f"Skipping {file_path} — already ingested (use --force to override)")
+            return
+        else:
+            logger.info(f"Force re-ingesting {file_path} — deleting old record...")
+            # Delete the existing document and case to avoid conflicts
+            # Note: In a production app you'd be more careful, but for a seeder this is fine.
+            await db.delete(existing)
+            # Find and delete the case if it was a seeded case
+            from app.modules.case.models import Case
+            case_result = await db.execute(select(Case).where(Case.id == existing.case_id))
+            existing_case = case_result.scalars().first()
+            if existing_case:
+                await db.delete(existing_case)
+            await db.commit()
 
     case_id = str(uuid.uuid4())
     doc_id = str(uuid.uuid4())
@@ -230,14 +246,15 @@ async def process_file(
     except Exception as e:
         print(f"Failed to ingest {file_name}: {e}", flush=True)
 
-async def main(limit: int = None, seed_all: bool = False):
+async def main(limit: int = None, seed_all: bool = False, force: bool = False):
     async with AsyncSessionLocal() as db:
         if seed_all:
-             await seed_laws(db)
-        await seed_judgments(db, limit=limit)
+             await seed_laws(db, force=force)
+        await seed_judgments(db, limit=limit, force=force)
 
 if __name__ == "__main__":
     import sys
-    limit_arg = int(sys.argv[1]) if len(sys.argv) > 1 else None
+    limit_arg = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else None
     seed_all_arg = "--all" in sys.argv
-    asyncio.run(main(limit=limit_arg, seed_all=seed_all_arg))
+    force_arg = "--force" in sys.argv
+    asyncio.run(main(limit=limit_arg, seed_all=seed_all_arg, force=force_arg))
