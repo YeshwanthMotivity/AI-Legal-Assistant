@@ -98,7 +98,8 @@ const Login = () => {
                   <input
                     type="text"
                     placeholder="Judicial ID or Email"
-                    className="w-full bg-background border border-border/50 rounded-2xl pl-14 pr-4 py-4 text-sm text-foreground focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-bold placeholder:text-muted-foreground/30"
+                    className="w-full bg-background border border-border/50 rounded-2xl pr-4 py-4 text-sm text-foreground focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-bold placeholder:text-muted-foreground/30"
+                    style={{ paddingLeft: '3.5rem' }}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
@@ -116,7 +117,8 @@ const Login = () => {
                   <input
                     type="password"
                     placeholder="••••••••"
-                    className="w-full bg-background border border-border/50 rounded-2xl pl-14 pr-4 py-4 text-sm text-foreground focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-bold placeholder:text-muted-foreground/30"
+                    className="w-full bg-background border border-border/50 rounded-2xl pr-4 py-4 text-sm text-foreground focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-bold placeholder:text-muted-foreground/30"
+                    style={{ paddingLeft: '3.5rem' }}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required

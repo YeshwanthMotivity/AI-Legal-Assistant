@@ -126,7 +126,8 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
              <div className="relative flex-1 sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input 
-                  className="w-full bg-card border rounded-lg pl-12 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                  className="w-full bg-card border rounded-lg pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                  style={{ paddingLeft: '3rem' }}
                   placeholder="Search cases..."
                 />
              </div>
