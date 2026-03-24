@@ -51,9 +51,9 @@ function splitTranscript(text: string): string[] {
 }
 
 const getSectionLabel = (text: string): string | null => {
-  if (/\bfacts?\b|\bclaimant\b|\bemployed\b/i.test(text.slice(0, 100))) return 'Facts'
-  if (/\barticle\s+\d+|\blaw\b|\bstatute\b/i.test(text.slice(0, 100))) return 'Legal Analysis'
-  if (/\bjudgment\b|\border\b|\baward\b|\bdismiss/i.test(text.slice(0, 100))) return 'Judgment'
+  if (/\bfacts?\b|\bclaimant\b|\bemployed\b/i.test(text.slice(0, 100))) return 'facts'
+  if (/\barticle\s+\d+|\blaw\b|\bstatute\b/i.test(text.slice(0, 100))) return 'legalAnalysis'
+  if (/\bjudgment\b|\border\b|\baward\b|\bdismiss/i.test(text.slice(0, 100))) return 'judgment'
   return null
 }
 
@@ -156,7 +156,7 @@ const PrecedentDetailPage: React.FC = () => {
                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
                    <BookOpen className="w-5 h-5" />
                 </div>
-                <CardTitle className="text-lg">Case Transcript & Analysis</CardTitle>
+                <CardTitle className="text-lg">{t('judge.workspace.transcriptAnalysis')}</CardTitle>
               </div>
               <div className="flex items-center gap-4">
                 {fromCaseId && (
@@ -170,7 +170,7 @@ const PrecedentDetailPage: React.FC = () => {
                     {t('common.backToCase') || "← Back to Case"}
                   </Button>
                 )}
-                <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter border-primary/30 text-primary/80">Reference: {id}</Badge>
+                <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter border-primary/30 text-primary/80">{t('judge.workspace.reference')}: {id}</Badge>
               </div>
             </CardHeader>
             <CardContent className="p-8 overflow-y-auto leading-relaxed text-sm font-medium">
@@ -178,15 +178,15 @@ const PrecedentDetailPage: React.FC = () => {
                 <div className="flex items-center gap-4 py-4 px-6 bg-primary/5 rounded-2xl border border-primary/10 mb-8">
                    <Scale className="w-8 h-8 text-primary/40 shrink-0" />
                    <div>
-                      <h4 className="text-sm font-black uppercase tracking-wider text-primary">Judicial Record</h4>
-                      <p className="text-[11px] text-muted-foreground italic">Official transcript from the DIFC Court of First Instance</p>
+                      <h4 className="text-sm font-black uppercase tracking-wider text-primary">{t('judge.workspace.judicialRecordTitle')}</h4>
+                      <p className="text-[11px] text-muted-foreground italic">{t('judge.workspace.judicialRecordSubtitle')}</p>
                    </div>
                 </div>
                 <div className="text-foreground/90 selection:bg-primary/20 space-y-4">
                   {precedent.text.trimStart()[0] === precedent.text.trimStart()[0].toLowerCase() && (
                     <p className="text-[11px] text-muted-foreground/60 italic mb-4 flex items-center gap-2">
                        <Info className="w-3 h-3" />
-                       ⓘ Transcript begins at stored document position
+                       ⓘ {t('judge.workspace.transcriptBeginNote')}
                     </p>
                   )}
                   {splitTranscript(precedent.text)
@@ -200,7 +200,7 @@ const PrecedentDetailPage: React.FC = () => {
                           {sectionLabel && (
                             <div className="flex items-center gap-2 mt-8 mb-4">
                               <Badge className="bg-primary/20 text-primary border-primary/30 font-black uppercase text-[10px] tracking-widest px-3 py-1">
-                                {sectionLabel}
+                                {t(`judge.workspace.sections.${sectionLabel}`)}
                               </Badge>
                               <div className="h-[1px] flex-1 bg-gradient-to-r from-primary/30 to-transparent" />
                             </div>
@@ -262,10 +262,10 @@ const PrecedentDetailPage: React.FC = () => {
                 </div>
                 <div>
                    <CardTitle className="text-sm font-bold">
-                     {activeTab === 'chat' ? "Intelligent Discovery" : t('judge.workspace.caseComparison')}
+                     {activeTab === 'chat' ? t('judge.workspace.intelligentDiscovery') : t('judge.workspace.caseComparison')}
                    </CardTitle>
                    <p className="text-[10px] text-muted-foreground font-bold uppercase">
-                     {activeTab === 'chat' ? "Powered by QWEN-2.5" : `Ref: ${fromCaseId}`}
+                     {activeTab === 'chat' ? t('judge.workspace.poweredBy', { model: 'QWEN-2.5' }) : `${t('judge.workspace.reference')}: ${fromCaseId}`}
                    </p>
                 </div>
               </div>
@@ -282,9 +282,9 @@ const PrecedentDetailPage: React.FC = () => {
                     <MessageSquare className="w-10 h-10" />
                   </div>
                   <div className="space-y-2">
-                    <h5 className="font-bold text-foreground">Explore this Case</h5>
+                    <h5 className="font-bold text-foreground">{t('judge.workspace.chatExploreTitle')}</h5>
                     <p className="text-xs text-muted-foreground italic leading-relaxed">
-                      Ask detailed questions about legal reasoning, specific clauses, or how this precedent applies to current labor laws.
+                      {t('judge.workspace.chatExploreDesc')}
                     </p>
                   </div>
                   <div className="flex flex-wrap justify-center gap-2 pt-4">
@@ -329,7 +329,7 @@ const PrecedentDetailPage: React.FC = () => {
                        <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]" />
                        <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]" />
                     </div>
-                    <span className="text-[10px] font-black uppercase text-muted-foreground tracking-tighter ml-1">Analyzing context</span>
+                    <span className="text-[10px] font-black uppercase text-muted-foreground tracking-tighter ml-1">{t('judge.workspace.chatAnalyzing')}</span>
                   </div>
                 </div>
               )}
@@ -378,7 +378,7 @@ const PrecedentDetailPage: React.FC = () => {
                 <div className="relative group">
                   <input 
                     type="text"
-                    placeholder="Inquire about case complexities..."
+                    placeholder={t('judge.workspace.chatPlaceholder')}
                     className="w-full bg-card border rounded-2xl pl-5 pr-14 py-3.5 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-bold placeholder:italic placeholder:font-medium shadow-inner"
                     value={chatMessage}
                     onChange={(e) => setChatMessage(e.target.value)}

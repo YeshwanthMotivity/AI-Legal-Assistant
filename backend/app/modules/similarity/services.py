@@ -463,8 +463,7 @@ class SimilarityService:
             raise HTTPException(status_code=404, detail="Precedent not found")
 
         payload = point.payload if hasattr(point, "payload") else point.get("payload", {})
-        
-        # Improved summary extraction: grab facts_summary or description
+           # Better summary extraction: skip very short fragments or headers
         raw_text = payload.get("raw_text") or payload.get("text") or ""
         summary = (
             payload.get("facts_summary") or 
@@ -474,16 +473,42 @@ class SimilarityService:
         )
         
         if not summary and raw_text:
-            # Look for first sentence with at least 40 chars
-            sentences = re.split(r'(?<=[.!?])\s+', raw_text)
-            for s in sentences:
-                if len(s.strip()) > 40:
-                    summary = s.strip()
+            # Look for a paragraph with substantial content, skipping common header-like fragments
+            paragraphs = [p.strip() for p in raw_text.split('\n') if len(p.strip()) > 30]
+            for p in paragraphs:
+                # Avoid fragments that look like bullet points or short headers
+                if len(p) > 100 and not p.lower().startswith(('case no', 'judgment', 'date', 'between', 'ref')):
+                    summary = p
                     break
+            if not summary and paragraphs:
+                summary = paragraphs[0]
             if not summary:
-                summary = raw_text[:200].rsplit(' ', 1)[0] + "..."
-        elif summary:
-            summary = _cleanse_text(summary)
+                summary = raw_text[:300].rsplit(' ', 1)[0] + "..."
+        
+        summary = _cleanse_text(summary) if summary else ""
+
+        # Metadata Fallbacks (Regex extraction if missing in payload)
+        outcome = payload.get("outcome") or payload.get("decision")
+        if not outcome and raw_text:
+            if re.search(r'claim is dismissed|judgment for the respondent|rejected|dismissed in its entirety', raw_text, re.I):
+                outcome = "Rejected"
+            elif re.search(r'judgment for the claimant|awarded|ordered to pay|entitled to', raw_text, re.I):
+                outcome = "Awarded"
+            else:
+                outcome = "Finalized"
+
+        case_type = payload.get("case_type") or payload.get("type")
+        if not case_type and raw_text:
+            if re.search(r'unpaid wages|salary|payment of wages|arrears', raw_text, re.I):
+                case_type = "Unpaid Wages"
+            elif re.search(r'unfair dismissal|termination|end of service', raw_text, re.I):
+                case_type = "Termination"
+
+        compensation = payload.get("compensation_amount") or payload.get("compensation") or payload.get("award")
+        if not compensation and raw_text:
+            amt_match = re.search(r'(?:AED|SAR|USD)\s*([\d,]{3,}(?:\.\d{2})?)', raw_text)
+            if amt_match:
+                compensation = amt_match.group(0)
 
         return PrecedentDetail(
             id=precedent_id,
@@ -491,11 +516,11 @@ class SimilarityService:
             year=str(payload.get("year", "")),
             category=payload.get("category"),
             text=raw_text,
-            outcome=payload.get("outcome"),
-            case_type=payload.get("case_type") or payload.get("type"),
+            outcome=outcome,
+            case_type=case_type,
             summary=summary,
             cited_laws=payload.get("cited_laws") or [],
-            compensation=payload.get("compensation_amount") or payload.get("compensation") or payload.get("award"),
+            compensation=compensation or "N/A",
         )
 
     async def precedent_chat(self, precedent_id: str, request: PrecedentChatRequest) -> PrecedentChatResponse:

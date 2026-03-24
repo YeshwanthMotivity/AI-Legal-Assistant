@@ -83,8 +83,8 @@ def _extract_article_title(raw_text: str, category: str) -> str:
         if len(found) > 8 and not found.endswith('('):
             return found
     # Fall back to category display name
-    return CATEGORY_DISPLAY_NAMES.get(fallback_category, 
-           fallback_category.replace("_", " ").replace("-", " ").title())
+    return CATEGORY_DISPLAY_NAMES.get(category, 
+           category.replace("_", " ").replace("-", " ").title())
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 0. Global Setup: Hallucination Guards

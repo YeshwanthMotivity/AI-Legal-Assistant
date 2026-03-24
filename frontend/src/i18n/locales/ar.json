@@ -262,7 +262,23 @@
       "loadTemplate": "تحميل قالب",
       "selectTemplate": "اختر قالباً",
       "templateReplaceWarning": "سيؤدي هذا إلى استبدال محتوى المسودة الحالية. هل تريد المتابعة؟",
-      "feedbackSuccess": "تم إرسال الملاحظات بنجاح."
+      "feedbackSuccess": "تم إرسال الملاحظات بنجاح.",
+      "intelligentDiscovery": "الاكتشاف الذكي",
+      "transcriptAnalysis": "نسخة القضية والتحليل",
+      "reference": "المرجع",
+      "poweredBy": "مشغل بواسطة {{model}}",
+      "judicialRecordTitle": "السجل القضائي",
+      "judicialRecordSubtitle": "نسخة رسمية من محكمة الدرجة الأولى في مركز دبي المالي العالمي",
+      "transcriptBeginNote": "تبدأ النسخة من موضع المستند المخزن",
+      "sections": {
+        "facts": "الوقائع",
+        "legalAnalysis": "التحليل القانوني",
+        "judgment": "الحكم"
+      },
+      "chatExploreTitle": "استكشف هذه القضية",
+      "chatExploreDesc": "اطرح أسئلة مفصلة حول التعليل القانوني، أو بنود محددة، أو كيفية تطبيق هذه السابقة على قوانين العمل الحالية.",
+      "chatAnalyzing": "جاري تحليل السياق",
+      "chatPlaceholder": "استفسر عن تعقيدات القضية..."
     },
     "documentStatus": {
       "pending": "قيد الانتظار",

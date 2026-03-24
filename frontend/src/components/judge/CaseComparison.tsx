@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Scale } from 'lucide-react';
 
 interface ComparisonData {
   field: string;
@@ -40,55 +41,60 @@ const CaseComparison = ({ currentCase, precedentCase }: CaseComparisonProps) => 
   const { t, i18n } = useTranslation();
 
   const comparisonData: ComparisonData[] = [
-    { field: i18n.language === 'ar' ? 'نوع القضية (Case Type)' : 'Case Type', currentValue: currentCase.type, precedentValue: precedentCase.type },
-    { field: t('judge.workspace.factComparison'), currentValue: currentCase.facts, precedentValue: precedentCase.facts },
-    { field: t('judge.workspace.legalIssues'), currentValue: currentCase.issues, precedentValue: precedentCase.issues },
-    { field: t('judge.judgment.decision'), currentValue: currentCase.outcome, precedentValue: precedentCase.outcome },
-    { field: t('judge.judgment.compensation'), currentValue: currentCase.compensation, precedentValue: precedentCase.compensation },
+    { field: t('judge.workspace.caseType') || 'Case Type', currentValue: currentCase.type, precedentValue: precedentCase.type },
+    { field: t('judge.workspace.factComparison') || 'Facts Comparison', currentValue: currentCase.facts, precedentValue: precedentCase.facts },
+    { field: t('judge.workspace.legalIssues') || 'Legal Issues', currentValue: currentCase.issues, precedentValue: precedentCase.issues },
+    { field: t('judge.judgment.decision') || 'Decision', currentValue: currentCase.outcome, precedentValue: precedentCase.outcome },
+    { field: t('judge.judgment.compensation') || 'Compensation', currentValue: currentCase.compensation, precedentValue: precedentCase.compensation },
   ];
 
   return (
-    <Card className="border-primary/20 bg-primary/5 shadow-sm overflow-hidden">
-      <CardHeader className="py-4 border-b bg-card">
-        <CardTitle className="text-sm font-bold flex items-center gap-2">
-          {t('judge.workspace.caseComparison')}
+    <Card className="border-border/50 bg-background shadow-xl overflow-hidden rounded-3xl">
+      <CardHeader className="py-5 border-b bg-muted/10">
+        <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-3">
+          <Scale className="w-5 h-5 text-primary" />
+          {t('judge.workspace.caseComparison') || 'Case Comparison Analysis'}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <Table dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
           <TableHeader>
-            <TableRow className="bg-muted/30">
-              <TableHead className="w-1/4 font-bold uppercase text-[10px] tracking-widest">{t('common.field') || 'Field'}</TableHead>
-              <TableHead className="w-3/8 font-bold uppercase text-[10px] tracking-widest text-primary">{t('judge.workspace.currentCase')}</TableHead>
-              <TableHead className="w-3/8 font-bold uppercase text-[10px] tracking-widest text-indigo-600">{t('judge.workspace.precedentCase')}</TableHead>
+            <TableRow className="bg-muted/50 hover:bg-muted/50 border-b border-border/50">
+              <TableHead className="w-1/4 font-black uppercase text-[10px] tracking-[0.2em] px-6 py-4 text-muted-foreground">{t('common.field') || 'Field'}</TableHead>
+              <TableHead className="w-3/8 font-black uppercase text-[10px] tracking-[0.2em] px-6 py-4 text-primary">{t('judge.workspace.currentCase') || 'Current Case'}</TableHead>
+              <TableHead className="w-3/8 font-black uppercase text-[10px] tracking-[0.2em] px-6 py-4 text-emerald-600">{t('judge.workspace.precedentCase') || 'Precedent Case'}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {comparisonData.map((row, idx) => (
-              <TableRow key={idx} className="hover:bg-accent/10 border-b border-border/50">
-                <TableCell className="font-semibold text-[11px] text-muted-foreground align-top pt-4">{row.field}</TableCell>
-                <TableCell className="text-[12px] align-top pt-4 pb-4">
+              <TableRow key={idx} className="hover:bg-primary/[0.02] border-b border-border/30 transition-colors">
+                <TableCell className="font-black text-[10px] uppercase text-muted-foreground/60 align-top pt-6 pb-6 px-6 tracking-wide">{row.field}</TableCell>
+                <TableCell className="text-[12px] align-top pt-6 pb-6 px-6">
                   {Array.isArray(row.currentValue) ? (
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                       {row.currentValue.map((v, i) => (
-                        <Badge key={i} variant="outline" className="text-[9px] px-1.5 py-0 border-primary/20 text-primary font-bold">{v}</Badge>
+                        <Badge key={i} variant="outline" className="text-[9px] px-2 py-0.5 border-primary/20 text-primary font-black bg-primary/5 uppercase tracking-tighter">{v}</Badge>
                       ))}
-                      {row.currentValue.length === 0 && <span className="text-muted-foreground italic">N/A</span>}
+                      {row.currentValue.length === 0 && <span className="text-muted-foreground/50 italic font-medium">N/A</span>}
                     </div>
                   ) : (
-                    <p className="leading-relaxed font-medium">{row.currentValue || 'N/A'}</p>
+                    <div className="leading-relaxed font-bold text-foreground/80 max-h-48 overflow-y-auto scrollbar-hide pr-2">
+                      {row.currentValue || <span className="text-muted-foreground/50 italic font-medium">N/A</span>}
+                    </div>
                   )}
                 </TableCell>
-                <TableCell className="text-[12px] align-top pt-4 pb-4 bg-indigo-50/20">
+                <TableCell className="text-[12px] align-top pt-6 pb-6 px-6 bg-primary/[0.02]">
                   {Array.isArray(row.precedentValue) ? (
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                       {row.precedentValue.map((v, i) => (
-                        <Badge key={i} variant="secondary" className="text-[9px] px-1.5 py-0 bg-indigo-100 text-indigo-700 border-indigo-200 font-bold">{v}</Badge>
+                        <Badge key={i} variant="secondary" className="text-[9px] px-2 py-0.5 bg-emerald-500/10 text-emerald-700 border-emerald-500/20 font-black uppercase tracking-tighter">{v}</Badge>
                       ))}
-                      {row.precedentValue.length === 0 && <span className="text-muted-foreground italic">N/A</span>}
+                      {row.precedentValue.length === 0 && <span className="text-muted-foreground/50 italic font-medium">N/A</span>}
                     </div>
                   ) : (
-                    <p className="leading-relaxed text-muted-foreground italic">{row.precedentValue || 'N/A'}</p>
+                    <div className="leading-relaxed font-bold text-foreground/80 max-h-48 overflow-y-auto scrollbar-hide pr-2">
+                       {row.precedentValue || <span className="text-muted-foreground/50 italic font-medium">N/A</span>}
+                    </div>
                   )}
                 </TableCell>
               </TableRow>

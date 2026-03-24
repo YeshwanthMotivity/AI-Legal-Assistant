@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     # Qdrant
     qdrant_host: str = "qdrant"
     qdrant_port: int = 6333
+    embedding_dimension: int = 1024
+    enable_sparse_search: bool = False
     
     # MinIO
     minio_root_user: str = "minioadmin"
