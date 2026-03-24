@@ -297,18 +297,27 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
     try:
         candidates = await _qdrant_search()
         
-        # Deduplicate precedents by case_id keeping highest score
+        # Deduplicate precedents by case_id AND title keeping highest score
         seen_case_ids = set()
+        seen_titles = set()
         deduped_candidates = []
         for c in candidates:
             payload = c.payload if hasattr(c, "payload") else c.get("payload", {})
             cid = payload.get("case_id", "")
-            if cid and cid not in seen_case_ids:
+            title = payload.get("case_name") or payload.get("title") or "Unknown Case"
+            
+            is_dup_id = bool(cid and cid in seen_case_ids)
+            is_dup_title = bool(title != "Unknown Case" and title in seen_titles)
+            
+            if is_dup_id or is_dup_title:
+                continue
+                
+            if cid:
                 seen_case_ids.add(cid)
-                deduped_candidates.append(c)
-            elif not cid:
-                # Keep points without case_id (though unlikely in precedents)
-                deduped_candidates.append(c)
+            if title != "Unknown Case":
+                seen_titles.add(title)
+                
+            deduped_candidates.append(c)
         
         results = []
         for c in deduped_candidates:
