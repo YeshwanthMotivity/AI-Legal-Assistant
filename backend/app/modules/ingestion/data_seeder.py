@@ -215,7 +215,7 @@ async def process_file(
         file_name=file_name,
         storage_key=file_path,
         mime_type="application/pdf",
-        document_type=doc_type.upper() if hasattr(doc_type, "upper") else doc_type, # Sync with DB UPPERCASE
+        document_type=doc_type.lower() if hasattr(doc_type, "lower") else doc_type, # Sync with lowercase Enum
         processing_status=ProcessingStatus.PENDING
     )
     db.add(new_doc)

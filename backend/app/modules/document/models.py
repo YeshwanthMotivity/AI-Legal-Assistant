@@ -18,9 +18,17 @@ class ProcessingStatus(str, enum.Enum):
 
 
 class DocumentType(str, enum.Enum):
-    COURT_ORDER = "COURT_ORDER"
-    LAW = "LAW"
-    OTHER = "OTHER"
+    CONTRACT = "contract"
+    FINANCIAL_RECORD = "financial_record"
+    TERMINATION_NOTICE = "termination_notice"
+    WITNESS_STATEMENT = "witness_statement"
+    EMPLOYMENT_CONTRACT = "employment_contract"
+    SALARY_RECORDS = "salary_records"
+    TERMINATION_LETTER = "termination_letter"
+    EVIDENCE = "evidence"
+    COURT_ORDER = "court_order"
+    LAW = "law"
+    OTHER = "other"
 
 
 class Document(Base):

@@ -119,7 +119,10 @@ const CaseDetail = () => {
       setMessageType('error')
       if (axios.isAxiosError(error)) {
         const status = error.response?.status
-        const detail = error.response?.data?.detail
+        let detail = error.response?.data?.detail
+        if (typeof detail === 'object' && detail !== null) {
+          detail = JSON.stringify(detail)
+        }
         if (status || detail) {
           setLocalMessage(`${t('judge.workspace.uploadError')} (${status ?? 'ERR'}${detail ? `: ${detail}` : ''})`)
           return
