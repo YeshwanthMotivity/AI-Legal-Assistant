@@ -43,6 +43,36 @@ def _parse_date(value: str) -> datetime | None:
         except ValueError:
             continue
     return None
+    
+# ─────────────────────────────────────────────────────────────────────────────
+# 0. Global Setup: Law Display Normalization
+# ─────────────────────────────────────────────────────────────────────────────
+
+CATEGORY_DISPLAY_NAMES = {
+    "DIFC_Employment_Law":   "DIFC Employment Law No. 2 of 2019",
+    "Federal_Labour_Law":    "UAE Federal Labour Law (Decree No. 33 of 2021)",
+    "ADGM_Employment_Law":   "ADGM Employment Regulations 2019",
+    "DIFC_Contract_Law":     "DIFC Contract Law",
+    "DIFC_Court_Law":        "DIFC Court Law",
+}
+
+def _resolve_law_title(l: dict) -> str:
+    raw_case_title = str(l.get("case_title") or "")
+    category = str(l.get("category") or "")
+    raw_name = str(l.get("law_name") or "")
+    
+    # Priority 1: Proper Case Title (if it's not a generic slug/filename)
+    if (raw_case_title and raw_case_title != raw_name and 
+        len(raw_case_title) > 10 and not raw_case_title.startswith("ADGM1547") and
+        'Article X' not in raw_case_title):
+        return raw_case_title
+        
+    # Priority 2: Category Map
+    if category in CATEGORY_DISPLAY_NAMES:
+        return CATEGORY_DISPLAY_NAMES[category]
+        
+    # Priority 3: Formatted Law Name
+    return raw_name.replace("-", " ").replace("_", " ").title()
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 0. Global Setup: Hallucination Guards
@@ -331,14 +361,19 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
             payload = c.payload if hasattr(c, "payload") else c.get("payload", {})
             score = c.score if hasattr(c, "score") else c.get("score", 0.0)
             
-            title = str(payload.get("law_name") or payload.get("title") or "Unknown Law")
+            raw_law_name = str(payload.get("law_name") or "")
+            raw_case_title = str(payload.get("case_title") or "")
+            category = str(payload.get("category") or "")
+
+            # Use resolved title
+            title = _resolve_law_title(payload)
             content = str(payload.get("raw_text") or payload.get("text") or "")
 
             # Fix A: Parse article numbers from raw text if title is generic
             import re
             # Look for "Article X" or "Article (X)" pattern at the start of chunks
             article_match = re.search(r'(Article\s+\d+[\w()]*\.?\s+[A-Z][^.]{5,60})', content)
-            if article_match and ("law" in title.lower() or "slug" in title.lower() or "-" in title):
+            if article_match and ("law" in title.lower() or "slug" in title.lower() or "law_name" in title or "-" in title):
                 title = article_match.group(1).strip()
 
             # Hallucination filter at search level
@@ -455,7 +490,18 @@ async def context_builder_node(state: AnalysisState) -> dict[str, Any]:
     laws = []
     # From Vector Search (Laws Collection)
     for l in state.get("laws", []):
-        laws.append(f"Statute: {l.get('title') or l.get('law_name')} | Match: {l.get('score', 0):.2f}\n{l.get('content') or l.get('text')}")
+        statute_title = l.get('title') or _resolve_law_title(l)
+        
+        # Check if articles are real or placeholder
+        key_arts = l.get('key_articles', '')
+        art_hint = ""
+        if key_arts and 'Article X' not in str(key_arts):
+            art_hint = f" | Key Articles: {key_arts}"
+            
+        laws.append(
+            f"Statute: {statute_title}{art_hint} | Match: {l.get('score', 0):.2f}\n"
+            f"{l.get('content') or l.get('text')}"
+        )
         
     context = {
         "case_metadata": case_metadata,
@@ -772,7 +818,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         result["complexity_score"] = round(complexity_score, 2)
 
         # Build final state payload
-        law_articles = [l.get("law_name") for l in state.get("laws", []) if l.get("law_name")]
+        law_articles = [_resolve_law_title(l) for l in state.get("laws", []) if l.get("law_name") or l.get("category")]
         
         similar_precedents = [
             {
@@ -857,8 +903,8 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
         
         # If it's a dict, extract fields
         if isinstance(item, dict):
-            # Cleanse input fields from potential LLM artifacts
-            raw_title = item.get("law_name") or item.get("title") or item.get("article_number") or "Legal Article"
+            # Use resolved title
+            raw_title = _resolve_law_title(item)
             raw_content = item.get("content") or item.get("text") or item.get("summary") or "Citation mapped from analysis."
             
             title = _cleanse_text(raw_title)
