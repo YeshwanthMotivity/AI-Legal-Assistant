@@ -1,5 +1,6 @@
 {
   "common": {
+    "welcome": "Welcome",
     "appName": "AI Judicial Assistant",
     "loading": "Loading...",
     "error": "An error occurred",
