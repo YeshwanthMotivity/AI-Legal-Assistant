@@ -84,7 +84,7 @@ async def re_index_all():
                     case_id=doc.case_id,
                     document_id=doc.id,
                     doc_type=doc_type_str,
-                    texts=chunk_texts,
+                    chunks=chunk_texts,
                     embeddings=embeddings,
                     metadata=metadata_list,
                     collection_name=collection_name
