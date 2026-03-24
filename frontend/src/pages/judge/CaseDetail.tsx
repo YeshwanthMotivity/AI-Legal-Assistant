@@ -443,10 +443,6 @@ const CaseDetail = () => {
                                   {item.title}
                                 </span>
                              </div>
-                             <p className="text-[11px] text-muted-foreground font-bold flex items-center gap-2 opacity-60 uppercase tracking-tighter">
-                                <Clock className="w-3.5 h-3.5" />
-                                Decided Jan 2024
-                             </p>
                           </div>
                           <div className="flex items-center gap-5 shrink-0">
                              <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[9px] font-black border border-primary/20 shadow-sm uppercase tracking-widest">
