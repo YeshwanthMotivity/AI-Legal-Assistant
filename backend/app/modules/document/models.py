@@ -44,7 +44,8 @@ class Document(Base):
     # Relationships
     case = relationship("Case", back_populates="documents")
     uploaded_by_user = relationship("User", back_populates="documents")
-    extracted_entities = relationship("ExtractedEntity", back_populates="document")
+    extracted_entities = relationship("ExtractedEntity", back_populates="document", cascade="all, delete-orphan")
+    evaluation_events = relationship("EvaluationEvent", back_populates="document", cascade="all, delete-orphan")
 
 
 class ExtractedEntity(Base):

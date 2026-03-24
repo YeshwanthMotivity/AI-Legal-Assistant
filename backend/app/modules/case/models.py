@@ -55,7 +55,8 @@ class Case(Base):
     # Relationships
     assigned_user = relationship("User", back_populates="cases", foreign_keys=[assigned_to])
     created_by_user = relationship("User", back_populates="created_cases", foreign_keys=[created_by])
-    documents = relationship("Document", back_populates="case")
-    judgments = relationship("Judgment", back_populates="case")
-    judge_feedback = relationship("JudgeFeedback", back_populates="case")
+    documents = relationship("Document", back_populates="case", cascade="all, delete-orphan")
+    judgments = relationship("Judgment", back_populates="case", cascade="all, delete-orphan")
+    judge_feedback = relationship("JudgeFeedback", back_populates="case", cascade="all, delete-orphan")
+    evaluation_events = relationship("EvaluationEvent", back_populates="case", cascade="all, delete-orphan")
 

@@ -30,7 +30,7 @@ class Judgment(Base):
     # Relationships
     case = relationship("Case", back_populates="judgments")
     judge = relationship("User", back_populates="judgments")
-    judge_feedback = relationship("JudgeFeedback", back_populates="judgment")
+    judge_feedback = relationship("JudgeFeedback", back_populates="judgment", cascade="all, delete-orphan")
 
 
 class JudgeFeedback(Base):
@@ -61,8 +61,11 @@ class EvaluationEvent(Base):
 
     id = Column(String, primary_key=True, index=True)
     document_id = Column(String, ForeignKey("documents.id"), nullable=True)
-    # case_id is nullable to support benchmark runner events which have no case
     case_id = Column(String, ForeignKey("cases.id"), nullable=True)
+    
+    # Relationships
+    document = relationship("Document", back_populates="evaluation_events")
+    case = relationship("Case", back_populates="evaluation_events")
     metric_type = Column(String, nullable=False)
     entity_type = Column(String, nullable=True)
     query_id = Column(String, nullable=True, index=True)
