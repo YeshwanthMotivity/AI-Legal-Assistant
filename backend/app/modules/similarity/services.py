@@ -439,25 +439,50 @@ class SimilarityService:
         
         # 1. Try Gemini (Primary)
         if settings.gemini_api_key:
-            try:
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
-                payload = {
-                    "system_instruction": {"parts": [{"text": system_prompt}]},
-                    "contents": [{"parts": [{"text": request.message}]}],
-                    "generationConfig": {
-                        "temperature": 0.1,
-                        "maxOutputTokens": 2048,
+            # Try v1beta then v1
+            versions = ["v1beta", "v1"]
+            last_error = None
+            
+            for version in versions:
+                url = f"https://generativelanguage.googleapis.com/{version}/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
+                
+                if version == "v1beta":
+                    payload = {
+                        "system_instruction": {"parts": [{"text": system_prompt}]},
+                        "contents": [{"parts": [{"text": request.message}]}],
+                        "generationConfig": {
+                            "temperature": 0.1,
+                            "maxOutputTokens": 2048,
+                        }
                     }
-                }
-                async with httpx.AsyncClient(timeout=60.0) as client:
-                    logger.info(f"Precedent Chat: calling Gemini ({settings.gemini_model})")
-                    response = await client.post(url, json=payload)
-                    response.raise_for_status()
-                    data = response.json()
-                    answer = data["candidates"][0]["content"]["parts"][0]["text"]
-                    return PrecedentChatResponse(response=answer)
-            except Exception as e:
-                logger.error(f"Gemini Precedent Chat failed: {repr(e)}. Falling back to local model.")
+                else:
+                    payload = {
+                        "contents": [{"parts": [{"text": f"SYSTEM INSTRUCTION:\n{system_prompt}\n\nUSER PROMPT:\n{request.message}"}]}],
+                        "generationConfig": {
+                            "temperature": 0.1,
+                            "maxOutputTokens": 2048,
+                        }
+                    }
+
+                try:
+                    async with httpx.AsyncClient(timeout=60.0) as client:
+                        logger.info(f"precedent_chat: calling Gemini ({settings.gemini_model}) via {version}")
+                        response = await client.post(url, json=payload)
+                        
+                        if response.status_code == 404:
+                            continue
+                            
+                        response.raise_for_status()
+                        data = response.json()
+                        answer = data["candidates"][0]["content"]["parts"][0]["text"]
+                        return PrecedentChatResponse(response=answer)
+                except Exception as e:
+                    logger.error(f"Gemini {version} attempt failed: {repr(e)}")
+                    last_error = e
+                    continue
+            
+            if last_error:
+                logger.error(f"Gemini Precedent Chat failed after trying all versions. Falling back to local model.")
 
         # 2. Fallback to Ollama (Qwen)
         async with httpx.AsyncClient(timeout=300.0) as client:

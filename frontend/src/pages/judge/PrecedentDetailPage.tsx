@@ -15,22 +15,24 @@ import {
   AlertCircle,
   ArrowLeftRight
 } from 'lucide-react'
-import { getPrecedent, chatWithPrecedent } from '../../api/judge'
+import { getPrecedent, chatWithPrecedent, getAnalysis, getCase } from '../../api/judge'
 import { PrecedentDetail } from '../../types/judge'
 import PortalLayout from '../../components/layout/PortalLayout'
+import CaseComparison from '../../components/judge/CaseComparison'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 const PrecedentDetailPage: React.FC = () => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
   
   // Extract source case ID if coming from active analysis
   const fromCaseId = (location.state as any)?.fromCaseId
+  const [activeTab, setActiveTab] = useState<'chat' | 'comparison'>(fromCaseId ? 'comparison' : 'chat')
   const [chatMessage, setChatMessage] = useState('')
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([])
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -39,6 +41,18 @@ const PrecedentDetailPage: React.FC = () => {
     queryKey: ['precedent', id],
     queryFn: () => getPrecedent(id || ''),
     enabled: !!id,
+  })
+
+  const { data: sourceCaseAnalysis, isLoading: isLoadingSource } = useQuery({
+    queryKey: ['case-analysis', fromCaseId],
+    queryFn: () => getAnalysis(fromCaseId as string),
+    enabled: !!fromCaseId && activeTab === 'comparison',
+  })
+
+  const { data: sourceCase } = useQuery({
+    queryKey: ['judge-case', fromCaseId],
+    queryFn: () => getCase(fromCaseId as string),
+    enabled: !!fromCaseId && activeTab === 'comparison',
   })
 
   const chatMutation = useMutation({
@@ -132,7 +146,7 @@ const PrecedentDetailPage: React.FC = () => {
                 </div>
                 <div className="text-foreground/90 selection:bg-primary/20 space-y-4">
                   {precedent.text
-                    .replace(/(\b\d{3,}\.\s)/g, '\n$1')
+                    .replace(/([.!?]\s)(\d{3,}\.)/g, '$1\n$2')
                     .replace(/(\b[A-Z][a-z]+\s+\d+\.\s)/g, '\n$1')
                     .split('\n')
                     .filter(p => p.trim())
@@ -158,23 +172,60 @@ const PrecedentDetailPage: React.FC = () => {
           </Card>
         </main>
 
-        {/* Sidebar - AI Chat */}
-        <aside className="w-full lg:w-[450px] flex flex-col shrink-0">
+        {/* Sidebar - AI Chat & Comparison Tabs */}
+        <aside className="w-full lg:w-[480px] flex flex-col shrink-0">
           <Card className="h-full shadow-xl border-primary/20 overflow-hidden flex flex-col bg-card/50 backdrop-blur-sm">
-            <CardHeader className="bg-primary/5 border-b py-5 flex flex-row items-center justify-between px-6">
+            {/* Tab Header */}
+            <div className="flex border-b bg-muted/30">
+              <button
+                onClick={() => setActiveTab('chat')}
+                className={cn(
+                  "flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
+                  activeTab === 'chat' 
+                    ? "bg-background text-primary border-b-2 border-primary" 
+                    : "text-muted-foreground hover:bg-muted/50"
+                )}
+              >
+                <Sparkles className="w-4 h-4" />
+                {t('judge.workspace.aiStatus')}
+              </button>
+              {fromCaseId && (
+                <button
+                  onClick={() => setActiveTab('comparison')}
+                  className={cn(
+                    "flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
+                    activeTab === 'comparison' 
+                      ? "bg-background text-primary border-b-2 border-primary" 
+                      : "text-muted-foreground hover:bg-muted/50"
+                  )}
+                >
+                  <ArrowLeftRight className="w-4 h-4" />
+                  {t('judge.workspace.comparison')}
+                </button>
+              )}
+            </div>
+
+            <CardHeader className="bg-primary/5 border-b py-4 flex flex-row items-center justify-between px-6">
               <div className="flex items-center gap-2.5">
                 <div className="p-1.5 bg-primary rounded-lg text-primary-foreground">
-                   <Sparkles className="w-4 h-4" />
+                   {activeTab === 'chat' ? <Sparkles className="w-4 h-4" /> : <ArrowLeftRight className="w-4 h-4" />}
                 </div>
                 <div>
-                   <CardTitle className="text-sm font-bold">Intelligent Discovery</CardTitle>
-                   <p className="text-[10px] text-muted-foreground font-bold uppercase">Powered by JAIS-7B</p>
+                   <CardTitle className="text-sm font-bold">
+                     {activeTab === 'chat' ? "Intelligent Discovery" : t('judge.workspace.caseComparison')}
+                   </CardTitle>
+                   <p className="text-[10px] text-muted-foreground font-bold uppercase">
+                     {activeTab === 'chat' ? "Powered by JAIS-7B" : `Ref: ${fromCaseId}`}
+                   </p>
                 </div>
               </div>
             </CardHeader>
 
-            {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin">
+            {/* Tab Content */}
+            <div className="flex-1 overflow-y-auto scrollbar-thin">
+              {activeTab === 'chat' ? (
+                <div className="p-6 space-y-6">
+                  {/* Chat Messages */}
               {messages.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 animate-in fade-in zoom-in-95 duration-700">
                   <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center text-primary/30">
@@ -232,33 +283,66 @@ const PrecedentDetailPage: React.FC = () => {
                   </div>
                 </div>
               )}
-              <div ref={chatEndRef} />
+                  <div ref={chatEndRef} />
+                </div>
+              ) : (
+                <div className="p-4">
+                  {(isLoadingSource || !sourceCaseAnalysis || !sourceCase) ? (
+                    <div className="p-12 text-center space-y-4">
+                       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                       <p className="text-xs font-bold text-muted-foreground uppercase italic tracking-widest">{t('common.loading')}</p>
+                    </div>
+                  ) : (
+                    <div className="animate-in fade-in zoom-in-95 duration-500">
+                      <CaseComparison 
+                        currentCase={{
+                          title: sourceCase.title || 'Current Case',
+                          type: sourceCase.case_type || 'Employment',
+                          facts: sourceCaseAnalysis.analysis.reasoning || 'Details from case analysis...',
+                          issues: sourceCaseAnalysis.analysis.lawArticles?.map((a: any) => typeof a === 'object' ? a.title : String(a)) || [],
+                          outcome: sourceCaseAnalysis.analysis.outcome || 'Pending',
+                          compensation: 'Verified by AI'
+                        }}
+                        precedentCase={{
+                          title: precedent.title,
+                          type: precedent.category || 'DIFC Judicial Precedent',
+                          facts: precedent.summary || 'Summary not available.',
+                          issues: precedent.cited_laws || [],
+                          outcome: precedent.outcome || 'Finalized',
+                          compensation: precedent.compensation || 'N/A'
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Input Area */}
-            <div className="p-6 bg-muted/20 border-t mt-auto">
-              <div className="relative group">
-                <input 
-                  type="text"
-                  placeholder="Inquire about case complexities..."
-                  className="w-full bg-card border rounded-2xl pl-5 pr-14 py-3.5 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-bold placeholder:italic placeholder:font-medium shadow-inner"
-                  value={chatMessage}
-                  onChange={(e) => setChatMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                />
-                <Button 
-                  size="icon"
-                  className="absolute right-2 top-2 h-10 w-10 shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform"
-                  onClick={handleSendMessage}
-                  disabled={!chatMessage.trim() || chatMutation.isPending}
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
+            {/* Input Area (Only for Chat) */}
+            {activeTab === 'chat' && (
+              <div className="p-6 bg-muted/20 border-t mt-auto">
+                <div className="relative group">
+                  <input 
+                    type="text"
+                    placeholder="Inquire about case complexities..."
+                    className="w-full bg-card border rounded-2xl pl-5 pr-14 py-3.5 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-bold placeholder:italic placeholder:font-medium shadow-inner"
+                    value={chatMessage}
+                    onChange={(e) => setChatMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSendMessage()
+                    }}
+                  />
+                  <Button 
+                    size="icon"
+                    className="absolute right-2 top-2 h-10 w-10 shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform"
+                    onClick={handleSendMessage}
+                    disabled={!chatMessage.trim() || chatMutation.isPending}
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
-              <p className="text-[9px] text-center mt-3 text-muted-foreground uppercase font-black tracking-widest opacity-50">
-                End-to-End Encrypted Judicial Workspace
-              </p>
-            </div>
+            )}
           </Card>
         </aside>
       </div>

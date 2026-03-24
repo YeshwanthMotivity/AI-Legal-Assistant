@@ -250,7 +250,8 @@
       "aiConfidence": "ثقة الذكاء الاصطناعي",
       "feedbackTitle": "ملاحظات القاضي",
       "judgmentFinalized": "تم اعتماد الحكم بنجاح.",
-      "feedbackSuccess": "تم إرسال الملاحظات بنجاح."
+      "feedbackSuccess": "تم إرسال الملاحظات بنجاح.",
+      "comparison": "مقارنة"
     },
     "documentStatus": {
       "pending": "قيد الانتظار",
@@ -268,7 +269,9 @@
       "claimant": "المدعي",
       "respondent": "المدعى عليه",
       "filingDate": "تاريخ الإيداع",
-      "notes": "ملاحظات"
+      "notes": "ملاحظات",
+      "createNewCase": "إنشاء قضية جديدة",
+      "submit": "إرسال"
     },
     "caseTypes": {
       "unpaid_wages": "أجور غير مدفوعة",

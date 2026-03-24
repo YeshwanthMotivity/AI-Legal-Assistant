@@ -392,7 +392,45 @@ const CaseDetail = () => {
 
           {/* Analysis View - Conditional on Analysis Ready */}
           {isReady ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-6">
+              {/* Case Analysis Overview Card */}
+              <Card className="shadow-lg border-primary/20 bg-primary/5 overflow-hidden">
+                <CardHeader className="bg-primary/10 border-b py-4">
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                    <CardTitle className="text-base font-bold">{t('judge.workspace.caseOverview')}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="mb-8 p-4 bg-muted/10 rounded-xl border border-dashed text-sm italic text-muted-foreground leading-relaxed animate-in fade-in zoom-in-95 duration-700">
+                     <h6 className="text-[10px] font-black uppercase tracking-widest text-primary/50 mb-1">Executive Summary</h6>
+                     {analysis.summary || "Case analysis in progress..."}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                       <h5 className="text-xs font-black uppercase tracking-widest text-primary/70">{t('judge.workspace.factsAndReasoning')}</h5>
+                       <div className="text-sm leading-relaxed text-foreground/80 space-y-3">
+                         {analysis.reasoning
+                           ?.replace(/\.\s+/g, '.\n')
+                           .split('\n')
+                           .filter(Boolean)
+                           .map((line: string, i: number) => (
+                             <p key={i} className="animate-in fade-in slide-in-from-left-2 duration-500" style={{ animationDelay: `${i * 100}ms` }} dir="auto">{line}</p>
+                           ))
+                         }
+                       </div>
+                    </div>
+                    <div className="space-y-4">
+                       <h5 className="text-xs font-black uppercase tracking-widest text-primary/70">{t('judge.workspace.judicialOutcome')}</h5>
+                       <div className="p-4 bg-background border rounded-xl shadow-inner italic text-sm text-foreground/90 leading-relaxed font-medium">
+                          {analysis.outcome}
+                       </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Precedents Card */}
               <Card className="shadow-sm border-border/50 overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between bg-muted/10 border-b py-4">
@@ -433,19 +471,18 @@ const CaseDetail = () => {
                                 <div className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 text-[10px] font-black border border-emerald-500/20 shadow-sm">
                                    {Math.round((item.similarityScore || 0) * 100)}% {t('judge.workspace.matchPercentage')}
                                 </div>
-                                <Button 
-                                  variant={comparingId === item.caseId ? "default" : "outline"}
-                                  size="sm" 
-                                  className={cn(
-                                    "h-7 text-[9px] font-black px-3 uppercase tracking-wider shadow-sm",
-                                    comparingId === item.caseId ? "shadow-primary/20 animate-in zoom-in-95" : ""
-                                  )}
-                                  onClick={() => {
-                                    setComparingId(comparingId === item.caseId ? null : item.caseId);
-                                  }}
-                                >
-                                  {comparingId === item.caseId ? t('common.cancel') : t('judge.workspace.caseComparison')}
-                                </Button>
+                                  <Button 
+                                    variant="outline"
+                                    size="sm" 
+                                    className="h-7 text-[9px] font-black px-3 uppercase tracking-wider shadow-sm hover:bg-primary hover:text-primary-foreground transition-all"
+                                    onClick={() => {
+                                      navigate(`/judge/precedents/${item.caseId}`, { 
+                                        state: { fromCaseId: id } 
+                                      });
+                                    }}
+                                  >
+                                    {t('judge.workspace.caseComparison')}
+                                  </Button>
                              </div>
                              <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
                           </div>
@@ -455,40 +492,6 @@ const CaseDetail = () => {
                 </CardContent>
               </Card>
 
-              {/* Case Comparison Section (Conditional) */}
-              {comparingId && (
-                <div className="col-span-1 md:col-span-2 space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                  {precedentQuery.isLoading ? (
-                    <Card className="p-8 flex flex-col items-center justify-center space-y-4 border-dashed">
-                      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                      <p className="text-xs font-bold text-muted-foreground tracking-widest uppercase">{t('common.loading')}</p>
-                    </Card>
-                  ) : precedentQuery.data ? (
-                    <CaseComparison 
-                      currentCase={{
-                        title: caseQuery.data?.title || 'Current Case',
-                        type: caseQuery.data?.case_type || 'Employment',
-                        facts: analysis?.reasoning || 'Details from case analysis...',
-                        issues: analysis?.lawArticles?.map((a: any) => typeof a === 'object' ? a.title : String(a)) || [],
-                        outcome: analysis?.outcome || 'Pending',
-                        compensation: 'Mapped from analysis'
-                      }}
-                      precedentCase={{
-                        title: precedentQuery.data.title,
-                        type: precedentQuery.data.case_type || 'Employment',
-                        facts: precedentQuery.data.summary || 'Summary not available.',
-                        issues: precedentQuery.data.cited_laws || [],
-                        outcome: precedentQuery.data.outcome || 'Finalized',
-                        compensation: precedentQuery.data.compensation || 'N/A'
-                      }}
-                    />
-                  ) : (
-                    <Card className="p-8 text-center border-dashed">
-                       <p className="text-xs font-bold text-destructive">{t('common.error')}</p>
-                    </Card>
-                  )}
-                </div>
-              )}
 
               {/* Law Articles Card */}
               <Card className="shadow-sm border-border/50 overflow-hidden">
@@ -521,7 +524,7 @@ const CaseDetail = () => {
                                  {title}
                                </h5>
                             </div>
-                            <p className="text-[11px] text-amber-800/80 leading-relaxed italic font-medium">
+                            <p className="text-[11px] text-amber-800/80 leading-relaxed italic font-medium" dir="auto">
                               {displayContent}
                             </p>
                           </div>
@@ -562,7 +565,8 @@ const CaseDetail = () => {
                 </CardContent>
               </Card>
             </div>
-          ) : (
+          </div>
+        ) : (
             <Card className="shadow-sm border-border/50 border-dashed border-2 bg-muted/5">
                <CardContent className="py-24 text-center">
                   <BarChart3 className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
@@ -581,7 +585,7 @@ const CaseDetail = () => {
                   </Button>
                </CardContent>
             </Card>
-          )}
+        )}
 
           {/* AI Unavailability Warning */}
           {isUnavailable && (

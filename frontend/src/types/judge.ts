@@ -70,6 +70,7 @@ export interface LawArticle {
 
 export interface NormalizedCaseAnalysis {
   status: string
+  summary?: string
   outcome?: string
   reasoning?: string
   lawArticles: (string | LawArticle)[]

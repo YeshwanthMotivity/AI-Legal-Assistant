@@ -657,15 +657,27 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
 
         for version in versions:
             url = f"https://generativelanguage.googleapis.com/{version}/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
-            payload = {
-                "system_instruction": {"parts": [{"text": system}]},
-                "contents": [{"parts": [{"text": user}]}],
-                "generationConfig": {
-                    "temperature": 0.1,
-                    "maxOutputTokens": NODE_TOKEN_LIMITS["reasoning"],
-                    "responseMimeType": "application/json"
+            
+            # v1 does not support system_instruction field
+            if version == "v1beta":
+                payload = {
+                    "system_instruction": {"parts": [{"text": system}]},
+                    "contents": [{"parts": [{"text": user}]}],
+                    "generationConfig": {
+                        "temperature": 0.1,
+                        "maxOutputTokens": NODE_TOKEN_LIMITS["reasoning"],
+                        "responseMimeType": "application/json"
+                    }
                 }
-            }
+            else:
+                # Fallback for v1: Merge system instruction into the user content
+                payload = {
+                    "contents": [{"parts": [{"text": f"SYSTEM INSTRUCTION:\n{system}\n\nUSER PROMPT:\n{user}"}]}],
+                    "generationConfig": {
+                        "temperature": 0.1,
+                        "maxOutputTokens": NODE_TOKEN_LIMITS["reasoning"]
+                    }
+                }
             
             async with httpx.AsyncClient(timeout=60.0) as client:
                 try:
