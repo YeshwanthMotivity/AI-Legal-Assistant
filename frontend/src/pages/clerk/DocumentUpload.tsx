@@ -154,7 +154,7 @@ const DocumentUpload = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div
+              <label
                 className={cn(
                   "p-10 border-b-2 border-dashed transition-all cursor-pointer group flex flex-col items-center justify-center text-center gap-4",
                   isDragging ? "bg-emerald-500/10 border-emerald-500 scale-[0.98]" : "bg-transparent border-transparent hover:bg-muted/30"
@@ -171,20 +171,20 @@ const DocumentUpload = () => {
                    <p className="font-bold text-sm">{t('clerk.forms.dragDropHelp')}</p>
                    <p className="text-[11px] text-muted-foreground italic mt-1 font-medium">PDF, DOCX, Images (MAX 50MB)</p>
                 </div>
-                <label className="cursor-pointer">
-                  <Button variant="outline" size="sm" className="pointer-events-none gap-2 mt-2">
-                     <Search className="w-3.5 h-3.5" />
-                     {t('clerk.forms.pickFiles')}
-                  </Button>
-                  <input 
-                    type="file" 
-                    multiple 
-                    accept=".pdf,.docx,image/*"
-                    className="hidden" 
-                    onChange={(e) => pushFiles(e.target.files)} 
-                  />
-                </label>
-              </div>
+                
+                <Button variant="outline" size="sm" className="gap-2 mt-2">
+                   <Search className="w-3.5 h-3.5" />
+                   {t('clerk.forms.pickFiles')}
+                </Button>
+                
+                <input 
+                  type="file" 
+                  multiple 
+                  accept=".pdf,.docx,image/*"
+                  className="hidden" 
+                  onChange={(e) => pushFiles(e.target.files)} 
+                />
+              </label>
 
               {jobs.length > 0 && (
                 <div className="p-6 bg-card space-y-4">
