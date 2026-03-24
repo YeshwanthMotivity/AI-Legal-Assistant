@@ -97,7 +97,7 @@ const JudgmentEditor = ({
 
       <CardContent className="p-8">
         <div className="space-y-8">
-          <div className="rounded-xl border bg-card overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+          <div className="rounded-xl border bg-card overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 transition-all" dir="ltr">
             <ReactQuill 
               theme="snow" 
               value={content} 

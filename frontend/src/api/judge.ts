@@ -186,7 +186,7 @@ const sanitizeDraftText = (value: string): string => {
     // Bullet points or key-value highlights
     if (trimmed.startsWith('•') || trimmed.startsWith('-')) {
       // Highlight potential case slugs in monospace
-      const highlighted = trimmed.replace(/([a-z0-0]+-case[a-z0-9-]+)/gi, '<code style="background: #f1f5f9; padding: 1px 4px; border-radius: 4px; font-family: monospace; font-size: 0.9em; color: #475569;">$1</code>')
+      const highlighted = trimmed.replace(/([a-z0-9]+-(?:case|eng)[a-z0-09-]*)/gi, '<code style="background: #f1f5f9; padding: 1px 4px; border-radius: 4px; font-family: monospace; font-size: 0.9em; color: #475569;">$1</code>')
       return `<p style="margin-bottom: 4px;">${highlighted}</p>`
     }
     

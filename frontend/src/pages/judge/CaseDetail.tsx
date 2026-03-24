@@ -72,7 +72,6 @@ const CaseDetail = () => {
   })
   const [localMessage, setLocalMessage] = useState('')
   const [messageType, setMessageType] = useState<'success' | 'error'>('success')
-  const [comparingId, setComparingId] = useState<string | null>(null)
 
   useEffect(() => {
     setAnalysisRequested(false)
@@ -150,11 +149,6 @@ const CaseDetail = () => {
     },
   })
 
-  const precedentQuery = useQuery({
-    queryKey: ['precedents', comparingId],
-    queryFn: () => getPrecedent(comparingId as string),
-    enabled: Boolean(comparingId),
-  })
 
   const feedbackMutation = useMutation({
     mutationFn: (payload: FeedbackRequest) => submitFeedback(id as string, payload),
@@ -447,7 +441,7 @@ const CaseDetail = () => {
                           key={item.caseId}
                           className={cn(
                             "flex items-center justify-between p-5 transition-all group border-l-4",
-                            comparingId === item.caseId ? "bg-primary/5 border-primary shadow-inner" : "hover:bg-muted/40 border-transparent"
+                            "hover:bg-muted/40 border-transparent"
                           )}
                         >
                           <div className="flex-1 min-w-0 ltr:pr-6 rtl:pl-6 leading-tight">
@@ -521,7 +515,7 @@ const CaseDetail = () => {
                             <div className="flex items-center gap-2 mb-2">
                                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                                <h5 className="font-black text-amber-900 text-xs uppercase tracking-tight">
-                                 {title}
+                                 {title.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
                                </h5>
                             </div>
                             <p className="text-[11px] text-amber-800/80 leading-relaxed italic font-medium" dir="auto">

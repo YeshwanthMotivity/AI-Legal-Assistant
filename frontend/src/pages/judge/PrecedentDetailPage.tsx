@@ -298,8 +298,11 @@ const PrecedentDetailPage: React.FC = () => {
                         currentCase={{
                           title: sourceCase.title || 'Current Case',
                           type: sourceCase.case_type || 'Employment',
-                          facts: sourceCaseAnalysis.analysis.reasoning || 'Details from case analysis...',
-                          issues: sourceCaseAnalysis.analysis.lawArticles?.map((a: any) => typeof a === 'object' ? a.title : String(a)) || [],
+                          facts: sourceCase.description || sourceCaseAnalysis.analysis.reasoning || 'Details from case analysis...',
+                          issues: sourceCaseAnalysis.analysis.lawArticles?.map((a: any) => {
+                            const raw = typeof a === 'object' ? (a.title || '') : String(a);
+                            return raw.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+                          }) || [],
                           outcome: sourceCaseAnalysis.analysis.outcome || 'Pending',
                           compensation: 'Verified by AI'
                         }}

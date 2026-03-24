@@ -207,10 +207,15 @@
       "viewCase": "View Case",
       "createCase": "Create New Case",
       "caseCreatedSuccess": "Case created successfully.",
-      "noCases": "No cases found for this tab."
+      "noCases": "No cases found for this tab.",
+      "caseType": "Case Type"
     },
     "workspace": {
       "title": "Case Workspace",
+      "caseOverview": "Case Overview",
+      "executiveSummary": "Executive Summary",
+      "factsAndReasoning": "Facts & Legal Reasoning",
+      "judicialOutcome": "Judicial Outcome",
       "caseId": "Case ID",
       "documents": "Case Documents",
       "documentType": "Document Type",

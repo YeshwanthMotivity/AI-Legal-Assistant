@@ -420,7 +420,7 @@ class SimilarityService:
             text=payload.get("raw_text") or payload.get("text") or "No text available",
             outcome=payload.get("outcome"),
             case_type=payload.get("case_type") or payload.get("type"),
-            summary=payload.get("summary") or payload.get("brief") or payload.get("description"),
+            summary=payload.get("summary") or payload.get("brief") or payload.get("description") or (payload.get("raw_text") or "")[:200].rsplit(' ', 1)[0] + "...",
             cited_laws=payload.get("cited_laws") or [],
             compensation=payload.get("compensation_amount") or payload.get("compensation") or payload.get("award"),
         )

@@ -334,6 +334,13 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
             title = str(payload.get("law_name") or payload.get("title") or "Unknown Law")
             content = str(payload.get("raw_text") or payload.get("text") or "")
 
+            # Fix A: Parse article numbers from raw text if title is generic
+            import re
+            # Look for "Article X" or "Article (X)" pattern at the start of chunks
+            article_match = re.search(r'(Article\s+\d+[\w()]*\.?\s+[A-Z][^.]{5,60})', content)
+            if article_match and ("law" in title.lower() or "slug" in title.lower() or "-" in title):
+                title = article_match.group(1).strip()
+
             # Hallucination filter at search level
             if _is_hallucination(title) or _is_hallucination(content):
                 continue
@@ -865,12 +872,18 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
         if _is_hallucination(title) or _is_hallucination(content):
             return None
             
-        # Truncate content to char limit for consistent UI layout
-        max_chars = 200
-        if len(content) > max_chars:
-            short_content = content[:max_chars].rsplit(' ', 1)[0] + '...'
+        # Fix B: Truncate content after first complete sentence for readability
+        # Find first period after 80 chars minimum to avoid tiny fragments
+        period_pos = content.find('. ', 80)
+        if period_pos > 0 and period_pos < 300:
+            short_content = content[:period_pos + 1]
         else:
-            short_content = content
+            # Fallback to character truncation if no sentence end found
+            max_chars = 200
+            if len(content) > max_chars:
+                short_content = content[:max_chars].rsplit(' ', 1)[0] + '...'
+            else:
+                short_content = content
             
         return {"title": title, "content": short_content or content}
 

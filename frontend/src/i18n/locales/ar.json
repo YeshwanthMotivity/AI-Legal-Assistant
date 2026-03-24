@@ -207,10 +207,15 @@
       "viewCase": "عرض القضية",
       "createCase": "إنشاء قضية جديدة",
       "caseCreatedSuccess": "تم إنشاء القضية بنجاح.",
-      "noCases": "لا توجد قضايا في هذا التبويب."
+      "noCases": "لا توجد قضايا في هذا التبويب.",
+      "caseType": "نوع القضية"
     },
     "workspace": {
       "title": "مساحة عمل القضية",
+      "caseOverview": "نظرة عامة على القضية",
+      "executiveSummary": "ملخص تنفيذي",
+      "factsAndReasoning": "الوقائع والتعليل القانوني",
+      "judicialOutcome": "النتيجة القضائية",
       "caseId": "معرّف القضية",
       "documents": "مستندات القضية",
       "documentType": "نوع المستند",
