@@ -9,6 +9,11 @@ from app.modules.document.models import Document, DocumentType, ProcessingStatus
 from app.modules.case.models import Case
 from app.modules.user.models import User
 from app.modules.evaluation.models import EvaluationEvent
+from app.modules.audit.models import AuditLog
+try:
+    from app.modules.judgment.models import Judgment
+except ImportError:
+    pass
 from app.modules.ingestion.chunker_fixed import hybrid_chunk_legal_doc
 from app.modules.ingestion.embedder import embed_chunks
 from app.modules.ingestion.vector_store import upsert_chunks
