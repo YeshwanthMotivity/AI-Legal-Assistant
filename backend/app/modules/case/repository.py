@@ -28,8 +28,10 @@ class CaseRepository:
         result = await self.db.execute(select(Case).where(Case.case_number == case_number))
         return result.scalar_one_or_none()
     
-    async def get_all(self, skip: int = 0, limit: int = 100, status: Optional[CaseStatus] = None) -> List[Case]:
+    async def get_all(self, skip: int = 0, limit: int = 100, status: Optional[CaseStatus] = None, exclude_seed: bool = False) -> List[Case]:
         query = select(Case)
+        if exclude_seed:
+            query = query.where(~Case.case_number.startswith('SEED-'))
         if status:
             query = query.where(Case.status == status)
         query = query.offset(skip).limit(limit).order_by(Case.created_at.desc())
@@ -54,7 +56,10 @@ class CaseRepository:
         return list(result.scalars().all())
 
     async def get_clerk_visible(self, skip: int = 0, limit: int = 100, status: Optional[CaseStatus] = None) -> List[Case]:
-        query = select(Case).where(Case.status != CaseStatus.FINALIZED)
+        query = select(Case).where(
+            Case.status != CaseStatus.FINALIZED,
+            ~Case.case_number.startswith('SEED-')
+        )
         if status:
             query = query.where(Case.status == status)
         query = query.offset(skip).limit(limit).order_by(Case.created_at.desc())
@@ -68,7 +73,10 @@ class CaseRepository:
         return result.scalar_one()
 
     async def count_clerk_visible(self, status: Optional[CaseStatus] = None) -> int:
-        query = select(func.count(Case.id)).where(Case.status != CaseStatus.FINALIZED)
+        query = select(func.count(Case.id)).where(
+            Case.status != CaseStatus.FINALIZED,
+            ~Case.case_number.startswith('SEED-')
+        )
         if status:
             query = query.where(Case.status == status)
         result = await self.db.execute(query)

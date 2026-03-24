@@ -11,6 +11,7 @@ import UserManagement from './pages/admin/UserManagement'
 import CaseAssignment from './pages/admin/CaseAssignment'
 import MetricsDashboard from './pages/admin/MetricsDashboard'
 import AuditLog from './pages/admin/AuditLog'
+import GlobalConfig from './pages/admin/GlobalConfig'
 import AdminDashboard from './pages/AdminDashboard'
 import JudgeDashboard from './pages/JudgeDashboard'
 import ClerkDashboard from './pages/ClerkDashboard'
@@ -151,6 +152,14 @@ function App() {
         element={
           <PrivateRoute allowedRoles={['admin']}>
             <AuditLog />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin/config"
+        element={
+          <PrivateRoute allowedRoles={['admin']}>
+            <GlobalConfig />
           </PrivateRoute>
         }
       />

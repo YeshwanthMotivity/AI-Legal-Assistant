@@ -24,6 +24,36 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
+function splitTranscript(text: string): string[] {
+  let processed = text
+
+  // Strategy 1: 3-digit numbered paragraphs (168. 169. 170.)
+  processed = processed.replace(/(\b[A-Za-z,]+\s)(\d{3,}\.\s)/g, '$1\n$2')
+  processed = processed.replace(/([.!?]\s)(\d{3,}\.\s)/g, '$1\n$2')
+
+  // Strategy 2: Sentence-boundary splitting for long unbroken text
+  // Split on ". " followed by capital letter when paragraph exceeds 400 chars
+  processed = processed.replace(/([.!?])\s+([A-Z])/g, (match, punct, cap) => {
+    // Only split if we're deep enough into a chunk (avoid splitting case names)
+    return `${punct}\n${cap}`
+  })
+
+  // Strategy 3: Known DIFC case citation boundaries  
+  // Split before case citations like "[2017] DIFC SCT" or "v Haydee Salon"
+  processed = processed.replace(/\s(\[\d{4}\]\s+DIFC)/g, '\n$1')
+
+  return processed
+    .split('\n')
+    .map(p => p.trim())
+    .filter(p => {
+      if (p.length < 15) return false
+      if ((p.match(/~/g) || []).length > 1) return false
+      if (/^[~\s»|7\d\s.]+$/.test(p)) return false
+      if (/^[§ARQ\s]+$/.test(p)) return false  // OCR garbage like "§iROQper"
+      return true
+    })
+}
+
 const PrecedentDetailPage: React.FC = () => {
   const { t, i18n } = useTranslation()
   const { id } = useParams<{ id: string }>()
@@ -128,8 +158,8 @@ const PrecedentDetailPage: React.FC = () => {
                     className="h-8 gap-2 bg-blue-500/10 text-blue-600 border-blue-500/20 hover:bg-blue-500/20 hover:text-blue-700 font-black uppercase text-[10px] tracking-tight shadow-sm"
                     onClick={() => navigate(`/judge/cases/${fromCaseId}`)}
                   >
-                    <ArrowLeftRight className="w-3.5 h-3.5" />
-                    {t('judge.workspace.caseComparison')}
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    {t('common.backToCase') || "← Back to Case"}
                   </Button>
                 )}
                 <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter">Reference: {id}</Badge>
@@ -145,11 +175,13 @@ const PrecedentDetailPage: React.FC = () => {
                    </div>
                 </div>
                 <div className="text-foreground/90 selection:bg-primary/20 space-y-4">
-                  {precedent.text
-                    .replace(/([.!?]\s)(\d{3,}\.)/g, '$1\n$2')
-                    .replace(/(\b[A-Z][a-z]+\s+\d+\.\s)/g, '\n$1')
-                    .split('\n')
-                    .filter(p => p.trim())
+                  {precedent.text.trimStart()[0] === precedent.text.trimStart()[0].toLowerCase() && (
+                    <p className="text-[11px] text-muted-foreground/60 italic mb-4 flex items-center gap-2">
+                       <Info className="w-3 h-3" />
+                       ⓘ Transcript begins at stored document position
+                    </p>
+                  )}
+                  {splitTranscript(precedent.text)
                     .map((paragraph, idx) => {
                       const trimmed = paragraph.trim();
                       const isNumbered = /^\d+\./.test(trimmed);
@@ -297,14 +329,15 @@ const PrecedentDetailPage: React.FC = () => {
                       <CaseComparison 
                         currentCase={{
                           title: sourceCase.title || 'Current Case',
-                          type: sourceCase.case_type || 'Employment',
-                          facts: sourceCase.description || sourceCaseAnalysis.analysis.reasoning || 'Details from case analysis...',
+                          type: t(`judge.caseTypes.${sourceCase.case_type}`) || sourceCase.case_type || 'Employment',
+                          facts: sourceCase.description || 'See case analysis for details.',
                           issues: sourceCaseAnalysis.analysis.lawArticles?.map((a: any) => {
                             const raw = typeof a === 'object' ? (a.title || '') : String(a);
+                            if (raw.length > 60) return 'DIFC Employment Law';
                             return raw.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
                           }) || [],
                           outcome: sourceCaseAnalysis.analysis.outcome || 'Pending',
-                          compensation: 'Verified by AI'
+                          compensation: sourceCaseAnalysis.analysis.entitlementBreakdown?.find((e: any) => e.label.includes('Gratuity') || e.label.includes('Total'))?.value || 'Pending calculation'
                         }}
                         precedentCase={{
                           title: precedent.title,

@@ -37,10 +37,10 @@ interface CaseComparisonProps {
 }
 
 const CaseComparison = ({ currentCase, precedentCase }: CaseComparisonProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const comparisonData: ComparisonData[] = [
-    { field: t('judge.case.caseType'), currentValue: currentCase.type, precedentValue: precedentCase.type },
+    { field: i18n.language === 'ar' ? 'نوع القضية (Case Type)' : 'Case Type', currentValue: currentCase.type, precedentValue: precedentCase.type },
     { field: t('judge.workspace.factComparison'), currentValue: currentCase.facts, precedentValue: precedentCase.facts },
     { field: t('judge.workspace.legalIssues'), currentValue: currentCase.issues, precedentValue: precedentCase.issues },
     { field: t('judge.judgment.decision'), currentValue: currentCase.outcome, precedentValue: precedentCase.outcome },
@@ -55,7 +55,7 @@ const CaseComparison = ({ currentCase, precedentCase }: CaseComparisonProps) => 
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <Table>
+        <Table dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
           <TableHeader>
             <TableRow className="bg-muted/30">
               <TableHead className="w-1/4 font-bold uppercase text-[10px] tracking-widest">{t('common.field') || 'Field'}</TableHead>

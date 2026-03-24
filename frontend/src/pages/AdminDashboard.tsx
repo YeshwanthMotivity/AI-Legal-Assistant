@@ -17,9 +17,12 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import StatCard from '@/components/StatCard';
 import { Button } from '@/components/ui/button';
 
+import { useNavigate } from 'react-router-dom';
+
 export default function AdminDashboard(): ReactNode {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   return (
     <PortalLayout title={t('admin.dashboard.title')} subtitle={t('admin.dashboard.subtitle', { email: user?.email || 'Admin' })}>
@@ -141,7 +144,10 @@ export default function AdminDashboard(): ReactNode {
                <p className="text-xs text-muted-foreground font-medium italic">{t('admin.dashboard.globalConfigDesc')}</p>
             </div>
          </div>
-         <Button className="h-12 px-8 font-black uppercase tracking-widest text-xs">
+         <Button 
+           className="h-12 px-8 font-black uppercase tracking-widest text-xs"
+           onClick={() => navigate('/admin/config')}
+         >
             {t('admin.dashboard.enterConfigMode')}
          </Button>
       </div>

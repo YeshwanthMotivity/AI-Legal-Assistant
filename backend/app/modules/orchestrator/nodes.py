@@ -74,6 +74,20 @@ def _resolve_law_title(l: dict) -> str:
     # Priority 3: Formatted Law Name
     return raw_name.replace("-", " ").replace("_", " ").title()
 
+def _extract_article_title(raw_text: str, fallback_category: str) -> str:
+    """Extracts Article N or Article N(x) from raw text."""
+    if not raw_text:
+         return CATEGORY_DISPLAY_NAMES.get(fallback_category, fallback_category.replace("_", " ").replace("-", " ").title())
+    
+    # Try to find "Article N" or "Article N(x)" at start of text
+    match = re.search(r'(Article\s+\d+[\w()]*(?:\s*[-–]\s*[\w\s]{3,40})?)', raw_text[:300])
+    if match:
+        return match.group(1).strip()
+    
+    # Fall back to category display name
+    return CATEGORY_DISPLAY_NAMES.get(fallback_category, 
+           fallback_category.replace("_", " ").replace("-", " ").title())
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 0. Global Setup: Hallucination Guards
 # ─────────────────────────────────────────────────────────────────────────────
@@ -365,16 +379,14 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
             raw_case_title = str(payload.get("case_title") or "")
             category = str(payload.get("category") or "")
 
-            # Use resolved title
-            title = _resolve_law_title(payload)
+            # Use resolved title and extract article
+            base_title = _resolve_law_title(payload)
             content = str(payload.get("raw_text") or payload.get("text") or "")
-
-            # Fix A: Parse article numbers from raw text if title is generic
-            import re
-            # Look for "Article X" or "Article (X)" pattern at the start of chunks
-            article_match = re.search(r'(Article\s+\d+[\w()]*\.?\s+[A-Z][^.]{5,60})', content)
-            if article_match and ("law" in title.lower() or "slug" in title.lower() or "law_name" in title or "-" in title):
-                title = article_match.group(1).strip()
+            title = _extract_article_title(content, category)
+            
+            # If the extracted title is just the category, prepend the base title for context
+            if title == CATEGORY_DISPLAY_NAMES.get(category):
+                title = f"{base_title} - {title}"
 
             # Hallucination filter at search level
             if _is_hallucination(title) or _is_hallucination(content):

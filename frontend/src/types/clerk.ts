@@ -7,6 +7,8 @@ export interface ClerkCreateCaseRequest {
   respondent_name: string
   filing_date: string
   court_number?: string
+  description?: string
+  claim_amount?: string
 }
 
 export interface ClerkUpdateCaseMetadataRequest {

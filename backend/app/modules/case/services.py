@@ -60,7 +60,8 @@ class CaseService:
             cases = await self.case_repository.get_clerk_visible(skip, limit, status_enum)
             total = await self.case_repository.count_clerk_visible(status_enum)
         else:
-            cases = await self.case_repository.get_all(skip, limit, status_enum)
+            # For ADMIN and other roles, exclude seed cases by default
+            cases = await self.case_repository.get_all(skip, limit, status_enum, exclude_seed=True)
             total = await self.case_repository.count(status_enum)
             
         return CaseListResponse(

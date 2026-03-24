@@ -155,14 +155,10 @@ export default function JudgeDashboard(): ReactNode {
                   <Plus className="w-4 h-4 text-primary" />
                   Create New Case
                </Button>
-               <Button className="w-full justify-start gap-3 bg-card hover:bg-accent text-foreground border shadow-sm h-12" variant="outline" onClick={() => navigate('/judge/precedents')}>
-                  <Search className="w-4 h-4 text-primary" />
-                  Search Precedents
-               </Button>
                <Button 
                 className="w-full justify-start gap-3 bg-card hover:bg-accent text-foreground border shadow-sm h-12" 
                 variant="outline"
-                onClick={() => alert("Legal Drafting Templates feature is coming soon in the next update!")}
+                onClick={() => navigate('/judge/cases')}
                >
                   <Briefcase className="w-4 h-4 text-primary" />
                   Drafting Templates

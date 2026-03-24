@@ -73,7 +73,6 @@ const CaseDetail = () => {
   })
   const [localMessage, setLocalMessage] = useState('')
   const [messageType, setMessageType] = useState<'success' | 'error'>('success')
-  const [precedentSearch, setPrecedentSearch] = useState('')
 
   useEffect(() => {
     setAnalysisRequested(false)
@@ -174,12 +173,6 @@ const CaseDetail = () => {
 
   const lawArticles = analysis?.lawArticles ?? []
   const precedents = useMemo(() => (analysis?.similarPrecedents ?? []).slice(0, 5), [analysis?.similarPrecedents])
-  const filteredPrecedents = useMemo(() => 
-    precedents.filter((p: any) => 
-      !precedentSearch || 
-      p.title.toLowerCase().includes(precedentSearch.toLowerCase()) || 
-      p.caseId.toLowerCase().includes(precedentSearch.toLowerCase())
-    ), [precedents, precedentSearch])
   const entitlements = analysis?.entitlementBreakdown ?? []
 
   const getDocumentStatusClass = (status: string) => {
@@ -414,81 +407,35 @@ const CaseDetail = () => {
           {/* Analysis View - Conditional on Analysis Ready */}
           {isReady ? (
             <div className="space-y-6">
-              {/* Case Analysis Overview Card */}
-              <Card className="shadow-lg border-primary/20 bg-primary/5 overflow-hidden">
-                <CardHeader className="bg-primary/10 border-b py-4">
-                  <div className="flex items-center gap-3">
-                    <Sparkles className="w-5 h-5 text-primary" />
-                    <CardTitle className="text-base font-bold">{t('judge.workspace.caseOverview')}</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                       <h5 className="text-xs font-black uppercase tracking-widest text-primary/70">{t('judge.workspace.factsAndReasoning')}</h5>
-                       <div className="text-sm leading-relaxed text-foreground/80 space-y-3">
-                         {analysis.reasoning
-                           ?.replace(/\.\s+/g, '.\n')
-                           .split('\n')
-                           .filter(Boolean)
-                           .map((line: string, i: number) => (
-                             <p key={i} className="animate-in fade-in slide-in-from-left-2 duration-500" style={{ animationDelay: `${i * 100}ms` }} dir="auto">{line}</p>
-                           ))
-                         }
-                       </div>
-                    </div>
-                    <div className="space-y-4">
-                       <h5 className="text-xs font-black uppercase tracking-widest text-primary/70">{t('judge.workspace.judicialOutcome')}</h5>
-                       <div className="p-4 bg-background border rounded-xl shadow-inner italic text-sm text-foreground/90 leading-relaxed font-medium">
-                          {analysis.outcome}
-                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Precedents Card */}
               <Card className="shadow-sm border-border/50 overflow-hidden">
                   <CardHeader className="flex flex-row items-center justify-between bg-muted/10 border-b py-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <Scale className="w-4 h-4 text-indigo-500" />
-                      <CardTitle className="text-sm">{t('judge.workspace.similarPrecedents')}</CardTitle>
-                    </div>
-                    <div className="relative">
-                      <Plus className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
-                      <input
-                        type="text"
-                        placeholder="Search precedents..."
-                        className="pl-8 pr-3 py-1 bg-background border rounded-lg text-[10px] w-full sm:w-48 focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium"
-                        value={precedentSearch}
-                        onChange={(e) => setPrecedentSearch(e.target.value)}
-                      />
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <Scale className="w-4 h-4 text-indigo-500" />
+                    <CardTitle className="text-sm">{t('judge.workspace.similarPrecedents')}</CardTitle>
                   </div>
                   <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-600 border-indigo-500/20">{t('judge.workspace.top5')}</Badge>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="divide-y divide-border/30">
-                      {filteredPrecedents.map((item) => (
-                        <div 
+                      {precedents.map((item) => (
+                        <Link 
                           key={item.caseId}
+                          to={`/judge/precedents/${item.caseId}`} 
+                          state={{ fromCaseId: id }}
                           className={cn(
                             "flex items-center justify-between p-5 transition-all group border-l-4",
-                            "hover:bg-muted/40 border-transparent"
+                            "hover:bg-muted/40 border-transparent hover:border-primary/40"
                           )}
                         >
                           <div className="flex-1 min-w-0 ltr:pr-6 rtl:pl-6 leading-tight">
                              <div className="flex items-center gap-2 mb-1.5">
                                 <Badge variant="outline" className="text-[8px] h-3.5 px-1 font-black bg-background shrink-0 uppercase tracking-tighter border-primary/20 text-primary/70">{t('judge.workspace.caseId')}: {item.caseId}</Badge>
-                                <Link 
-                                  to={`/judge/precedents/${item.caseId}`} 
-                                  state={{ fromCaseId: id }}
-                                  className="text-[13px] font-extrabold group-hover:text-primary transition-colors truncate underline decoration-primary/20 underline-offset-4 hover:decoration-primary"
-                                >
+                                <span className="text-[13px] font-extrabold group-hover:text-primary transition-colors truncate underline decoration-primary/20 underline-offset-4 hover:decoration-primary">
                                   {item.title}
-                                </Link>
+                                </span>
                              </div>
                              <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1.5 opacity-70">
                                 <Scale className="w-3 h-3" />
@@ -496,26 +443,12 @@ const CaseDetail = () => {
                              </p>
                           </div>
                           <div className="flex items-center gap-4 shrink-0">
-                             <div className="flex flex-col items-end gap-2">
-                                <div className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 text-[10px] font-black border border-emerald-500/20 shadow-sm">
-                                   {Math.round((item.similarityScore || 0) * 100)}% {t('judge.workspace.matchPercentage')}
-                                </div>
-                                  <Button 
-                                    variant="outline"
-                                    size="sm" 
-                                    className="h-7 text-[9px] font-black px-3 uppercase tracking-wider shadow-sm hover:bg-primary hover:text-primary-foreground transition-all"
-                                    onClick={() => {
-                                      navigate(`/judge/precedents/${item.caseId}`, { 
-                                        state: { fromCaseId: id } 
-                                      });
-                                    }}
-                                  >
-                                    {t('judge.workspace.caseComparison')}
-                                  </Button>
+                             <div className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 text-[10px] font-black border border-emerald-500/20 shadow-sm">
+                                {Math.round((item.similarityScore || 0) * 100)}% {t('judge.workspace.matchPercentage')}
                              </div>
-                             <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
+                             <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary transition-colors" />
                           </div>
-                        </div>
+                        </Link>
                       ))}
                     </div>
                 </CardContent>
@@ -656,7 +589,7 @@ const CaseDetail = () => {
                 respondentName={caseQuery.data?.respondent_name ?? ''}
                 filingDate={caseQuery.data?.filing_date ?? ''}
                 lawArticles={analysis?.lawArticles?.map((a: any) =>
-                  typeof a === 'object' ? a.title : String(a)
+                  typeof a === 'object' ? (a.title || '') : String(a)
                 )}
                 precedents={precedents.map(p => p.title)}
                 outcome={analysis?.outcome}

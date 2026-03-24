@@ -412,15 +412,30 @@ class SimilarityService:
             raise HTTPException(status_code=404, detail="Precedent not found")
 
         payload = point.payload if hasattr(point, "payload") else point.get("payload", {})
+        
+        # Improved summary extraction: grab first substantive sentence containing parties or outcome
+        raw_text = payload.get("raw_text") or payload.get("text") or ""
+        summary = payload.get("summary") or payload.get("brief") or payload.get("description")
+        
+        if not summary and raw_text:
+            # Look for first sentence with at least 40 chars
+            sentences = re.split(r'(?<=[.!?])\s+', raw_text)
+            for s in sentences:
+                if len(s.strip()) > 40:
+                    summary = s.strip()
+                    break
+            if not summary:
+                summary = raw_text[:200].rsplit(' ', 1)[0] + "..."
+
         return PrecedentDetail(
             id=precedent_id,
             title=payload.get("case_name") or payload.get("title") or "Unnamed Case",
             year=str(payload.get("year", "")),
             category=payload.get("category"),
-            text=payload.get("raw_text") or payload.get("text") or "No text available",
+            text=raw_text,
             outcome=payload.get("outcome"),
             case_type=payload.get("case_type") or payload.get("type"),
-            summary=payload.get("summary") or payload.get("brief") or payload.get("description") or (payload.get("raw_text") or "")[:200].rsplit(' ', 1)[0] + "...",
+            summary=summary,
             cited_laws=payload.get("cited_laws") or [],
             compensation=payload.get("compensation_amount") or payload.get("compensation") or payload.get("award"),
         )

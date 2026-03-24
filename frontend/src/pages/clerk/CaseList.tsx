@@ -57,6 +57,8 @@ const ClerkCaseList = () => {
     respondent_name: '',
     filing_date: '',
     court_number: '',
+    description: '',
+    claim_amount: '',
   })
 
   const [metadataForm, setMetadataForm] = useState({
@@ -87,6 +89,8 @@ const ClerkCaseList = () => {
         respondent_name: '',
         filing_date: '',
         court_number: '',
+        description: '',
+        claim_amount: '',
       })
     },
     onError: () => {
@@ -294,6 +298,24 @@ const ClerkCaseList = () => {
                     placeholder="e.g. DIFC-LC-2024-001"
                     value={createForm.court_number}
                     onChange={(event) => setCreateForm((prev) => ({ ...prev, court_number: event.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-xs font-black uppercase text-muted-foreground ml-1">{t('clerk.forms.claimAmount') || 'Claim Amount (AED)'}</label>
+                  <input
+                    className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                    placeholder="e.g. 55000"
+                    value={createForm.claim_amount}
+                    onChange={(event) => setCreateForm((prev) => ({ ...prev, claim_amount: event.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-xs font-black uppercase text-muted-foreground ml-1">{t('clerk.forms.description') || 'Case Description / Notes'}</label>
+                  <textarea
+                    className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none min-h-[100px]"
+                    placeholder="Briefly describe the nature of the claim..."
+                    value={createForm.description}
+                    onChange={(event) => setCreateForm((prev) => ({ ...prev, description: event.target.value }))}
                   />
                 </div>
               </div>

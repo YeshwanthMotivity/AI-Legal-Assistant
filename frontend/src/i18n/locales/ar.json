@@ -255,8 +255,12 @@
       "aiConfidence": "ثقة الذكاء الاصطناعي",
       "feedbackTitle": "ملاحظات القاضي",
       "judgmentFinalized": "تم اعتماد الحكم بنجاح.",
+      "loadTemplate": "تحميل قالب",
+      "selectTemplate": "اختر قالباً",
+      "templateReplaceWarning": "سيؤدي هذا إلى استبدال محتوى المسودة الحالية. هل تريد المتابعة؟",
       "feedbackSuccess": "تم إرسال الملاحظات بنجاح.",
-      "comparison": "مقارنة"
+      "comparison": "مقارنة",
+      "backToCase": "رجوع إلى القضية"
     },
     "documentStatus": {
       "pending": "قيد الانتظار",
