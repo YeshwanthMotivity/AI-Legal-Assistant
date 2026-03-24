@@ -966,27 +966,18 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
     case_items = "".join([f"<li>{c}</li>" for c in unique_cases]) or "<li>No specific precedents cited.</li>"
 
     final_draft = (
-        f"<div style='font-family: serif; color: #1a1a1a;'>"
-        f"<div style='text-align: center; border-bottom: 2px solid #333; margin-bottom: 20px; padding-bottom: 10px;'>"
-        f"<h2 style='margin: 0; font-size: 18px;'>DIFC COURTS - SMALL CLAIMS TRIBUNAL</h2>"
-        f"<p style='margin: 5px 0; font-size: 14px;'>CASE ID: {state['case_id']}</p>"
-        f"<h3 style='margin: 10px 0; color: #b45309;'>AI-ASSISTED JUDGMENT DRAFT</h3>"
+        f"<div style='font-family: inherit; color: #1a1a1a;'>"
+        f"<div style='text-align: center; border-bottom: 2px dashed #cecece; margin-bottom: 24px; padding-bottom: 16px;'>"
+        f"<h2 style='margin: 0; font-size: 18px; font-weight: 900; letter-spacing: 0.5px;'>DIFC COURTS - TRIBUNAL</h2>"
+        f"<p style='margin: 5px 0; font-size: 12px; color: #666;'>CASE REFERENCE: {state['case_id']}</p>"
         f"</div>"
         
-        f"<h3>1. DISPOSITION AND OUTCOME</h3>"
-        f"<p><strong>The Tribunal's decision is:</strong> {reasoning.get('outcome') or 'PENDING'}</p>"
+        f"<div style='line-height: 1.7; white-space: pre-wrap; font-size: 15px;'>"
+        f"{draft_content}"
+        f"</div>"
         
-        f"<h3>2. LEGAL REASONING</h3>"
-        f"<div style='line-height: 1.6; white-space: pre-wrap;'>{draft_content}</div>"
-        
-        f"<h3>3. CITED AUTHORITIES</h3>"
-        f"<h4>Statutory Provisions:</h4>"
-        f"<ul>{law_items}</ul>"
-        f"<h4>Judicial Precedents:</h4>"
-        f"<ul>{case_items}</ul>"
-        
-        f"<div style='margin-top: 30px; padding-top: 10px; border-top: 1px dashed #ccc; font-size: 12px; color: #666; text-align: center;'>"
-        f"--- End of AI Draft ---"
+        f"<div style='margin-top: 40px; padding-top: 15px; border-top: 1px dashed #ccc; font-size: 11px; font-weight: bold; color: #999; text-align: center;'>"
+        f"--- END OF AI DRAFT ---"
         f"</div>"
         f"</div>"
     )
