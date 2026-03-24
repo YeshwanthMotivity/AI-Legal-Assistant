@@ -93,7 +93,7 @@ async def re_index_all():
                 await upsert_chunks(
                     case_id=doc.case_id,
                     document_id=doc.id,
-                    doc_type=doc_type_str,
+                    doc_type=doc_type_for_chunker,
                     chunks=chunk_texts,
                     embeddings=embeddings,
                     metadata=metadata_list,
