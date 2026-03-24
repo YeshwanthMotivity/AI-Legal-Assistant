@@ -7,7 +7,7 @@ from qdrant_client.models import Filter, FieldCondition, MatchValue
 
 # Ensure app is in path
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from app.database import AsyncSessionLocal
 from app.modules.case.models import Case
