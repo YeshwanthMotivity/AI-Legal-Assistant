@@ -45,7 +45,9 @@ function splitTranscript(text: string): string[] {
   
   return processed.split('\n').map(p => p.trim()).filter(p => {
     if (p.length < 20) return false
-    if ((p.match(/~/g) || []).length > 1) return false
+    // Filter noise like ~~~ or multiple underscore placeholders
+    if ((p.match(/[~_]{2,}/g) || []).length > 0) return false
+    if (p.includes('...') && p.length < 40) return false
     return true
   })
 }

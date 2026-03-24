@@ -49,11 +49,12 @@ def _parse_date(value: str) -> datetime | None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 CATEGORY_DISPLAY_NAMES = {
-    "DIFC_Employment_Law":   "DIFC Employment Law No. 2 of 2019",
+    "DIFC_Employment_Law":   "DIFC Employment Law (No. 2 of 2019)",
+    "employment_law":        "DIFC Employment Law",
+    "contract_law":         "DIFC Contract Law",
+    "companies_law":        "DIFC Companies Law",
     "Federal_Labour_Law":    "UAE Federal Labour Law (Decree No. 33 of 2021)",
     "ADGM_Employment_Law":   "ADGM Employment Regulations 2019",
-    "DIFC_Contract_Law":     "DIFC Contract Law",
-    "DIFC_Court_Law":        "DIFC Court Law",
 }
 
 def _resolve_law_title(l: dict) -> str:
@@ -296,8 +297,21 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
     try:
         candidates = await _qdrant_search()
         
-        results = []
+        # Deduplicate precedents by case_id keeping highest score
+        seen_case_ids = set()
+        deduped_candidates = []
         for c in candidates:
+            payload = c.payload if hasattr(c, "payload") else c.get("payload", {})
+            cid = payload.get("case_id", "")
+            if cid and cid not in seen_case_ids:
+                seen_case_ids.add(cid)
+                deduped_candidates.append(c)
+            elif not cid:
+                # Keep points without case_id (though unlikely in precedents)
+                deduped_candidates.append(c)
+        
+        results = []
+        for c in deduped_candidates:
             payload = c.payload if hasattr(c, "payload") else c.get("payload", {})
             score = c.score if hasattr(c, "score") else c.get("score", 0.0)
             

@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import PortalLayout from '../../components/layout/PortalLayout'
 import JudgmentEditor from '../../components/judge/JudgmentEditor'
-import CaseComparison from '../../components/judge/CaseComparison'
+import { CATEGORY_DISPLAY_NAMES } from '../../constants/legal'
 import {
   getCase,
   getCaseDocuments,
@@ -56,7 +56,7 @@ const DOCUMENT_TYPES: DocumentType[] = [
 ]
 
 const CaseDetail = () => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
   const { id } = useParams<{ id: string }>()
 
@@ -458,12 +458,12 @@ const CaseDetail = () => {
 
               {/* Law Articles Card */}
               <Card className="shadow-lg border-border/50 overflow-hidden group/laws">
-                <CardHeader className="flex flex-row items-center justify-between bg-amber-500/5 border-b py-4 px-6 group-hover/laws:bg-amber-500/10 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between bg-primary/5 border-b py-4 px-6 group-hover/laws:bg-primary/10 transition-colors">
                   <div className="flex items-center gap-2">
-                    <BookOpen className="w-5 h-5 text-amber-600" />
-                    <CardTitle className="text-sm font-black uppercase tracking-widest text-amber-900/80 dark:text-amber-100/80">{t('judge.workspace.lawArticles')}</CardTitle>
+                    <BookOpen className="w-5 h-5 text-primary" />
+                    <CardTitle className="text-sm font-black uppercase tracking-widest">{t('judge.workspace.lawArticles')}</CardTitle>
                   </div>
-                  <Badge variant="outline" className="text-[10px] font-bold border-amber-200 text-amber-700 bg-amber-50/50 px-2 uppercase tracking-tighter">UAE Labor Law</Badge>
+                  <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary bg-primary/5 px-2 uppercase tracking-tighter">{CATEGORY_DISPLAY_NAMES[i18n.language] || 'DIFC Legal Framework'}</Badge>
                 </CardHeader>
                 <CardContent className="p-6">
                     <div className="grid grid-cols-1 gap-4">
@@ -477,12 +477,12 @@ const CaseDetail = () => {
                           : "Citations mapped from primary case analysis.";
                         
                         return (
-                          <div key={idx} className="bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/10 dark:border-amber-500/20 p-5 rounded-2xl hover:shadow-md hover:border-amber-500/30 transition-all group/article relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-1 h-full bg-amber-500/20 group-hover/article:bg-amber-500 transition-colors" />
+                          <div key={idx} className="bg-primary/5 dark:bg-primary/10 border border-primary/10 dark:border-primary/20 p-5 rounded-2xl hover:shadow-md hover:border-primary/30 transition-all group/article relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-primary/20 group-hover/article:bg-primary transition-colors" />
                             <div className="flex items-center gap-2.5 mb-2.5">
-                               <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-                               <h5 className="font-black text-amber-800 dark:text-amber-300 text-[11px] uppercase tracking-wide group-hover/article:text-primary transition-colors">
-                                 {title.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                               <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
+                               <h5 className="font-black text-foreground/80 text-[11px] uppercase tracking-wide group-hover/article:text-primary transition-colors">
+                                 {CATEGORY_DISPLAY_NAMES[title.toLowerCase()] || title.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
                                </h5>
                             </div>
                             <p className="text-[12px] text-muted-foreground leading-relaxed italic font-medium line-clamp-3 group-hover/article:text-foreground transition-colors">

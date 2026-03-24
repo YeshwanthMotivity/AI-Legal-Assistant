@@ -154,8 +154,14 @@ const sanitizeDraftText = (value: string): string => {
   if (!content) return ''
 
   let cleanContent = content
-  const patterns = [/^\{[\s\S]*"case_id"\s*:/, /^AI Draft:\s*$/i]
-  const hasContextBlob = patterns.some((pattern) => pattern.test(content)) || content.includes('"context"')
+  // Remove full JSON objects that might be prefixed
+  const patterns = [
+    /^\{[\s\S]*"case_id"\s*:[^}]*\}/, 
+    /^\{[\s\S]*"context"\s*:[^}]*\}/,
+    /^AI Draft:\s*$/i,
+    /Source Context:[\s\S]*?Analysis:/i
+  ]
+  const hasContextBlob = patterns.some((p) => p.test(content)) || content.includes('"context":')
   
   if (hasContextBlob) {
     const marker = 'Preliminary legal analysis'
@@ -163,7 +169,8 @@ const sanitizeDraftText = (value: string): string => {
     if (markerIndex >= 0) {
       cleanContent = content.slice(markerIndex).trim()
     } else {
-      cleanContent = content.replace(/\{[\s\S]*?\}\s*/g, '').trim()
+      // Remove any top-level JSON structure
+      cleanContent = content.replace(/^\{[\s\S]*?\}\s*/g, '').trim()
     }
   }
 

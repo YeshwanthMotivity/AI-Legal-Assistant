@@ -106,6 +106,8 @@ async def re_index_all():
                 if not case.title or case.title == "Unnamed Case" or "Seeded Case" in case.title:
                     case.title = doc.file_name.replace(".pdf", "").replace(".PDF", "")
                     logger.info(f"Updated case title to: {case.title}")
+                
+                await db.commit() # Commit title before upserting summary
 
                 # 7. Re-embed Case Summary
                 summary_parts = [

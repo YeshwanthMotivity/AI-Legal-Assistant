@@ -227,7 +227,7 @@ const DocumentUpload = () => {
                             <p className="text-[13px] font-bold truncate">{job.file.name}</p>
                             <div className="flex items-center gap-2 mt-1">
                                <Badge variant="outline" className="text-[9px] uppercase font-black py-0 h-4 border-emerald-500/20 text-emerald-600 bg-emerald-500/5">
-                                  {job.status}
+                                  {t(`clerk.uploadStatus.${job.status}`)}
                                </Badge>
                                <span className="text-[10px] text-muted-foreground font-medium italic">{(job.file.size / 1024 / 1024).toFixed(2)} MB</span>
                             </div>

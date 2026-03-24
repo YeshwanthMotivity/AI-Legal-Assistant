@@ -212,7 +212,8 @@ async def run_ingestion_pipeline(
     try:
         case_repo = CaseRepository(db)
         case = await case_repo.get_by_id(case_id)
-        if case:
+        # Only index in case_summaries if this is a seeded precedent, not a user upload
+        if case and collection_name == "difc_precedents":
             summary_parts = [
                 case.title,
                 case.case_type.value if case.case_type else "",

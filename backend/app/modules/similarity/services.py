@@ -512,7 +512,7 @@ class SimilarityService:
 
         return PrecedentDetail(
             id=precedent_id,
-            title=payload.get("case_name") or payload.get("title") or "Unnamed Case",
+            title=payload.get("case_name") or payload.get("case_title") or payload.get("title") or "Unnamed Case",
             year=str(payload.get("year", "")),
             category=payload.get("category"),
             text=raw_text,

@@ -42,10 +42,10 @@ const CaseComparison = ({ currentCase, precedentCase }: CaseComparisonProps) => 
 
   const comparisonData: ComparisonData[] = [
     { field: t('judge.workspace.caseType') || 'Case Type', currentValue: currentCase.type, precedentValue: precedentCase.type },
-    { field: t('judge.workspace.factComparison') || 'Facts Comparison', currentValue: currentCase.facts, precedentValue: precedentCase.facts },
+    { field: t('judge.workspace.factComparison') || 'Key Facts', currentValue: currentCase.facts, precedentValue: precedentCase.facts },
     { field: t('judge.workspace.legalIssues') || 'Legal Issues', currentValue: currentCase.issues, precedentValue: precedentCase.issues },
-    { field: t('judge.judgment.decision') || 'Decision', currentValue: currentCase.outcome, precedentValue: precedentCase.outcome },
-    { field: t('judge.judgment.compensation') || 'Compensation', currentValue: currentCase.compensation, precedentValue: precedentCase.compensation },
+    { field: t('judge.judgment.decision') || 'Decision Outcome', currentValue: currentCase.outcome, precedentValue: precedentCase.outcome },
+    { field: t('judge.judgment.compensation') || 'Compensation/Award', currentValue: currentCase.compensation, precedentValue: precedentCase.compensation },
   ];
 
   return (
