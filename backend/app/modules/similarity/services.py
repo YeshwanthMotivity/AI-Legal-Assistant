@@ -170,6 +170,10 @@ class SimilarityService:
                     FieldCondition(
                         key="case_type",
                         match=MatchValue(value=case.case_type.value)
+                    ),
+                    FieldCondition(
+                        key="language",
+                        match=MatchValue(value="en")
                     )
                 ],
                 must_not=[

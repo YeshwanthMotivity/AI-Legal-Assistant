@@ -869,9 +869,12 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
         if _is_hallucination(title) or _is_hallucination(content):
             return None
             
-        # Fix: use first complete sentence for better clarity
-        period_pos = content.find('. ')
-        short_content = content[:period_pos + 1] if period_pos > 30 else (content[:200] + "...")
+        # Use up to 400 chars, ending at a sentence boundary if possible
+        if len(content) <= 400:
+            short_content = content
+        else:
+            period_pos = content.find('. ', 200)  # Find sentence end after 200 chars
+            short_content = content[:period_pos + 1] if period_pos > 0 else content[:400] + "..."
             
         return {"title": title, "content": short_content}
 
