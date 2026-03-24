@@ -80,6 +80,7 @@ export interface NormalizedCaseAnalysis {
   draftText: string
   explainability: Record<string, unknown>
   reasoning_status?: string
+  facts?: string[]
 }
 
 export interface CaseAnalysisResponse {

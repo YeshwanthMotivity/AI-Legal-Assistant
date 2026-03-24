@@ -1,74 +1,51 @@
-@layer base {
-  :root {
-    /* Emerald Mirror Light Mode */
-    --background: 120 10% 98%;
-    --foreground: 150 10% 8%;
-    
-    --card: 0 0% 100%;
-    --card-foreground: 150 10% 8%;
-    
-    --popover: 0 0% 100%;
-    --popover-foreground: 150 10% 8%;
-    
-    --primary: 152 60% 36%;
-    --primary-foreground: 0 0% 100%;
-    
-    --secondary: 152 40% 92%;
-    --secondary-foreground: 152 60% 20%;
-    
-    --muted: 140 10% 95%;
-    --muted-foreground: 150 5% 45%;
-    
-    --accent: 152 40% 92%;
-    --accent-foreground: 152 60% 20%;
-    
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    
-    --border: 140 10% 90%;
-    --input: 140 10% 90%;
-    --ring: 152 60% 36%;
-    
-    --radius: 1rem;
-    
-    /* Semantic Status */
-    --success: 152 60% 36%;
-    --warning: 38 92% 50%;
-    --info: 210 80% 55%;
+@import "tailwindcss";
 
-    /* Premium Accents */
-    --gold: 45 60% 53%;
+@theme {
+  /* Emerald Mirror Light Mode (Default) */
+  --color-background: oklch(98% 0.01 150);
+  --color-foreground: oklch(20% 0.02 150);
+  
+  --color-card: oklch(100% 0 0);
+  --color-card-foreground: oklch(20% 0.02 150);
+  
+  --color-popover: oklch(100% 0 0);
+  --color-popover-foreground: oklch(20% 0.02 150);
+  
+  --color-primary: oklch(45% 0.15 152);
+  --color-primary-foreground: oklch(100% 0 0);
+  
+  --color-secondary: oklch(92% 0.05 152);
+  --color-secondary-foreground: oklch(25% 0.1 152);
+  
+  --color-muted: oklch(95% 0.01 140);
+  --color-muted-foreground: oklch(50% 0.02 150);
+  
+  --color-accent: oklch(92% 0.05 152);
+  --color-accent-foreground: oklch(25% 0.1 152);
+  
+  --color-destructive: oklch(60% 0.2 0);
+  --color-destructive-foreground: oklch(100% 0 0);
+  
+  --color-border: oklch(90% 0.01 140);
+  --color-input: oklch(90% 0.01 140);
+  --color-ring: oklch(45% 0.15 152);
+  
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+
+  /* Semantic Status */
+  --color-success: oklch(45% 0.15 152);
+  --color-warning: oklch(75% 0.15 70);
+  --color-info: oklch(65% 0.15 250);
+  
+  /* Animations */
+  @keyframes fade-in-up {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
-
-  .dark {
-    /* Emerald Mirror Dark Mode */
-    --background: 160 10% 6%;
-    --foreground: 150 10% 94%;
-    
-    --card: 160 10% 9%;
-    --card-foreground: 150 10% 94%;
-    
-    --popover: 160 10% 9%;
-    --popover-foreground: 150 10% 94%;
-    
-    --primary: 152 55% 45%;
-    --primary-foreground: 160 10% 6%;
-    
-    --secondary: 160 10% 14%;
-    --secondary-foreground: 152 55% 85%;
-    
-    --muted: 160 10% 14%;
-    --muted-foreground: 160 5% 65%;
-    
-    --accent: 160 10% 14%;
-    --accent-foreground: 152 55% 85%;
-    
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    
-    --border: 160 8% 16%;
-    --input: 160 8% 16%;
-    --ring: 152 55% 45%;
+  @keyframes slide-in-right {
+    0% { transform: translateX(-20px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
   }
 }
 
@@ -77,7 +54,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans antialiased shrink-0;
   }
 }
 
@@ -95,7 +72,7 @@
   }
   
   .btn-premium {
-    @apply bg-primary text-primary-foreground shadow-[0_0_20px_rgba(var(--primary),0.3)] hover:shadow-[0_0_30px_rgba(var(--primary),0.5)] transition-all duration-300;
+    @apply bg-primary text-primary-foreground shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] transition-all duration-300;
   }
 }
 
@@ -103,4 +80,14 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* Dark Mode Overrides */
+.dark {
+  --color-background: oklch(12% 0.02 160);
+  --color-foreground: oklch(95% 0.01 150);
+  --color-card: oklch(15% 0.02 160);
+  --color-card-foreground: oklch(95% 0.01 150);
+  --color-border: oklch(20% 0.02 160);
+  --color-primary: oklch(55% 0.15 152);
 }
