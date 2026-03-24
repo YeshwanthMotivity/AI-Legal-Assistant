@@ -5,8 +5,10 @@ import os
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import AsyncSessionLocal
-from app.modules.document.models import Document, DocumentType, ProcessingStatus
+from app.modules.document.models import Document, DocumentType, ProcessingStatus, ExtractedEntity
 from app.modules.case.models import Case
+from app.modules.user.models import User
+from app.modules.evaluation.models import EvaluationEvent
 from app.modules.ingestion.chunker_fixed import hybrid_chunk_legal_doc
 from app.modules.ingestion.embedder import embed_chunks
 from app.modules.ingestion.vector_store import upsert_chunks
