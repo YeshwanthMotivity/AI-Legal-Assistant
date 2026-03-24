@@ -66,7 +66,9 @@ async def re_index_all():
                 logger.info(f"Generated {len(embeddings)} embeddings for {doc.file_name}")
 
                 # 5. Upsert Chunks to Qdrant
-                collection_name = "difc_laws" if "law" in str(doc.document_type).lower() else "difc_precedents"
+                # Robust check: if "law" is in type OR folder name contains "Laws"
+                is_law = "law" in str(doc.document_type).lower() or "/laws/" in str(doc.storage_key).lower()
+                collection_name = "difc_laws" if is_law else "difc_precedents"
                 
                 # Check for is_law in extra metadata if we had it
                 # For now, use simple logic
