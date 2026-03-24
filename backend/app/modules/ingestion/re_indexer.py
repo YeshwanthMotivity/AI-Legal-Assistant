@@ -51,10 +51,18 @@ async def re_index_all():
                     }
                 }
 
-                # 3. Re-chunk
-                # Map doc_type string to DocumentType enum if possible, or just pass string
-                doc_type_str = doc.document_type
-                hybrid_chunks = hybrid_chunk_legal_doc(structured_data, doc_type_str)
+                # 3. Use high-fidelity Article Splitter for laws
+                is_law = "law" in str(doc.document_type).lower() or "/laws/" in str(doc.storage_key).lower()
+                
+                # If it's a law, split into articles using regex first
+                if is_law:
+                    articles = parser.split_law_into_articles(doc.ocr_text)
+                    structured_data["articles"] = articles
+                    logger.info(f"Regex-split {doc.file_name} into {len(articles)} articles")
+
+                # 4. Chunk
+                doc_type_for_chunker = "law" if is_law else "judgment"
+                hybrid_chunks = hybrid_chunk_legal_doc(structured_data, doc_type_for_chunker)
                 chunk_texts = [c["text"] for c in hybrid_chunks]
 
                 if not chunk_texts:
