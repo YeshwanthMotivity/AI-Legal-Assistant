@@ -247,7 +247,7 @@ const PrecedentDetailPage: React.FC = () => {
                      {activeTab === 'chat' ? "Intelligent Discovery" : t('judge.workspace.caseComparison')}
                    </CardTitle>
                    <p className="text-[10px] text-muted-foreground font-bold uppercase">
-                     {activeTab === 'chat' ? "Powered by JAIS-7B" : `Ref: ${fromCaseId}`}
+                     {activeTab === 'chat' ? "Powered by QWEN-2.5" : `Ref: ${fromCaseId}`}
                    </p>
                 </div>
               </div>

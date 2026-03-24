@@ -23,7 +23,7 @@ export default function GlobalConfig(): ReactNode {
   
   // Local state for configuration parameters
   const [config, setConfig] = useState({
-    model: 'jais-7b',
+    model: 'qwen-2.5',
     reranker: 'cross-encoder',
     ragLimit: 5,
     similarityThreshold: 0.75,
@@ -62,18 +62,18 @@ export default function GlobalConfig(): ReactNode {
                 <div 
                   className={cn(
                     "p-4 border rounded-xl cursor-pointer transition-all flex items-center justify-between",
-                    config.model === 'jais-7b' ? "bg-primary/5 border-primary shadow-sm" : "hover:bg-muted/50"
+                    config.model === 'qwen-2.5' ? "bg-primary/5 border-primary shadow-sm" : "hover:bg-muted/50"
                   )}
-                  onClick={() => setConfig({...config, model: 'jais-7b'})}
+                  onClick={() => setConfig({...config, model: 'qwen-2.5'})}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center font-bold", config.model === 'jais-7b' ? "bg-primary text-white" : "bg-muted text-muted-foreground")}>J</div>
+                    <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center font-bold", config.model === 'qwen-2.5' ? "bg-primary text-white" : "bg-muted text-muted-foreground")}>Q</div>
                     <div>
-                      <p className="font-bold text-sm">JAIS-7B (Recommended)</p>
+                      <p className="font-bold text-sm">QWEN-2.5 (Recommended)</p>
                       <p className="text-xs text-muted-foreground">Specialized for Arabic & UAE Legal Contexts</p>
                     </div>
                   </div>
-                  {config.model === 'jais-7b' && <div className="w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-[10px]">✓</div>}
+                  {config.model === 'qwen-2.5' && <div className="w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-[10px]">✓</div>}
                 </div>
                 
                 <div 

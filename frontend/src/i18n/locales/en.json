@@ -231,6 +231,8 @@
       "analysisReady": "AI analysis is ready.",
       "analysisFailed": "AI analysis failed.",
       "analysisError": "Unable to load analysis right now.",
+      "similarPrecedents": "Similar Precedents",
+      "lawArticles": "Related Law Articles",
       "entitlementCalculation": "Entitlement Calculation",
       "judgmentDraft": "Judgment Draft",
       "regenerationComplete": "Refined draft generated.",
@@ -340,7 +342,7 @@
       "ingestionDesc": "Streamline the ingestion of physical evidence and legal filings. Supporting high-resolution OCR for both Arabic and English procedural documents.",
       "startBulkUpload": "Start Bulk Upload",
       "aiNodesOnline": "AI Reasoning Nodes: ONLINE",
-      "latencyInfo": "Latency: 24ms | Model Cluster: JAIS-7B Optimized",
+      "latencyInfo": "Latency: 24ms | Model Cluster: QWEN-2.5 Optimized",
       "hardwareDiagnostics": "Hardware Diagnostics"
     },
     "pages": {

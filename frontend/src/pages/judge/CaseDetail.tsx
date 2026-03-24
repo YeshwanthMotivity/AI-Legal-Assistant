@@ -573,7 +573,7 @@ const CaseDetail = () => {
                 <div className="flex-1">
                   <h5 className="font-black text-amber-900 text-lg mb-1.5 uppercase tracking-tighter italic">Reasoning Cluster Active</h5>
                   <p className="text-amber-800 text-sm leading-relaxed font-bold opacity-80">
-                    The JAIS-7B reasoning nodes are currently synthesizing complex legal data. Deep legal analysis typically requires 2-5 minutes to reach high confidence.
+                    The QWEN-2.5 reasoning nodes are currently synthesizing complex legal data. Deep legal analysis typically requires 2-5 minutes to reach high confidence.
                   </p>
                 </div>
               </div>
