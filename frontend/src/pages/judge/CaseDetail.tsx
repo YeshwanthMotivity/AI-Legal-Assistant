@@ -238,11 +238,11 @@ const CaseDetail = () => {
             <Button 
               variant="destructive" 
               size="sm"
-              className="gap-2 font-bold px-4 shadow-sm"
+              className="gap-2 font-bold px-4 shadow-sm hover:scale-105 transition-all"
               onClick={() => { if (window.confirm('Delete this case?')) deleteMutation.mutate() }}
               disabled={deleteMutation.isPending}
             >
-              <AlertCircle className="w-4 h-4 text-white" />
+              <AlertCircle className="w-4 h-4 text-destructive-foreground" />
               {deleteMutation.isPending ? "Deleting..." : "Delete Case"}
             </Button>
         </div>
@@ -264,11 +264,11 @@ const CaseDetail = () => {
 
       {localMessage && (
         <div className={cn(
-          "mb-8 p-4 rounded-xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-4",
-          messageType === 'error' ? "bg-destructive/10 border-destructive/20 text-destructive" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
+          "mb-8 p-4 rounded-xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-4 shadow-sm",
+          messageType === 'error' ? "bg-destructive/10 border-destructive/20 text-destructive" : "bg-primary/10 border-primary/20 text-primary"
         )}>
           {messageType === 'error' ? <AlertCircle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
-          <span className="font-bold text-sm">{localMessage}</span>
+          <span className="font-bold text-sm uppercase tracking-tighter">{localMessage}</span>
           <Button variant="ghost" size="icon" className="ml-auto h-8 w-8" onClick={() => setLocalMessage('')}>
              <Plus className="w-4 h-4 rotate-45" />
           </Button>
@@ -288,10 +288,13 @@ const CaseDetail = () => {
             <CardContent className="p-6">
               <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-black uppercase text-muted-foreground ml-1">{t('judge.workspace.documentType')}</label>
+                    <div className="space-y-1.5 group">
+                      <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest flex items-center gap-2">
+                        <FileText className="w-3 h-3 text-primary" />
+                        {t('judge.workspace.documentType')}
+                      </label>
                       <select
-                        className="w-full bg-background border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
+                        className="w-full bg-background border border-border/50 rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-4 focus:ring-primary/10 transition-all cursor-pointer font-bold"
                         value={selectedDocType}
                         onChange={(event) => setSelectedDocType(event.target.value as DocumentType)}
                       >
@@ -446,7 +449,7 @@ const CaseDetail = () => {
                              </p>
                           </div>
                           <div className="flex items-center gap-5 shrink-0">
-                             <div className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-black border border-emerald-500/20 shadow-sm">
+                             <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[9px] font-black border border-primary/20 shadow-sm uppercase tracking-widest">
                                 {Math.round((item.similarityScore || 0) * 100)}% Match
                              </div>
                              <ChevronRight className="w-5 h-5 text-muted-foreground/30 group-hover:text-primary transition-transform group-hover:translate-x-1" />
@@ -477,14 +480,14 @@ const CaseDetail = () => {
                           : "Citations mapped from primary case analysis.";
                         
                         return (
-                          <div key={idx} className="bg-amber-500/5 border border-amber-500/10 p-4 rounded-2xl hover:shadow-lg transition-all group/article">
+                          <div key={idx} className="bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/10 dark:border-amber-500/20 p-4 rounded-2xl hover:shadow-lg transition-all group/article">
                             <div className="flex items-center gap-2.5 mb-2.5">
                                <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-                               <h5 className="font-black text-amber-900 text-xs uppercase tracking-tight group-hover/article:text-primary transition-colors">
+                               <h5 className="font-black text-amber-700 dark:text-amber-400 text-[11px] uppercase tracking-tight group-hover/article:text-primary transition-colors">
                                  {title.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
                                </h5>
                             </div>
-                            <p className="text-[12px] text-amber-800/80 leading-relaxed italic font-medium line-clamp-3">
+                            <p className="text-[12px] text-muted-foreground leading-relaxed italic font-medium line-clamp-3">
                               {content}
                             </p>
                           </div>

@@ -20,24 +20,24 @@ const StatCard = ({ label, value, icon: Icon, trend, className }: StatCardProps)
       whileHover={{ y: -5 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className={cn("overflow-hidden", className)}>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <Icon className="w-6 h-6" />
+      <Card className={cn("overflow-hidden border-border/50 shadow-md hover:shadow-xl hover:border-primary/30 transition-all duration-300 group", className)}>
+        <CardContent className="p-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-500 shadow-inner">
+              <Icon className="w-7 h-7" />
             </div>
             {trend && (
               <div className={cn(
-                "text-xs font-bold px-2 py-1 rounded-full",
-                trend.isPositive ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                "text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest",
+                trend.isPositive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
               )}>
-                {trend.isPositive ? '+' : '-'}{trend.value}%
+                {trend.isPositive ? '↑' : '↓'} {trend.value}%
               </div>
             )}
           </div>
           <div>
-            <div className="text-3xl font-bold mb-1">{value}</div>
-            <div className="text-sm text-muted-foreground font-medium uppercase tracking-wider">
+            <div className="text-4xl font-black tracking-tighter mb-1.5 text-foreground">{value}</div>
+            <div className="text-[11px] text-muted-foreground font-black uppercase tracking-[0.2em] opacity-70">
               {label}
             </div>
           </div>

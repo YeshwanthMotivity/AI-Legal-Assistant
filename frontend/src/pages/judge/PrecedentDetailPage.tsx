@@ -155,14 +155,14 @@ const PrecedentDetailPage: React.FC = () => {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="h-8 gap-2 bg-blue-500/10 text-blue-600 border-blue-500/20 hover:bg-blue-500/20 hover:text-blue-700 font-black uppercase text-[10px] tracking-tight shadow-sm"
+                    className="h-8 gap-2 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 hover:text-primary-hover font-black uppercase text-[10px] tracking-tight shadow-sm"
                     onClick={() => navigate(`/judge/cases/${fromCaseId}`)}
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     {t('common.backToCase') || "← Back to Case"}
                   </Button>
                 )}
-                <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter">Reference: {id}</Badge>
+                <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter border-primary/30 text-primary/80">Reference: {id}</Badge>
               </div>
             </CardHeader>
             <CardContent className="p-8 overflow-y-auto leading-relaxed text-sm font-medium">

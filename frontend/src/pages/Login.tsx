@@ -43,12 +43,12 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen w-full relative overflow-hidden bg-slate-950 flex items-center justify-center p-6 selection:bg-emerald-500/30">
+    <div className="min-h-screen w-full relative overflow-hidden bg-background flex items-center justify-center p-6 selection:bg-emerald-500/30">
       {/* Dynamic Background Pattern */}
-      <div className="absolute inset-0 opacity-20 pointer-events-none">
+      <div className="absolute inset-0 opacity-10 dark:opacity-20 pointer-events-none">
          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/20 blur-[120px] rounded-full" />
-         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/20 blur-[120px] rounded-full" />
-         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/20 blur-[120px] rounded-full" />
+         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-5 dark:opacity-10" />
       </div>
 
       <motion.div 
@@ -59,68 +59,68 @@ const Login = () => {
       >
         {/* Superior Branding Section */}
         <div className="text-center mb-10 translate-y-2">
-           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase tracking-widest mb-6 backdrop-blur-sm">
+           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest mb-6 backdrop-blur-sm">
               <ShieldCheck className="w-3.5 h-3.5" />
               Secure Judicial Portal
            </div>
            
            <div className="flex justify-center mb-6">
               <div className="relative group">
-                <div className="absolute inset-0 bg-emerald-500/20 blur-2xl rounded-full group-hover:bg-emerald-500/40 transition-all duration-700" />
-                <div className="relative w-20 h-20 bg-gradient-to-br from-emerald-600 to-teal-800 rounded-[24px] flex items-center justify-center shadow-2xl border border-white/10 group-hover:rotate-6 transition-transform">
+                <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full group-hover:bg-primary/40 transition-all duration-700" />
+                <div className="relative w-20 h-20 bg-gradient-to-br from-primary to-primary-hover rounded-[24px] flex items-center justify-center shadow-2xl border border-white/10 group-hover:rotate-6 transition-transform">
                    <Scale className="w-10 h-10 text-white drop-shadow-lg" />
                 </div>
               </div>
            </div>
 
-           <h1 className="text-3xl font-black tracking-tight text-white mb-2">
+           <h1 className="text-3xl font-black tracking-tight text-foreground mb-2">
               {t('common.appName')}
            </h1>
-           <div className="flex items-center justify-center gap-2 text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] opacity-60">
+           <div className="flex items-center justify-center gap-2 text-muted-foreground font-bold uppercase text-[10px] tracking-[0.2em] opacity-80">
               <span>DIFC</span>
-              <div className="w-1 h-1 bg-slate-700 rounded-full" />
+              <div className="w-1 h-1 bg-border rounded-full" />
               <span>Labor Law AI</span>
-              <div className="w-1 h-1 bg-slate-700 rounded-full" />
+              <div className="w-1 h-1 bg-border rounded-full" />
               <span>v2.4.0</span>
            </div>
         </div>
 
-        <Card className="bg-white/5 backdrop-blur-xl border-white/10 shadow-2xl overflow-hidden rounded-[32px]">
+        <Card className="backdrop-blur-xl border-border/50 shadow-2xl overflow-hidden rounded-[32px] bg-card/50 dark:bg-white/5">
           <CardContent className="p-10">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2 group">
-                <label className="text-[11px] font-black uppercase text-slate-500 ml-1 tracking-tighter flex items-center gap-2">
-                  <User className="w-3 h-3 text-emerald-500" />
+                <label className="text-[11px] font-black uppercase text-muted-foreground ml-1 tracking-tighter flex items-center gap-2">
+                  <User className="w-3 h-3 text-primary" />
                   Credentials
                 </label>
                 <div className="relative">
                   <input
                     type="text"
                     placeholder="Judicial ID or Email"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-sm text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/20 transition-all font-bold placeholder:text-white/20"
+                    className="w-full bg-background border border-border/50 rounded-2xl pl-12 pr-4 py-4 text-sm text-foreground focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-bold placeholder:text-muted-foreground/30"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
                   />
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-emerald-500 transition-colors" />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/30 group-focus-within:text-primary transition-colors" />
                 </div>
               </div>
 
               <div className="space-y-2 group">
-                <label className="text-[11px] font-black uppercase text-slate-500 ml-1 tracking-tighter flex items-center gap-2">
-                   <Lock className="w-3 h-3 text-emerald-500" />
+                <label className="text-[11px] font-black uppercase text-muted-foreground ml-1 tracking-tighter flex items-center gap-2">
+                   <Lock className="w-3 h-3 text-primary" />
                    {t('auth.password')}
                 </label>
                 <div className="relative">
                   <input
                     type="password"
                     placeholder="••••••••"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-sm text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/20 transition-all font-bold placeholder:text-white/20"
+                    className="w-full bg-background border border-border/50 rounded-2xl pl-12 pr-4 py-4 text-sm text-foreground focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-bold placeholder:text-muted-foreground/30"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-emerald-500 transition-colors" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/30 group-focus-within:text-primary transition-colors" />
                 </div>
               </div>
 
@@ -128,7 +128,7 @@ const Login = () => {
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="p-4 rounded-2xl bg-destructive/20 border border-destructive/20 text-destructive text-xs font-black uppercase tracking-widest text-center"
+                  className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-black uppercase tracking-widest text-center"
                 >
                   {error}
                 </motion.div>
@@ -136,12 +136,12 @@ const Login = () => {
 
               <Button
                 type="submit"
-                className="w-full h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-[13px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 transition-all group"
+                className="w-full h-14 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground text-[13px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-all group border-none"
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-primary-foreground/20 border-t-primary-foreground rounded-full animate-spin" />
                     Authenticating...
                   </div>
                 ) : (
@@ -153,18 +153,18 @@ const Login = () => {
               </Button>
             </form>
 
-            <div className="mt-10 pt-8 border-t border-white/5">
+            <div className="mt-10 pt-8 border-t border-border/50">
               <div className="flex items-center gap-2 mb-4">
-                 <Info className="w-3.5 h-3.5 text-slate-500" />
-                 <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Environment Access</span>
+                 <Info className="w-3.5 h-3.5 text-muted-foreground" />
+                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Environment Access</span>
               </div>
               <div className="grid grid-cols-1 gap-2">
                 {[
-                  { role: 'judge', pass: 'judge', color: 'bg-indigo-500/20 text-indigo-400' },
-                  { role: 'clerk', pass: 'clerk', color: 'bg-emerald-500/20 text-emerald-400' },
-                  { role: 'admin', pass: 'admin', color: 'bg-amber-500/20 text-amber-400' }
+                  { role: 'judge', pass: 'judge', color: 'bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 border-indigo-500/10' },
+                  { role: 'clerk', pass: 'clerk', color: 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border-emerald-500/10' },
+                  { role: 'admin', pass: 'admin', color: 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 border-amber-500/10' }
                 ].map(({ role, pass, color }) => (
-                  <div key={role} className={cn("flex items-center justify-between p-3 rounded-xl border border-white/5", color)}>
+                  <div key={role} className={cn("flex items-center justify-between p-3 rounded-xl border", color)}>
                      <span className="text-[10px] font-black uppercase">{role}</span>
                      <span className="text-[10px] font-bold opacity-60">{pass}</span>
                   </div>
@@ -175,7 +175,7 @@ const Login = () => {
         </Card>
 
         {/* Global Footer */}
-        <div className="mt-8 flex items-center justify-between px-4 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
+        <div className="mt-8 flex items-center justify-between px-4 text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em] opacity-60">
            <div className="flex items-center gap-2">
               <Globe className="w-3.5 h-3.5" />
               GLOBAL REGION

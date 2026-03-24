@@ -170,28 +170,28 @@ export default function JudgeDashboard(): ReactNode {
           </Card>
 
           <Card className="shadow-sm border-border/50">
-            <CardHeader>
+            <CardHeader className="pb-2">
               <CardTitle className="text-base">{t('judge.workspace.aiStatus')}</CardTitle>
-              <CardDescription>{t('clerk.dashboard.aiNodesOnline')}</CardDescription>
+              <CardDescription className="text-[10px] font-bold uppercase tracking-wider">{t('clerk.dashboard.aiNodesOnline')}</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-bold uppercase text-muted-foreground">
+            <CardContent className="pt-4">
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2 text-[10px] font-black uppercase text-muted-foreground tracking-tight">
                     <span>{t('judge.workspace.aiConfidence')}</span>
-                    <span>88%</span>
+                    <span className="text-right text-primary">88%</span>
                   </div>
-                  <div className="h-1.5 w-full bg-accent rounded-full overflow-hidden">
-                    <div className="h-full bg-primary w-[88%] rounded-full shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
+                  <div className="h-2 w-full bg-accent/30 rounded-full overflow-hidden border border-border/5">
+                    <div className="h-full bg-primary w-[88%] rounded-full shadow-[0_0_12px_rgba(var(--primary),0.4)] transition-all duration-1000 ease-out" />
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-bold uppercase text-muted-foreground">
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2 text-[10px] font-black uppercase text-muted-foreground tracking-tight">
                     <span>{t('judge.dashboard.performance')}</span>
-                    <span>94%</span>
+                    <span className="text-right text-emerald-500">94%</span>
                   </div>
-                  <div className="h-1.5 w-full bg-accent rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 w-[94%] rounded-full" />
+                  <div className="h-2 w-full bg-accent/30 rounded-full overflow-hidden border border-border/5">
+                    <div className="h-full bg-emerald-500 w-[94%] rounded-full shadow-[0_0_12px_rgba(16,185,129,0.3)] transition-all duration-1000 ease-out" />
                   </div>
                 </div>
               </div>

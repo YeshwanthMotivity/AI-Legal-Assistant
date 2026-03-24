@@ -41,7 +41,7 @@ export default function AdminDashboard(): ReactNode {
            <CardHeader className="bg-muted/10 border-b py-6 px-8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-600">
+                  <div className="p-2.5 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-xl text-indigo-600 dark:text-indigo-400">
                      <Users className="w-6 h-6" />
                   </div>
                   <div>
@@ -61,7 +61,7 @@ export default function AdminDashboard(): ReactNode {
                  {t('admin.dashboard.userAccessDesc')}
               </p>
               <Link to="/admin/users">
-                <Button variant="outline" className="w-full h-10 border-blue-500/20 text-blue-700 bg-blue-500/5 hover:bg-blue-500/10 gap-2 font-bold">
+                <Button variant="outline" className="w-full h-10 border-indigo-500/20 text-indigo-600 dark:text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10 gap-2 font-bold uppercase text-[10px] tracking-widest">
                    {t('admin.dashboard.manageAccess')}
                 </Button>
               </Link>
@@ -73,7 +73,7 @@ export default function AdminDashboard(): ReactNode {
            <CardHeader className="bg-muted/10 border-b py-6 px-8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-600">
+                  <div className="p-2.5 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-xl text-emerald-600 dark:text-emerald-400">
                      <BarChart3 className="w-6 h-6" />
                   </div>
                   <div>
@@ -93,7 +93,7 @@ export default function AdminDashboard(): ReactNode {
                   {t('admin.dashboard.aiPerfDesc')}
               </p>
               <Link to="/admin/metrics">
-                <Button variant="outline" className="w-full h-10 border-emerald-500/20 text-emerald-700 bg-emerald-500/5 hover:bg-emerald-500/10 gap-2 font-bold">
+                <Button variant="outline" className="w-full h-10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10 gap-2 font-bold uppercase text-[10px] tracking-widest">
                    {t('admin.dashboard.viewAnalytics')}
                 </Button>
               </Link>
@@ -125,7 +125,7 @@ export default function AdminDashboard(): ReactNode {
                  {t('admin.dashboard.auditDesc')}
               </p>
               <Link to="/admin/audit">
-                <Button variant="outline" className="w-full h-10 border-primary/20 text-primary bg-primary/5 hover:bg-primary/10 gap-2 font-bold">
+                <Button variant="outline" className="w-full h-10 border-primary/20 text-primary bg-primary/5 hover:bg-primary/10 gap-2 font-bold uppercase text-[10px] tracking-widest">
                    {t('admin.dashboard.reviewLogs')}
                 </Button>
               </Link>
