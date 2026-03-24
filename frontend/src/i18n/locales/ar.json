@@ -16,7 +16,8 @@
     "actions": "الإجراءات",
     "language": "اللغة",
     "main_menu": "القائمة الرئيسية",
-    "field": "الحقل"
+    "field": "الحقل",
+    "backToCase": "← العودة للقضية"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -242,7 +243,8 @@
       "confidence": "مستوى الثقة",
       "top5": "أفضل 5",
       "judicialRecord": "سجل قضائي رسمي من مركز دبي المالي العالمي",
-      "caseComparison": "مقارنة القضايا",
+      "caseComparison": "تحليل مقارنة القضايا",
+      "comparison": "مقارنة",
       "currentCase": "القضية الحالية",
       "precedentCase": "سابقة قضائية",
       "factComparison": "مقارنة الوقائع الرئيسية",
@@ -259,9 +261,7 @@
       "loadTemplate": "تحميل قالب",
       "selectTemplate": "اختر قالباً",
       "templateReplaceWarning": "سيؤدي هذا إلى استبدال محتوى المسودة الحالية. هل تريد المتابعة؟",
-      "feedbackSuccess": "تم إرسال الملاحظات بنجاح.",
-      "comparison": "مقارنة",
-      "backToCase": "رجوع إلى القضية"
+      "feedbackSuccess": "تم إرسال الملاحظات بنجاح."
     },
     "documentStatus": {
       "pending": "قيد الانتظار",
@@ -360,6 +360,8 @@
       "respondent": "المدعى عليه",
       "filingDate": "تاريخ الإيداع",
       "courtNumber": "رقم المحكمة",
+      "claimAmount": "مبلغ المطالبة (درهم)",
+      "description": "وصف القضية / ملاحظات",
       "createCaseAction": "إنشاء قضية",
       "editMetadata": "تعديل البيانات الوصفية",
       "metadataEditor": "بيانات القضية الوصفية",

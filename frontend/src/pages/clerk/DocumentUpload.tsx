@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { 
@@ -43,6 +43,7 @@ const DocumentUpload = () => {
   const [selectedCaseId, setSelectedCaseId] = useState('')
   const [jobs, setJobs] = useState<ClerkUploadJob[]>([])
   const [isDragging, setIsDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const casesQuery = useQuery({
     queryKey: queryKeys.clerkCases,
@@ -172,12 +173,22 @@ const DocumentUpload = () => {
                    <p className="text-[11px] text-muted-foreground italic mt-1 font-medium">PDF, DOCX, Images (MAX 50MB)</p>
                 </div>
                 
-                <Button variant="outline" size="sm" className="gap-2 mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2 mt-2"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                >
                    <Search className="w-3.5 h-3.5" />
                    {t('clerk.forms.pickFiles')}
                 </Button>
                 
                 <input 
+                  ref={fileInputRef}
                   type="file" 
                   multiple 
                   accept=".pdf,.docx,image/*"

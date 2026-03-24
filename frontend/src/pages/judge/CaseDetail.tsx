@@ -432,7 +432,7 @@ const CaseDetail = () => {
                           to={`/judge/precedents/${item.caseId}`} 
                           state={{ fromCaseId: id }}
                           className={cn(
-                            "flex items-center justify-between p-6 transition-all group border-l-4 border-transparent",
+                            "grid grid-cols-[1fr,auto] items-center p-6 transition-all group border-l-4 border-transparent",
                             "hover:bg-primary/5 hover:border-primary"
                           )}
                         >

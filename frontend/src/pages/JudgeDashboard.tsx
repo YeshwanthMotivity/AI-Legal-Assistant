@@ -238,15 +238,53 @@ export default function JudgeDashboard(): ReactNode {
                        </div>
                        <h4 className="font-bold text-base tracking-tight">{label}</h4>
                     </div>
-                    <div className="bg-muted/40 p-5 rounded-2xl text-[10px] space-y-3 opacity-50 pointer-events-none select-none border border-border/50">
-                       <div className="h-4 bg-muted-foreground/20 w-3/4 rounded-full mx-auto" />
+                    <div className="bg-muted/40 p-5 rounded-2xl text-[10px] space-y-4 select-none border border-border/50 relative overflow-hidden group-hover:bg-card transition-colors">
+                       <div className="h-3 bg-muted-foreground/20 w-3/4 rounded-full mx-auto" />
                        <div className="space-y-2">
-                          <div className="h-3 bg-muted-foreground/10 w-full rounded-full" />
-                          <div className="h-3 bg-muted-foreground/10 w-5/6 rounded-full" />
-                          <div className="h-3 bg-muted-foreground/10 w-4/6 rounded-full" />
+                          <div className="h-2 bg-muted-foreground/10 w-full rounded-full" />
+                          <div className="h-2 bg-muted-foreground/10 w-5/6 rounded-full" />
+                          
+                          {/* Unique Preview Content per Template */}
+                          <div className="mt-4 pt-3 border-t border-border/30 space-y-2">
+                            {key === 'unpaid_wages' && (
+                              <>
+                                <div className="text-[9px] font-black text-emerald-600/60 uppercase tracking-tighter">Section: Recovery of Wages</div>
+                                <div className="h-1.5 bg-emerald-500/10 w-full rounded-full" />
+                                <div className="h-1.5 bg-emerald-500/10 w-4/6 rounded-full" />
+                              </>
+                            )}
+                            {key === 'wrongful_termination' && (
+                              <>
+                                <div className="text-[9px] font-black text-amber-600/60 uppercase tracking-tighter">Section: Termination Cause</div>
+                                <div className="h-1.5 bg-amber-500/10 w-full rounded-full" />
+                                <div className="h-1.5 bg-amber-500/10 w-3/4 rounded-full" />
+                              </>
+                            )}
+                            {key === 'end_of_service' && (
+                              <>
+                                <div className="text-[9px] font-black text-blue-600/60 uppercase tracking-tighter">Section: Gratuity Accrual</div>
+                                <div className="h-1.5 bg-blue-500/10 w-full rounded-full" />
+                                <div className="h-1.5 bg-blue-500/10 w-5/6 rounded-full" />
+                              </>
+                            )}
+                            {key === 'contract_dispute' && (
+                              <>
+                                <div className="text-[9px] font-black text-indigo-600/60 uppercase tracking-tighter">Section: Material Breach</div>
+                                <div className="h-1.5 bg-indigo-500/10 w-full rounded-full" />
+                                <div className="h-1.5 bg-indigo-500/10 w-3/4 rounded-full" />
+                              </>
+                            )}
+                            {key === 'other' && (
+                              <>
+                                <div className="text-[9px] font-black text-muted-foreground/60 uppercase tracking-tighter">Section: Findings of Fact</div>
+                                <div className="h-1.5 bg-muted-foreground/10 w-full rounded-full" />
+                                <div className="h-1.5 bg-muted-foreground/10 w-4/6 rounded-full" />
+                              </>
+                            )}
+                          </div>
                        </div>
-                       <div className="mt-6 border-t border-border/50 pt-4 h-12 w-full bg-primary/5 rounded-xl font-black flex items-center justify-center uppercase tracking-widest text-[9px] text-primary/60">
-                          Sample Structure
+                       <div className="mt-4 border-t border-border/50 pt-3 h-10 w-full bg-primary/5 rounded-xl font-black flex items-center justify-center uppercase tracking-widest text-[8px] text-primary/60">
+                          {t('judge.workspace.judgmentDraft')} Preview
                        </div>
                     </div>
                   </Card>
