@@ -65,9 +65,30 @@ def hybrid_chunk_legal_doc(
         found_any = False
 
         for section_name in law_sections:
-            content = structured_data.get(section_name, "")
+            content = structured_data.get(section_name)
             if not content:
                 continue
+            
+            # Special handling for our new high-fidelity article list
+            if section_name == "articles" and isinstance(content, list):
+                found_any = True
+                for art in content:
+                    art_text = art.get("text", "")
+                    art_title = art.get("title", f"Article {art.get('article_number', '?')}")
+                    if not art_text:
+                        continue
+                    # For articles, we still chunk if they are extremely long, but typically they fit in one
+                    section_chunks = chunk_text(art_text, chunk_size=chunk_size, overlap=overlap)
+                    for i, chunk_txt in enumerate(section_chunks):
+                        meta = base_metadata("article", i, len(section_chunks))
+                        meta["article_title"] = art_title
+                        meta["article_number"] = art.get("article_number")
+                        all_chunks.append({
+                            "text": chunk_txt,
+                            "metadata": meta
+                        })
+                continue
+
             found_any = True
             section_chunks = chunk_text(str(content), chunk_size=chunk_size, overlap=overlap)
             for i, chunk_txt in enumerate(section_chunks):

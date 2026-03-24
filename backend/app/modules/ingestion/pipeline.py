@@ -117,6 +117,13 @@ async def run_ingestion_pipeline(
     parser = LegalStructureParser()
     structured_data = await parser.parse(raw_text)
 
+    # NEW: If it's a law, split into high-fidelity articles using regex
+    is_law = doc_type in ("LAW", "law")
+    if is_law:
+        articles = parser.split_law_into_articles(raw_text)
+        structured_data["articles"] = articles
+        logger.info(f"Regex split law into {len(articles)} articles for {document_id}")
+
     # Merge LLM extraction into structured_data metadata
     structured_data["llm_metadata"] = llm_structured
     structured_data["language"] = detected_language

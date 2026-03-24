@@ -181,9 +181,16 @@ async def process_file(
                 await db.delete(existing_case)
             await db.commit()
 
-    case_id = str(uuid.uuid4())
-    doc_id = str(uuid.uuid4())
-    case_number = f"SEED-{file_name.upper().replace('.PDF', '')}-{str(uuid.uuid4())[:8]}"
+    # Deterministic IDs based on file path
+    # Using uuid5(uuid.NAMESPACE_URL, file_path) ensures the same file always has the same IDs
+    doc_id = str(uuid.uuid5(uuid.NAMESPACE_URL, file_path))
+    # For cases, use the directory path so all files in one folder belong to one case
+    case_folder = os.path.dirname(file_path)
+    case_id = str(uuid.uuid5(uuid.NAMESPACE_URL, case_folder))
+    
+    # Deterministic case number: prefix + first 16 chars of UUID
+    case_number_slug = case_id.split('-')[0].upper()
+    case_number = f"SEED-{file_name.upper().replace('.PDF', '')}-{case_number_slug}"
     
     logger.info(f"Processing {file_name} as {doc_type} in collection {collection_name}...")
 
@@ -208,7 +215,7 @@ async def process_file(
         file_name=file_name,
         storage_key=file_path,
         mime_type="application/pdf",
-        document_type=doc_type.lower() if hasattr(doc_type, "lower") else doc_type,
+        document_type=doc_type.upper() if hasattr(doc_type, "upper") else doc_type, # Sync with DB UPPERCASE
         processing_status=ProcessingStatus.PENDING
     )
     db.add(new_doc)

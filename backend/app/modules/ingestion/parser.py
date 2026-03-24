@@ -196,6 +196,40 @@ class LegalStructureParser:
         return _regex_parse(text)
 
     @staticmethod
+    def split_law_into_articles(text: str) -> List[Dict[str, str]]:
+        """
+        Robustly splits a law document into individual articles using regex.
+        Captures 100% of the text between article markers.
+        """
+        # Supports: Article 1, Article (1), المادة 1, المادة (1)
+        pattern = r"(?i)(?:\n|^)\s*(?:Article|Art\.?|المادة)\s*\(?(\d+)\)?"
+        
+        matches = list(re.finditer(pattern, text))
+        if not matches:
+            return []
+
+        articles = []
+        for i in range(len(matches)):
+            start_pos = matches[i].start()
+            # Content starts after the article marker
+            content_start = matches[i].end()
+            
+            # End position is the start of the next article marker or end of text
+            end_pos = matches[i+1].start() if i + 1 < len(matches) else len(text)
+            
+            article_num = matches[i].group(1)
+            # Full text includes the "Article X" header + the content
+            article_full_text = text[start_pos:end_pos].strip()
+            
+            articles.append({
+                "article_number": article_num,
+                "text": article_full_text,
+                "title": f"Article {article_num}"
+            })
+            
+        return articles
+
+    @staticmethod
     def extract_article_citations(text: str) -> List[str]:
         """Regex helper for extracting Article citations."""
         pattern = r"(?:Article|Art\.?|المادة)\s*(\d+)"
