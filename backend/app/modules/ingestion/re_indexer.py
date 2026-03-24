@@ -102,7 +102,12 @@ async def re_index_all():
                     collection_name=collection_name
                 )
 
-                # 6. Re-embed Case Summary
+                # 6. Update Case Title if it's "Unnamed"
+                if not case.title or case.title == "Unnamed Case" or "Seeded Case" in case.title:
+                    case.title = doc.file_name.replace(".pdf", "").replace(".PDF", "")
+                    logger.info(f"Updated case title to: {case.title}")
+
+                # 7. Re-embed Case Summary
                 summary_parts = [
                     case.title,
                     case.case_type.value if hasattr(case.case_type, 'value') else str(case.case_type),
