@@ -367,36 +367,69 @@ class SimilarityService:
             run_id=run_id,
         )
 
-    async def get_precedent(self, precedent_id: str) -> PrecedentDetail:
-        """Fetch full details of a precedent from Qdrant."""
+    async def get_precedent(self, precedent_id: str, language: str = "en") -> PrecedentDetail:
+        """Fetch full details of a precedent from Qdrant, with language-aware lookup."""
         client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
-        
-        # 1. Try fetching directly by point ID (UUID or int)
         point = None
+
+        # Step 1: Try direct UUID fetch
         try:
-            # Check if it looks like a UUID
-            import uuid
             is_valid_uuid = False
             try:
                 uuid.UUID(precedent_id)
                 is_valid_uuid = True
             except ValueError:
                 pass
-                
+
             if is_valid_uuid or precedent_id.isdigit():
                 def _get_by_id():
-                    return client.retrieve(collection_name="difc_precedents", ids=[precedent_id])
+                    return client.retrieve(
+                        collection_name="difc_precedents",
+                        ids=[precedent_id]
+                    )
                 res = await asyncio.get_event_loop().run_in_executor(None, _get_by_id)
                 point = res[0] if res else None
         except Exception as e:
-            logger.warning(f"Direct ID retrieve failed for {precedent_id}: {e}")
+            logger.warning(f"Direct ID retrieve failed: {e}")
 
-        # 2. Fallback: search by case_id filter in payload
+        # Step 2: If language is AR, try to find the Arabic version of this case
+        if language == "ar":
+            # Get the case_name from the EN version first, then find AR counterpart
+            en_payload = point.payload if point and hasattr(point, "payload") else {}
+            case_name = en_payload.get("case_name") or en_payload.get("case_title") or ""
+            
+            if case_name:
+                def _find_ar_version():
+                    search_filter = Filter(
+                        must=[
+                            FieldCondition(key="language", match=MatchValue(value="ar")),
+                            FieldCondition(key="case_name", match=MatchValue(value=case_name)),
+                        ]
+                    )
+                    results = client.query_points(
+                        collection_name="difc_precedents",
+                        query_filter=search_filter,
+                        limit=1,
+                        with_payload=True,
+                    )
+                    pts = results.points if hasattr(results, "points") else results
+                    return pts[0] if pts else None
+
+                ar_point = await asyncio.get_event_loop().run_in_executor(None, _find_ar_version)
+                if ar_point:
+                    point = ar_point  # use AR version
+
+        # Step 3: Fallback — search by case_id
         if not point:
             def _qdrant_filter_search():
-                search_filter = Filter(
-                    must=[FieldCondition(key="case_id", match=MatchValue(value=precedent_id))]
-                )
+                must_conditions = [
+                    FieldCondition(key="case_id", match=MatchValue(value=precedent_id))
+                ]
+                if language == "ar":
+                    must_conditions.append(
+                        FieldCondition(key="language", match=MatchValue(value="ar"))
+                    )
+                search_filter = Filter(must=must_conditions)
                 results = client.query_points(
                     collection_name="difc_precedents",
                     query_filter=search_filter,
@@ -408,8 +441,24 @@ class SimilarityService:
 
             point = await asyncio.get_event_loop().run_in_executor(None, _qdrant_filter_search)
 
+        # Step 4: Final fallback — any version regardless of language
         if not point:
-            logger.error(f"Precedent not found in difc_precedents: {precedent_id}")
+            def _fallback_search():
+                search_filter = Filter(
+                    must=[FieldCondition(key="case_id", match=MatchValue(value=precedent_id))]
+                )
+                results = client.query_points(
+                    collection_name="difc_precedents",
+                    query_filter=search_filter,
+                    limit=1,
+                    with_payload=True,
+                )
+                pts = results.points if hasattr(results, "points") else results
+                return pts[0] if pts else None
+
+            point = await asyncio.get_event_loop().run_in_executor(None, _fallback_search)
+
+        if not point:
             raise HTTPException(status_code=404, detail="Precedent not found")
 
         payload = point.payload if hasattr(point, "payload") else point.get("payload", {})
@@ -449,15 +498,18 @@ class SimilarityService:
         )
 
     async def precedent_chat(self, precedent_id: str, request: PrecedentChatRequest) -> PrecedentChatResponse:
-        """Start a conversation about a specific precedent (Gemini Primary, Qwen Fallback)."""
-        detail = await self.get_precedent(precedent_id)
+        """Interact with a specific precedent using AI chat (Language-Aware)."""
+        detail = await self.get_precedent(precedent_id, language=request.language)
         
-        # Detect language from the user's message
-        lang_hint = "Arabic" if any(ord(c) > 0x600 for c in request.message) else "English"
-
+        lang_instruction = (
+            "يجب أن تجيب باللغة العربية الفصحى القانونية فقط."
+            if request.language == 'ar'
+            else "Respond in English."
+        )
+        
         system_prompt = (
             f"You are a legal assistant analyzing the precedent case: {detail.title}.\n"
-            f"Answer in {lang_hint}.\n"
+            f"{lang_instruction}\n"
             "Answer the user's question BASED ONLY on the case text provided below.\n"
             "If the information is not in the text, say you don't know.\n\n"
             "CASE TEXT:\n"

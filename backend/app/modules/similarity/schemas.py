@@ -30,6 +30,7 @@ class PrecedentDetail(BaseModel):
 
 class PrecedentChatRequest(BaseModel):
     message: str
+    language: str = "en"
 
 
 class PrecedentChatResponse(BaseModel):

@@ -71,8 +71,8 @@ const PrecedentDetailPage: React.FC = () => {
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   const { data: precedent, isLoading, error } = useQuery({
-    queryKey: ['precedent', id],
-    queryFn: () => getPrecedent(id || ''),
+    queryKey: ['precedent', id, i18n.language],
+    queryFn: () => getPrecedent(id || '', i18n.language),
     enabled: !!id,
   })
 
@@ -89,7 +89,7 @@ const PrecedentDetailPage: React.FC = () => {
   })
 
   const chatMutation = useMutation({
-    mutationFn: (message: string) => chatWithPrecedent(id || '', message),
+    mutationFn: (message: string) => chatWithPrecedent(id || '', message, i18n.language),
     onSuccess: (data) => {
       setMessages((prev) => [...prev, { role: 'ai', content: data.response }])
     },
@@ -98,6 +98,11 @@ const PrecedentDetailPage: React.FC = () => {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Clear messages when language changes to avoid confusing bilingual chat history
+  useEffect(() => {
+    setMessages([])
+  }, [i18n.language])
 
   const handleSendMessage = () => {
     if (!chatMessage.trim() || chatMutation.isPending) return

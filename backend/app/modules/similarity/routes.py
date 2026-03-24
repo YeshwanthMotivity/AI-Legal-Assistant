@@ -30,12 +30,13 @@ async def find_similar_cases(
 @router.get("/precedents/{precedent_id}", response_model=PrecedentDetail)
 async def get_precedent_details(
     precedent_id: str,
+    language: str = "en",
     db: AsyncSession = Depends(get_db),
     _current_user: dict = Depends(require_role(UserRole.JUDGE, UserRole.ADMIN)),
 ):
     """Fetch full text and details of a specific precedent."""
     service = SimilarityService(db)
-    return await service.get_precedent(precedent_id)
+    return await service.get_precedent(precedent_id, language=language)
 
 
 @router.post("/precedents/{precedent_id}/chat", response_model=PrecedentChatResponse)

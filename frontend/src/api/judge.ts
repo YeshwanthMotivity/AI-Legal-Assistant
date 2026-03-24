@@ -301,17 +301,25 @@ export const submitFeedback = async (caseId: string, payload: FeedbackRequest) =
   return response.data
 }
 
-export const getPrecedent = async (precedentId: string): Promise<PrecedentDetail> => {
-  const response = await apiClient.get<PrecedentDetail>(`/precedents/${precedentId}`)
+export const getPrecedent = async (
+  precedentId: string,
+  language: string = 'en'
+): Promise<PrecedentDetail> => {
+  const response = await apiClient.get<PrecedentDetail>(
+    `/precedents/${precedentId}`,
+    { params: { language } }
+  )
   return response.data
 }
 
 export const chatWithPrecedent = async (
   precedentId: string,
-  message: string
+  message: string,
+  language: string = 'en'
 ): Promise<PrecedentChatResponse> => {
-  const response = await apiClient.post<PrecedentChatResponse>(`/precedents/${precedentId}/chat`, {
-    message,
-  })
+  const response = await apiClient.post<PrecedentChatResponse>(
+    `/precedents/${precedentId}/chat`,
+    { message, language }
+  )
   return response.data
 }
