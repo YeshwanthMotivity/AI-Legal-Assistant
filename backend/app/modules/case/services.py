@@ -197,6 +197,10 @@ class CaseService:
         feedback_result = await OrchestratorService(self.db).record_feedback(case_id, feedback_data, judge_id)
         return FeedbackResponse.model_validate(feedback_result)
 
+    async def delete_case(self, case_id: str) -> bool:
+        """Delete case by ID."""
+        return await self.case_repository.delete(case_id)
+
     @staticmethod
     def _parse_status(status: Optional[str]) -> Optional[CaseStatus]:
         if not status:

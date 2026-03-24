@@ -193,3 +193,22 @@ async def submit_feedback(
         )
     return await service.submit_feedback(case_id, feedback_data.model_dump(), current_user["sub"])
 
+
+@router.delete("/{case_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_case(
+    case_id: str,
+    db: AsyncSession = Depends(get_db),
+    service: CaseService = Depends(get_case_service),
+    current_user: dict = Depends(require_role(UserRole.ADMIN, UserRole.JUDGE))
+):
+    """Delete case."""
+    success = await service.delete_case(case_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Case not found"
+        )
+    from app.modules.audit.service import AuditService
+    await AuditService(db).log(current_user["sub"], "delete_case", "case", case_id)
+    return None
+

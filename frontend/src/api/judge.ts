@@ -243,6 +243,10 @@ export const getCase = async (caseId: string): Promise<CaseResponse> => {
   return response.data
 }
 
+export const deleteCase = async (caseId: string): Promise<void> => {
+  await apiClient.delete(`/cases/${caseId}`)
+}
+
 export const uploadCaseDocument = async (
   caseId: string,
   file: File,

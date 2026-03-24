@@ -306,7 +306,10 @@
       "compensationPlaceholder": "مبلغ اختياري",
       "reasoning": "ملاحظات التسبيب",
       "reasoningPlaceholder": "ملاحظات تسبيب اختيارية",
-      "validationEmpty": "نص الحكم لا يمكن أن يكون فارغاً."
+      "validationEmpty": "نص الحكم لا يمكن أن يكون فارغاً.",
+      "loadTemplate": "تحميل قالب",
+      "selectTemplate": "اختر قالباً",
+      "templateReplaceWarning": "سيؤدي هذا إلى استبدال محتوى المسودة الحالية. هل تريد المتابعة؟"
     },
     "feedback": {
       "legalRelevance": "الملاءمة القانونية",

@@ -9,8 +9,11 @@ import {
   Scale,
   DollarSign,
   MessageSquare,
-  Sparkles
+  Sparkles,
+  FileText,
+  ChevronDown
 } from 'lucide-react'
+import { buildTemplate, TEMPLATE_LABELS, TEMPLATE_LABELS_AR } from '@/constants/judgmentTemplates'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -20,6 +23,14 @@ interface JudgmentEditorProps {
   draftText: string
   confidence: number
   isSubmitting: boolean
+  caseType?: string
+  caseNumber?: string
+  claimantName?: string
+  respondentName?: string
+  filingDate?: string
+  lawArticles?: string[]
+  precedents?: string[]
+  outcome?: string
   onRegenerate: () => Promise<void>
   onFinalize: (payload: {
     judgmentText: string
@@ -35,15 +46,25 @@ const JudgmentEditor = ({
   draftText,
   confidence,
   isSubmitting,
+  caseType,
+  caseNumber,
+  claimantName,
+  respondentName,
+  filingDate,
+  lawArticles,
+  precedents,
+  outcome,
   onRegenerate,
   onFinalize,
 }: JudgmentEditorProps) => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [content, setContent] = useState(draftText)
   const [decision, setDecision] = useState('accept')
   const [compensationAmount, setCompensationAmount] = useState('')
   const [reasoning, setReasoning] = useState('')
   const [error, setError] = useState('')
+  const [showTemplatePanel, setShowTemplatePanel] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('')
 
   useEffect(() => {
     setContent(draftText)
@@ -75,6 +96,64 @@ const JudgmentEditor = ({
            <CardTitle className="text-lg">{t('judge.workspace.judgmentDraft')}</CardTitle>
         </div>
         
+        {/* Template Selector Button */}
+        <div className="relative">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-2 h-8 text-[11px] font-black uppercase border-primary/20 text-primary hover:bg-primary/5"
+            onClick={() => setShowTemplatePanel(!showTemplatePanel)}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            {t('judge.judgment.loadTemplate')}
+            <ChevronDown className={cn("w-3 h-3 transition-transform", showTemplatePanel && "rotate-180")} />
+          </Button>
+
+          {showTemplatePanel && (
+            <div className="absolute top-full mt-2 right-0 z-50 w-64 bg-card border rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
+              <div className="p-3 border-b bg-muted/20">
+                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">
+                  {t('judge.judgment.selectTemplate')}
+                </p>
+              </div>
+              <div className="p-2 space-y-1">
+                {Object.entries(i18n.language === 'ar' ? TEMPLATE_LABELS_AR : TEMPLATE_LABELS).map(([key, label]) => (
+                  <button
+                    key={key}
+                    className={cn(
+                      "w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors hover:bg-primary/5 hover:text-primary",
+                      selectedTemplate === key && "bg-primary/10 text-primary"
+                    )}
+                    onClick={() => {
+                      const hasContent = stripHtml(content).length > 20
+                      if (hasContent && !confirm(t('judge.judgment.templateReplaceWarning'))) {
+                        setShowTemplatePanel(false)
+                        return
+                      }
+                      const html = buildTemplate(key, {
+                        caseNumber: caseNumber || '',
+                        claimantName: claimantName || '',
+                        respondentName: respondentName || '',
+                        filingDate: filingDate || '',
+                        outcome,
+                        reasoning: undefined,
+                        lawArticles,
+                        precedents,
+                      })
+                      setContent(html)
+                      setSelectedTemplate(key)
+                      setShowTemplatePanel(false)
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="flex items-center gap-3 bg-card px-4 py-1.5 rounded-full border shadow-sm">
           <div className="flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-emerald-500" />

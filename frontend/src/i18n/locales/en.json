@@ -305,7 +305,10 @@
       "compensationPlaceholder": "Optional amount",
       "reasoning": "Reasoning Notes",
       "reasoningPlaceholder": "Optional reasoning notes",
-      "validationEmpty": "Judgment content cannot be empty."
+      "validationEmpty": "Judgment content cannot be empty.",
+      "loadTemplate": "Load Template",
+      "selectTemplate": "Select a Template",
+      "templateReplaceWarning": "This will replace the current draft content. Continue?"
     },
     "feedback": {
       "legalRelevance": "Legal Relevance",

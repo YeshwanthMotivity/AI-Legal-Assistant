@@ -32,6 +32,7 @@ import {
   submitFeedback,
   uploadCaseDocument,
   getPrecedent,
+  deleteCase,
 } from '../../api/judge'
 import { useCaseAnalysisPolling } from '../../hooks/useCaseAnalysisPolling'
 import type { DocumentType, FeedbackRequest, JudgmentRequest } from '../../types/judge'
@@ -72,6 +73,7 @@ const CaseDetail = () => {
   })
   const [localMessage, setLocalMessage] = useState('')
   const [messageType, setMessageType] = useState<'success' | 'error'>('success')
+  const [precedentSearch, setPrecedentSearch] = useState('')
 
   useEffect(() => {
     setAnalysisRequested(false)
@@ -158,6 +160,11 @@ const CaseDetail = () => {
     },
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteCase(id as string),
+    onSuccess: () => navigate('/judge/cases'),
+  })
+
   const analysis = analysisQuery.analysis?.analysis
   const isReady = analysis?.status === 'AIAnalysisReady'
   // Fix: use isFetching for active polling state, not isLoading (which is only true on first load)
@@ -167,6 +174,12 @@ const CaseDetail = () => {
 
   const lawArticles = analysis?.lawArticles ?? []
   const precedents = useMemo(() => (analysis?.similarPrecedents ?? []).slice(0, 5), [analysis?.similarPrecedents])
+  const filteredPrecedents = useMemo(() => 
+    precedents.filter((p: any) => 
+      !precedentSearch || 
+      p.title.toLowerCase().includes(precedentSearch.toLowerCase()) || 
+      p.caseId.toLowerCase().includes(precedentSearch.toLowerCase())
+    ), [precedents, precedentSearch])
   const entitlements = analysis?.entitlementBreakdown ?? []
 
   const getDocumentStatusClass = (status: string) => {
@@ -222,10 +235,24 @@ const CaseDetail = () => {
       
       {/* Action Header */}
       <div className="flex justify-between items-center mb-8">
-        <Button variant="ghost" onClick={() => navigate('/judge/cases')} className="gap-2 text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="w-4 h-4" />
-          {t('common.back')}
-        </Button>
+        <div className="flex gap-3">
+            <Link to="/judge/cases">
+              <Button variant="ghost" size="sm" className="gap-2 font-bold hover:bg-primary/5">
+                <ChevronLeft className="w-4 h-4" />
+                {t('common.back')}
+              </Button>
+            </Link>
+            <Button 
+              variant="destructive" 
+              size="sm"
+              className="gap-2 font-bold px-4 shadow-sm"
+              onClick={() => { if (window.confirm('Delete this case?')) deleteMutation.mutate() }}
+              disabled={deleteMutation.isPending}
+            >
+              <AlertCircle className="w-4 h-4 text-white" />
+              {deleteMutation.isPending ? "Deleting..." : "Delete Case"}
+            </Button>
+        </div>
         <div className="flex gap-3">
            <Button 
             variant="outline" 
@@ -396,10 +423,6 @@ const CaseDetail = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <div className="mb-8 p-4 bg-muted/10 rounded-xl border border-dashed text-sm italic text-muted-foreground leading-relaxed animate-in fade-in zoom-in-95 duration-700">
-                     <h6 className="text-[10px] font-black uppercase tracking-widest text-primary/50 mb-1">Executive Summary</h6>
-                     {analysis.summary || "Case analysis in progress..."}
-                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-4">
                        <h5 className="text-xs font-black uppercase tracking-widest text-primary/70">{t('judge.workspace.factsAndReasoning')}</h5>
@@ -427,16 +450,28 @@ const CaseDetail = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Precedents Card */}
               <Card className="shadow-sm border-border/50 overflow-hidden">
-                <CardHeader className="flex flex-row items-center justify-between bg-muted/10 border-b py-4">
-                  <div className="flex items-center gap-2">
-                    <Scale className="w-4 h-4 text-indigo-500" />
-                    <CardTitle className="text-sm">{t('judge.workspace.similarPrecedents')}</CardTitle>
+                  <CardHeader className="flex flex-row items-center justify-between bg-muted/10 border-b py-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <Scale className="w-4 h-4 text-indigo-500" />
+                      <CardTitle className="text-sm">{t('judge.workspace.similarPrecedents')}</CardTitle>
+                    </div>
+                    <div className="relative">
+                      <Plus className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                      <input
+                        type="text"
+                        placeholder="Search precedents..."
+                        className="pl-8 pr-3 py-1 bg-background border rounded-lg text-[10px] w-full sm:w-48 focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium"
+                        value={precedentSearch}
+                        onChange={(e) => setPrecedentSearch(e.target.value)}
+                      />
+                    </div>
                   </div>
                   <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-600 border-indigo-500/20">{t('judge.workspace.top5')}</Badge>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="divide-y divide-border/30">
-                      {precedents.map((item) => (
+                      {filteredPrecedents.map((item) => (
                         <div 
                           key={item.caseId}
                           className={cn(
@@ -543,6 +578,15 @@ const CaseDetail = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
+                    {entitlements.length > 0 && entitlements.every((e: any) => e.value.includes('0.00') || e.value === '0.00 years') && (
+                      <div className="p-5 mx-6 my-6 bg-amber-500/5 border border-dashed border-amber-500/20 rounded-xl text-[11px] text-amber-800 leading-relaxed italic flex items-start gap-3">
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <p>
+                          Salary and employment dates were not found in the uploaded documents. 
+                          Upload salary records or employment contracts to calculate entitlements accurately.
+                        </p>
+                      </div>
+                    )}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 divide-y divide-border/50 sm:divide-y-0">
                       {entitlements.map((entry, idx) => (
                         <div key={`${entry.label}-${idx}`} className="p-6 flex flex-col gap-1 hover:bg-muted/10 transition-colors border-r border-border/50 last:border-r-0">
@@ -560,7 +604,7 @@ const CaseDetail = () => {
               </Card>
             </div>
           </div>
-        ) : (
+          ) : (
             <Card className="shadow-sm border-border/50 border-dashed border-2 bg-muted/5">
                <CardContent className="py-24 text-center">
                   <BarChart3 className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
@@ -579,7 +623,7 @@ const CaseDetail = () => {
                   </Button>
                </CardContent>
             </Card>
-        )}
+          )}
 
           {/* AI Unavailability Warning */}
           {isUnavailable && (
@@ -602,16 +646,26 @@ const CaseDetail = () => {
                 <Scale className="w-5 h-5 text-primary" />
                 <h3 className="text-xl font-bold tracking-tight">Judgment Drafting Workspace</h3>
              </div>
-             <JudgmentEditor
-               draftText={analysis?.draftText ?? ''}
-               confidence={analysis?.confidence ?? 0}
-               isSubmitting={finalizeMutation.isPending}
-               onRegenerate={async () => {
-                 await runAnalysisMutation.mutateAsync()
-                 await analysisQuery.refetch()
-               }}
-               onFinalize={handleFinalize}
-             />
+              <JudgmentEditor
+                draftText={analysis?.draftText ?? ''}
+                confidence={analysis?.confidence ?? 0}
+                isSubmitting={finalizeMutation.isPending}
+                caseType={caseQuery.data?.case_type}
+                caseNumber={caseQuery.data?.case_number}
+                claimantName={caseQuery.data?.claimant_name ?? ''}
+                respondentName={caseQuery.data?.respondent_name ?? ''}
+                filingDate={caseQuery.data?.filing_date ?? ''}
+                lawArticles={analysis?.lawArticles?.map((a: any) =>
+                  typeof a === 'object' ? a.title : String(a)
+                )}
+                precedents={precedents.map(p => p.title)}
+                outcome={analysis?.outcome}
+                onRegenerate={async () => {
+                  await runAnalysisMutation.mutateAsync()
+                  await analysisQuery.refetch()
+                }}
+                onFinalize={handleFinalize}
+              />
           </div>
 
           {/* Feedback Section */}
