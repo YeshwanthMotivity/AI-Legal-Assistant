@@ -189,7 +189,15 @@ const DocumentUpload = () => {
               {jobs.length > 0 && (
                 <div className="p-6 bg-card space-y-4">
                   <div className="flex items-center justify-between mb-4">
-                     <h4 className="text-[11px] font-black uppercase text-muted-foreground tracking-widest">Queue ({jobs.length})</h4>
+                     <div>
+                        <h4 className="text-[11px] font-black uppercase text-muted-foreground tracking-widest">Queue ({jobs.length})</h4>
+                        {!selectedCaseId && (
+                           <p className="text-[9px] text-destructive font-bold flex items-center gap-1 mt-1 animate-pulse">
+                              <AlertCircle className="w-2.5 h-2.5" />
+                              {t('clerk.forms.selectCaseFirst')}
+                           </p>
+                        )}
+                     </div>
                      <Button 
                         size="sm" 
                         className="h-9 px-6 shadow-lg shadow-emerald-500/20 font-bold gap-2"
