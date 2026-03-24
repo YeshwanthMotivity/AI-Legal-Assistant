@@ -163,7 +163,6 @@ async def process_file(
     file_name = os.path.basename(file_path)
 
     # Check if already ingested
-    from app.modules.document.models import Document
     result = await db.execute(select(Document).where(Document.storage_key == file_path))
     existing = result.scalars().first()
     if existing:
@@ -176,7 +175,6 @@ async def process_file(
             # Note: In a production app you'd be more careful, but for a seeder this is fine.
             await db.delete(existing)
             # Find and delete the case if it was a seeded case
-            from app.modules.case.models import Case
             case_result = await db.execute(select(Case).where(Case.id == existing.case_id))
             existing_case = case_result.scalars().first()
             if existing_case:
