@@ -452,8 +452,12 @@ class SimilarityService:
         """Start a conversation about a specific precedent (Gemini Primary, Qwen Fallback)."""
         detail = await self.get_precedent(precedent_id)
         
+        # Detect language from the user's message
+        lang_hint = "Arabic" if any(ord(c) > 0x600 for c in request.message) else "English"
+
         system_prompt = (
             f"You are a legal assistant analyzing the precedent case: {detail.title}.\n"
+            f"Answer in {lang_hint}.\n"
             "Answer the user's question BASED ONLY on the case text provided below.\n"
             "If the information is not in the text, say you don't know.\n\n"
             "CASE TEXT:\n"

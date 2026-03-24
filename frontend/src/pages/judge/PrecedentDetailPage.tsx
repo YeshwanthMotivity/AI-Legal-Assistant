@@ -24,6 +24,17 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
+function renderMarkdown(text: string): React.ReactNode {
+  // Bold: **text** → <strong>
+  const parts = String(text || '').split(/(\*\*[^*]+\*\*)/g)
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="text-primary/90 font-black">{part.slice(2, -2)}</strong>
+    }
+    return part
+  })
+}
+
 function splitTranscript(text: string): string[] {
   let processed = text
   // Only numbered paragraphs
@@ -300,7 +311,7 @@ const PrecedentDetailPage: React.FC = () => {
                       ? "bg-primary text-primary-foreground border-transparent rounded-tr-none" 
                       : "bg-card border-border/50 rounded-tl-none"
                   )}>
-                    {msg.content}
+                    {renderMarkdown(msg.content)}
                   </div>
                 </div>
               ))}
