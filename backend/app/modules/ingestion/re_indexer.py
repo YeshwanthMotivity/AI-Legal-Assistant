@@ -16,6 +16,7 @@ except ImportError:
     pass
 from app.modules.ingestion.chunker_fixed import hybrid_chunk_legal_doc
 from app.modules.ingestion.embedder import embed_chunks
+from app.modules.ingestion.parser import LegalStructureParser
 from app.modules.ingestion.vector_store import upsert_chunks
 from app.modules.similarity.vector_store import upsert_case_summary
 
@@ -42,6 +43,7 @@ async def re_index_all():
                     continue
 
                 # 2. Extract structured data pattern (simulation for chunker)
+                parser = LegalStructureParser()
                 structured_data = {
                     "raw_text": doc.ocr_text,
                     "metadata": {
@@ -87,7 +89,7 @@ async def re_index_all():
                     m.update({
                         "case_id": doc.case_id,
                         "document_id": doc.id,
-                        "document_type": doc_type_str
+                        "document_type": doc_type_for_chunker
                     })
 
                 await upsert_chunks(
