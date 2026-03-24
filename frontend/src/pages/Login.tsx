@@ -93,16 +93,16 @@ const Login = () => {
                   <User className="w-3 h-3 text-primary" />
                   Credentials
                 </label>
-                <div className="relative">
+                <div className="relative flex items-center">
+                  <User className="absolute left-4 w-5 h-5 text-muted-foreground/30 group-focus-within:text-primary transition-colors z-10" />
                   <input
                     type="text"
                     placeholder="Judicial ID or Email"
-                    className="w-full bg-background border border-border/50 rounded-2xl pl-12 pr-4 py-4 text-sm text-foreground focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-bold placeholder:text-muted-foreground/30"
+                    className="w-full bg-background border border-border/50 rounded-2xl pl-14 pr-4 py-4 text-sm text-foreground focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-bold placeholder:text-muted-foreground/30"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
                   />
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/30 group-focus-within:text-primary transition-colors" />
                 </div>
               </div>
 
@@ -111,16 +111,16 @@ const Login = () => {
                    <Lock className="w-3 h-3 text-primary" />
                    {t('auth.password')}
                 </label>
-                <div className="relative">
+                <div className="relative flex items-center">
+                  <Lock className="absolute left-4 w-5 h-5 text-muted-foreground/30 group-focus-within:text-primary transition-colors z-10" />
                   <input
                     type="password"
                     placeholder="••••••••"
-                    className="w-full bg-background border border-border/50 rounded-2xl pl-12 pr-4 py-4 text-sm text-foreground focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-bold placeholder:text-muted-foreground/30"
+                    className="w-full bg-background border border-border/50 rounded-2xl pl-14 pr-4 py-4 text-sm text-foreground focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-bold placeholder:text-muted-foreground/30"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/30 group-focus-within:text-primary transition-colors" />
                 </div>
               </div>
 
@@ -158,15 +158,18 @@ const Login = () => {
                  <Info className="w-3.5 h-3.5 text-muted-foreground" />
                  <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Environment Access</span>
               </div>
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-1 gap-2.5">
                 {[
                   { role: 'judge', pass: 'judge', color: 'bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 border-indigo-500/10' },
                   { role: 'clerk', pass: 'clerk', color: 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border-emerald-500/10' },
                   { role: 'admin', pass: 'admin', color: 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 border-amber-500/10' }
                 ].map(({ role, pass, color }) => (
-                  <div key={role} className={cn("flex items-center justify-between p-3 rounded-xl border", color)}>
-                     <span className="text-[10px] font-black uppercase">{role}</span>
-                     <span className="text-[10px] font-bold opacity-60">{pass}</span>
+                  <div key={role} className={cn("grid grid-cols-[100px_1fr] items-center p-3 px-5 rounded-xl border transition-colors", color)}>
+                     <span className="text-[10px] font-black uppercase tracking-widest">{role}</span>
+                     <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold opacity-40">PASSWORD:</span>
+                        <span className="text-[10px] font-black tracking-widest">{pass}</span>
+                     </div>
                   </div>
                 ))}
               </div>

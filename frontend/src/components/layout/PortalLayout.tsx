@@ -16,7 +16,8 @@ import {
   Settings,
   Bell,
   PanelLeftClose,
-  PanelLeft
+  PanelLeft,
+  Scale
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import LanguageToggle from '../LanguageToggle'
@@ -108,8 +109,8 @@ const PortalLayout = ({ title, subtitle, children }: PortalLayoutProps) => {
         )}
       >
         <div className="p-8 flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center text-primary-foreground font-black text-xl shadow-lg transition-transform hover:scale-105 active:scale-95">
-            L
+          <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95">
+            <Scale className="w-6 h-6" />
           </div>
           <span className="font-black text-xl tracking-tighter text-gradient">{t('common.appName')}</span>
         </div>
