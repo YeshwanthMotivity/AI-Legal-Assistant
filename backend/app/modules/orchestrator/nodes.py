@@ -74,16 +74,14 @@ def _resolve_law_title(l: dict) -> str:
     # Priority 3: Formatted Law Name
     return raw_name.replace("-", " ").replace("_", " ").title()
 
-def _extract_article_title(raw_text: str, fallback_category: str) -> str:
-    """Extracts Article N or Article N(x) from raw text."""
-    if not raw_text:
-         return CATEGORY_DISPLAY_NAMES.get(fallback_category, fallback_category.replace("_", " ").replace("-", " ").title())
-    
-    # Try to find "Article N" or "Article N(x)" at start of text
-    match = re.search(r'(Article\s+\d+[\w()]*(?:\s*[-–]\s*[\w\s]{3,40})?)', raw_text[:300])
+def _extract_article_title(raw_text: str, category: str) -> str:
+    # Search entire chunk for "Article N" pattern
+    match = re.search(r'\b(Article\s+\d+[\w()]*(?:\s*[-–:]\s*[\w\s]{3,50})?)', raw_text)
     if match:
-        return match.group(1).strip()
-    
+        found = match.group(1).strip()
+        # Validate it's a real article reference, not noise
+        if len(found) > 8 and not found.endswith('('):
+            return found
     # Fall back to category display name
     return CATEGORY_DISPLAY_NAMES.get(fallback_category, 
            fallback_category.replace("_", " ").replace("-", " ").title())
@@ -627,24 +625,19 @@ def _flatten_to_text(data: Any, indent: int = 0) -> str:
 
 
 def _select_model(state: AnalysisState) -> tuple[str, str, float]:
-    """Determines the best model for the case complexity."""
+    """Determines the best model for the case complexity (Fast Qwen 1.5B)."""
     precedents = state.get("precedents", [])
     laws = state.get("laws", [])
     
-    # Base complexity score
+    # Simple complexity scoring kept for potential future routing, but now standardizing on Qwen-2.5 1.5B.
     complexity_score = 0.3
     if len(precedents) > 3: complexity_score += 0.2
     if len(laws) > 5: complexity_score += 0.2
     if len(state.get("context", {}).get("case_metadata", {}).get("description", "")) > 1000:
         complexity_score += 0.2
         
-    # Qwen (fast) as primary, JAIS (robust) for HIGH complexity cases (>0.7)
-    if complexity_score > 0.7:
-        model_url = settings.ollama_url
-        model_label = "jwnder/jais-adaptive:7b"
-    else:
-        model_url = settings.ollama_url
-        model_label = "qwen2.5:1.5b-instruct"
+    model_url = settings.ollama_url
+    model_label = "qwen2.5:1.5b-instruct"
         
     return model_url, model_label, complexity_score
 
@@ -712,63 +705,6 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             data = response.json()
             return str(data.get("response", ""))
 
-    async def _call_gemini(system: str, user: str) -> str:
-        if not settings.gemini_api_key:
-            raise ValueError("Gemini API key not configured")
-        
-        # Try v1beta first, then v1 if 404
-        versions = ["v1beta", "v1"]
-        last_error = None
-
-        for version in versions:
-            url = f"https://generativelanguage.googleapis.com/{version}/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
-            
-            # v1 does not support system_instruction field
-            if version == "v1beta":
-                payload = {
-                    "system_instruction": {"parts": [{"text": system}]},
-                    "contents": [{"parts": [{"text": user}]}],
-                    "generationConfig": {
-                        "temperature": 0.1,
-                        "maxOutputTokens": NODE_TOKEN_LIMITS["reasoning"],
-                        "responseMimeType": "application/json"
-                    }
-                }
-            else:
-                # Fallback for v1: Merge system instruction into the user content
-                payload = {
-                    "contents": [{"parts": [{"text": f"SYSTEM INSTRUCTION:\n{system}\n\nUSER PROMPT:\n{user}"}]}],
-                    "generationConfig": {
-                        "temperature": 0.1,
-                        "maxOutputTokens": NODE_TOKEN_LIMITS["reasoning"]
-                    }
-                }
-            
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                try:
-                    logger.info(f"reasoning_agent_node: calling Gemini ({settings.gemini_model}) via {version}")
-                    response = await client.post(url, json=payload)
-                    
-                    if response.status_code == 404:
-                        logger.warning(f"Gemini {version} returned 404 for model {settings.gemini_model}. Trying next version...")
-                        continue
-                        
-                    response.raise_for_status()
-                    data = response.json()
-                    return data["candidates"][0]["content"]["parts"][0]["text"]
-                except httpx.HTTPStatusError as e:
-                    last_error = e
-                    if e.response.status_code == 429:
-                        logger.error(f"Gemini Rate Limit (429) hit for key ending in ...{settings.gemini_api_key[-4:]}")
-                    continue
-                except (KeyError, IndexError):
-                    logger.error(f"Gemini response parsing failed for {version}: {data}")
-                    raise ValueError(f"Invalid Gemini response format in {version}")
-                except Exception as e:
-                    last_error = e
-                    continue
-        
-        raise last_error or ValueError(f"Gemini call failed for all tried versions ({', '.join(versions)})")
 
     # ── 5. JSON parsing helpers ───────────────────────────────────────────────
     # (parsing logic stays same)
@@ -855,21 +791,10 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             "complexity_score":  round(complexity_score, 2),
         }
 
-    # ── 6. Execution: Gemini (Primary) → Qwen-1.5B (Fallback) ──────────────────
-    
-    # Try Gemini first
-    if settings.gemini_api_key:
-        try:
-            content = await _call_gemini(system_prompt, user_prompt)
-            return _normalize_reasoning(content, f"gemini:{settings.gemini_model}", "ok")
-        except Exception as e:
-            logger.error(f"Gemini reasoning failed: {repr(e)}. Falling back to local Qwen.")
-
-    # Fallback to Qwen via Ollama
-    fallback_model = "qwen2.5:1.5b-instruct"
+    # Execute Qwen 1.5B via Ollama
     try:
-        content = await _call_ollama(settings.ollama_url, 120, fallback_model)
-        return _normalize_reasoning(content, fallback_model, "fallback_ok")
+        content = await _call_ollama(settings.ollama_url, 120, model_label)
+        return _normalize_reasoning(content, model_label, "ok")
     except Exception as e:
         return _error_result(state, start_time, complexity_score, repr(e))
 
@@ -930,20 +855,11 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
         if _is_hallucination(title) or _is_hallucination(content):
             return None
             
-        # Fix B: Truncate content after first complete sentence for readability
-        # Find first period after 80 chars minimum to avoid tiny fragments
-        period_pos = content.find('. ', 80)
-        if period_pos > 0 and period_pos < 300:
-            short_content = content[:period_pos + 1]
-        else:
-            # Fallback to character truncation if no sentence end found
-            max_chars = 200
-            if len(content) > max_chars:
-                short_content = content[:max_chars].rsplit(' ', 1)[0] + '...'
-            else:
-                short_content = content
+        # Fix: use first complete sentence for better clarity
+        period_pos = content.find('. ')
+        short_content = content[:period_pos + 1] if period_pos > 30 else (content[:200] + "...")
             
-        return {"title": title, "content": short_content or content}
+        return {"title": title, "content": short_content}
 
     raw_laws = reasoning.get("cited_laws") or state.get("laws", [])
     # Filter out Nones from the list comprehension

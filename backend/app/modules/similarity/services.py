@@ -414,9 +414,14 @@ class SimilarityService:
 
         payload = point.payload if hasattr(point, "payload") else point.get("payload", {})
         
-        # Improved summary extraction: grab first substantive sentence containing parties or outcome
+        # Improved summary extraction: grab facts_summary or description
         raw_text = payload.get("raw_text") or payload.get("text") or ""
-        summary = payload.get("summary") or payload.get("brief") or payload.get("description")
+        summary = (
+            payload.get("facts_summary") or 
+            payload.get("summary") or 
+            payload.get("brief") or 
+            payload.get("description")
+        )
         
         if not summary and raw_text:
             # Look for first sentence with at least 40 chars
@@ -427,6 +432,8 @@ class SimilarityService:
                     break
             if not summary:
                 summary = raw_text[:200].rsplit(' ', 1)[0] + "..."
+        elif summary:
+            summary = _cleanse_text(summary)
 
         return PrecedentDetail(
             id=precedent_id,
@@ -453,54 +460,7 @@ class SimilarityService:
             f"{detail.text}"
         )
         
-        # 1. Try Gemini (Primary)
-        if settings.gemini_api_key:
-            # Try v1beta then v1
-            versions = ["v1beta", "v1"]
-            last_error = None
-            
-            for version in versions:
-                url = f"https://generativelanguage.googleapis.com/{version}/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
-                
-                if version == "v1beta":
-                    payload = {
-                        "system_instruction": {"parts": [{"text": system_prompt}]},
-                        "contents": [{"parts": [{"text": request.message}]}],
-                        "generationConfig": {
-                            "temperature": 0.1,
-                            "maxOutputTokens": 2048,
-                        }
-                    }
-                else:
-                    payload = {
-                        "contents": [{"parts": [{"text": f"SYSTEM INSTRUCTION:\n{system_prompt}\n\nUSER PROMPT:\n{request.message}"}]}],
-                        "generationConfig": {
-                            "temperature": 0.1,
-                            "maxOutputTokens": 2048,
-                        }
-                    }
-
-                try:
-                    async with httpx.AsyncClient(timeout=60.0) as client:
-                        logger.info(f"precedent_chat: calling Gemini ({settings.gemini_model}) via {version}")
-                        response = await client.post(url, json=payload)
-                        
-                        if response.status_code == 404:
-                            continue
-                            
-                        response.raise_for_status()
-                        data = response.json()
-                        answer = data["candidates"][0]["content"]["parts"][0]["text"]
-                        return PrecedentChatResponse(response=answer)
-                except Exception as e:
-                    logger.error(f"Gemini {version} attempt failed: {repr(e)}")
-                    last_error = e
-                    continue
-            
-            if last_error:
-                logger.error(f"Gemini Precedent Chat failed after trying all versions. Falling back to local model.")
-
-        # 2. Fallback to Ollama (Qwen)
+        # Use Ollama (Qwen) as primary
         async with httpx.AsyncClient(timeout=300.0) as client:
             try:
                 url = f"{settings.ollama_url}/api/chat"
@@ -524,3 +484,11 @@ class SimilarityService:
                 logger.error(f"Precedent chat fallback failed: {e}")
                 raise HTTPException(status_code=502, detail=f"AI service failed to respond: {str(e)}")
 
+def _cleanse_text(text: Any) -> str:
+    """Helper to remove common artifacts from AI generated text."""
+    if not text: return ""
+    text = str(text).strip()
+    # Remove markdown code blocks
+    text = re.sub(r"```(?:json)?\s*([\s\S]*?)\s*```", r"\1", text)
+    text = text.replace('```', '')
+    return text.strip()

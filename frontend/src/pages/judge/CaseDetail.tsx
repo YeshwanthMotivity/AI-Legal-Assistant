@@ -457,12 +457,13 @@ const CaseDetail = () => {
               </Card>
 
               {/* Law Articles Card */}
-              <Card className="shadow-lg border-border/50 overflow-hidden">
-                <CardHeader className="flex flex-row items-center justify-between bg-amber-500/5 border-b py-4 px-6">
+              <Card className="shadow-lg border-border/50 overflow-hidden group/laws">
+                <CardHeader className="flex flex-row items-center justify-between bg-amber-500/5 border-b py-4 px-6 group-hover/laws:bg-amber-500/10 transition-colors">
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-5 h-5 text-amber-600" />
-                    <CardTitle className="text-sm font-black uppercase tracking-widest">{t('judge.workspace.lawArticles')}</CardTitle>
+                    <CardTitle className="text-sm font-black uppercase tracking-widest text-amber-900/80 dark:text-amber-100/80">{t('judge.workspace.lawArticles')}</CardTitle>
                   </div>
+                  <Badge variant="outline" className="text-[10px] font-bold border-amber-200 text-amber-700 bg-amber-50/50 px-2 uppercase tracking-tighter">UAE Labor Law</Badge>
                 </CardHeader>
                 <CardContent className="p-6">
                     <div className="grid grid-cols-1 gap-4">
@@ -476,14 +477,15 @@ const CaseDetail = () => {
                           : "Citations mapped from primary case analysis.";
                         
                         return (
-                          <div key={idx} className="bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/10 dark:border-amber-500/20 p-4 rounded-2xl hover:shadow-lg transition-all group/article">
+                          <div key={idx} className="bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/10 dark:border-amber-500/20 p-5 rounded-2xl hover:shadow-md hover:border-amber-500/30 transition-all group/article relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-amber-500/20 group-hover/article:bg-amber-500 transition-colors" />
                             <div className="flex items-center gap-2.5 mb-2.5">
-                               <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-                               <h5 className="font-black text-amber-700 dark:text-amber-400 text-[11px] uppercase tracking-tight group-hover/article:text-primary transition-colors">
+                               <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+                               <h5 className="font-black text-amber-800 dark:text-amber-300 text-[11px] uppercase tracking-wide group-hover/article:text-primary transition-colors">
                                  {title.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
                                </h5>
                             </div>
-                            <p className="text-[12px] text-muted-foreground leading-relaxed italic font-medium line-clamp-3">
+                            <p className="text-[12px] text-muted-foreground leading-relaxed italic font-medium line-clamp-3 group-hover/article:text-foreground transition-colors">
                               {content}
                             </p>
                           </div>

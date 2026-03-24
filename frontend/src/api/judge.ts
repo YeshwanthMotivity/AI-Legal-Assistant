@@ -209,12 +209,23 @@ const normalizeCaseAnalysis = (raw: RawCaseAnalysisResponse): CaseAnalysisRespon
   const confidence = confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw
   const draftSource = String(analysis.draft_text ?? reasoning.draft_judgment ?? '')
 
+  const reasoningText = typeof analysis.reasoning === 'string' 
+    ? analysis.reasoning 
+    : String(reasoning.reasoning ?? '')
+
+  // Derive summary from first 2 sentences of reasoning
+  const summarySentences = reasoningText.split('. ').slice(0, 2).join('. ') + (reasoningText.includes('. ') ? '.' : '')
+
   return {
     case_id: raw.case_id,
     analysis: {
       status: String(analysis.status ?? 'not_found'),
       outcome: analysis.outcome,
-      reasoning: typeof analysis.reasoning === 'string' ? analysis.reasoning : String(reasoning.reasoning ?? ''),
+      summary: summarySentences || undefined,
+      facts: reasoningText 
+        ? reasoningText.split('. ').filter(s => s.length > 20).slice(0, 5)
+        : [],
+      reasoning: reasoningText,
       lawArticles: extractLawArticles(explainability, analysis.cited_laws ?? reasoning.cited_laws),
       similarPrecedents: extractSimilarPrecedents(explainability, analysis.cited_cases ?? reasoning.cited_cases),
       entitlementBreakdown: extractEntitlements(explainability),

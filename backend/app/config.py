@@ -39,18 +39,9 @@ class Settings(BaseSettings):
     ollama_url: str = "http://localhost:11434"
     bge_m3_url: str = "http://bge_m3:8001"
     bge_reranker_url: str = "http://bge_reranker:8002"
-    jais_url: str = "http://jais:8003"
-    fallback_model_url: str = "http://fallback_model:8004"
-    jais_timeout_seconds: int = 180
-    enable_sparse_search: bool = False
-    embedding_dimension: int = 384
-    ollama_model_primary: str = "jwnder/jais-adaptive:7b"
+    ollama_model_primary: str = "qwen2.5:1.5b-instruct"
     ollama_model_fallback: str = "qwen2.5:1.5b-instruct"
     ollama_timeout_seconds: int = 120
-    
-    # Gemini
-    gemini_api_key: str | None = Field(default=None, env="GEMINI_API_KEY")
-    gemini_model: str = "gemini-2.0-flash"
     
     # Application
     debug: bool = True
