@@ -210,7 +210,7 @@ async def process_file(
         file_name=file_name,
         storage_key=file_path,
         mime_type="application/pdf",
-        document_type=doc_type,
+        document_type=doc_type.value if hasattr(doc_type, 'value') else doc_type,
         processing_status=ProcessingStatus.PENDING
     )
     db.add(new_doc)
@@ -223,7 +223,7 @@ async def process_file(
             case_id=case_id,
             storage_key=file_path,
             mime_type="application/pdf",
-            doc_type=doc_type.value, # Pass string value to pipeline
+            doc_type=doc_type.value if hasattr(doc_type, 'value') else doc_type, # Pass string value to pipeline
             db=db,
             collection_name=collection_name,
             extra_metadata=extra_metadata
