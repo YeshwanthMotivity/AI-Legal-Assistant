@@ -1,4 +1,11 @@
 {
+  "landing": {
+    "lexAi": "LexAI",
+    "suite": "Legal Intelligence Suite",
+    "insights": "Intelligent Legal Insights <br/>Powered by UAE Law.",
+    "accuracy": "Legal Accuracy",
+    "statutes": "Statutes Indexed"
+  },
   "common": {
     "welcome": "Welcome",
     "appName": "AI Judicial Assistant",
@@ -21,6 +28,15 @@
   },
   "auth": {
     "login": "Login",
+    "institutionalEmail": "Institutional Email / ID",
+    "accessKey": "Access Key",
+    "forgot": "Forgot?",
+    "authenticating": "Authenticating...",
+    "executeAccess": "Execute Access",
+    "envAccessCredentials": "Environment Access Credentials",
+    "newToLexAi": "New to LexAI?",
+    "establishAccount": "Establish Institutional Account",
+    "legalIntelligence": "Enter your credentials to access legal intelligence",
     "logout": "Logout",
     "username": "Username",
     "password": "Password",

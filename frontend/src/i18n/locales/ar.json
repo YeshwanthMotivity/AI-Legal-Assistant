@@ -1,4 +1,11 @@
 {
+  "landing": {
+    "lexAi": "LexAI",
+    "suite": "باقة الذكاء القانوني",
+    "insights": "رؤى قانونية ذكية <br/>مدعومة بالقانون الإماراتي.",
+    "accuracy": "الدقة القانونية",
+    "statutes": "قوانين مفهرسة"
+  },
   "common": {
     "welcome": "مرحباً",
     "appName": "المساعد القضائي الذكي",
@@ -21,6 +28,15 @@
   },
   "auth": {
     "login": "تسجيل الدخول",
+    "institutionalEmail": "البريد الإلكتروني المؤسسي / المعرف",
+    "accessKey": "مفتاح الوصول",
+    "forgot": "هل نسيت؟",
+    "authenticating": "جاري المصادقة...",
+    "executeAccess": "تنفيذ الوصول",
+    "envAccessCredentials": "بيانات اعتماد بيئة الوصول",
+    "newToLexAi": "هل أنت جديد في LexAI؟",
+    "establishAccount": "إنشاء حساب مؤسسي",
+    "legalIntelligence": "أدخل بيانات الاعتماد للوصول إلى الذكاء القانوني",
     "logout": "تسجيل الخروج",
     "username": "اسم المستخدم",
     "password": "كلمة المرور",
