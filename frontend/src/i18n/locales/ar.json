@@ -230,6 +230,7 @@
       "caseType": "نوع القضية"
     },
     "workspace": {
+      "caseType": "نوع القضية",
       "title": "مساحة عمل القضية",
       "caseOverview": "نظرة عامة على القضية",
       "executiveSummary": "ملخص تنفيذي",

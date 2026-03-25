@@ -230,6 +230,7 @@
       "caseType": "Case Type"
     },
     "workspace": {
+      "caseType": "Case Type",
       "title": "Case Workspace",
       "caseOverview": "Case Overview",
       "executiveSummary": "Executive Summary",
