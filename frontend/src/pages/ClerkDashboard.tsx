@@ -88,7 +88,7 @@ export default function ClerkDashboard(): ReactNode {
                  {t('clerk.dashboard.ingestionDesc')}
               </p>
               <Link to="/clerk/documents">
-                <Button variant="secondary" className="w-full h-11 border-emerald-500/20 text-emerald-700 bg-emerald-500/5 hover:bg-emerald-500/10 gap-2 font-bold">
+                <Button variant="secondary" className="w-full h-11 border-emerald-500/20 text-emerald-700 dark:text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10 gap-2 font-bold">
                    {t('clerk.dashboard.startBulkUpload')}
                 </Button>
               </Link>

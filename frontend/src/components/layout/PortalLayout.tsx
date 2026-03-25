@@ -31,6 +31,7 @@ interface PortalLayoutProps {
   subtitle?: string
   children: ReactNode
   hideSidebar?: boolean
+  hideHeaderContent?: boolean
 }
 
 interface SidebarItemProps {
@@ -59,7 +60,7 @@ const SidebarItem = ({ icon: Icon, label, href, active, collapsed }: SidebarItem
   </NavLink>
 );
 
-const PortalLayout = ({ title, subtitle, children, hideSidebar = false }: PortalLayoutProps) => {
+const PortalLayout = ({ title, subtitle, children, hideSidebar = false, hideHeaderContent = false }: PortalLayoutProps) => {
   const { t, i18n } = useTranslation()
   const { user, logout } = useAuth()
   const location = useLocation()
@@ -138,10 +139,10 @@ const PortalLayout = ({ title, subtitle, children, hideSidebar = false }: Portal
           <div className="px-6 py-5 mx-4 mb-6 rounded-3xl bg-primary/5 border border-primary/10 glass-strong">
             <div className="flex items-center gap-2.5 mb-2.5">
                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-               <span className="text-[10px] font-black uppercase tracking-widest text-primary">AI Reasoning Node</span>
+               <span className="text-[10px] font-black uppercase tracking-widest text-primary">{t('judge.judgment.aiReasoningNode')}</span>
             </div>
             <p className="text-[10px] text-muted-foreground/80 leading-relaxed font-medium">
-               Synthesizing deep legal insights via <span className="text-primary font-bold">BGE-M3</span> & <span className="text-primary font-bold">Qdrant</span> technology.
+               {t('judge.judgment.aiReasoningDesc')}
             </p>
           </div>
 
@@ -175,30 +176,27 @@ const PortalLayout = ({ title, subtitle, children, hideSidebar = false }: Portal
         )}
       >
         {/* Header Enhancement */}
-        <header className="sticky top-0 z-30 w-full glass-strong border-b px-10 py-5 flex justify-between items-center h-[88px]">
-          <div className="animate-in fade-in slide-in-from-top-2 duration-500">
-            <h1 className="text-3xl font-black tracking-tighter text-gradient leading-none">
-              {title}
-            </h1>
-            {subtitle && (
-              <p className="text-xs text-muted-foreground font-bold mt-1.5 opacity-70 italic">
-                {subtitle}
-              </p>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-8">
-            <div className="hidden lg:flex items-center gap-5 text-muted-foreground/40">
-              <Search className="w-5 h-5 cursor-pointer hover:text-primary transition-all hover:scale-110 active:scale-95" />
-              <Bell className="w-5 h-5 cursor-pointer hover:text-primary transition-all hover:scale-110 active:scale-95" />
-              <Settings className="w-5 h-5 cursor-pointer hover:text-primary transition-all hover:scale-110 active:scale-95" />
+        {!hideHeaderContent && (
+          <header className="sticky top-0 z-30 w-full glass-strong border-b px-10 py-5 flex justify-between items-center h-[88px]">
+            <div className="animate-in fade-in slide-in-from-top-2 duration-500">
+              <h1 className="text-3xl font-black tracking-tighter text-gradient leading-none">
+                {title}
+              </h1>
+              {subtitle && (
+                <p className="text-xs text-muted-foreground font-bold mt-1.5 opacity-70 italic">
+                  {subtitle}
+                </p>
+              )}
             </div>
-            <div className="flex items-center gap-4 border-l border-border/40 pl-8 h-10">
-              <ThemeToggle />
-              <LanguageToggle />
+            
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-4 border-border/40 h-10">
+                <ThemeToggle />
+                <LanguageToggle />
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
+        )}
 
         {/* Page Content Container */}
         <div className="p-10 max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -210,4 +208,3 @@ const PortalLayout = ({ title, subtitle, children, hideSidebar = false }: Portal
 }
 
 export default PortalLayout
-
