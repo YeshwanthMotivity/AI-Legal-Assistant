@@ -334,7 +334,7 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
                     "title": payload.get("case_name") or payload.get("title") or "Unknown Case",
                     "year": payload.get("year", "N/A"),
                     "category": payload.get("category", "Unspecified"),
-                    "text": payload.get("raw_text", "")[:500],
+                    "text": payload.get("raw_text", "")[:2000],
                     "score": score
                 })
         duration = time.time() - start_time
@@ -860,7 +860,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         result["complexity_score"] = round(complexity_score, 2)
 
         # Build final state payload
-        law_articles = [_resolve_law_title(l) for l in state.get("laws", []) if l.get("law_name") or l.get("category")]
+        law_articles = [l for l in state.get("laws", []) if l.get("law_name") or l.get("category") or l.get("content")]
         
         similar_precedents = [
             {
