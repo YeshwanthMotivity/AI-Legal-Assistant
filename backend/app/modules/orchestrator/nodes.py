@@ -377,11 +377,11 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
                 try:
                     # Primary: Groq
                     parsed = None
-                    if settings.groq_api_key:
+                    if settings.groq_api_key1:
                         try:
                             resp = await client.post(
                                 "https://api.groq.com/openai/v1/chat/completions",
-                                headers={"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"},
+                                headers={"Authorization": f"Bearer {settings.groq_api_key1}", "Content-Type": "application/json"},
                                 json={
                                     "model": settings.groq_model,
                                     "response_format": {"type": "json_object"},
@@ -573,11 +573,11 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
                 item["content"] = _strip_noise(item["content"])
                 # Primary: Groq
                 parsed = None
-                if settings.groq_api_key:
+                if settings.groq_api_key1:
                     try:
                         resp = await client.post(
                             "https://api.groq.com/openai/v1/chat/completions",
-                            headers={"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"},
+                            headers={"Authorization": f"Bearer {settings.groq_api_key1}", "Content-Type": "application/json"},
                             json={
                                 "model": settings.groq_model,
                                 "response_format": {"type": "json_object"},
@@ -1132,46 +1132,49 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
     # Align with keys expected by OrchestratorService.run_analysis and get_case_analysis
     # Use search results from state if the LLM didn't provide specific citations
     # Ensure law articles are always objects with title/content
-    def _to_article_obj(item):
+    def _to_precedent_obj(item):
         if not item: return None
-        
-        # If it's a dict, extract fields
         if isinstance(item, dict):
-            # Use resolved title
-            raw_title = _resolve_law_title(item)
-            raw_content = item.get("content") or item.get("text") or item.get("summary") or "Citation mapped from analysis."
-            
-            title = _cleanse_text(raw_title)
-            content = _cleanse_text(raw_content)
-        else:
-            # It's a string
-            title = str(item)
-            content = "Citations mapped from primary case analysis."
+            return {
+                "caseId": item.get("case_id") or item.get("id"),
+                "title": item.get("case_name") or item.get("title") or "Unknown Case",
+                "similarityScore": item.get("score") or item.get("similarity_score") or 1.0
+            }
+        return {
+            "caseId": None,
+            "title": str(item),
+            "similarityScore": 1.0
+        }
             
         # Case-insensitive filter
-        if _is_hallucination(title) or _is_hallucination(content):
-            return None
-            
-        # Use up to 400 chars, ending at a sentence boundary if possible
-        if len(content) <= 400:
-            short_content = content
+        return {"title": title, "content": short_content}
+
+    def _to_article_obj(item):
+        if not item: return None
+        if isinstance(item, dict):
+            raw_title = _resolve_law_title(item)
+            raw_content = item.get("content") or item.get("text") or item.get("summary") or "Citation mapped from analysis."
+            title, content = _cleanse_text(raw_title), _cleanse_text(raw_content)
         else:
-            period_pos = content.find('. ', 200)  # Find sentence end after 200 chars
-            short_content = content[:period_pos + 1] if period_pos > 0 else content[:400] + "..."
-            
+            title, content = str(item), "Citations mapped from primary case analysis."
+        if _is_hallucination(title) or _is_hallucination(content): return None
+        short_content = content[:400] + "..." if len(content) > 400 else content
         return {"title": title, "content": short_content}
 
     raw_laws = reasoning.get("cited_laws") or state.get("laws", [])
     # Filter out Nones from the list comprehension
     law_articles = [obj for l in raw_laws if (obj := _to_article_obj(l)) is not None]
 
+    raw_precedents = reasoning.get("cited_cases") or state.get("precedents", [])
+    similar_precedents = [obj for p in raw_precedents if (obj := _to_precedent_obj(p)) is not None]
+
     explainability = {
         "summary": reasoning.get("summary", ""),
         "facts": reasoning.get("facts", []),
         "law_articles": law_articles,
-        "laws": law_articles, # Duplicate for frontend compatibility
-        "similar_precedents": reasoning.get("cited_cases") or state.get("precedents", []),
-        "similarPrecedents": reasoning.get("cited_cases") or state.get("precedents", []), # Frontend compatibility
+        "laws": law_articles,
+        "similar_precedents": similar_precedents,
+        "similarPrecedents": similar_precedents,
         "evidence_chunks": [item.get("chunk_text", "") for item in state.get("search_results", [])],
         "confidence_score": (lambda c: c/100.0 if c > 1.0 else c)(float(str(reasoning.get("confidence", 0.85)).replace("%","") or 0.85)),
     }
