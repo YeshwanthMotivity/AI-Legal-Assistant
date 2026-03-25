@@ -331,7 +331,11 @@
       "launchWorkbench": "تشغيل منضدة الذكاء الاصطناعي",
       "finalJudgmentOrchestrator": "منسق الحكم النهائي",
       "finalJudgmentOrchestratorDesc": "تركيب جميع مجموعات الذكاء في مسودة ملزمة قانونياً.",
-      "strongMatch": "تطابق قوي"
+      "strongMatch": "تطابق قوي",
+      "deleteCase": "حذف القضية",
+      "deleteCaseTitle": "بروتوكول شطب سجل النظام",
+      "deleteCaseDesc": "تحذير: هذا الإجراء سيقوم بشطب سجل القضية وجميع بيانات الذكاء المرتبطة بها نهائياً من أرشيف مركز دبي المالي العالمي. لا يمكن التراجع عن هذا الإجراء.",
+      "confirmDelete": "تأكيد الشطب"
     },
     "documentStatus": {
       "pending": "قيد الانتظار",
@@ -384,7 +388,25 @@
       "validationEmpty": "نص الحكم لا يمكن أن يكون فارغاً.",
       "loadTemplate": "تحميل قالب",
       "selectTemplate": "اختر قالباً",
-      "templateReplaceWarning": "سيؤدي هذا إلى استبدال محتوى المسودة الحالية. هل تريد المتابعة؟"
+      "templateReplaceWarning": "سيؤدي هذا إلى استبدال محتوى المسودة الحالية. هل تريد المتابعة؟",
+      "judicialRecordEditor": "محرر السجل القضائي",
+      "manualReviewFinalization": "المراجعة اليدوية والاعتماد النهائي",
+      "logicConfidence": "ثقة المنطق",
+      "legalTemplates": "القوالب القانونية",
+      "selectCaseBlueprint": "اختر مخطط القضية",
+      "proposedAiStance": "الموقف المقترح من الذكاء الاصطناعي",
+      "predictedOutcome": "النتيجة المتوقعة",
+      "injectIntoDraft": "إدراج في المسودة",
+      "relevantCitations": "الاستشهادات ذات الصلة",
+      "similarPrecedents": "سوابق مشابهة",
+      "processingFinalRecord": "جاري معالجة السجل النهائي",
+      "finalizeDecision": "اعتماد القرار",
+      "judicialDecision": "القرار القضائي",
+      "compensationAward": "مبلغ التعويض المحكوم به",
+      "judicialLogicSynthesis": "تركيب المنطق القضائي",
+      "summarizeReasoningPlaceholder": "لخّص التعليل القانوني الجوهري لهذا السجل...",
+      "aiReasoningNode": "وحدة الاستدلال الذكي",
+      "aiReasoningDesc": "تركيب رؤى قانونية عميقة عبر تقنية BGE-M3 وQdrant."
     },
     "feedback": {
       "legalRelevance": "الملاءمة القانونية",
@@ -423,26 +445,6 @@
       "hearingDate": "تاريخ الجلسة",
       "unscheduled": "غير مجدول",
       "openCase": "فتح القضية"
-    },
-    "judgment": {
-      "judicialRecordEditor": "محرر السجل القضائي",
-      "manualReviewFinalization": "المراجعة اليدوية والاعتماد النهائي",
-      "logicConfidence": "ثقة المنطق",
-      "legalTemplates": "القوالب القانونية",
-      "selectCaseBlueprint": "اختر مخطط القضية",
-      "proposedAiStance": "الموقف المقترح من الذكاء الاصطناعي",
-      "predictedOutcome": "النتيجة المتوقعة",
-      "injectIntoDraft": "إدراج في المسودة",
-      "relevantCitations": "الاستشهادات ذات الصلة",
-      "similarPrecedents": "سوابق مشابهة",
-      "processingFinalRecord": "جاري معالجة السجل النهائي",
-      "finalizeDecision": "اعتماد القرار",
-      "judicialDecision": "القرار القضائي",
-      "compensationAward": "مبلغ التعويض المحكوم به",
-      "judicialLogicSynthesis": "تركيب المنطق القضائي",
-      "summarizeReasoningPlaceholder": "لخّص التعليل القانوني الجوهري لهذا السجل...",
-      "aiReasoningNode": "وحدة الاستدلال الذكي",
-      "aiReasoningDesc": "تركيب رؤى قانونية عميقة عبر تقنية BGE-M3 وQdrant."
     }
   },
   "clerk": {

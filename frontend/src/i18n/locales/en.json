@@ -331,7 +331,11 @@
       "finalJudgmentOrchestratorDesc": "Synthesize all intelligence clusters into a legally binding draft.",
       "waitingAnalysis": "Awaiting AI analysis...",
       "regenerate": "Regenerate",
-      "strongMatch": "Strong Match"
+      "strongMatch": "Strong Match",
+      "deleteCase": "Delete Case",
+      "deleteCaseTitle": "System Deletion Protocol",
+      "deleteCaseDesc": "Warning: This action will permanently purge this case record and all associated intelligence from the DIFC judicial registry. This cannot be undone.",
+      "confirmDelete": "Confirm Purge"
     },
     "documentStatus": {
       "pending": "Pending",
@@ -384,7 +388,25 @@
       "validationEmpty": "Judgment content cannot be empty.",
       "loadTemplate": "Load Template",
       "selectTemplate": "Select a Template",
-      "templateReplaceWarning": "This will replace the current draft content. Continue?"
+      "templateReplaceWarning": "This will replace the current draft content. Continue?",
+      "judicialRecordEditor": "Judicial Record Editor",
+      "manualReviewFinalization": "Manual Review & Finalization",
+      "logicConfidence": "Logic Confidence",
+      "legalTemplates": "Legal Templates",
+      "selectCaseBlueprint": "Select Case Blueprint",
+      "proposedAiStance": "Proposed AI Stance",
+      "predictedOutcome": "Predicted Outcome",
+      "injectIntoDraft": "Inject Into Draft",
+      "relevantCitations": "Relevant Citations",
+      "similarPrecedents": "Similar Precedents",
+      "processingFinalRecord": "Processing Final Record",
+      "finalizeDecision": "Finalize Decision",
+      "judicialDecision": "Judicial Decision",
+      "compensationAward": "Compensation Award",
+      "judicialLogicSynthesis": "Judicial Logic Synthesis",
+      "summarizeReasoningPlaceholder": "Summarize the core legal reasoning for this record...",
+      "aiReasoningNode": "AI Reasoning Node",
+      "aiReasoningDesc": "Synthesizing deep legal insights via BGE-M3 & Qdrant technology."
     },
     "feedback": {
       "legalRelevance": "Legal Relevance",
@@ -423,26 +445,6 @@
       "hearingDate": "Hearing Date",
       "unscheduled": "Unscheduled",
       "openCase": "Open Case"
-    },
-    "judgment": {
-      "judicialRecordEditor": "Judicial Record Editor",
-      "manualReviewFinalization": "Manual Review & Finalization",
-      "logicConfidence": "Logic Confidence",
-      "legalTemplates": "Legal Templates",
-      "selectCaseBlueprint": "Select Case Blueprint",
-      "proposedAiStance": "Proposed AI Stance",
-      "predictedOutcome": "Predicted Outcome",
-      "injectIntoDraft": "Inject Into Draft",
-      "relevantCitations": "Relevant Citations",
-      "similarPrecedents": "Similar Precedents",
-      "processingFinalRecord": "Processing Final Record",
-      "finalizeDecision": "Finalize Decision",
-      "judicialDecision": "Judicial Decision",
-      "compensationAward": "Compensation Award",
-      "judicialLogicSynthesis": "Judicial Logic Synthesis",
-      "summarizeReasoningPlaceholder": "Summarize the core legal reasoning for this record...",
-      "aiReasoningNode": "AI Reasoning Node",
-      "aiReasoningDesc": "Synthesizing deep legal insights via BGE-M3 & Qdrant technology."
     }
   },
   "clerk": {
