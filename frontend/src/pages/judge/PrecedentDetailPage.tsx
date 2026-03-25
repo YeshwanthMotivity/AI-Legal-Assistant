@@ -14,7 +14,8 @@ import {
   Scale,
   AlertCircle,
   ArrowLeftRight,
-  CheckCircle2
+  CheckCircle2,
+  ChevronRight
 } from 'lucide-react'
 import { getPrecedent, chatWithPrecedent, getAnalysis, getCase } from '../../api/judge'
 import { PrecedentDetail } from '../../types/judge'
@@ -74,17 +75,7 @@ const PrecedentDetailPage: React.FC = () => {
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([])
   const chatEndRef = useRef<HTMLDivElement>(null)
 
-  const [caseAnalysis, setCaseAnalysis] = useState<{
-    nature: string
-    parties: { claimant: string; respondent: string }
-    keyFacts: string[]
-    legalIssues: string[]
-    courtAnalysis: string
-    outcome: string
-    legalBasis: string
-  } | null>(null)
-  const [analysisLoading, setAnalysisLoading] = useState(false)
-  const [analysisError, setAnalysisError] = useState(false)
+
 
   const { data: precedent, isLoading, error } = useQuery({
     queryKey: ['precedent', id, i18n.language],
@@ -111,69 +102,7 @@ const PrecedentDetailPage: React.FC = () => {
     },
   })
 
-  useEffect(() => {
-    if (!precedent?.text || caseAnalysis || analysisLoading) return
-    setAnalysisLoading(true)
-    setAnalysisError(false)
 
-    // Step 1: Ask 5 simple focused questions sequentially
-    const extractField = async (question: string): Promise<string> => {
-      try {
-        const res = await chatWithPrecedent(id || '', question, i18n.language)
-        return (res.response || '').trim()
-      } catch {
-        return ''
-      }
-    }
-
-    const buildAnalysis = async () => {
-      try {
-        const [nature, claimant, respondent, outcome, legalBasis] = await Promise.all([
-          extractField('In one sentence, what type of dispute is this case about?'),
-          extractField('Who is the claimant or plaintiff in this case? Give only the name or role, nothing else.'),
-          extractField('Who is the respondent or defendant in this case? Give only the name or role, nothing else.'),
-          extractField('What did the court decide or order in this case? Give a brief 1-2 sentence answer.'),
-          extractField('Which specific laws or articles did the court rely on? List them briefly.'),
-        ])
-
-        // Step 2: Ask for facts and issues as numbered lists
-        const factsRaw = await extractField(
-          'List the 3-4 most important facts of this case as short bullet points. Start each with a dash (-).'
-        )
-        const issuesRaw = await extractField(
-          'List the 2-3 main legal issues the court had to decide. Start each with a dash (-).'
-        )
-        const courtAnalysis = await extractField(
-          'In 2 sentences, how did the court analyze the evidence and reach its decision?'
-        )
-
-        // Parse bullet lists
-        const parseBullets = (text: string): string[] =>
-          text.split('\\n')
-            .map(l => l.replace(/^[-•*]\\s*/, '').trim())
-            .filter(l => l.length > 10)
-
-        setCaseAnalysis({
-          nature: nature || 'Employment dispute before the DIFC Court.',
-          parties: {
-            claimant: claimant || 'Claimant (see transcript)',
-            respondent: respondent || 'Respondent (see transcript)',
-          },
-          keyFacts: parseBullets(factsRaw).slice(0, 4),
-          legalIssues: parseBullets(issuesRaw).slice(0, 3),
-          courtAnalysis: courtAnalysis || '',
-          outcome: outcome || 'See judgment section of transcript.',
-          legalBasis: legalBasis || 'DIFC Employment Law',
-        })
-      } catch {
-        setAnalysisError(true)
-      } finally {
-        setAnalysisLoading(false)
-      }
-    }
-
-    buildAnalysis()
-  }, [precedent?.text, id, i18n.language])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -255,202 +184,120 @@ const PrecedentDetailPage: React.FC = () => {
             </CardHeader>
             <CardContent className="p-8 overflow-y-auto leading-relaxed text-sm font-medium">
               <div className="max-w-4xl mx-auto space-y-6">
-                
-                {/* Header banner */}
-                <div className="flex items-center gap-4 py-4 px-6 bg-primary/5 rounded-2xl border border-primary/10 mb-6">
+
+                {/* Header Banner */}
+                <div className="flex items-center gap-4 py-4 px-6 bg-primary/5 rounded-2xl border border-primary/10">
                   <Scale className="w-8 h-8 text-primary/40 shrink-0" />
                   <div>
-                    <h4 className="text-sm font-black uppercase tracking-wider text-primary">
-                      {t('judge.workspace.judicialRecordTitle')}
-                    </h4>
-                    <p className="text-[11px] text-muted-foreground italic">
-                      {t('judge.workspace.judicialRecordSubtitle')}
-                    </p>
+                    <h4 className="text-sm font-black uppercase tracking-wider text-primary">Judicial Record</h4>
+                    <p className="text-[11px] text-muted-foreground italic">Official transcript from the DIFC Court of First Instance</p>
                   </div>
                 </div>
 
-                {/* Structured Case Analysis */}
-                {analysisLoading && (
-                  <div className="space-y-4 animate-pulse">
-                    <div className="h-6 bg-primary/10 rounded-xl w-1/3" />
-                    <div className="h-4 bg-muted/30 rounded-lg w-full" />
-                    <div className="h-4 bg-muted/30 rounded-lg w-5/6" />
-                    <div className="h-4 bg-muted/30 rounded-lg w-4/6" />
-                    <p className="text-xs text-muted-foreground italic text-center pt-4 flex items-center justify-center gap-2">
-                      <span className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin inline-block" />
-                      Generating structured case analysis...
-                    </p>
+                {/* Static Case Details Card */}
+                <div className="border border-border/40 rounded-2xl overflow-hidden">
+                  <div className="bg-muted/20 px-6 py-3 border-b border-border/30 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <h5 className="text-[11px] font-black uppercase tracking-widest text-primary">Case Details</h5>
                   </div>
-                )}
-
-                {!analysisLoading && caseAnalysis && (
-                  <div className="space-y-6">
-
-                    {/* Parties */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-blue-500/5 border border-blue-500/15 rounded-2xl p-4">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1">Claimant</p>
-                        <p className="text-sm font-bold text-foreground">{caseAnalysis.parties?.claimant || 'Not identified'}</p>
-                      </div>
-                      <div className="bg-orange-500/5 border border-orange-500/15 rounded-2xl p-4">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-orange-600 mb-1">Respondent</p>
-                        <p className="text-sm font-bold text-foreground">{caseAnalysis.parties?.respondent || 'Not identified'}</p>
-                      </div>
-                    </div>
-
-                    {/* Nature of Dispute */}
-                    <div className="bg-primary/5 border border-primary/10 rounded-2xl p-5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-2 h-2 rounded-full bg-primary" />
-                        <h5 className="text-[11px] font-black uppercase tracking-widest text-primary">Nature of Dispute</h5>
-                      </div>
-                      <p className="text-sm text-foreground/80 leading-relaxed">{caseAnalysis.nature}</p>
-                    </div>
-
-                    {/* Key Facts */}
-                    {caseAnalysis.keyFacts?.length > 0 && (
-                      <div className="border border-border/30 rounded-2xl p-5">
-                        <div className="flex items-center gap-2 mb-4">
-                          <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                          <h5 className="text-[11px] font-black uppercase tracking-widest text-emerald-600">Key Facts</h5>
+                  <div className="divide-y divide-border/20">
+                    {[
+                      { label: 'Court',      value: 'DIFC Courts' },
+                      { label: 'Case Title', value: precedent.title },
+                      { label: 'Reference',  value: id },
+                      { label: 'Year',       value: precedent.year || 'N/A' },
+                      { label: 'Case Type',  value: precedent.category || 'DIFC Judicial Precedent' },
+                      { label: 'Outcome',    value: precedent.outcome || 'See transcript' },
+                      { label: 'Summary',    value: precedent.summary || null },
+                    ]
+                      .filter(row => row.value)
+                      .map((row, i) => (
+                        <div key={i} className="grid grid-cols-[140px_1fr] gap-4 px-6 py-3.5 hover:bg-muted/10 transition-colors">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-0.5">
+                            {row.label}
+                          </span>
+                          <span className="text-sm font-medium text-foreground/85 leading-relaxed">
+                            {row.value}
+                          </span>
                         </div>
-                        <ul className="space-y-2">
-                          {caseAnalysis.keyFacts.map((fact, i) => (
-                            <li key={i} className="flex items-start gap-3 text-sm text-foreground/80">
-                              <span className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">
-                                {i + 1}
-                              </span>
-                              {fact}
-                            </li>
+                      ))}
+
+                    {/* Cited Laws row - only if available */}
+                    {(precedent.cited_laws?.length ?? 0) > 0 && (
+                      <div className="grid grid-cols-[140px_1fr] gap-4 px-6 py-3.5 hover:bg-muted/10 transition-colors">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-0.5">
+                          Laws Cited
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(precedent.cited_laws || []).slice(0, 5).map((law: string, i: number) => (
+                            <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-bold">
+                              {law}
+                            </span>
                           ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* Legal Issues */}
-                    {caseAnalysis.legalIssues?.length > 0 && (
-                      <div className="border border-border/30 rounded-2xl p-5">
-                        <div className="flex items-center gap-2 mb-4">
-                          <div className="w-2 h-2 rounded-full bg-amber-500" />
-                          <h5 className="text-[11px] font-black uppercase tracking-widest text-amber-600">Legal Issues</h5>
                         </div>
-                        <ul className="space-y-2">
-                          {caseAnalysis.legalIssues.map((issue, i) => (
-                            <li key={i} className="flex items-start gap-3 text-sm text-foreground/80">
-                              <span className="text-amber-500 font-black text-xs shrink-0 mt-0.5">→</span>
-                              {issue}
-                            </li>
-                          ))}
-                        </ul>
                       </div>
                     )}
+                  </div>
+                </div>
 
-                    {/* Court Analysis */}
-                    {caseAnalysis.courtAnalysis && (
-                      <div className="bg-muted/20 border border-border/30 rounded-2xl p-5">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-2 h-2 rounded-full bg-purple-500" />
-                          <h5 className="text-[11px] font-black uppercase tracking-widest text-purple-600">Court's Analysis</h5>
-                        </div>
-                        <p className="text-sm text-foreground/80 leading-relaxed">{caseAnalysis.courtAnalysis}</p>
-                      </div>
-                    )}
+                {/* Hint to use AI chat */}
+                <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/10 rounded-xl">
+                  <MessageSquare className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    <span className="font-black text-primary">Want a deeper analysis?</span> Use the AI Assistant on the right to ask questions about this case — key rulings, legal reasoning, how it compares to your current case, and more.
+                  </p>
+                </div>
 
-                    {/* Outcome */}
-                    {caseAnalysis.outcome && (
-                      <div className="bg-primary/10 border border-primary/20 rounded-2xl p-5">
-                        <div className="flex items-center gap-2 mb-2">
-                          <CheckCircle2 className="w-4 h-4 text-primary" />
-                          <h5 className="text-[11px] font-black uppercase tracking-widest text-primary">Judgment Outcome</h5>
-                        </div>
-                        <p className="text-sm font-bold text-foreground leading-relaxed">{caseAnalysis.outcome}</p>
-                      </div>
-                    )}
-
-                    {/* Legal Basis */}
-                    {caseAnalysis.legalBasis && (
-                      <div className="border border-border/30 rounded-2xl p-5">
-                        <div className="flex items-center gap-2 mb-2">
-                          <BookOpen className="w-4 h-4 text-muted-foreground" />
-                          <h5 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Legal Basis</h5>
-                        </div>
-                        <p className="text-sm text-foreground/70 leading-relaxed italic">{caseAnalysis.legalBasis}</p>
-                      </div>
-                    )}
-
-                    {/* Divider before raw transcript */}
-                    <div className="border-t border-dashed border-border/40 pt-6">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 mb-4 flex items-center gap-2">
-                        <Info className="w-3 h-3" />
+                {/* Full Transcript (collapsible) */}
+                <details className="group border border-border/30 rounded-2xl overflow-hidden">
+                  <summary className="flex items-center justify-between px-6 py-4 bg-muted/10 cursor-pointer hover:bg-muted/20 transition-colors list-none">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
                         Full Transcript
-                      </p>
-                      {precedent.text.trimStart()[0] === precedent.text.trimStart()[0].toLowerCase() && (
-                        <p className="text-[11px] text-muted-foreground/60 italic mb-4 flex items-center gap-2">
-                          <Info className="w-3 h-3" />
-                          ⓘ {t('judge.workspace.transcriptBeginNote')}
-                        </p>
-                      )}
-                      <div className="text-foreground/90 selection:bg-primary/20 space-y-4">
-                        {(() => {
-                          let lastSection: string | null = null
-                          return splitTranscript(precedent.text).map((paragraph, idx) => {
-                            const trimmed = paragraph.trim()
-                            const isNumbered = /^\d+\./.test(trimmed)
-                            const sectionLabel = getSectionLabel(trimmed)
-                            const showLabel = sectionLabel !== null && sectionLabel !== lastSection
-                            if (showLabel) lastSection = sectionLabel
-                            return (
-                              <div key={idx} className="space-y-1">
-                                {showLabel && (
-                                  <div className="flex items-center gap-2 mt-6 mb-3">
-                                    <Badge className="bg-primary/20 text-primary border-primary/30 font-black uppercase text-[10px] tracking-widest px-3 py-1">
-                                      {t(`judge.workspace.sections.${sectionLabel}`)}
-                                    </Badge>
-                                    <div className="h-[1px] flex-1 bg-gradient-to-r from-primary/30 to-transparent" />
-                                  </div>
-                                )}
-                                <p className={cn(
-                                  "transition-colors hover:text-foreground leading-relaxed text-sm",
-                                  isNumbered && "pl-4 border-l-2 border-primary/20 font-semibold text-foreground py-2 bg-primary/5 rounded-r-lg"
-                                )}>
-                                  {trimmed}
-                                </p>
-                              </div>
-                            )
-                          })
-                        })()}
-                      </div>
+                      </span>
                     </div>
-
-                  </div>
-                )}
-
-                {/* Fallback: no analysis, show raw transcript only */}
-                {!analysisLoading && !caseAnalysis && (
-                  <div className="text-foreground/90 space-y-4">
-                    {analysisError && (
-                      <div className="flex items-center gap-3 p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl mb-6">
-                        <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                        <div>
-                          <p className="text-xs text-amber-800 font-bold">AI analysis unavailable for this case.</p>
-                          <p className="text-xs text-amber-700 mt-0.5">The full transcript is shown below for manual review.</p>
-                        </div>
-                      </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-90" />
+                  </summary>
+                  <div className="px-6 py-5 space-y-4 border-t border-border/20">
+                    {precedent.text.trimStart()[0] === precedent.text.trimStart()[0].toLowerCase() && (
+                      <p className="text-[11px] text-muted-foreground/60 italic flex items-center gap-2">
+                        <Info className="w-3 h-3" />
+                        ⓘ {t('judge.workspace.transcriptBeginNote')}
+                      </p>
                     )}
-                    {splitTranscript(precedent.text).map((paragraph, idx) => {
-                      const trimmed = paragraph.trim()
-                      const isNumbered = /^\d+\./.test(trimmed)
-                      return (
-                        <p key={idx} className={cn(
-                          "transition-colors hover:text-foreground leading-relaxed text-sm",
-                          isNumbered && "pl-4 border-l-2 border-primary/20 font-semibold py-2 bg-primary/5 rounded-r-lg"
-                        )}>
-                          {trimmed}
-                        </p>
-                      )
-                    })}
+                    <div className="text-foreground/90 space-y-4">
+                      {(() => {
+                        let lastSection: string | null = null
+                        return splitTranscript(precedent.text).map((paragraph, idx) => {
+                          const trimmed = paragraph.trim()
+                          const isNumbered = /^\\d+\\./.test(trimmed)
+                          const sectionLabel = getSectionLabel(trimmed)
+                          const showLabel = sectionLabel !== null && sectionLabel !== lastSection
+                          if (showLabel) lastSection = sectionLabel
+                          return (
+                            <div key={idx} className="space-y-1">
+                              {showLabel && (
+                                <div className="flex items-center gap-2 mt-6 mb-3">
+                                  <Badge className="bg-primary/20 text-primary border-primary/30 font-black uppercase text-[10px] tracking-widest px-3 py-1">
+                                    {t(`judge.workspace.sections.${sectionLabel}`)}
+                                  </Badge>
+                                  <div className="h-[1px] flex-1 bg-gradient-to-r from-primary/30 to-transparent" />
+                                </div>
+                              )}
+                              <p className={cn(
+                                "transition-colors hover:text-foreground leading-relaxed text-sm",
+                                isNumbered && "pl-4 border-l-2 border-primary/20 font-semibold text-foreground py-2 bg-primary/5 rounded-r-lg"
+                              )}>
+                                {trimmed}
+                              </p>
+                            </div>
+                          )
+                        })
+                      })()}
+                    </div>
                   </div>
-                )}
+                </details>
 
               </div>
             </CardContent>
