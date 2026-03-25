@@ -4,6 +4,7 @@ import uuid
 import logging
 import re
 import os
+import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from qdrant_client import QdrantClient
