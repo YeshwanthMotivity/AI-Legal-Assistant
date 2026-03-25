@@ -229,424 +229,408 @@ const CaseDetail = () => {
       subtitle={`${t('judge.workspace.caseId')}: ${caseQuery.data?.case_number ?? id}`}
     >
       
-      {/* Action Header */}
-      <div className="flex justify-between items-center mb-10 bg-white/50 backdrop-blur-md p-6 rounded-[32px] border border-white/20 shadow-xl shadow-primary/5">
-        <div className="flex gap-4">
+      {/* Header Actions */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10 bg-white/40 backdrop-blur-xl p-8 rounded-[40px] border border-white/40 shadow-2xl shadow-primary/5">
+        <div className="flex items-center gap-6">
             <Link to="/judge/cases">
-              <Button variant="ghost" size="sm" className="gap-2 font-black uppercase tracking-widest text-[10px] hover:bg-primary/5 rounded-2xl px-6 h-12 transition-all">
+              <Button variant="ghost" size="sm" className="gap-2 font-black uppercase tracking-[0.2em] text-[10px] hover:bg-primary/5 rounded-2xl px-6 h-12 transition-all">
                 <ChevronLeft className="w-5 h-5" />
                 {t('common.back')}
               </Button>
             </Link>
-            <div className="h-12 w-[1px] bg-border/40 mx-2" />
-            <div className="flex flex-col justify-center">
-              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">Current Protocol</span>
-              <Badge variant="outline" className="text-[11px] font-black border-primary/20 text-primary bg-primary/5 px-3 py-1 rounded-lg">
-                DIFC Employment Standard v2.4
-              </Badge>
+            <div className="h-10 w-[2px] bg-border/20 mx-2 hidden md:block" />
+            <div className="flex flex-col">
+              <h1 className="text-xl font-black tracking-tight text-deep-green leading-none mb-1">
+                {caseQuery.data?.title || "Case Workspace"}
+              </h1>
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                <FileText className="w-3 h-3 text-primary" />
+                DIFC Protocol — Employment Standard v2.4
+              </span>
             </div>
         </div>
         
-        <div className="flex items-center gap-6">
-           <div className="flex items-center gap-3 bg-emerald-500/10 px-6 py-3 rounded-2xl border border-emerald-500/20">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-black text-emerald-800 uppercase tracking-widest">
-                {isActivelyLoading ? t('judge.workspace.processing') : isReady ? t('judge.workspace.complete') : t('judge.workspace.initial')}
-              </span>
-           </div>
-           
-           <div className="flex flex-col items-end ltr:mr-4 rtl:ml-4">
-              <div className="flex items-center gap-2 mb-1">
-                 <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">AI Confidence</span>
-                 <span className="text-sm font-black text-primary">
-                    {Math.round((analysis?.confidence ?? 0) > 1 ? (analysis?.confidence ?? 0) / 100 : (analysis?.confidence ?? 0) * 100)}%
-                 </span>
-              </div>
-              <div className="w-32 h-1.5 bg-border/20 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-primary transition-all duration-1000" 
-                  style={{ width: `${Math.round((analysis?.confidence ?? 0) > 1 ? (analysis?.confidence ?? 0) / 100 : (analysis?.confidence ?? 0) * 100)}%` }}
-                />
-              </div>
-           </div>
-
-           <div className="flex gap-3">
-              <Button 
-                variant="outline" 
-                className="gap-2 border-primary/20 hover:bg-primary/5 text-primary rounded-2xl h-14 px-8 font-black uppercase tracking-widest text-[11px] shadow-sm active:scale-95 transition-all"
-                disabled={isActivelyLoading}
-                onClick={() => runAnalysisMutation.mutate()}
-              >
-                  <Sparkles className={cn("w-5 h-5", isActivelyLoading && "animate-spin")} />
-                  {t('judge.workspace.runAnalysis')}
-              </Button>
-              <Button className="rounded-2xl h-14 px-10 font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-primary/30 group">
-                  <CheckCircle2 className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
-                  Finalize Judgment
-              </Button>
-           </div>
+        <div className="flex items-center gap-4 w-full md:w-auto">
+           <Button 
+            variant="outline" 
+            className="flex-1 md:flex-none gap-3 border-primary/20 hover:bg-primary/5 text-primary rounded-2xl h-14 px-8 font-black uppercase tracking-widest text-[11px] shadow-sm active:scale-95 transition-all"
+            disabled={isActivelyLoading}
+            onClick={() => runAnalysisMutation.mutate()}
+           >
+              <Sparkles className={cn("w-5 h-5", isActivelyLoading && "animate-spin")} />
+              {t('judge.workspace.runAnalysis')}
+           </Button>
+           <Button className="flex-1 md:flex-none rounded-2xl h-14 px-10 font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-primary/30 group">
+              <CheckCircle2 className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
+              Finalize Judgment
+           </Button>
         </div>
       </div>
 
       {localMessage && (
         <div className={cn(
-          "mb-8 p-6 rounded-[32px] border-2 flex items-center gap-4 animate-in fade-in slide-in-from-top-6 shadow-2xl",
-          messageType === 'error' ? "bg-destructive/10 border-destructive/20 text-destructive" : "bg-primary/10 border-primary/20 text-primary"
+          "mb-10 p-6 rounded-[32px] border-2 flex items-center gap-4 animate-in fade-in slide-in-from-top-8 duration-500 shadow-2xl",
+          messageType === 'error' ? "bg-rose-500/10 border-rose-500/20 text-rose-600" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
         )}>
           {messageType === 'error' ? <AlertCircle className="w-6 h-6" /> : <CheckCircle2 className="w-6 h-6" />}
-          <span className="font-black text-xs uppercase tracking-widest">{localMessage}</span>
-          <Button variant="ghost" size="icon" className="ml-auto h-10 w-10 hover:bg-black/5 rounded-full" onClick={() => setLocalMessage('')}>
+          <span className="font-black text-xs uppercase tracking-widest flex-1">{localMessage}</span>
+          <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-black/5 rounded-full shrink-0" onClick={() => setLocalMessage('')}>
              <Plus className="w-6 h-6 rotate-45" />
           </Button>
         </div>
       )}
 
-      {/* Main Premium Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-[380px,1fr,380px] gap-8 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-[420px,1fr] gap-10 items-start">
         
-        {/* LEFT COLUMN: Workspace Context & Pipeline */}
+        {/* SIDEBAR: Documents & AI Metrics */}
         <aside className="flex flex-col gap-8 sticky top-24">
           
-          {/* Workspace Context Card */}
-          <Card className="rounded-[40px] shadow-2xl border-white/40 overflow-hidden bg-white/60 backdrop-blur-xl group hover:shadow-primary/5 transition-all">
-            <CardHeader className="p-8 pb-4">
-              <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-muted-foreground/80">
-                <FileText className="w-5 h-5 text-primary/60" />
-                Workspace Context
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-8 pt-0 space-y-8">
-              {/* Data Completeness */}
-              <div className="bg-muted/30 p-6 rounded-[32px] border border-border/40">
-                <div className="flex justify-between items-center mb-3">
-                   <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Data Completeness</span>
-                   <span className="text-xs font-black text-primary">25%</span>
+          {/* AI Metrics Card (Prominent Status) */}
+          <Card className="rounded-[40px] shadow-2xl border-white/40 overflow-hidden bg-deep-green text-white group border-[4px]">
+             <CardHeader className="p-8 pb-4">
+                <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-primary">
+                  <Sparkles className="w-5 h-5" />
+                  AI Intelligence Metrics
+                </CardTitle>
+             </CardHeader>
+             <CardContent className="p-8 pt-4 space-y-8">
+                <div className="flex items-center justify-between">
+                   <div className="flex flex-col">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-1">Analysis Status</span>
+                      <Badge variant={isReady ? "success" : "warning"} className="w-fit uppercase font-black text-[9px] tracking-widest px-3 py-1 rounded-lg">
+                        {isActivelyLoading ? t('judge.workspace.processing') : isReady ? t('judge.workspace.complete') : t('judge.workspace.initial')}
+                      </Badge>
+                   </div>
+                   <div className="flex flex-col items-end">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-1">Confidence</span>
+                      <strong className="text-3xl font-black text-primary tracking-tighter">
+                         {Math.round((analysis?.confidence ?? 0) > 1 ? (analysis?.confidence ?? 0) / 100 : (analysis?.confidence ?? 0) * 100)}%
+                      </strong>
+                   </div>
                 </div>
-                <div className="h-3 w-full bg-white/50 rounded-full overflow-hidden shadow-inner">
-                   <div className="h-full bg-gradient-to-r from-primary to-primary-hover w-[25%] rounded-full shadow-[0_0_15px_rgba(var(--primary),0.3)]" />
+                
+                <div className="space-y-3">
+                   <div className="h-3 w-full bg-white/10 rounded-full overflow-hidden shadow-inner p-[2px]">
+                      <div 
+                        className="h-full bg-primary rounded-full shadow-[0_0_20px_rgba(var(--primary),0.6)] transition-all duration-1000 ease-out" 
+                        style={{ width: `${Math.round((analysis?.confidence ?? 0) > 1 ? (analysis?.confidence ?? 0) / 100 : (analysis?.confidence ?? 0) * 100)}%` }}
+                      />
+                   </div>
+                   <p className="text-[10px] text-white/40 font-bold italic leading-relaxed text-center">
+                     Core model nodes synthesizing sectoral legal data.
+                   </p>
                 </div>
-                <p className="text-[9px] text-muted-foreground mt-4 italic font-bold opacity-60">Additional documents required for high precision.</p>
-              </div>
-
-              {/* Categorize Entry */}
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Categorize Entry</label>
-                <select
-                  className="w-full bg-white border-2 border-border/50 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-primary/40 focus:ring-8 focus:ring-primary/5 transition-all appearance-none cursor-pointer"
-                  value={selectedDocType}
-                  onChange={(event) => setSelectedDocType(event.target.value as DocumentType)}
-                >
-                  {DOCUMENT_TYPES.map((dt) => (
-                    <option key={dt} value={dt}>{t(`judge.documentTypes.${dt}`)}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Upload Zone */}
-              <div className="relative group">
-                 <input 
-                   ref={fileInputRef} 
-                   type="file" 
-                   className="absolute inset-0 opacity-0 cursor-pointer z-20"
-                   onChange={handleDocumentChange}
-                 />
-                 <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-border/60 rounded-[32px] bg-muted/10 group-hover:border-primary/40 group-hover:bg-primary/5 transition-all duration-300">
-                    <div className="w-16 h-16 rounded-full bg-white shadow-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                       <Upload className="w-7 h-7 text-primary/60" />
-                    </div>
-                    <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground text-center line-clamp-1 px-4">
-                      {selectedFile ? selectedFile.name : "Drag file or browse"}
-                    </span>
-                 </div>
-              </div>
-
-              <Button
-                className="w-full h-16 rounded-[24px] shadow-xl text-[11px] font-black uppercase tracking-[0.2em] shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
-                onClick={handleUpload}
-                disabled={!selectedFile || uploadMutation.isPending}
-              >
-                {uploadMutation.isPending ? "INGESTING DATA..." : "SYNC WORKSPACE"}
-              </Button>
-            </CardContent>
+             </CardContent>
           </Card>
 
-          {/* Intelligence Pipeline (Vertical Stepper) */}
-          <Card className="rounded-[40px] shadow-2xl border-white/40 overflow-hidden bg-white/40 backdrop-blur-xl">
-              <CardHeader className="p-8 pb-4">
-                <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-muted-foreground/80">
-                  <Sparkles className="w-5 h-5 text-primary/60" />
-                  Intelligence Pipeline
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-8 pt-4">
-                 <div className="space-y-8 relative before:absolute before:left-[17px] before:top-2 before:bottom-2 before:w-[2px] before:bg-border/40">
-                    {[
-                      { id: 'ingestion', label: 'Ingestion', status: 'Validation Finished', done: true },
-                      { id: 'parsing', label: 'Parsing', status: 'Validation Finished', done: true },
-                      { id: 'reasoning', label: 'Reasoning', status: isReady ? 'Synthesis Complete' : 'Synthesizing...', active: !isReady && isActivelyLoading, done: isReady }
-                    ].map((step) => (
-                      <div key={step.id} className="flex gap-6 relative z-10">
-                         <div className={cn(
-                           "w-9 h-9 rounded-full flex items-center justify-center border-4 border-white shadow-lg transition-all",
-                           step.done ? "bg-emerald-500" : step.active ? "bg-primary animate-pulse" : "bg-border/60"
-                         )}>
-                            {step.done ? <CheckCircle2 className="w-4 h-4 text-white" /> : <div className="w-2 h-2 rounded-full bg-white/40" />}
-                         </div>
-                         <div className="flex flex-col justify-center">
-                            <h4 className="text-[12px] font-black uppercase tracking-wider text-foreground">{step.label}</h4>
-                            <span className="text-[10px] font-bold text-muted-foreground italic opacity-60 leading-none mt-1">{step.status}</span>
-                         </div>
+          {/* Documents Section (Original Flow) */}
+          <Card className="rounded-[40px] shadow-2xl border-white/60 overflow-hidden bg-white/60 backdrop-blur-xl">
+            <CardHeader className="p-8 pb-4 border-b border-border/20 bg-muted/10">
+              <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-muted-foreground">
+                <FileText className="w-5 h-5 text-primary" />
+                {t('judge.workspace.documents')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8 space-y-8">
+              {/* Category & File Selection */}
+              <div className="grid grid-cols-1 gap-6">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">{t('judge.workspace.documentType')}</label>
+                    <select
+                      className="w-full bg-white border-2 border-border/50 rounded-2xl px-5 py-4 text-xs font-black outline-none focus:border-primary/40 focus:ring-8 focus:ring-primary/5 transition-all cursor-pointer shadow-sm"
+                      value={selectedDocType}
+                      onChange={(event) => setSelectedDocType(event.target.value as DocumentType)}
+                    >
+                      {DOCUMENT_TYPES.map((docType) => (
+                        <option key={docType} value={docType}>
+                          {t(`judge.documentTypes.${docType}`)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">{t('judge.workspace.uploadDocument')}</label>
+                    <div className="relative group overflow-hidden rounded-[32px] border-2 border-dashed border-border/60 hover:border-primary/40 transition-all">
+                       <input 
+                         ref={fileInputRef} 
+                         type="file" 
+                         className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                         onChange={handleDocumentChange}
+                       />
+                       <div className="flex flex-col items-center justify-center p-10 bg-muted/10 group-hover:bg-primary/5 transition-colors">
+                          <div className="w-12 h-12 rounded-2xl bg-white shadow-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                             <Upload className="w-6 h-6 text-primary/60" />
+                          </div>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center line-clamp-1 px-4 italic opacity-60">
+                            {selectedFile ? selectedFile.name : "Drop or select case files"}
+                          </span>
+                       </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    className="w-full h-16 rounded-[24px] shadow-xl text-[11px] font-black uppercase tracking-[0.2em] shadow-primary/20 group overflow-hidden relative"
+                    onClick={handleUpload}
+                    disabled={!selectedFile || uploadMutation.isPending}
+                  >
+                    <span className="relative z-10">{uploadMutation.isPending ? "PROCESSING DATA..." : "INGEST INTO WORKSPACE"}</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-hover opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </Button>
+              </div>
+
+              {/* Document List */}
+              <div className="pt-6 border-t border-border/20 space-y-4">
+                {(documentsQuery.data?.items ?? []).map((doc) => (
+                  <div key={doc.id} className="group flex items-center justify-between p-5 rounded-[24px] bg-white border-2 border-transparent hover:border-primary/20 hover:shadow-xl hover:shadow-black/5 transition-all">
+                    <div className="flex-1 min-w-0 pr-4">
+                      <div className="flex items-center gap-3 mb-1">
+                         <FileText className="w-4 h-4 text-primary/60" />
+                         <h5 className="text-[12px] font-black truncate">{doc.file_name}</h5>
                       </div>
-                    ))}
-                 </div>
-              </CardContent>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-60">{t(`judge.documentTypes.${doc.document_type}`)}</span>
+                    </div>
+                    <Badge 
+                      variant={doc.processing_status === 'complete' ? 'success' : doc.processing_status === 'failed' ? 'destructive' : 'warning'}
+                      className="px-3 h-6 text-[8px] font-black uppercase tracking-widest rounded-full"
+                    >
+                       {t(`judge.documentStatus.${doc.processing_status.toLowerCase()}`)}
+                    </Badge>
+                  </div>
+                ))}
+                {(!documentsQuery.data?.items || documentsQuery.data?.items.length === 0) && (
+                  <div className="py-12 text-center text-[11px] text-muted-foreground font-bold italic bg-muted/5 rounded-[32px] border-2 border-dashed border-border/20">
+                     No documents currently synchronized.
+                  </div>
+                )}
+              </div>
+            </CardContent>
           </Card>
         </aside>
 
-        {/* MIDDLE COLUMN: Stats & Summary */}
+        {/* MAIN AREA: Analysis Results -> editor -> feedback */}
         <main className="flex flex-col gap-10">
-           {/* Center Statistics (Vertical) */}
-           <div className="grid grid-cols-1 gap-6">
-              {[
-                { label: 'Monthly Salary', value: entitlements.find(e => e.label.includes('Salary'))?.value || 'AED 0.00', missing: !(entitlements.find(e => e.label.includes('Salary'))?.value?.includes('AED') && !entitlements.find(e => e.label.includes('Salary'))?.value?.includes('0.00')) },
-                { label: 'Years of Service', value: entitlements.find(e => e.label.includes('Service'))?.value || '0.00 years', missing: !entitlements.find(e => e.label.includes('Service'))?.value?.includes('years') || entitlements.find(e => e.label.includes('Service'))?.value?.includes('0.00') },
-                { label: 'Gratuity Estimate', value: entitlements.find(e => e.label.includes('Gratuity'))?.value || 'AED 0.00', missing: !(entitlements.find(e => e.label.includes('Gratuity'))?.value?.includes('AED') && !entitlements.find(e => e.label.includes('Gratuity'))?.value?.includes('0.00')) }
-              ].map((stat, idx) => (
-                <div key={idx} className="bg-white/40 backdrop-blur-md p-10 rounded-[48px] border border-white/40 flex flex-col items-center justify-center text-center shadow-xl hover:shadow-primary/5 transition-all group overflow-hidden relative">
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-primary/10 transition-all" />
-                   <div className="flex items-center gap-3 mb-4">
-                      <span className="text-[12px] font-black uppercase tracking-[0.3em] text-muted-foreground/70">{stat.label}</span>
-                      {stat.missing && (
-                        <Badge variant="destructive" className="bg-destructive/10 text-destructive border-destructive/20 text-[9px] font-black uppercase tracking-tighter px-2 h-5">
-                          Missing Primary Data
-                        </Badge>
-                      )}
-                   </div>
-                   <strong className="text-[48px] font-black tracking-tighter text-foreground/90 group-hover:text-primary transition-colors leading-tight">
-                      {stat.value}
-                   </strong>
-                </div>
-              ))}
-           </div>
-
-           {/* Analysis Content */}
-           {isReady ? (
-             <Card className="rounded-[40px] shadow-2xl border-white/40 overflow-hidden bg-white/60 backdrop-blur-xl">
-                  <CardHeader className="p-10 pb-6 border-b border-border/40">
-                    <CardTitle className="text-xl font-black tracking-tight flex items-center gap-4">
-                       <Sparkles className="w-8 h-8 text-primary shadow-primary/20" />
+          
+          {/* Analysis View */}
+          {isReady ? (
+            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-10 duration-700">
+               
+               {/* 1. Case Summary Card */}
+              <Card className="rounded-[48px] shadow-2xl border-white/60 overflow-hidden bg-white/60 backdrop-blur-xl group">
+                  <CardHeader className="p-10 pb-6 border-b border-border/20 bg-emerald-500/5">
+                    <CardTitle className="text-xl font-black tracking-tight flex items-center gap-4 text-deep-green">
+                       <Sparkles className="w-8 h-8 text-primary" />
                        Case Summary & Fact Synthesis
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-12 space-y-12">
-                     <div className="bg-primary/5 p-10 rounded-[40px] border-2 border-primary/10 italic text-[15px] leading-[1.8] font-bold text-muted-foreground/80 shadow-inner relative overflow-hidden">
+                     <div className="bg-white p-10 rounded-[40px] border-2 border-primary/10 italic text-[16px] leading-[1.8] font-bold text-muted-foreground/80 shadow-inner relative overflow-hidden group-hover:border-primary/30 transition-all">
                         <div className="absolute left-0 top-0 w-2 h-full bg-primary" />
                         {analysis?.summary && !analysis.summary.trim().startsWith('{') && !analysis.summary.trim().startsWith('json')
                           ? analysis.summary
-                          : "Case synthesis protocols complete. Reviewing jurisdictional precedents for outcome alignment."}
+                          : "Synthesis protocols complete. Mapping jurisdictional precedents from DIFC legal repository."}
                      </div>
                      
-                     <div className="grid grid-cols-1 gap-6">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {(analysis?.facts || [])
                           .filter((fact: any) => {
                             const s = String(fact).trim()
                             return !s.startsWith('{') && !s.startsWith('json') && !s.startsWith('"outcome"') && s.length > 10
                           })
                           .map((fact: any, idx: number) => (
-                           <div key={idx} className="flex gap-8 p-8 rounded-[32px] hover:bg-white transition-all group border border-transparent hover:border-border/40 hover:shadow-xl hover:shadow-black/5">
-                              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black text-lg shrink-0 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                           <div key={idx} className="flex gap-6 p-6 rounded-[32px] bg-white/50 border-2 border-transparent hover:border-primary/20 hover:bg-white transition-all shadow-sm hover:shadow-xl hover:shadow-black/5 group/fact">
+                              <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black text-sm shrink-0 group-hover/fact:bg-primary group-hover/fact:text-white transition-all">
                                  {idx + 1}
                               </div>
-                              <p className="text-[15px] font-bold leading-relaxed m-0 text-foreground/70 group-hover:text-foreground transition-colors">{fact}</p>
+                              <p className="text-[14px] font-bold leading-relaxed m-0 text-foreground/70 group-hover/fact:text-foreground transition-colors">{fact}</p>
                            </div>
                         ))}
                      </div>
-
-                     {/* Precedents Section - Integrated in middle column for better flow */}
-                     <div className="pt-8 space-y-8">
-                        <div className="flex items-center justify-between">
-                           <h3 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground">Similar Jurisdictional Precedents</h3>
-                           <Badge className="bg-primary/10 text-primary border-primary/20 font-black">TOP 5 MATCHES</Badge>
-                        </div>
-                        <div className="grid grid-cols-1 gap-4">
-                           {precedents.map((item) => (
-                             <Link 
-                               key={item.caseId}
-                               to={`/judge/precedents/${item.caseId}`} 
-                               className="p-6 rounded-[28px] bg-white border border-border/20 shadow-sm hover:shadow-2xl hover:shadow-primary/5 hover:border-primary/30 transition-all group flex items-center justify-between"
-                             >
-                                <div className="flex gap-4 items-center">
-                                   <div className="w-12 h-12 rounded-2xl bg-muted/30 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                                      <Scale className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                                   </div>
-                                   <div>
-                                      <h5 className="font-black text-[13px] group-hover:text-primary transition-colors">{item.title}</h5>
-                                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">REF: {item.caseId}</span>
-                                   </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                   <span className="text-xs font-black text-primary bg-primary/5 px-3 py-1 rounded-full uppercase tracking-tighter">
-                                     {item.similarityScore > 1 ? item.similarityScore : Math.round(item.similarityScore * 100)}% Match
-                                   </span>
-                                   <ChevronRight className="w-5 h-5 text-muted-foreground/30 group-hover:text-primary transition-transform group-hover:translate-x-1" />
-                                </div>
-                             </Link>
-                           ))}
-                        </div>
-                     </div>
                   </CardContent>
-             </Card>
-           ) : (
-             <div className="h-[800px] flex flex-col items-center justify-center bg-white/40 backdrop-blur-md rounded-[60px] border-4 border-dashed border-white/60 p-20 text-center">
-                <div className="w-32 h-32 rounded-[40px] bg-white shadow-2xl flex items-center justify-center mb-10 animate-bounce">
-                   <Sparkles className="w-14 h-14 text-primary" />
-                </div>
-                <h2 className="text-[32px] font-black tracking-tight mb-4">Judicial Intelligence Workbench</h2>
-                <p className="text-muted-foreground text-[16px] max-w-md mx-auto italic font-bold">
-                   Load workspace documents and initiate the reasoning engine for deep legal synthesis.
-                </p>
-                <Button 
-                  size="lg" 
-                  className="mt-12 h-20 px-12 rounded-3xl text-sm font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all"
-                  onClick={() => runAnalysisMutation.mutate()}
-                  disabled={isActivelyLoading}
-                >
-                  {isActivelyLoading ? "Synthesizing Pipeline..." : "Enable Core Reasoning"}
-                </Button>
-             </div>
-           )}
-        </main>
+               </Card>
 
-        {/* RIGHT COLUMN: Prophecy & Risks */}
-        <aside className="flex flex-col gap-8 sticky top-24">
-           
-           {/* Intelligence Core Prophecy */}
-           <Card className="rounded-[40px] shadow-2xl border-deep-green overflow-hidden bg-white group border-[4px]">
-              <CardHeader className="p-8 pb-4">
-                <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-deep-green">
-                  <CheckCircle2 className="w-5 h-5" />
-                  Intelligence Core Prophecy
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-8 pt-4">
-                 <div className="bg-primary/5 p-8 rounded-[32px] border border-primary/20 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-3xl -mr-8 -mt-8" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-6 block">Probable Outcome Score</span>
-                    <div className="flex justify-between items-end">
-                       <h3 className="text-[32px] font-black leading-none text-deep-green">{analysis?.outcome || "Pending"}</h3>
-                       <strong className="text-[28px] font-black text-primary leading-none tracking-tighter">
-                          {Math.round((analysis?.confidence ?? 0) > 1 ? (analysis?.confidence ?? 0) / 100 : (analysis?.confidence ?? 0) * 100)}%
+              {/* 2. Results Grid: Precedents & Laws */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                 {/* Precedents */}
+                 <Card className="rounded-[40px] shadow-2xl border-white/60 overflow-hidden bg-white/40 backdrop-blur-xl">
+                    <CardHeader className="p-8 pb-4 border-b border-border/20 flex flex-row items-center justify-between">
+                       <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-muted-foreground">
+                          <Scale className="w-5 h-5 text-primary" />
+                          Similar Precedents
+                       </CardTitle>
+                       <Badge className="bg-primary/10 text-primary border-primary/20 font-black">TOP 5</Badge>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                       {precedents.map((item) => (
+                         <Link 
+                           key={item.caseId}
+                           to={`/judge/precedents/${item.caseId}`} 
+                           className="flex items-center justify-between p-6 rounded-[32px] bg-white border-2 border-transparent hover:border-primary/30 shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-all group"
+                         >
+                            <div className="flex flex-col gap-1 min-w-0 pr-4">
+                               <h5 className="font-black text-[13px] group-hover:text-primary transition-colors truncate">{item.title}</h5>
+                               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">REF: {item.caseId}</span>
+                            </div>
+                            <div className="flex items-center gap-4 shrink-0">
+                               <span className="text-[11px] font-black text-primary bg-primary/10 px-3 py-1.5 rounded-full uppercase tracking-tighter">
+                                 {item.similarityScore > 1 ? item.similarityScore : Math.round(item.similarityScore * 100)}% Match
+                               </span>
+                               <ChevronRight className="w-5 h-5 text-muted-foreground/30 group-hover:text-primary transition-transform group-hover:translate-x-1" />
+                            </div>
+                         </Link>
+                       ))}
+                    </CardContent>
+                 </Card>
+
+                 {/* Law Articles */}
+                 <Card className="rounded-[40px] shadow-2xl border-white/60 overflow-hidden bg-white/40 backdrop-blur-xl">
+                    <CardHeader className="p-8 pb-4 border-b border-border/20 flex flex-row items-center justify-between">
+                       <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-muted-foreground">
+                          <BookOpen className="w-5 h-5 text-primary" />
+                          Legal Framework
+                       </CardTitle>
+                       <Badge variant="outline" className="text-secondary font-black border-secondary/20 bg-secondary/5">ARTICLE MAPPING</Badge>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                       {lawArticles.map((article: any, idx: number) => {
+                         const title = typeof article === 'object' ? (article.article_number || article.title || 'Legal Reference') : String(article);
+                         return (
+                           <div key={idx} className="p-6 rounded-[32px] bg-white border-2 border-transparent hover:border-emerald-500/30 shadow-sm hover:shadow-xl hover:shadow-emerald-500/5 transition-all group/art cursor-help">
+                              <div className="flex items-center gap-3 mb-2">
+                                 <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                 <h5 className="font-black text-[13px] uppercase tracking-wide group-hover/art:text-emerald-700 transition-colors">{title}</h5>
+                              </div>
+                              <p className="text-[11px] text-muted-foreground font-bold leading-relaxed italic line-clamp-2">
+                                {typeof article === 'object' ? (article.content || "Contextual jurisdictional article mapped to current case facts.") : "Referenced during AI reasoning phase."}
+                              </p>
+                           </div>
+                         );
+                       })}
+                    </CardContent>
+                 </Card>
+              </div>
+
+              {/* 3. Entitlement Calculation (StatCards) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                 {entitlements.map((entry, idx) => (
+                    <div key={idx} className="bg-white/60 backdrop-blur-xl p-10 rounded-[48px] border-2 border-white/80 shadow-2xl hover:shadow-primary/10 transition-all group relative overflow-hidden text-center">
+                       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                       <div className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 mb-6 flex flex-col items-center gap-3">
+                          {entry.label}
+                          {(entry.value.includes('0.00') || entry.value === '0.00 years') && (
+                            <Badge variant="destructive" className="bg-rose-500/10 text-rose-600 border-rose-500/20 text-[9px] font-black uppercase tracking-tighter px-2 h-5">
+                               Missing Primary Data
+                            </Badge>
+                          )}
+                       </div>
+                       <strong className="text-4xl font-black text-deep-green tracking-tighter group-hover:text-primary transition-colors block leading-none">
+                          {entry.value}
                        </strong>
                     </div>
-                    <div className="mt-8 h-2 w-full bg-border/40 rounded-full overflow-hidden">
-                       <div 
-                         className="h-full bg-deep-green rounded-full shadow-[0_0_15px_rgba(2,44,34,0.4)] transition-all duration-1000"
-                         style={{ width: `${Math.round((analysis?.confidence ?? 0) > 1 ? (analysis?.confidence ?? 0) / 100 : (analysis?.confidence ?? 0) * 100)}%` }}
-                       />
-                    </div>
-                 </div>
-              </CardContent>
-           </Card>
+                 ))}
+              </div>
 
-           {/* Inherent Litigation Risks */}
-           <Card className="rounded-[40px] shadow-2xl border-white/40 overflow-hidden bg-white/60 backdrop-blur-xl">
-              <CardHeader className="p-8 pb-4">
-                <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-muted-foreground/80">
-                  <AlertCircle className="w-5 h-5 text-destructive/60" />
-                  Inherent Litigation Risks
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-8 pt-4">
-                 <div className="p-6 rounded-[32px] bg-destructive/5 border border-destructive/20 flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-white shadow-md flex items-center justify-center shrink-0">
-                       <Scale className="w-5 h-5 text-destructive/60" />
-                    </div>
-                    <h4 className="text-[11px] font-black uppercase tracking-widest text-destructive">Ambiguous Precedent</h4>
-                 </div>
-              </CardContent>
-           </Card>
+               {/* 4. Judgment Workspace */}
+               <div className="pt-10 border-t-2 border-dashed border-border/30">
+                  <div className="flex items-center gap-5 mb-8">
+                     <div className="w-16 h-16 rounded-[28px] bg-primary/10 flex items-center justify-center text-primary shadow-xl shadow-primary/5">
+                        <Scale className="w-8 h-8" />
+                     </div>
+                     <div>
+                        <h3 className="text-4xl font-black tracking-tighter text-deep-green leading-none mb-1">Judgment Workspace</h3>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-50">DIFC AI AGENT COLLABORATION STRAND</span>
+                     </div>
+                  </div>
+                  <JudgmentEditor
+                    draftText={analysis?.draftText ?? ''}
+                    confidence={analysis?.confidence ?? 0}
+                    isSubmitting={finalizeMutation.isPending}
+                    caseType={caseQuery.data?.case_type}
+                    caseNumber={caseQuery.data?.case_number}
+                    claimantName={caseQuery.data?.claimant_name ?? ''}
+                    respondentName={caseQuery.data?.respondent_name ?? ''}
+                    filingDate={caseQuery.data?.filing_date ?? ''}
+                    lawArticles={analysis?.lawArticles?.map((a: any) =>
+                      typeof a === 'object' ? (a.title || '') : String(a)
+                    )}
+                    precedents={precedents.map(p => p.title)}
+                    outcome={analysis?.outcome}
+                    onRegenerate={async () => {
+                      await runAnalysisMutation.mutateAsync()
+                      await analysisQuery.refetch()
+                    }}
+                    onFinalize={handleFinalize}
+                  />
+               </div>
 
-           {/* Optimal Sequential Protocol */}
-           <Card className="rounded-[40px] shadow-2xl border-white/40 overflow-hidden bg-white/60 backdrop-blur-xl">
-              <CardHeader className="p-8 pb-4">
-                <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-muted-foreground/80">
-                  <BarChart3 className="w-5 h-5 text-primary/60" />
-                  Optimal Sequential Protocol
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-8 h-32 flex items-center justify-center text-center">
-                 <div className="w-full h-2 bg-muted/40 rounded-full relative overflow-hidden">
-                    <div className="absolute inset-0 bg-primary/20 animate-shimmer shadow-[inset_0_0_10px_rgba(var(--primary),0.1)]" />
-                 </div>
-              </CardContent>
-           </Card>
-
-           {/* Validation Feedback */}
-           <Card className="rounded-[40px] shadow-2xl border-white/40 overflow-hidden bg-white/60 backdrop-blur-xl">
-              <CardHeader className="p-8 pb-4">
-                <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-muted-foreground/80">
-                  <MessageSquare className="w-5 h-5 text-primary/60" />
-                  Validation Feedback
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-8 pt-4 space-y-6">
-                 <div className="flex flex-col gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Reasoning Score</span>
-                    <div className="flex gap-2">
-                       {[1,2,3,4,5].map(n => (
-                         <div key={n} className={cn(
-                           "w-10 h-10 rounded-full flex items-center justify-center text-[10px] font-black shadow-sm cursor-pointer transition-all active:scale-90",
-                           feedback.reasoning_quality_score >= n ? "bg-primary text-white scale-110 shadow-primary/30" : "bg-white border border-border/60 hover:border-primary/40 text-muted-foreground"
-                         )} onClick={() => setFeedback(prev => ({ ...prev, reasoning_quality_score: n }))}>
-                            {n}
-                         </div>
-                       ))}
-                    </div>
-                 </div>
-                 <Button 
-                   className="w-full h-14 rounded-2xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-neutral-800"
-                   onClick={handleFeedbackSubmit}
-                   disabled={feedbackMutation.isPending}
-                 >
-                   Send Performance Metrics
-                 </Button>
-              </CardContent>
-           </Card>
-
-        </aside>
-      </div>
-
-      {/* Judgment Drafting Workspace (Expands to full width below) */}
-      <div className="mt-12 space-y-8 pt-12 border-t-2 border-dashed border-border/40">
-         <div className="flex items-center gap-4 mb-2">
-            <div className="w-12 h-12 rounded-[20px] bg-primary/10 flex items-center justify-center">
-               <Scale className="w-7 h-7 text-primary" />
+               {/* 5. Validation Feedback */}
+               <Card className="rounded-[48px] shadow-2xl border-white/60 overflow-hidden bg-white/60 backdrop-blur-xl">
+                  <CardHeader className="p-10 pb-4 border-b border-border/20">
+                     <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-muted-foreground">
+                        <MessageSquare className="w-5 h-5 text-primary" />
+                        Performance Validation Feedback
+                     </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-10">
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-10">
+                        {[
+                          { id: 'legal_relevance_score', label: 'Legal Relevance', icon: Scale },
+                          { id: 'reasoning_quality_score', label: 'Reasoning Synthesis', icon: Sparkles },
+                          { id: 'explanation_clarity_score', label: 'Contextual Clarity', icon: BookOpen }
+                        ].map((item) => (
+                          <div key={item.id} className="space-y-6">
+                             <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                <span className="flex items-center gap-3"><item.icon className="w-4 h-4 text-primary" /> {item.label}</span>
+                                <span className="text-primary text-sm">{(feedback as any)[item.id]} / 5</span>
+                             </div>
+                             <div className="flex gap-2">
+                                {[1,2,3,4,5].map(n => (
+                                  <div 
+                                    key={n} 
+                                    className={cn(
+                                      "flex-1 h-10 rounded-xl flex items-center justify-center text-[10px] font-black cursor-pointer transition-all",
+                                      (feedback as any)[item.id] >= n ? "bg-primary text-white shadow-lg shadow-primary/30" : "bg-white border-2 border-border/20 text-muted-foreground hover:border-primary/40"
+                                    )}
+                                    onClick={() => setFeedback(prev => ({ ...prev, [item.id]: n }))}
+                                  >
+                                    {n}
+                                  </div>
+                                ))}
+                             </div>
+                          </div>
+                        ))}
+                     </div>
+                     <Button 
+                       className="w-full h-16 rounded-[24px] bg-deep-green text-white font-black uppercase tracking-[0.3em] text-[10px] shadow-2xl shadow-deep-green/20 hover:scale-[1.01] active:scale-95 transition-all"
+                       onClick={handleFeedbackSubmit}
+                       disabled={feedbackMutation.isPending}
+                     >
+                        Commit Performance Metrics
+                     </Button>
+                  </CardContent>
+               </Card>
             </div>
-            <div>
-               <h3 className="text-[28px] font-black tracking-tight text-gradient leading-none mb-1">Judgment Drafting Workspace</h3>
-               <span className="text-xs font-black uppercase tracking-widest text-muted-foreground opacity-50">DIFC AI AGENT COLLABORATION v1.0</span>
+          ) : (
+            <div className="h-[700px] flex flex-col items-center justify-center bg-white/40 backdrop-blur-xl rounded-[60px] border-4 border-dashed border-white/60 p-20 text-center shadow-2xl group">
+               <div className="w-32 h-32 rounded-[40px] bg-white shadow-2xl flex items-center justify-center mb-10 group-hover:scale-110 transition-transform duration-500 animate-pulse-glow">
+                  <Sparkles className="w-14 h-14 text-primary" />
+               </div>
+               <h2 className="text-[36px] font-black tracking-tighter text-deep-green mb-4">Judicial Intelligence Workbench</h2>
+               <p className="text-muted-foreground text-[16px] max-w-sm mx-auto italic font-bold opacity-60">
+                  Synchronize case documentation to initiate deep legal synthesis and outcome prophecy.
+               </p>
+               <Button 
+                size="lg" 
+                className="mt-12 h-20 px-16 rounded-[32px] text-sm font-black uppercase tracking-[0.3em] shadow-2xl shadow-primary/30 hover:scale-[1.05] active:scale-95 transition-all"
+                onClick={() => runAnalysisMutation.mutate()}
+                disabled={isActivelyLoading}
+               >
+                 <Sparkles className={cn("w-6 h-6 mr-4", isActivelyLoading && "animate-spin")} />
+                 {isActivelyLoading ? "Synthesizing..." : "Enable Core Reasoning"}
+               </Button>
             </div>
-         </div>
-          <JudgmentEditor
-            draftText={analysis?.draftText ?? ''}
-            confidence={analysis?.confidence ?? 0}
-            isSubmitting={finalizeMutation.isPending}
-            caseType={caseQuery.data?.case_type}
-            caseNumber={caseQuery.data?.case_number}
-            claimantName={caseQuery.data?.claimant_name ?? ''}
-            respondentName={caseQuery.data?.respondent_name ?? ''}
-            filingDate={caseQuery.data?.filing_date ?? ''}
-            lawArticles={analysis?.lawArticles?.map((a: any) =>
-              typeof a === 'object' ? (a.title || '') : String(a)
-            )}
-            precedents={precedents.map(p => p.title)}
-            outcome={analysis?.outcome}
-            onRegenerate={async () => {
-              await runAnalysisMutation.mutateAsync()
-              await analysisQuery.refetch()
-            }}
-            onFinalize={handleFinalize}
-          />
+          )}
+        </main>
       </div>
     </PortalLayout>
   )
