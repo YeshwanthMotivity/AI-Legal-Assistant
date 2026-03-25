@@ -46,6 +46,41 @@ def _parse_date(value: str) -> datetime | None:
         except ValueError:
             continue
     return None
+
+def _smart_slice(text: str, target_len: int = 1500) -> str:
+    if len(text) <= target_len:
+        return text
+    markers = [
+        text.lower().find("claimant:"),
+        text.lower().find("respondent:"),
+        text.lower().find(" v "),
+        text.lower().find("between"),
+    ]
+    first_hit = min((m for m in markers if m >= 0), default=0)
+    start = max(0, first_hit - 200)
+    end = start + target_len
+    if end > len(text):
+        end = len(text)
+        start = max(0, end - target_len)
+    return text[start:end]
+
+NOISE_PATTERNS = [
+    r"https?://\S+",
+    r"\(/[\w-]+\)",
+    r"DFSA\s*\(",
+    r"Dubai Courts",
+    r"data-protection-policy",
+    r"terms-of-use",
+    r"quality-policy",
+    r"disclaimer",
+    r"Legal Database",
+]
+
+def _strip_noise(text: str) -> str:
+    for pattern in NOISE_PATTERNS:
+        text = re.sub(pattern, "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
     
 # ─────────────────────────────────────────────────────────────────────────────
 # 0. Global Setup: Law Display Normalization
@@ -345,16 +380,34 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
                         headers={"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"},
                         json={
                             "model": settings.groq_model,
+                            "response_format": {"type": "json_object"},
                             "messages": [
-                                {"role": "system", "content": "From this court case excerpt, extract: case name (X v Y format if present), year, and a 1-2 sentence summary of the dispute and outcome. Be concise."},
-                                {"role": "user", "content": item["text"][:600]}
+                                {"role": "system", "content": (
+                                    "You are a DIFC legal case parser. Extract from the court text and return ONLY valid JSON — no markdown, no explanation.\n"
+                                    "Schema: {\"case_name\": \"X v Y or null\", \"claimant\": \"name or null\", "
+                                    "\"respondent\": \"name or null\", \"year\": \"4-digit string or null\", "
+                                    "\"outcome\": \"Awarded|Dismissed|Partial|Settled|null\", "
+                                    "\"summary\": \"1-2 sentence factual summary\"}\n"
+                                    "Look for 'Claimant:' and 'Respondent:' labels. If not explicit, look for 'X v Y' patterns. "
+                                    "For outcome look for awarded/dismissed/ordered to pay language."
+                                )},
+                                {"role": "user", "content": _smart_slice(item["text"], 1500)}
                             ],
-                            "max_tokens": 120,
+                            "max_tokens": 200,
                             "temperature": 0.0,
                         }
                     )
                     resp.raise_for_status()
-                    item["text"] = resp.json()["choices"][0]["message"]["content"]
+                    groq_raw = resp.json()["choices"][0]["message"]["content"]
+                    parsed = json.loads(groq_raw)
+                    if parsed.get("case_name"):
+                        item["title"] = parsed["case_name"]
+                    item["claimant"]   = parsed.get("claimant")
+                    item["respondent"] = parsed.get("respondent")
+                    item["outcome"]    = parsed.get("outcome") or item.get("outcome", "")
+                    item["year"]       = parsed.get("year") or item.get("year", "N/A")
+                    item["summary"]    = parsed.get("summary", "")
+                    item["text"]       = parsed.get("summary", item["text"])
                 except Exception:
                     pass
                     
@@ -453,22 +506,34 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
                 })
         async with httpx.AsyncClient(timeout=30) as client:
             for item in results[:5]:
+                item["content"] = _strip_noise(item["content"])
                 try:
                     resp = await client.post(
                         "https://api.groq.com/openai/v1/chat/completions",
                         headers={"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"},
                         json={
                             "model": settings.groq_model,
+                            "response_format": {"type": "json_object"},
                             "messages": [
-                                {"role": "system", "content": "Extract and return ONLY: article number, article title, and a 1-2 sentence plain English summary of what this law article covers. Format: 'Article X(Y) - Title: [title]. Summary: [summary]'"},
-                                {"role": "user", "content": item["content"][:600]}
+                                {"role": "system", "content": (
+                                    "You are a DIFC legal article parser. Return ONLY valid JSON — no markdown, no explanation.\n"
+                                    "Schema: {\"article_number\": \"e.g. Article 19(2) or null\", \"article_title\": \"short title or null\", "
+                                    "\"law_name\": \"full law name\", \"summary\": \"1-2 sentence plain English explanation\"}"
+                                )},
+                                {"role": "user", "content": item["content"][:1500]}
                             ],
                             "max_tokens": 120,
                             "temperature": 0.0,
                         }
                     )
                     resp.raise_for_status()
-                    item["content"] = resp.json()["choices"][0]["message"]["content"]
+                    parsed = json.loads(resp.json()["choices"][0]["message"]["content"])
+                    item["article_number"] = parsed.get("article_number")
+                    item["article_title"]  = parsed.get("article_title")
+                    item["law_name"]       = parsed.get("law_name") or item.get("title", "")
+                    item["content"]        = parsed.get("summary", item["content"])
+                    if parsed.get("article_number"):
+                        item["title"] = parsed["article_number"]
                 except Exception:
                     pass
 

@@ -55,7 +55,9 @@ export interface SimilarPrecedent {
   caseId: string
   title: string
   similarityScore: number
-  summary?: string
+  summary?: string | null
+  claimant?: string | null
+  respondent?: string | null
 }
 
 export interface EntitlementItem {
@@ -146,9 +148,11 @@ export interface PrecedentDetail {
   text: string
   outcome?: string
   case_type?: string
-  summary?: string
+  summary?: string | null
   cited_laws?: string[]
   compensation?: string
+  claimant?: string | null
+  respondent?: string | null
 }
 
 export interface PrecedentChatResponse {

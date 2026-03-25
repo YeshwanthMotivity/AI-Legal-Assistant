@@ -7,6 +7,9 @@ class SimilarCase(BaseModel):
     outcome: str
     similarity_score: float
     confidence_score: float
+    claimant: str | None = None
+    respondent: str | None = None
+    summary: str | None = None
 
 
 class SimilarityRequest(BaseModel):
@@ -26,6 +29,8 @@ class PrecedentDetail(BaseModel):
     summary: str | None = None
     cited_laws: list[str] = []
     compensation: str | None = None
+    claimant: str | None = None
+    respondent: str | None = None
 
 
 class PrecedentChatRequest(BaseModel):

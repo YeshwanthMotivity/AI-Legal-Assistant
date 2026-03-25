@@ -307,7 +307,10 @@ const PrecedentDetailPage: React.FC = () => {
                   </div>
                   <div className="divide-y divide-border/20">
                     {(() => {
-                      const parties = extractParties(precedent.text)
+                      const parties = {
+                        claimant: precedent.claimant || extractParties(precedent.text).claimant,
+                        respondent: precedent.respondent || extractParties(precedent.text).respondent,
+                      }
                       const cleanTitle = extractCaseTitle(precedent.text, precedent.title)
                       const cleanSummary = precedent.summary || extractSummary(precedent.text)
                       const year = precedent.year || extractYear(precedent.text)

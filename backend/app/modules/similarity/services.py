@@ -526,6 +526,8 @@ class SimilarityService:
             summary=summary,
             cited_laws=payload.get("cited_laws") or [],
             compensation=compensation or "N/A",
+            claimant=payload.get("claimant"),
+            respondent=payload.get("respondent")
         )
 
     async def precedent_chat(self, precedent_id: str, request: PrecedentChatRequest) -> PrecedentChatResponse:
