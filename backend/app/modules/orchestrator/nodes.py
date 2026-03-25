@@ -391,7 +391,7 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
                                     "Look for 'Claimant:' and 'Respondent:' labels. If not explicit, look for 'X v Y' patterns. "
                                     "For outcome look for awarded/dismissed/ordered to pay language."
                                 )},
-                                {"role": "user", "content": _smart_slice(item["text"], 1500)}
+                                {"role": "user", "content": _smart_slice(item["text"], 3000)}
                             ],
                             "max_tokens": 200,
                             "temperature": 0.0,
@@ -402,8 +402,28 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
                     parsed = json.loads(groq_raw)
                     if parsed.get("case_name"):
                         item["title"] = parsed["case_name"]
-                    item["claimant"]   = parsed.get("claimant")
-                    item["respondent"] = parsed.get("respondent")
+                    
+                    # Validate party names — reject generic labels and cited-case prefixes
+                    _BAD_PARTY = {None, "", "the Claimant", "Claimant", "claimant",
+                                  "the Defendant", "Defendant", "defendant",
+                                  "the Respondent", "Respondent", "See transcript", "N/A"}
+                    _BAD_PREFIX = ("In ", "See ", "As in ", "Cited in", "Relying on",
+                                   "Although ", "Those ", "Court of Appeal in ",
+                                   "Justice ", "Lady ", "Lord ")
+                    
+                    raw_claimant = parsed.get("claimant")
+                    raw_respondent = parsed.get("respondent")
+                    
+                    if raw_claimant and raw_claimant not in _BAD_PARTY and not raw_claimant.startswith(_BAD_PREFIX):
+                        item["claimant"] = raw_claimant
+                    else:
+                        item["claimant"] = None
+                    
+                    if raw_respondent and raw_respondent not in _BAD_PARTY and not raw_respondent.startswith(_BAD_PREFIX):
+                        item["respondent"] = raw_respondent
+                    else:
+                        item["respondent"] = None
+                    
                     item["outcome"]    = parsed.get("outcome") or item.get("outcome", "")
                     item["year"]       = parsed.get("year") or item.get("year", "N/A")
                     item["summary"]    = parsed.get("summary", "")
