@@ -22,10 +22,10 @@ class CaseService:
         self.judgment_repository = JudgmentRepository(db)
 
     @staticmethod
-    async def _run_analysis_task(case_id: str) -> None:
+    async def _run_analysis_task(case_id: str, language: str = "en") -> None:
         async with AsyncSessionLocal() as task_db:
             try:
-                await OrchestratorService(task_db).run_analysis(case_id)
+                await OrchestratorService(task_db).run_analysis(case_id, language=language)
                 await task_db.commit()
             except Exception:
                 await task_db.rollback()
@@ -88,7 +88,7 @@ class CaseService:
             return None
         return CaseResponse.model_validate(case)
     
-    async def analyze_case(self, case_id: str, background_tasks: BackgroundTasks) -> CaseAnalyzeResponse:
+    async def analyze_case(self, case_id: str, background_tasks: BackgroundTasks, language: str = "en") -> CaseAnalyzeResponse:
         """Queue AI analysis for a case."""
         case = await self.case_repository.update_status(case_id, CaseStatus.AI_ANALYSIS_PENDING)
         if not case:
@@ -98,7 +98,7 @@ class CaseService:
             )
 
         await self.db.commit()
-        background_tasks.add_task(self._run_analysis_task, case_id)
+        background_tasks.add_task(self._run_analysis_task, case_id, language=language)
 
         return CaseAnalyzeResponse(
             case_id=case_id,

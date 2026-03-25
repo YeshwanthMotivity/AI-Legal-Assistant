@@ -30,6 +30,7 @@ interface PortalLayoutProps {
   title: string
   subtitle?: string
   children: ReactNode
+  hideSidebar?: boolean
 }
 
 interface SidebarItemProps {
@@ -58,7 +59,7 @@ const SidebarItem = ({ icon: Icon, label, href, active, collapsed }: SidebarItem
   </NavLink>
 );
 
-const PortalLayout = ({ title, subtitle, children }: PortalLayoutProps) => {
+const PortalLayout = ({ title, subtitle, children, hideSidebar = false }: PortalLayoutProps) => {
   const { t, i18n } = useTranslation()
   const { user, logout } = useAuth()
   const location = useLocation()
@@ -104,71 +105,73 @@ const PortalLayout = ({ title, subtitle, children }: PortalLayoutProps) => {
   return (
     <div className="flex min-h-screen bg-background text-foreground selection:bg-primary/20">
       {/* Static Sidebar */}
-      <aside 
-        className={cn(
-          "glass-strong flex flex-col fixed h-full z-40 w-[280px] border-r-0 border-l-0 shadow-2xl",
-          isRTL ? "right-0 border-l" : "left-0 border-r"
-        )}
-      >
-        <div className="p-8 flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95">
-            <Scale className="w-6 h-6" />
-          </div>
-          <span className="font-black text-xl tracking-tighter text-gradient">{t('common.appName')}</span>
-        </div>
-
-        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto scrollbar-hide">
-          <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.25em] mb-6 px-4 opacity-50">
-            {t('common.main_menu')}
-          </div>
-          {menuItems.map((item) => (
-            <SidebarItem
-              key={item.href}
-              icon={item.icon}
-              label={item.label}
-              href={item.href}
-              active={location.pathname === item.href}
-            />
-          ))}
-        </nav>
-
-        {/* AI Engine Info Card (Static) */}
-        <div className="px-6 py-5 mx-4 mb-6 rounded-3xl bg-primary/5 border border-primary/10 glass-strong">
-          <div className="flex items-center gap-2.5 mb-2.5">
-             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-             <span className="text-[10px] font-black uppercase tracking-widest text-primary">AI Reasoning Node</span>
-          </div>
-          <p className="text-[10px] text-muted-foreground/80 leading-relaxed font-medium">
-             Synthesizing deep legal insights via <span className="text-primary font-bold">BGE-M3</span> & <span className="text-primary font-bold">Qdrant</span> technology.
-          </p>
-        </div>
-
-        <div className="p-6 bg-muted/20 border-t border-border/40 mt-auto">
-          <div className="flex items-center gap-4 mb-6 px-2">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center text-primary font-black shadow-inner shrink-0 text-lg">
-              {user?.username?.[0].toUpperCase()}
+      {!hideSidebar && (
+        <aside 
+          className={cn(
+            "glass-strong flex flex-col fixed h-full z-40 w-[280px] border-r-0 border-l-0 shadow-2xl",
+            isRTL ? "right-0 border-l" : "left-0 border-r"
+          )}
+        >
+          <div className="p-8 flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95">
+              <Scale className="w-6 h-6" />
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-black truncate leading-tight">{user?.username}</div>
-              <div className="text-[10px] font-black text-primary/70 truncate uppercase tracking-tight">{t(`roles.${user?.role}`)}</div>
-            </div>
+            <span className="font-black text-xl tracking-tighter text-gradient">{t('common.appName')}</span>
           </div>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 rounded-2xl h-12 transition-all group px-4"
-            onClick={logout}
-          >
-            <LogOut className={cn("w-5 h-5 transition-transform group-hover:-translate-x-1", isRTL ? "ml-3" : "mr-3")} />
-            <span className="font-bold">{t('auth.logout')}</span>
-          </Button>
-        </div>
-      </aside>
+
+          <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto scrollbar-hide">
+            <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.25em] mb-6 px-4 opacity-50">
+              {t('common.main_menu')}
+            </div>
+            {menuItems.map((item) => (
+              <SidebarItem
+                key={item.href}
+                icon={item.icon}
+                label={item.label}
+                href={item.href}
+                active={location.pathname === item.href}
+              />
+            ))}
+          </nav>
+
+          {/* AI Engine Info Card (Static) */}
+          <div className="px-6 py-5 mx-4 mb-6 rounded-3xl bg-primary/5 border border-primary/10 glass-strong">
+            <div className="flex items-center gap-2.5 mb-2.5">
+               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+               <span className="text-[10px] font-black uppercase tracking-widest text-primary">AI Reasoning Node</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground/80 leading-relaxed font-medium">
+               Synthesizing deep legal insights via <span className="text-primary font-bold">BGE-M3</span> & <span className="text-primary font-bold">Qdrant</span> technology.
+            </p>
+          </div>
+
+          <div className="p-6 bg-muted/20 border-t border-border/40 mt-auto">
+            <div className="flex items-center gap-4 mb-6 px-2">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center text-primary font-black shadow-inner shrink-0 text-lg">
+                {user?.username?.[0].toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-black truncate leading-tight">{user?.username}</div>
+                <div className="text-[10px] font-black text-primary/70 truncate uppercase tracking-tight">{t(`roles.${user?.role}`)}</div>
+              </div>
+            </div>
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 rounded-2xl h-12 transition-all group px-4"
+              onClick={logout}
+            >
+              <LogOut className={cn("w-5 h-5 transition-transform group-hover:-translate-x-1", isRTL ? "ml-3" : "mr-3")} />
+              <span className="font-bold">{t('auth.logout')}</span>
+            </Button>
+          </div>
+        </aside>
+      )}
 
       {/* Main Content Area */}
       <main 
         className={cn(
           "flex-1 transition-all duration-300 min-h-screen",
-          isRTL ? "mr-[280px]" : "ml-[280px]"
+          !hideSidebar && (isRTL ? "mr-[280px]" : "ml-[280px]")
         )}
       >
         {/* Header Enhancement */}

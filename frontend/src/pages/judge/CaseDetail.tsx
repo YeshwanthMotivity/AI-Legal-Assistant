@@ -133,7 +133,7 @@ const CaseDetail = () => {
   })
 
   const runAnalysisMutation = useMutation({
-    mutationFn: () => runAnalysis(id as string),
+    mutationFn: () => runAnalysis(id as string, i18n.language),
     onSuccess: async () => {
       setAnalysisRequested(true)
       await analysisQuery.refetch()
@@ -242,11 +242,11 @@ const CaseDetail = () => {
               variant="destructive" 
               size="sm"
               className="gap-2 font-bold px-4 shadow-sm hover:scale-105 transition-all"
-              onClick={() => { if (window.confirm('Delete this case?')) deleteMutation.mutate() }}
+              onClick={() => { if (window.confirm(t('judge.workspace.confirmDeleteCase'))) deleteMutation.mutate() }}
               disabled={deleteMutation.isPending}
             >
               <AlertCircle className="w-4 h-4 text-destructive-foreground" />
-              {deleteMutation.isPending ? "Deleting..." : "Delete Case"}
+              {deleteMutation.isPending ? t('judge.workspace.deletingCase') : t('judge.workspace.deleteCase')}
             </Button>
         </div>
         <div className="flex gap-3">
@@ -260,7 +260,7 @@ const CaseDetail = () => {
               {t('judge.workspace.runAnalysis')}
            </Button>
            <Button className="shadow-lg shadow-primary/20">
-              Finalize Judgment
+              {t('judge.workspace.finalizeJudgment')}
            </Button>
         </div>
       </div>
@@ -460,8 +460,8 @@ const CaseDetail = () => {
                                const showRespondent = !isBadValue(item.respondent)
                                return (showClaimant || showRespondent) ? (
                                  <div className="text-[11px] text-muted-foreground mt-1 flex gap-3">
-                                   {showClaimant && <span>Claimant: <strong>{item.claimant}</strong></span>}
-                                   {showRespondent && <span>Respondent: <strong>{item.respondent}</strong></span>}
+                                   {showClaimant && <span>{t('judge.workspace.claimantLabel')}: <strong>{item.claimant}</strong></span>}
+                                   {showRespondent && <span>{t('judge.workspace.respondentLabel')}: <strong>{item.respondent}</strong></span>}
                                  </div>
                                ) : null
                              })()}
@@ -493,7 +493,7 @@ const CaseDetail = () => {
                 <CardHeader className="flex flex-row items-center justify-between bg-primary/5 border-b py-4 px-6 group-hover/laws:bg-primary/10 transition-colors">
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-5 h-5 text-primary" />
-                    <CardTitle className="text-sm font-black uppercase tracking-widest">{t('judge.workspace.lawArticles')}</CardTitle>
+                    <CardTitle className="text-sm font-black uppercase tracking-widest text-[#0c3a2f]">{t('judge.workspace.lawArticles')}</CardTitle>
                   </div>
                   <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary bg-primary/5 px-2 uppercase tracking-tighter">{CATEGORY_DISPLAY_NAMES[i18n.language] || 'DIFC Legal Framework'}</Badge>
                 </CardHeader>
@@ -512,7 +512,7 @@ const CaseDetail = () => {
                               .replace(/^\w/, (c: string) => c.toUpperCase())
                               .replace(/\d{4}$/, (y: string) => ` (${y})`)
                               .trim()
-                          : `Article ${idx + 1}`;
+                          : `${t('judge.workspace.article')} ${idx + 1}`;
                         const content = isObj
                           ? (article.content || article.text || article.description || article.summary || '')
                           : '';
@@ -545,13 +545,13 @@ const CaseDetail = () => {
                               <p className="text-[12px] text-muted-foreground leading-relaxed italic font-medium line-clamp-3 group-hover/article:text-foreground transition-colors">
                                 {cleanArticleContent(
                                 (content || '').replace(/\s*\|\s*Match:\s*[\d.]+/gi, '')
-                              ) || 'Citations mapped from primary case analysis.'}
+                              ) || t('judge.workspace.citationsMapped')}
                               </p>
                             </div>
                             
                             <div className="absolute left-0 top-full mt-2 z-50 w-80 p-4 bg-popover/95 backdrop-blur-md border border-border/60 rounded-2xl shadow-2xl text-xs text-foreground/80 leading-relaxed font-medium hidden group-hover/tooltip:block animate-in fade-in zoom-in-95 duration-200">
-                              <span className="font-black text-primary uppercase tracking-widest mb-1.5 block text-[9px]">Article Context</span>
-                              {content || 'No detailed description available in analysis metadata.'}
+                              <span className="font-black text-primary uppercase tracking-widest mb-1.5 block text-[9px]">{t('judge.workspace.articleContext')}</span>
+                              {content || t('judge.workspace.noDetailedDescription')}
                             </div>
                           </div>
                         );
@@ -559,7 +559,7 @@ const CaseDetail = () => {
                       {lawArticles.length === 0 && (
                         <div className="py-12 text-center flex flex-col items-center gap-3 bg-muted/5 rounded-2xl border border-dashed">
                            <BookOpen className="w-10 h-10 text-muted-foreground/20" />
-                           <p className="text-xs text-muted-foreground font-bold italic">No relevant articles identified.</p>
+                           <p className="text-xs text-muted-foreground font-bold italic">{t('judge.workspace.noRelevantArticles')}</p>
                         </div>
                       )}
                     </div>
@@ -579,8 +579,7 @@ const CaseDetail = () => {
                       <div className="p-6 mx-8 my-6 bg-amber-500/5 border border-dashed border-amber-500/20 rounded-2xl text-xs text-amber-800 leading-relaxed italic flex items-start gap-4 shadow-sm">
                         <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                         <p className="font-medium">
-                          Salary and employment dates were not found in the uploaded documents. 
-                          Upload salary records or employment contracts to calculate entitlements accurately.
+                          {t('judge.workspace.salaryEmploymentNotFound')}
                         </p>
                       </div>
                     )}
@@ -593,7 +592,7 @@ const CaseDetail = () => {
                       ))}
                       {entitlements.length === 0 && (
                         <div className="col-span-full py-16 text-center text-muted-foreground font-bold italic bg-muted/5">
-                           Calculation data unavailable for this case.
+                           {t('judge.workspace.calculationDataUnavailable')}
                         </div>
                       )}
                     </div>
@@ -605,14 +604,14 @@ const CaseDetail = () => {
                   <CardHeader className="bg-muted/10 border-b py-5 px-8">
                     <CardTitle className="text-lg font-black tracking-tight flex items-center gap-3">
                        <Sparkles className="w-6 h-6 text-primary" />
-                       Case Summary & Fact Synthesis
+                       {t('judge.workspace.caseSummaryFacts')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-10 prose prose-sm dark:prose-invert max-w-none">
                      <div className="bg-primary/5 p-8 rounded-3xl border border-primary/10 mb-8 italic text-base leading-relaxed font-medium text-muted-foreground shadow-inner">
                         {analysis?.summary && !analysis.summary.trim().startsWith('{') && !analysis.summary.trim().startsWith('json')
                           ? analysis.summary
-                          : "Analysis complete. See judgment draft for full details."}
+                          : t('judge.workspace.analysisCompleteSeeDraft')}
                      </div>
                      
                      <div className="grid grid-cols-1 gap-6">
@@ -641,10 +640,8 @@ const CaseDetail = () => {
                   <AlertCircle className="w-8 h-8" />
                 </div>
                 <div className="flex-1">
-                  <h5 className="font-black text-amber-900 text-lg mb-1.5 uppercase tracking-tighter italic">Reasoning Cluster Active</h5>
-                  <p className="text-amber-800 text-sm leading-relaxed font-bold opacity-80">
-                    The QWEN-2.5 reasoning nodes are currently synthesizing complex legal data. Deep legal analysis typically requires 2-5 minutes to reach high confidence.
-                  </p>
+                  <h5 className="font-black text-amber-900 text-lg mb-1.5 uppercase tracking-tighter italic">{t('judge.workspace.reasoningClusterTitle')}</h5>
+                  <p className="text-xs text-amber-800/80 leading-relaxed font-bold italic">{t('judge.workspace.reasoningClusterDesc')}</p>
                 </div>
               </div>
             )}
@@ -653,7 +650,7 @@ const CaseDetail = () => {
             <div className="space-y-6 pt-6 border-t border-border/40">
                <div className="flex items-center gap-3 mb-2">
                   <Scale className="w-8 h-8 text-primary" />
-                  <h3 className="text-2xl font-black tracking-tight text-gradient">Judgment Drafting Workspace</h3>
+                  <h3 className="text-2xl font-black tracking-tight text-gradient">{t('judge.workspace.judgmentDraftingWorkspace')}</h3>
                </div>
                 <JudgmentEditor
                   draftText={analysis?.draftText ?? ''}
@@ -684,9 +681,9 @@ const CaseDetail = () => {
                     <BarChart3 className="w-20 h-20 text-muted-foreground/20 mx-auto" />
                     <Sparkles className="w-10 h-10 text-primary/30 absolute -top-4 -right-4 animate-bounce" />
                   </div>
-                  <h4 className="text-2xl font-black mb-4 tracking-tight">Judicial Intelligence Workbench</h4>
+                  <h3 className="text-xl font-black text-primary mb-1 tracking-tight">{t('judge.workspace.workbenchTitle')}</h3>
                   <p className="max-w-md mx-auto text-muted-foreground text-base italic leading-relaxed font-medium">
-                     {t('judge.workspace.waitingAnalysis')} Engage the reasoning engine to populate similar precedents, law articles, and drafting suggestions.
+                    <p className="text-xs text-muted-foreground font-medium italic">{t('judge.workspace.workbenchDesc')}</p>
                   </p>
                   <Button 
                     size="lg"
@@ -695,7 +692,7 @@ const CaseDetail = () => {
                     onClick={() => runAnalysisMutation.mutate()}
                   >
                      <Sparkles className={cn("w-5 h-5 mr-3", isActivelyLoading && "animate-spin")} />
-                     {isActivelyLoading ? "Synthesizing Case Context..." : "Enable AI Insights"}
+                     {isActivelyLoading ? t('judge.workspace.synthesizingContext') : t('judge.workspace.enableAiInsights')}
                   </Button>
                </CardContent>
             </Card>
