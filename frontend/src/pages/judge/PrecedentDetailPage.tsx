@@ -52,11 +52,12 @@ function splitTranscript(text: string): string[] {
   })
 }
 
-const getSectionLabel = (text: string): string | null => {
-  if (/\bfacts?\b|\bclaimant\b|\bemployed\b/i.test(text.slice(0, 100))) return 'facts'
-  if (/\barticle\s+\d+|\blaw\b|\bstatute\b/i.test(text.slice(0, 100))) return 'legalAnalysis'
-  if (/\bjudgment\b|\border\b|\baward\b|\bdismiss/i.test(text.slice(0, 100))) return 'judgment'
-  return null
+const getSectionLabel = (text: string, prevLabel: string | null): string | null => {
+  const slice = text.slice(0, 120).toLowerCase()
+  if (/\bfacts?\b|\bclaimant\b|\bemployed\b|\bbackground\b|\bparties\b/.test(slice)) return 'facts'
+  if (/\barticle\s+\d+|\blaw\b|\bstatute\b|\bregulation\b|\bprovision\b/.test(slice)) return 'legalAnalysis'
+  if (/\bjudgment\b|\border\b|\baward\b|\bdismiss|\bfinding\b|\bdecision\b/.test(slice)) return 'judgment'
+  return prevLabel // carry forward the section label so it doesn't reset on every paragraph
 }
 
 const PrecedentDetailPage: React.FC = () => {
@@ -192,14 +193,17 @@ const PrecedentDetailPage: React.FC = () => {
                     </p>
                   )}
                   {splitTranscript(precedent.text)
-                    .map((paragraph, idx) => {
-                      const trimmed = paragraph.trim();
+                    .reduce<{ text: string; section: string | null }[]>((acc, paragraph) => {
+                      const prevSection = acc.length > 0 ? acc[acc.length - 1].section : null
+                      return [...acc, { text: paragraph.trim(), section: getSectionLabel(paragraph.trim(), prevSection) }]
+                    }, [])
+                    .map(({ text: trimmed, section: sectionLabel }, idx, arr) => {
                       const isNumbered = /^\d+\./.test(trimmed);
-                      const sectionLabel = getSectionLabel(trimmed);
+                      const showLabel = sectionLabel && (idx === 0 || arr[idx - 1].section !== sectionLabel);
                       
                       return (
                         <div key={idx} className="space-y-4">
-                          {sectionLabel && (
+                          {showLabel && (
                             <div className="flex items-center gap-2 mt-8 mb-4">
                               <Badge className="bg-primary/20 text-primary border-primary/30 font-black uppercase text-[10px] tracking-widest px-3 py-1">
                                 {t(`judge.workspace.sections.${sectionLabel}`)}

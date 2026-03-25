@@ -472,24 +472,37 @@ const CaseDetail = () => {
                     <div className="grid grid-cols-1 gap-4">
                       {lawArticles.map((article: any, idx: number) => {
                         const isObj = typeof article === 'object' && article !== null;
-                        const title = isObj 
-                          ? (article.title || article.law_name || article.article_number || `Article ${idx + 1}`) 
+                        const rawTitle = isObj
+                          ? (article.article_number || article.title || article.law_name || '')
                           : String(article);
-                        const content = isObj 
-                          ? (article.content || article.text || article.description || "Article details mapped from Case Analysis.") 
-                          : "Citations mapped from primary case analysis.";
+                        const title = rawTitle
+                          ? rawTitle.replace(/([a-z])([A-Z])/g, '$1 $2')
+                                     .replace(/^\w/, (c: string) => c.toUpperCase())
+                                     .replace(/\d{4}$/, (y: string) => ` (${y})`)
+                          : `Article ${idx + 1}`;
+                        const content = isObj
+                          ? (article.content || article.text || article.description || article.summary || '')
+                          : '';
+                        const articleNum = isObj ? (article.article_number || article.number || null) : null;
                         
                         return (
                           <div key={idx} className="bg-primary/5 dark:bg-primary/10 border border-primary/10 dark:border-primary/20 p-5 rounded-2xl hover:shadow-md hover:border-primary/30 transition-all group/article relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-1 h-full bg-primary/20 group-hover/article:bg-primary transition-colors" />
                             <div className="flex items-center gap-2.5 mb-2.5">
-                               <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
-                               <h5 className="font-black text-foreground/80 text-[11px] uppercase tracking-wide group-hover/article:text-primary transition-colors">
-                                 {CATEGORY_DISPLAY_NAMES[title.toLowerCase()] || title.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                               </h5>
+                               <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)] shrink-0" />
+                               <div className="flex items-center gap-2">
+                                 {articleNum && (
+                                   <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-primary/20 text-primary border border-primary/20 uppercase tracking-widest shrink-0">
+                                     {articleNum}
+                                   </span>
+                                 )}
+                                 <h5 className="font-black text-foreground/80 text-[11px] uppercase tracking-wide group-hover/article:text-primary transition-colors">
+                                   {CATEGORY_DISPLAY_NAMES[title.toLowerCase()] || title}
+                                 </h5>
+                               </div>
                             </div>
                             <p className="text-[12px] text-muted-foreground leading-relaxed italic font-medium line-clamp-3 group-hover/article:text-foreground transition-colors">
-                              {content}
+                              {content || 'Referenced in case analysis. See full transcript for application context.'}
                             </p>
                           </div>
                         );

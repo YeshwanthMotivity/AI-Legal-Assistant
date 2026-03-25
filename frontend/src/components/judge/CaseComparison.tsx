@@ -69,7 +69,10 @@ const CaseComparison = ({ currentCase, precedentCase }: CaseComparisonProps) => 
             {comparisonData.map((row, idx) => (
               <TableRow key={idx} className="hover:bg-primary/[0.02] border-b border-border/30 transition-colors">
                 <TableCell className="font-black text-[10px] uppercase text-muted-foreground/60 align-top pt-6 pb-6 px-6 tracking-wide">{row.field}</TableCell>
-                <TableCell className="text-[12px] align-top pt-6 pb-6 px-6">
+                <TableCell 
+                  className="text-[12px] align-top pt-6 pb-6 px-6"
+                  title={typeof row.currentValue === 'string' ? row.currentValue : undefined}
+                >
                   {Array.isArray(row.currentValue) ? (
                     <div className="flex flex-wrap gap-1.5">
                       {row.currentValue.map((v, i) => (
@@ -78,12 +81,15 @@ const CaseComparison = ({ currentCase, precedentCase }: CaseComparisonProps) => 
                       {row.currentValue.length === 0 && <span className="text-muted-foreground/50 italic font-medium">N/A</span>}
                     </div>
                   ) : (
-                    <div className="leading-relaxed font-bold text-foreground/80 max-h-48 overflow-y-auto scrollbar-hide pr-2">
+                    <div className="leading-relaxed font-bold text-foreground/80 max-h-32 overflow-y-auto scrollbar-thin pr-2 relative">
                       {row.currentValue || <span className="text-muted-foreground/50 italic font-medium">N/A</span>}
                     </div>
                   )}
                 </TableCell>
-                <TableCell className="text-[12px] align-top pt-6 pb-6 px-6 bg-primary/[0.02]">
+                <TableCell 
+                  className="text-[12px] align-top pt-6 pb-6 px-6 bg-primary/[0.02]"
+                  title={typeof row.precedentValue === 'string' ? row.precedentValue : undefined}
+                >
                   {Array.isArray(row.precedentValue) ? (
                     <div className="flex flex-wrap gap-1.5">
                       {row.precedentValue.map((v, i) => (
@@ -92,7 +98,7 @@ const CaseComparison = ({ currentCase, precedentCase }: CaseComparisonProps) => 
                       {row.precedentValue.length === 0 && <span className="text-muted-foreground/50 italic font-medium">N/A</span>}
                     </div>
                   ) : (
-                    <div className="leading-relaxed font-bold text-foreground/80 max-h-48 overflow-y-auto scrollbar-hide pr-2">
+                    <div className="leading-relaxed font-bold text-foreground/80 max-h-32 overflow-y-auto scrollbar-thin pr-2 relative">
                        {row.precedentValue || <span className="text-muted-foreground/50 italic font-medium">N/A</span>}
                     </div>
                   )}
