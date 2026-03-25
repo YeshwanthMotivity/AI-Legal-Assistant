@@ -498,24 +498,31 @@ const CaseDetail = () => {
                         };
                         
                         return (
-                          <div key={idx} className="bg-primary/5 dark:bg-primary/10 border border-primary/10 dark:border-primary/20 p-5 rounded-2xl hover:shadow-md hover:border-primary/30 transition-all group/article relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-1 h-full bg-primary/20 group-hover/article:bg-primary transition-colors" />
-                            <div className="flex items-center gap-2.5 mb-2.5">
-                               <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)] shrink-0" />
-                               <div className="flex items-center gap-2">
-                                 {articleNum && (
-                                   <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-primary/20 text-primary border border-primary/20 uppercase tracking-widest shrink-0">
-                                     {articleNum}
-                                   </span>
-                                 )}
-                                 <h5 className="font-black text-foreground/80 text-[11px] uppercase tracking-wide group-hover/article:text-primary transition-colors">
-                                   {CATEGORY_DISPLAY_NAMES[title.toLowerCase()] || title}
-                                 </h5>
-                               </div>
+                          <div key={idx} className="relative group/tooltip">
+                            <div className="bg-primary/5 dark:bg-primary/10 border border-primary/10 dark:border-primary/20 p-5 rounded-2xl hover:shadow-md hover:border-primary/30 transition-all group/article relative overflow-hidden">
+                              <div className="absolute top-0 left-0 w-1 h-full bg-primary/20 group-hover/article:bg-primary transition-colors" />
+                              <div className="flex items-center gap-2.5 mb-2.5">
+                                 <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)] shrink-0" />
+                                 <div className="flex items-center gap-2">
+                                   {articleNum && (
+                                     <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-primary/20 text-primary border border-primary/20 uppercase tracking-widest shrink-0">
+                                       {articleNum}
+                                     </span>
+                                   )}
+                                   <h5 className="font-black text-foreground/80 text-[11px] uppercase tracking-wide group-hover/article:text-primary transition-colors">
+                                     {CATEGORY_DISPLAY_NAMES[title.toLowerCase()] || title}
+                                   </h5>
+                                 </div>
+                              </div>
+                              <p className="text-[12px] text-muted-foreground leading-relaxed italic font-medium line-clamp-3 group-hover/article:text-foreground transition-colors">
+                                {cleanArticleContent(content) || 'Relevant article — see full legal framework for complete text.'}
+                              </p>
                             </div>
-                            <p className="text-[12px] text-muted-foreground leading-relaxed italic font-medium line-clamp-3 group-hover/article:text-foreground transition-colors">
-                              {cleanArticleContent(content) || 'Relevant article — see full legal framework for complete text.'}
-                            </p>
+                            
+                            <div className="absolute left-0 top-full mt-2 z-50 w-80 p-4 bg-popover/95 backdrop-blur-md border border-border/60 rounded-2xl shadow-2xl text-xs text-foreground/80 leading-relaxed font-medium hidden group-hover/tooltip:block animate-in fade-in zoom-in-95 duration-200">
+                              <span className="font-black text-primary uppercase tracking-widest mb-1.5 block text-[9px]">Article Context</span>
+                              {content || 'No detailed description available in analysis metadata.'}
+                            </div>
                           </div>
                         );
                       })}

@@ -113,10 +113,10 @@ const extractLawArticles = (
   return firstArray.map((entry) => {
     if (typeof entry === 'string') return entry
     const row = asRecord(entry)
-    if (row.title || row.content) {
+    if (row.title || row.content || row.description || row.article_text || row.body) {
       return {
         title: String(row.title ?? row.law_name ?? row.article_number ?? 'Legal Article'),
-        content: String(row.content ?? row.text ?? row.summary ?? 'Citations mapped from primary case analysis.'),
+        content: String(row.content ?? row.text ?? row.description ?? row.article_text ?? row.body ?? row.summary ?? 'Citations mapped from primary case analysis.'),
       }
     }
     return String(row.article ?? row.id ?? '').trim()
