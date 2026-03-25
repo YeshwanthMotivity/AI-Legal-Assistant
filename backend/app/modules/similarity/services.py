@@ -574,32 +574,43 @@ class SimilarityService:
             f"{detail.text}"
         )
         
-        # Use Local Ollama (Qwen)
-        async with httpx.AsyncClient(timeout=300.0) as client:
+        # Use Groq for structured, numbered-point responses
+        async with httpx.AsyncClient(timeout=60.0) as client:
             try:
-                url = f"{settings.ollama_url}/api/generate"
-                prompt = f"System: {system_prompt}\n\nUser: {request.message}\n\nAssistant:"
-                payload = {
-                    "model": settings.ollama_model_fallback,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.1,
-                        "num_predict": 1000
+                resp = await client.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {settings.groq_api_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": settings.groq_model,
+                        "messages": [
+                            {"role": "system", "content": (
+                                f"You are a DIFC legal analyst. Answer questions about the case: {detail.title}.\n"
+                                f"{lang_instruction}\n"
+                                "Rules:\n"
+                                "- Answer ONLY based on the case text provided.\n"
+                                "- Format your answer as clear numbered points.\n"
+                                "- Each point = one key finding or fact. Max 5 points.\n"
+                                "- Keep each point to 1-2 sentences.\n"
+                                "- End with a one-line 'Summary:' conclusion.\n"
+                                "- If the answer is not in the text, say: 'This information is not available in the case transcript.'\n\n"
+                                f"CASE TEXT:\n{detail.text[:4000]}"
+                            )},
+                            {"role": "user", "content": request.message}
+                        ],
+                        "max_tokens": 600,
+                        "temperature": 0.0,
                     }
-                }
-                headers = {"Content-Type": "application/json"}
-                
-                logger.info(f"Sending chat request to Ollama ({settings.ollama_model_fallback})")
-                response = await client.post(url, headers=headers, json=payload, timeout=300.0)
-                response.raise_for_status()
-                data = response.json()
-                
-                answer = data.get("response", "Could not generate an answer.")
+                )
+                resp.raise_for_status()
+                answer = resp.json()["choices"][0]["message"]["content"]
+                logger.info(f"Precedent chat via Groq ({settings.groq_model}) successful")
                 return PrecedentChatResponse(response=answer)
             except Exception as e:
-                logger.error(f"Precedent chat fallback failed: {e}")
-                raise HTTPException(status_code=502, detail=f"AI service failed to respond: {str(e)}")
+                logger.error(f"Precedent chat failed: {e}")
+                raise HTTPException(status_code=502, detail=f"AI service failed: {str(e)}")
 
 def _cleanse_text(text: Any) -> str:
     """Helper to remove common artifacts from AI generated text."""

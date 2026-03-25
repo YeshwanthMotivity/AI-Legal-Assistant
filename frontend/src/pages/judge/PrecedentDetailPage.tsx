@@ -573,7 +573,7 @@ const PrecedentDetailPage: React.FC = () => {
                         precedentCase={{
                           title: precedent.title,
                           type: precedent.category || 'DIFC Judicial Precedent',
-                          facts: precedent.summary || 'Summary not available.',
+                          facts: aiSummary || precedent.summary || (precedent.text?.slice(0, 300) + '...'),
                           issues: precedent.cited_laws || [],
                           outcome: precedent.outcome || 'Finalized',
                           compensation: precedent.compensation || 'N/A'
