@@ -89,7 +89,7 @@ const extractSimilarPrecedents = (
     const title =
       String(row.title ?? row.case_title ?? row.summary ?? row.name ?? `Precedent ${index + 1}`)
     const caseId = String(row.case_id ?? row.id ?? `precedent-${index + 1}`)
-    const similarityScore = toNumber(row.similarity ?? row.score ?? row.similarity_score, 0)
+    const similarityScore = toNumber(row.similarityScore ?? row.similarity ?? row.score ?? row.similarity_score, 0)
     const summary = row.summary ? String(row.summary) : undefined
     return { caseId, title, similarityScore, summary }
   })
