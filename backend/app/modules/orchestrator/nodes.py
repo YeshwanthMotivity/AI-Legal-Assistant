@@ -802,25 +802,24 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
 
     # ── 4. Model Callers ──────────────────────────────────────────────────────
     async def _call_ollama(url: str, timeout_seconds: int, model_name: str) -> str:
-        logger.info(f"reasoning_agent_node: calling x.ai (grok-4-1-fast)")
+        logger.info(f"reasoning_agent_node: calling ollama ({model_name}) at {url}")
+        prompt = f"System: {system_prompt}\n\nUser Context: {user_prompt}\n\nAssistant Response (JSON ONLY):"
+        payload = {
+            "model": model_name,
+            "prompt": prompt,
+            "stream": False,
+            "options": {
+                "num_ctx": 4096,
+                "temperature": 0.1,
+                "num_predict": NODE_TOKEN_LIMITS["reasoning"]
+            }
+        }
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
-            payload = {
-                "model": "grok-4-1-fast",
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                "stream": False,
-                "temperature": 0.1
-            }
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {os.environ.get('XAI_API_KEY')}"
-            }
-            response = await client.post("https://api.x.ai/v1/chat/completions", headers=headers, json=payload, timeout=timeout_seconds)
+            headers = {"Content-Type": "application/json"}
+            response = await client.post(f"{url}/api/generate", headers=headers, json=payload, timeout=timeout_seconds)
             response.raise_for_status()
             data = response.json()
-            return str(data.get("choices", [{}])[0].get("message", {}).get("content", ""))
+            return str(data.get("response", ""))
 
 
     # ── 5. JSON parsing helpers ───────────────────────────────────────────────
@@ -1072,25 +1071,24 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
     )
 
     try:
-        model_url = "https://api.x.ai/v1/chat/completions"
+        model_url = f"{settings.ollama_url}/api/generate"
+        prompt = f"System: {system_prompt}\n\nUser Context: {user_prompt}\n\nAssistant Response:"
         payload = {
-            "model": "grok-4-1-fast",
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
+            "model": settings.ollama_model_fallback,
+            "prompt": prompt,
             "stream": False,
-            "temperature": 0.05
+            "options": {
+                "num_ctx": 4096,
+                "temperature": 0.2,
+                "num_predict": NODE_TOKEN_LIMITS["drafting"]
+            }
         }
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {os.environ.get('XAI_API_KEY')}"
-        }
+        headers = {"Content-Type": "application/json"}
         async with httpx.AsyncClient(timeout=120) as client:
             response = await client.post(model_url, headers=headers, json=payload)
             response.raise_for_status()
             data = response.json()
-            draft_content = _cleanse_text(str(data.get("choices", [{}])[0].get("message", {}).get("content", "")))
+            draft_content = _cleanse_text(str(data.get("response", "")))
     except Exception as e:
         logger.warning(f"judgment_drafting_agent_node failed: {e}, using reasoning fallback")
         draft_content = reasoning.get("draft_judgment") or reasoning.get("reasoning") or ""
