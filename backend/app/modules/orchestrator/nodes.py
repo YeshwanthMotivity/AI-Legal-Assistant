@@ -1030,7 +1030,6 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
     )
 
     try:
-    try:
         model_url = "https://api.x.ai/v1/chat/completions"
         payload = {
             "model": "grok-4-1-fast",
