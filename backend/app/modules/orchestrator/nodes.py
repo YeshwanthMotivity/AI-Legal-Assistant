@@ -1154,29 +1154,29 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
             if 0 <= idx < len(search_pool):
                 best_match = search_pool[idx]
                 return {
-                    "caseId": best_match.get("case_id") or best_match.get("id"),
-                    "title": best_match.get("title") or title_str,
+                    "caseId": best_match.get("similar_case_id") or best_match.get("case_id") or best_match.get("id"),
+                    "title": best_match.get("title") or best_match.get("case_title") or title_str,
                     "claimant": best_match.get("claimant"),
                     "respondent": best_match.get("respondent"),
                     "summary": best_match.get("summary"),
                     "similarityScore": 0.95 - (idx * 0.05)
                 }
-
+        
         # 3. Fuzzy ratio match
         best_match = None
         best_ratio = 0.0
         for pool_item in search_pool:
-            pool_title = pool_item.get("title") or ""
+            pool_title = pool_item.get("title") or pool_item.get("case_title") or ""
             # Simple fuzzy ratio check
             ratio = difflib.SequenceMatcher(None, title_str.lower(), pool_title.lower()).ratio()
             if ratio > best_ratio:
                 best_ratio = ratio
                 best_match = pool_item
         
-        if best_match and (best_ratio > 0.6 or title_str.lower() in (best_match.get("title") or "").lower()):
+        if best_match and (best_ratio > 0.6 or title_str.lower() in (best_match.get("title") or best_match.get("case_title") or "").lower()):
             return {
-                "caseId": best_match.get("case_id") or best_match.get("id"),
-                "title": best_match.get("title") or title_str,
+                "caseId": best_match.get("similar_case_id") or best_match.get("case_id") or best_match.get("id"),
+                "title": best_match.get("title") or best_match.get("case_title") or title_str,
                 "claimant": best_match.get("claimant"),
                 "respondent": best_match.get("respondent"),
                 "summary": best_match.get("summary"),
