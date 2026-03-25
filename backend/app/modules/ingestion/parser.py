@@ -122,12 +122,12 @@ class LegalStructureParser:
     )
 
     def __init__(self, timeout: float = 120.0):
-        self.url = f"{settings.ollama_url}/api/chat"
+        self.url = "https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions"
         self.timeout = timeout
 
     async def parse(self, text: str) -> Dict[str, Any]:
         """
-        Calls JAIS LLM to parse the text into structured sections.
+        Calls Gemini LLM to parse the text into structured sections.
         Falls back to regex parser if LLM fails or times out.
         """
         defaults = {
@@ -145,10 +145,16 @@ class LegalStructureParser:
             input_text = text[:8000]
 
             async with httpx.AsyncClient(timeout=self.timeout) as client:
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {settings.groq_api_key1}"
+                }
                 response = await client.post(
-                    self.url,
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers=headers,
                     json={
-                        "model": settings.ollama_model_primary,
+                        "model": "llama-3.3-70b-versatile",
+                        "response_format": {"type": "json_object"},
                         "messages": [
                             {"role": "system", "content": self.SYSTEM_PROMPT},
                             {
@@ -162,7 +168,7 @@ class LegalStructureParser:
                 response.raise_for_status()
                 data = response.json()
 
-            content = data["message"]["content"]
+            content = data["choices"][0]["message"]["content"]
 
             # Clean markdown fences if present
             content = re.sub(r"```json\s*", "", content)

@@ -150,12 +150,18 @@ async def extract_entities(text: str) -> list[dict]:
     )
 
     try:
-        # FIXED: was 2.0 — LLM needs time to process legal text
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        url = "https://api.groq.com/openai/v1/chat/completions"
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {settings.groq_api_key1}"
+            }
             response = await client.post(
-                f"{settings.ollama_url}/api/chat",
+                url,
+                headers=headers,
                 json={
-                    "model": settings.ollama_model_fallback,
+                    "model": "llama-3.3-70b-versatile",
+                    "response_format": {"type": "json_object"},
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": text[:4000]}
@@ -166,7 +172,7 @@ async def extract_entities(text: str) -> list[dict]:
             response.raise_for_status()
             data = response.json()
 
-            content = data["message"]["content"].strip()
+            content = data["choices"][0]["message"]["content"].strip()
 
         # Clean markdown fences
         content = re.sub(r"```json\s*", "", content)
