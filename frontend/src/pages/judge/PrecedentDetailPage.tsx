@@ -83,6 +83,9 @@ const PrecedentDetailPage: React.FC = () => {
     enabled: !!id,
   })
 
+  // Temporary debug for observing precedent vector fields
+  console.log('Precedent data:', precedent)
+
   const { data: sourceCaseAnalysis, isLoading: isLoadingSource } = useQuery({
     queryKey: ['case-analysis', fromCaseId],
     queryFn: () => getAnalysis(fromCaseId as string),
