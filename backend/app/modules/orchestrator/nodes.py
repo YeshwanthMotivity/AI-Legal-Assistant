@@ -879,6 +879,7 @@ def _flatten_to_text(data: Any, indent: int = 0) -> str:
 def _select_model(state: AnalysisState) -> tuple[str, str, float]:
     model_url = "https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions"
     model_label = "gemini-2.0-flash"
+    complexity_score = 0.5
         
     return model_url, model_label, complexity_score
 
