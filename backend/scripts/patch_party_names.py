@@ -3,6 +3,7 @@ One-time Qdrant patch script: Extract claimant/respondent names from raw_text
 and write them directly into difc_precedents payload fields.
 
 Usage:
+  docker compose up -d --build backend
   docker compose exec backend python /app/scripts/patch_party_names.py
 """
 
@@ -24,17 +25,33 @@ BAD_VALUES = {
 # ── Extraction helpers ────────────────────────────────────────────────────────
 
 def extract_parties_from_text(text: str) -> dict:
-    """Extract from English documents."""
-    # Pattern: "X v Y [YEAR] DIFC"
-    match = re.search(
+    """Extract from English documents — skip cited cases like 'In Elseco v Lys'."""
+    # Priority: matches containing "DIFC CFI" (main case, not appeal/CA refs)
+    matches = list(re.finditer(
+        r'([A-Z][A-Za-z\s&,.\'-]{3,60})\s+v\s+([A-Z][A-Za-z\s&,.\'-]{3,60})\s*\[(\d{4})\]\s*DIFC\s*CFI',
+        text
+    ))
+    if matches:
+        m = matches[0]
+        return {
+            "claimant": m.group(1).strip(),
+            "respondent": m.group(2).strip(),
+            "year": m.group(3),
+        }
+
+    # Fallback: "X v Y [YEAR]" but skip lines starting with "In ", "See ", etc.
+    for m in re.finditer(
         r'([A-Z][A-Za-z\s&,.\'-]{3,60})\s+v\s+([A-Z][A-Za-z\s&,.\'-]{3,60})\s*\[(\d{4})\]',
         text
-    )
-    if match:
+    ):
+        line_start = text.rfind('\n', 0, m.start()) + 1
+        prefix = text[line_start:m.start()].strip().lower()
+        if prefix.startswith(('in ', 'see ', 'as in ', 'cited in', 'relying on')):
+            continue
         return {
-            "claimant": match.group(1).strip(),
-            "respondent": match.group(2).strip(),
-            "year": match.group(3),
+            "claimant": m.group(1).strip(),
+            "respondent": m.group(2).strip(),
+            "year": m.group(3),
         }
 
     # Pattern: "BETWEEN\n\nX\n\nClaimant\n\nand\n\nY\n\nDefendant"
@@ -87,7 +104,8 @@ def main():
             payload = point.payload or {}
             existing_claimant = payload.get("claimant", "")
 
-            if existing_claimant not in BAD_VALUES:
+            # Skip if already has a real name (not generic or cited-case prefix)
+            if existing_claimant not in BAD_VALUES and not existing_claimant.startswith("In "):
                 skipped += 1
                 continue
 

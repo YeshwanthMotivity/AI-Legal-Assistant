@@ -446,6 +446,22 @@ const CaseDetail = () => {
                                   {item.title}
                                 </span>
                              </div>
+                             {(() => {
+                               const genericLabels = ['the claimant', 'claimant', 'the defendant', 'defendant', 'see transcript', 'n/a']
+                               const showClaimant = item.claimant && !genericLabels.includes(item.claimant.toLowerCase())
+                               const showRespondent = item.respondent && !genericLabels.includes(item.respondent.toLowerCase())
+                               return (showClaimant || showRespondent) ? (
+                                 <div className="text-[11px] text-muted-foreground mt-1 flex gap-3">
+                                   {showClaimant && <span>Claimant: <strong>{item.claimant}</strong></span>}
+                                   {showRespondent && <span>Respondent: <strong>{item.respondent}</strong></span>}
+                                 </div>
+                               ) : null
+                             })()}
+                             {item.summary && (
+                               <p className="text-[11px] text-muted-foreground mt-1 italic line-clamp-2">
+                                 {item.summary}
+                               </p>
+                             )}
                           </div>
                           <div className="flex items-center gap-5 shrink-0">
                              <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[9px] font-black border border-primary/20 shadow-sm uppercase tracking-widest">

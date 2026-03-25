@@ -573,7 +573,18 @@ const PrecedentDetailPage: React.FC = () => {
                         precedentCase={{
                           title: precedent.title,
                           type: precedent.category || 'DIFC Judicial Precedent',
-                          facts: aiSummary || precedent.summary || (precedent.text?.slice(0, 300) + '...'),
+                          facts: (() => {
+                            if (aiSummary) return aiSummary
+                            if (precedent.summary && precedent.summary.length < 500) return precedent.summary
+                            const cleanText = (precedent.text || '')
+                              .replace(/https?:\/\/\S+/g, '')
+                              .replace(/\(\/[\w-]+\)/g, '')
+                              .replace(/DFSA\s*\(/g, '')
+                              .replace(/data-protection-policy|terms-of-use|quality-policy|disclaimer/gi, '')
+                              .replace(/\n{3,}/g, '\n\n')
+                              .trim()
+                            return cleanText.slice(0, 300) + '...'
+                          })(),
                           issues: precedent.cited_laws || [],
                           outcome: precedent.outcome || 'Finalized',
                           compensation: precedent.compensation || 'N/A'
