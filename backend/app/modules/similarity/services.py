@@ -580,7 +580,7 @@ class SimilarityService:
                 url = f"{settings.ollama_url}/api/generate"
                 prompt = f"System: {system_prompt}\n\nUser: {request.message}\n\nAssistant:"
                 payload = {
-                    "model": settings.ollama_model_primary,
+                    "model": settings.ollama_model_fallback,
                     "prompt": prompt,
                     "stream": False,
                     "options": {
@@ -590,7 +590,7 @@ class SimilarityService:
                 }
                 headers = {"Content-Type": "application/json"}
                 
-                logger.info(f"Sending chat request to Ollama ({settings.ollama_model_primary})")
+                logger.info(f"Sending chat request to Ollama ({settings.ollama_model_fallback})")
                 response = await client.post(url, headers=headers, json=payload, timeout=300.0)
                 response.raise_for_status()
                 data = response.json()
