@@ -449,7 +449,12 @@ const CaseDetail = () => {
                           </div>
                           <div className="flex items-center gap-5 shrink-0">
                              <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[9px] font-black border border-primary/20 shadow-sm uppercase tracking-widest">
-                                {Math.round((item.similarityScore || 0) * 100)}% Match
+                                {(() => {
+                                  const raw = item.similarityScore || 0;
+                                  // Handle both 0-1 float and 0-100 integer formats
+                                  const pct = raw > 1 ? Math.round(raw) : Math.round(raw * 100);
+                                  return `${pct}% Match`;
+                                })()}
                              </div>
                              <ChevronRight className="w-5 h-5 text-muted-foreground/30 group-hover:text-primary transition-transform group-hover:translate-x-1" />
                           </div>

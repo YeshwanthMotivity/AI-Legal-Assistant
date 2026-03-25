@@ -64,11 +64,11 @@ const getSectionLabel = (text: string): string | null => {
 
 function extractCaseTitle(text: string, fallback: string): string {
   // Pattern: "X v Y [YEAR] DIFC" or "X v Y" in legal text
-  const vMatch = text.match(/([A-Z][A-Za-z\\s&,.'()-]{3,50})\\s+v\\s+([A-Z][A-Za-z\\s&,.'()-]{3,50})\\s+\\[(\\d{4})\\]/);
+  const vMatch = text.match(/([A-Z][A-Za-z\s&,.'()-]{3,50})\s+v\s+([A-Z][A-Za-z\s&,.'()-]{3,50})\s+\[(\d{4})\]/);
   if (vMatch) return `${vMatch[1].trim()} v ${vMatch[2].trim()}`;
   
   // Shorter "X v Y" without year
-  const shortV = text.match(/([A-Z][A-Za-z\\s]{3,40})\\s+v\\s+([A-Z][A-Za-z\\s]{3,40})[^\\w]/);
+  const shortV = text.match(/([A-Z][A-Za-z\s]{3,40})\s+v\s+([A-Z][A-Za-z\s]{3,40})[^\w]/);
   if (shortV) return `${shortV[1].trim()} v ${shortV[2].trim()}`;
   
   // If fallback looks like a filename, return generic
@@ -78,13 +78,13 @@ function extractCaseTitle(text: string, fallback: string): string {
 
 function extractParties(text: string): { claimant: string; respondent: string } {
   // "X v Y [year]" pattern
-  const match = text.match(/([A-Z][A-Za-z\\s&,.'()-]{3,50})\\s+v\\s+([A-Z][A-Za-z\\s&,.'()-]{3,50})\\s+\\[(\\d{4})\\]/);
+  const match = text.match(/([A-Z][A-Za-z\s&,.'()-]{3,50})\s+v\s+([A-Z][A-Za-z\s&,.'()-]{3,50})\s+\[(\d{4})\]/);
   if (match) {
     return { claimant: match[1].trim(), respondent: match[2].trim() };
   }
   // Fallback: look for "Claimant: X" or "Defendant: X" patterns
-  const claimantMatch = text.match(/[Cc]laimant[:\\s]+([A-Z][A-Za-z\\s]{2,40})(?:\\n|,|\\.)/);
-  const defendantMatch = text.match(/[Dd]efendant[:\\s]+([A-Z][A-Za-z\\s]{2,40})(?:\\n|,|\\.)/);
+  const claimantMatch = text.match(/[Cc]laimant[:\s]+([A-Z][A-Za-z\s]{2,40})(?:\n|,|\.)/);
+  const defendantMatch = text.match(/[Dd]efendant[:\s]+([A-Z][A-Za-z\s]{2,40})(?:\n|,|\.)/);
   return {
     claimant: claimantMatch?.[1]?.trim() || 'See transcript',
     respondent: defendantMatch?.[1]?.trim() || 'See transcript',
@@ -94,23 +94,20 @@ function extractParties(text: string): { claimant: string; respondent: string } 
 function extractSummary(text: string): string {
   if (!text) return '';
   
-  // Try to find the case name line "X v Y [year]" and use surrounding context
-  const titleMatch = text.match(/([A-Z][A-Za-z\\s&]+v\\s+[A-Z][A-Za-z\\s&]+\\[(\\d{4})\\][^\\n]*)/);
-  
   // Find sentences that contain key judgment language
   const sentences = text
-    .replace(/\\n+/g, ' ')
-    .split(/(?<=[.!?])\\s+/)
+    .replace(/\n+/g, ' ')
+    .split(/(?<=[.!?])\s+/)
     .filter(s => s.length > 40 && s.length < 400);
   
   // Prefer sentences with outcome/decision language
   const outcomeSentence = sentences.find(s =>
-    /\\b(court (found|held|ordered|dismissed|awarded)|judgment|claimant (is|was) entitled|claim (succeeded|failed)|awarded|dismissed)\\b/i.test(s)
+    /\b(court (found|held|ordered|dismissed|awarded)|judgment|claimant (is|was) entitled|claim (succeeded|failed)|awarded|dismissed)\b/i.test(s)
   );
   
   // Prefer sentences with factual background
   const factSentence = sentences.find(s =>
-    /\\b(employed|employment|wages|salary|termination|dismissed|contract|dispute)\\b/i.test(s)
+    /\b(employed|employment|wages|salary|termination|dismissed|contract|dispute)\b/i.test(s)
   );
   
   const parts = [factSentence, outcomeSentence]
@@ -119,16 +116,30 @@ function extractSummary(text: string): string {
     .slice(0, 2);
   
   if (parts.length > 0) {
-    return parts.join(' ').replace(/\\s+/g, ' ').trim();
+    return parts.join(' ').replace(/\s+/g, ' ').trim();
   }
   
-  // Last resort: first 2 clean sentences
-  return sentences.slice(0, 2).join(' ').trim();
+  // Last resort: first 1 clean sentence, capped
+  return sentences.slice(0, 1).join(' ').trim().slice(0, 220) + '...';
 }
 
-function extractYear(text: string): string {
-  const match = text.match(/\\[(\\d{4})\\]\\s+DIFC/);
-  return match ? match[1] : 'N/A';
+function extractYear(text: string): string | null {
+  // Match [2024] DIFC or similar citation patterns
+  const match = text.match(/\[(\d{4})\]\s+DIFC/) || text.match(/\b(20\d{2}|19\d{2})\b/);
+  return match ? match[1] : null;
+}
+
+function getOutcomeStyle(outcome: string): { label: string; className: string } {
+  const o = (outcome || '').toLowerCase();
+  if (o.includes('award') || o.includes('granted') || o.includes('success'))
+    return { label: 'Awarded', className: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-400' };
+  if (o.includes('dismiss') || o.includes('reject') || o.includes('denied') || o.includes('failed'))
+    return { label: 'Dismissed', className: 'bg-red-500/15 text-red-700 border-red-500/30 dark:text-red-400' };
+  if (o.includes('final') || o.includes('settled') || o.includes('resolved'))
+    return { label: 'Finalized', className: 'bg-blue-500/15 text-blue-700 border-blue-500/30 dark:text-blue-400' };
+  if (o.includes('partial'))
+    return { label: 'Partially Awarded', className: 'bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-400' };
+  return { label: outcome, className: 'bg-muted/50 text-muted-foreground border-border/40' };
 }
 
 const PrecedentDetailPage: React.FC = () => {
@@ -273,31 +284,42 @@ const PrecedentDetailPage: React.FC = () => {
                     {(() => {
                       const parties = extractParties(precedent.text)
                       const cleanTitle = extractCaseTitle(precedent.text, precedent.title)
-                      const cleanSummary = extractSummary(precedent.text)
-                      
-                      return [
-                        { label: 'Court',       value: 'DIFC Courts' },
-                        { label: 'Source',      value: precedent.title },
-                        { label: 'Case Title',  value: cleanTitle },
-                        { label: 'Reference',   value: id },
-                        { label: 'Year',        value: precedent.year || extractYear(precedent.text) },
-                        { label: 'Claimant',    value: parties.claimant },
-                        { label: 'Respondent',  value: parties.respondent },
-                        { label: 'Case Type',   value: precedent.category || 'DIFC Judicial Precedent' },
-                        { label: 'Outcome',     value: precedent.outcome || 'See transcript' },
-                        { label: 'Summary',     value: cleanSummary || null },
+                      const cleanSummary = precedent.summary || extractSummary(precedent.text)
+                      const year = precedent.year || extractYear(precedent.text)
+                      const outcomeRaw = (precedent.outcome || '').split('.')[0].trim()
+                      const outcomeStyle = outcomeRaw ? getOutcomeStyle(outcomeRaw) : null
+
+                      type RowType = { label: string; value: unknown; type: 'text' | 'outcome' | 'summary' }
+                      const rows: RowType[] = [
+                        { label: 'Court',       value: 'DIFC Courts',                                    type: 'text' },
+                        { label: 'Source',      value: precedent.title,                                   type: 'text' },
+                        { label: 'Case Title',  value: cleanTitle,                                        type: 'text' },
+                        { label: 'Reference',   value: id,                                                type: 'text' },
+                        ...(year ? [{ label: 'Year', value: year, type: 'text' as const }] : []),
+                        { label: 'Claimant',    value: parties.claimant,                                  type: 'text' },
+                        { label: 'Respondent',  value: parties.respondent,                                type: 'text' },
+                        { label: 'Case Type',   value: precedent.category || 'DIFC Judicial Precedent',  type: 'text' },
+                        ...(outcomeStyle ? [{ label: 'Outcome', value: outcomeStyle, type: 'outcome' as const }] : []),
+                        ...(cleanSummary ? [{ label: 'Summary', value: cleanSummary, type: 'summary' as const }] : []),
                       ]
-                        .filter(row => row.value)
-                        .map((row, i) => (
-                          <div key={i} className="grid grid-cols-[140px_1fr] gap-4 px-6 py-3.5 hover:bg-muted/10 transition-colors">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-0.5">
-                              {row.label}
+
+                      return rows.map((row, i) => (
+                        <div key={i} className="grid grid-cols-[140px_1fr] gap-4 px-6 py-3.5 hover:bg-muted/10 transition-colors">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-0.5">
+                            {row.label}
+                          </span>
+                          {row.type === 'outcome' ? (
+                            <span className={`inline-flex items-center self-start gap-1.5 text-[11px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border w-fit ${(row.value as ReturnType<typeof getOutcomeStyle>).className}`}>
+                              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+                              {(row.value as ReturnType<typeof getOutcomeStyle>).label}
                             </span>
-                            <span className={`text-sm font-medium text-foreground/85 leading-relaxed ${row.label === 'Summary' ? 'italic text-muted-foreground' : ''}`}>
-                              {row.value}
+                          ) : (
+                            <span className={`text-sm font-medium leading-relaxed ${row.type === 'summary' ? 'italic text-muted-foreground' : 'text-foreground/85'}`}>
+                              {String(row.value)}
                             </span>
-                          </div>
-                        ))
+                          )}
+                        </div>
+                      ))
                     })()}
 
                     {/* Cited Laws row - only if available */}
