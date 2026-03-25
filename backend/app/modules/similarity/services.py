@@ -5,6 +5,7 @@ import logging
 import re
 import os
 import httpx
+import json
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from qdrant_client import QdrantClient
@@ -470,6 +471,30 @@ class SimilarityService:
         payload = point.payload if hasattr(point, "payload") else point.get("payload", {})
            # Better summary extraction: skip very short fragments or headers
         raw_text = payload.get("raw_text") or payload.get("text") or ""
+        
+        # Groq Extraction: Full text dynamic lookup bypassing isolated chunk exceptions
+        if not payload.get("claimant") and raw_text:
+            try:
+                async with httpx.AsyncClient(timeout=15) as http:
+                    r = await http.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        headers={"Authorization": f"Bearer {settings.groq_api_key}"},
+                        json={
+                            "model": settings.groq_model,
+                            "response_format": {"type": "json_object"},
+                            "messages": [
+                                {"role": "system", "content": "Extract claimant and respondent names from this DIFC case text. Return ONLY JSON: {\"claimant\": \"name\", \"respondent\": \"name\"}. Look for 'X v Y' patterns or 'Claimant:' labels."},
+                                {"role": "user", "content": raw_text[:3000]}
+                            ],
+                            "max_tokens": 80,
+                            "temperature": 0.0
+                        }
+                    )
+                    parsed = json.loads(r.json()["choices"][0]["message"]["content"])
+                    payload["claimant"] = parsed.get("claimant")
+                    payload["respondent"] = parsed.get("respondent")
+            except Exception:
+                pass
         summary = (
             payload.get("facts_summary") or 
             payload.get("summary") or 
