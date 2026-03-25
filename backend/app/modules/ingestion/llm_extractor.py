@@ -162,10 +162,27 @@ async def extract_structure(
     Call Gemini LLM to extract structured JSON from document text.
     Truncates text to 8000 chars (Gemini handles large context well).
     """
+    model = "gemini-2.0-flash"
+    prompt = _select_prompt(doc_type, language)
+
+    # Truncate to avoid context overflow for very large docs, but Gemini handles 8k easily
+    truncated_text = text[:8000] if len(text) > 8000 else text
+
+    payload = {
+        "model": model,
+        "response_format": {"type": "json_object"},
+        "messages": [
+            {
+                "role": "user",
+                "content": f"{prompt}\n\nDOCUMENT TEXT TO PARSE:\n{truncated_text}"
+            }
+        ],
+        "stream": False,
+        "temperature": 0.1,
+        "max_tokens": 1000,
+    }
+
     try:
-        prompt = _select_prompt(doc_type, language)
-        truncated_text = text[:8000] if len(text) > 8000 else text
-        
         url = "https://api.groq.com/openai/v1/chat/completions"
         async with httpx.AsyncClient(timeout=120.0) as client:
             headers = {
