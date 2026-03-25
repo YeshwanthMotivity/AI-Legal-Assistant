@@ -1222,7 +1222,7 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
             entitlement_breakdown.append(e)
 
     # 4. Resolve Cited Precedents with Search Results
-    search_pool = state.get("similar_precedents", []) or state.get("search_results", [])
+    search_pool = state.get("similar_precedents", []) or state.get("precedents", []) or state.get("search_results", [])
     raw_precedents = reasoning.get("cited_cases") or state.get("precedents", [])
     similar_precedents = []
     for p in raw_precedents:
