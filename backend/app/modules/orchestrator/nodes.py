@@ -377,11 +377,12 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
                 try:
                     # Primary: Groq
                     parsed = None
-                    if settings.groq_api_key1:
+                    if settings.groq_api_key:
                         try:
                             resp = await client.post(
                                 "https://api.groq.com/openai/v1/chat/completions",
-                                headers={"Authorization": f"Bearer {settings.groq_api_key1}", "Content-Type": "application/json"},
+                                # Use OLD key for search enrichment
+                                headers={"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"},
                                 json={
                                     "model": settings.groq_model,
                                     "response_format": {"type": "json_object"},
@@ -573,11 +574,12 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
                 item["content"] = _strip_noise(item["content"])
                 # Primary: Groq
                 parsed = None
-                if settings.groq_api_key1:
+                if settings.groq_api_key:
                     try:
                         resp = await client.post(
                             "https://api.groq.com/openai/v1/chat/completions",
-                            headers={"Authorization": f"Bearer {settings.groq_api_key1}", "Content-Type": "application/json"},
+                            # Use OLD key for search enrichment
+                            headers={"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"},
                             json={
                                 "model": settings.groq_model,
                                 "response_format": {"type": "json_object"},
