@@ -27,14 +27,49 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 function renderMarkdown(text: string): React.ReactNode {
-  // Bold: **text** → <strong>
-  const parts = String(text || '').split(/(\*\*[^*]+\*\*)/g)
-  return parts.map((part, i) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} className="text-primary/90 font-black">{part.slice(2, -2)}</strong>
-    }
-    return part
-  })
+  if (!text) return null
+  
+  // Split on numbered points: "1. " "2. " etc, or "Summary:"
+  const lines = text
+    .replace(/(\d+\.\s)/g, '\n$1')
+    .replace(/(Summary:)/gi, '\n$1')
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 0)
+
+  if (lines.length <= 1) {
+    const parts = String(text || '').split(/(\*\*[^*]+\*\*)/g)
+    return <span>{parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} className="text-primary/90 font-black">{part.slice(2, -2)}</strong>
+      }
+      return part
+    })}</span>
+  }
+
+  return (
+    <div className="space-y-2">
+      {lines.map((line, i) => {
+        const isSummary = /^summary:/i.test(line)
+        const isNumbered = /^\d+\./.test(line)
+        const parts = line.split(/(\*\*[^*]+\*\*)/g)
+        const rendered = parts.map((part, j) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            return <strong key={j} className="text-primary/90 font-black">{part.slice(2, -2)}</strong>
+          }
+          return part
+        })
+        return (
+          <div key={i} className={isSummary
+            ? "pt-2 border-t border-border/30 font-bold text-foreground"
+            : isNumbered ? "flex gap-2" : ""
+          }>
+            {rendered}
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 function splitTranscript(text: string): string[] {
@@ -187,25 +222,25 @@ const PrecedentDetailPage: React.FC = () => {
     if (!precedent?.text || aiSummary || summaryLoading) return
     setSummaryLoading(true)
     
-    fetch('https://api.x.ai/v1/chat/completions', {
+    fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_XAI_API_KEY}`
+        'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'grok-4-1-fast',
+        model: 'llama-3.1-8b-instant',
         messages: [{
           role: 'user',
           content: `In 2-3 sentences max, summarize this DIFC court case — who sued whom, what the dispute was about, and the outcome. Be concise and factual.\n\n${precedent.text.slice(0, 3000)}`
         }],
         temperature: 0,
-        stream: false
+        max_tokens: 150
       })
     })
     .then(r => r.json())
     .then(d => setAiSummary(d.choices?.[0]?.message?.content || ''))
-    .catch(err => console.error('x.ai summary fetch failed:', err))
+    .catch(err => console.error('Groq summary fetch failed:', err))
     .finally(() => setSummaryLoading(false))
   }, [precedent?.text, aiSummary])
 
@@ -574,16 +609,19 @@ const PrecedentDetailPage: React.FC = () => {
                           title: precedent.title,
                           type: precedent.category || 'DIFC Judicial Precedent',
                           facts: (() => {
+                            if (summaryLoading) return 'Generating AI summary...'
                             if (aiSummary) return aiSummary
-                            if (precedent.summary && precedent.summary.length < 500) return precedent.summary
+                            if (precedent.summary && precedent.summary.length < 500 && !precedent.summary.startsWith('with any')) return precedent.summary
                             const cleanText = (precedent.text || '')
                               .replace(/https?:\/\/\S+/g, '')
                               .replace(/\(\/[\w-]+\)/g, '')
                               .replace(/DFSA\s*\(/g, '')
                               .replace(/data-protection-policy|terms-of-use|quality-policy|disclaimer/gi, '')
+                              .replace(/Dubai Courts[^.]*\./gi, '')
                               .replace(/\n{3,}/g, '\n\n')
                               .trim()
-                            return cleanText.slice(0, 300) + '...'
+                            if (cleanText.length > 50) return cleanText.slice(0, 300) + '...'
+                            return 'See full transcript for case details.'
                           })(),
                           issues: precedent.cited_laws || [],
                           outcome: precedent.outcome || 'Finalized',

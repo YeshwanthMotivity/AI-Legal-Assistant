@@ -505,9 +505,13 @@ const CaseDetail = () => {
                           ? (article.article_number || article.title || article.law_name || '')
                           : String(article);
                         const title = rawTitle
-                          ? rawTitle.replace(/([a-z])([A-Z])/g, '$1 $2')
-                                     .replace(/^\w/, (c: string) => c.toUpperCase())
-                                     .replace(/\d{4}$/, (y: string) => ` (${y})`)
+                          ? rawTitle
+                              .replace(/\s*\|\s*Match:\s*[\d.]+/gi, '')
+                              .replace(/\s*\|\s*Key Articles:[^|]*/gi, '')
+                              .replace(/([a-z])([A-Z])/g, '$1 $2')
+                              .replace(/^\w/, (c: string) => c.toUpperCase())
+                              .replace(/\d{4}$/, (y: string) => ` (${y})`)
+                              .trim()
                           : `Article ${idx + 1}`;
                         const content = isObj
                           ? (article.content || article.text || article.description || article.summary || '')
@@ -539,7 +543,9 @@ const CaseDetail = () => {
                                  </div>
                               </div>
                               <p className="text-[12px] text-muted-foreground leading-relaxed italic font-medium line-clamp-3 group-hover/article:text-foreground transition-colors">
-                                {cleanArticleContent(content) || 'Relevant article — see full legal framework for complete text.'}
+                                {cleanArticleContent(
+                                (content || '').replace(/\s*\|\s*Match:\s*[\d.]+/gi, '')
+                              ) || 'Citations mapped from primary case analysis.'}
                               </p>
                             </div>
                             

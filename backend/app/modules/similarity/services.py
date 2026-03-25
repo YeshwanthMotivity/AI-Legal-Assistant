@@ -589,17 +589,17 @@ class SimilarityService:
             f"{detail.text}"
         )
         
-        # Use Groq for structured, numbered-point responses
+        # Use DeepSeek for structured, numbered-point responses
         async with httpx.AsyncClient(timeout=60.0) as client:
             try:
                 resp = await client.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
+                    "https://api.deepseek.com/chat/completions",
                     headers={
-                        "Authorization": f"Bearer {settings.groq_api_key}",
+                        "Authorization": f"Bearer {settings.deepseek_api_key}",
                         "Content-Type": "application/json"
                     },
                     json={
-                        "model": settings.groq_model,
+                        "model": "deepseek-chat",
                         "messages": [
                             {"role": "system", "content": (
                                 f"You are a DIFC legal analyst. Answer questions about the case: {detail.title}.\n"
@@ -621,7 +621,7 @@ class SimilarityService:
                 )
                 resp.raise_for_status()
                 answer = resp.json()["choices"][0]["message"]["content"]
-                logger.info(f"Precedent chat via Groq ({settings.groq_model}) successful")
+                logger.info(f"Precedent chat via DeepSeek successful")
                 return PrecedentChatResponse(response=answer)
             except Exception as e:
                 logger.error(f"Precedent chat failed: {e}")
