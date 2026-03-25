@@ -159,17 +159,18 @@ async def extract_structure(
     filename: str = ""
 ) -> dict:
     """
-    Call Ollama LLM to extract structured JSON from document text.
-    Truncates text to 3000 chars to stay within context window.
+    Call Gemini LLM to extract structured JSON from document text.
+    Truncates text to 8000 chars (Gemini handles large context well).
     """
-    model = _select_model(language)
+    model = "gemini-2.0-flash"
     prompt = _select_prompt(doc_type, language)
 
-    # Truncate to avoid context overflow — first 3000 chars has the key info
-    truncated_text = text[:3000] if len(text) > 3000 else text
+    # Truncate to avoid context overflow for very large docs, but Gemini handles 8k easily
+    truncated_text = text[:8000] if len(text) > 8000 else text
 
     payload = {
         "model": model,
+        "response_format": {"type": "json_object"},
         "messages": [
             {
                 "role": "user",
@@ -177,21 +178,22 @@ async def extract_structure(
             }
         ],
         "stream": False,
-        "options": {
-            "temperature": 0.1,
-            "num_predict": 800,
-        }
+        "temperature": 0.1,
+        "max_tokens": 1000,
     }
 
     try:
+        url = "https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions"
         async with httpx.AsyncClient(timeout=120.0) as client:
+            params = {"key": settings.gemini_api_key}
             response = await client.post(
-                f"{settings.ollama_url}/api/chat",
+                url,
+                params=params,
                 json=payload
             )
             response.raise_for_status()
             data = response.json()
-            raw_content = data["message"]["content"]
+            raw_content = data["choices"][0]["message"]["content"]
             result = _parse_json_response(raw_content)
 
             # Always set language and doc_type

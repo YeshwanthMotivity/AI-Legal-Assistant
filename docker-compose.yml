@@ -11,7 +11,7 @@ services:
       - /home/administrator/data/qdrant:/qdrant/storage
     mem_limit: 1g
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:6333/readyz || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:6333/readyz || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5

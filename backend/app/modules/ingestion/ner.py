@@ -150,12 +150,15 @@ async def extract_entities(text: str) -> list[dict]:
     )
 
     try:
-        # FIXED: was 2.0 — LLM needs time to process legal text
+        url = "https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions"
         async with httpx.AsyncClient(timeout=60.0) as client:
+            params = {"key": settings.gemini_api_key}
             response = await client.post(
-                f"{settings.ollama_url}/api/chat",
+                url,
+                params=params,
                 json={
-                    "model": settings.ollama_model_fallback,
+                    "model": "gemini-2.0-flash",
+                    "response_format": {"type": "json_object"},
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": text[:4000]}
@@ -166,7 +169,7 @@ async def extract_entities(text: str) -> list[dict]:
             response.raise_for_status()
             data = response.json()
 
-            content = data["message"]["content"].strip()
+            content = data["choices"][0]["message"]["content"].strip()
 
         # Clean markdown fences
         content = re.sub(r"```json\s*", "", content)

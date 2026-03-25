@@ -490,24 +490,58 @@ class SimilarityService:
         )
         if claimant_is_bad and raw_text:
             try:
+                parsed = None
                 async with httpx.AsyncClient(timeout=15) as http:
-                    r = await http.post(
-                        "https://api.groq.com/openai/v1/chat/completions",
-                        headers={"Authorization": f"Bearer {settings.groq_api_key}"},
-                        json={
-                            "model": settings.groq_model,
-                            "response_format": {"type": "json_object"},
-                            "messages": [
-                                {"role": "system", "content": "Extract claimant and respondent names from this DIFC case text. Return ONLY JSON: {\"claimant\": \"name\", \"respondent\": \"name\"}. Look for 'X v Y' patterns or 'Claimant:' labels."},
-                                {"role": "user", "content": raw_text[:3000]}
-                            ],
-                            "max_tokens": 80,
-                            "temperature": 0.0
-                        }
-                    )
-                    parsed = json.loads(r.json()["choices"][0]["message"]["content"])
-                    payload["claimant"] = parsed.get("claimant")
-                    payload["respondent"] = parsed.get("respondent")
+                    # Primary: Groq
+                    if settings.groq_api_key:
+                        try:
+                            r = await http.post(
+                                "https://api.groq.com/openai/v1/chat/completions",
+                                headers={"Authorization": f"Bearer {settings.groq_api_key}"},
+                                json={
+                                    "model": settings.groq_model,
+                                    "response_format": {"type": "json_object"},
+                                    "messages": [
+                                        {"role": "system", "content": "Extract claimant and respondent names from this DIFC case text. Return ONLY JSON: {\"claimant\": \"name\", \"respondent\": \"name\"}. Look for 'X v Y' patterns or 'Claimant:' labels."},
+                                        {"role": "user", "content": raw_text[:3000]}
+                                    ],
+                                    "max_tokens": 80,
+                                    "temperature": 0.0
+                                }
+                            )
+                            if r.status_code == 200:
+                                parsed = json.loads(r.json()["choices"][0]["message"]["content"])
+                                logger.info("Groq party extraction successful")
+                        except Exception as e:
+                            logger.warning(f"Groq party extraction failed: {e}")
+
+                    # Fallback: Gemini
+                    if not parsed and settings.gemini_api_key:
+                        try:
+                            r = await http.post(
+                                f"https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions",
+                                params={"key": settings.gemini_api_key},
+                                headers={"Content-Type": "application/json"},
+                                json={
+                                    "model": "gemini-2.0-flash",
+                                    "response_format": {"type": "json_object"},
+                                    "messages": [
+                                        {"role": "system", "content": "Extract claimant and respondent names from this DIFC case text. Return ONLY JSON: {\"claimant\": \"name\", \"respondent\": \"name\"}."},
+                                        {"role": "user", "content": raw_text[:3000]}
+                                    ],
+                                    "max_tokens": 80,
+                                    "temperature": 0.0
+                                }
+                            )
+                            if r.status_code == 200:
+                                parsed = json.loads(r.json()["choices"][0]["message"]["content"])
+                                logger.info("Gemini party extraction successful")
+                        except Exception as e:
+                            logger.warning(f"Gemini party extraction fallback failed: {e}")
+
+                    if parsed:
+                        payload["claimant"] = parsed.get("claimant")
+                        payload["respondent"] = parsed.get("respondent")
             except Exception:
                 pass
         summary = (
@@ -589,40 +623,78 @@ class SimilarityService:
             f"{detail.text}"
         )
         
-        # Use DeepSeek for structured, numbered-point responses
+        # Primary: DeepSeek
         async with httpx.AsyncClient(timeout=60.0) as client:
             try:
-                resp = await client.post(
-                    "https://api.deepseek.com/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {settings.deepseek_api_key}",
-                        "Content-Type": "application/json"
-                    },
-                    json={
-                        "model": "deepseek-chat",
-                        "messages": [
-                            {"role": "system", "content": (
-                                f"You are a DIFC legal analyst. Answer questions about the case: {detail.title}.\n"
-                                f"{lang_instruction}\n"
-                                "Rules:\n"
-                                "- Answer ONLY based on the case text provided.\n"
-                                "- Format your answer as clear numbered points.\n"
-                                "- Each point = one key finding or fact. Max 5 points.\n"
-                                "- Keep each point to 1-2 sentences.\n"
-                                "- End with a one-line 'Summary:' conclusion.\n"
-                                "- If the answer is not in the text, say: 'This information is not available in the case transcript.'\n\n"
-                                f"CASE TEXT:\n{detail.text[:4000]}"
-                            )},
-                            {"role": "user", "content": request.message}
-                        ],
-                        "max_tokens": 600,
-                        "temperature": 0.0,
-                    }
-                )
-                resp.raise_for_status()
-                answer = resp.json()["choices"][0]["message"]["content"]
-                logger.info(f"Precedent chat via DeepSeek successful")
-                return PrecedentChatResponse(response=answer)
+                if settings.deepseek_api_key:
+                    resp = await client.post(
+                        "https://api.deepseek.com/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {settings.deepseek_api_key}",
+                            "Content-Type": "application/json"
+                        },
+                        json={
+                            "model": "deepseek-chat",
+                            "messages": [
+                                {"role": "system", "content": (
+                                    f"You are a DIFC legal analyst. Answer questions about the case: {detail.title}.\n"
+                                    f"{lang_instruction}\n"
+                                    "Rules:\n"
+                                    "- Answer ONLY based on the case text provided.\n"
+                                    "- Format your answer as clear numbered points.\n"
+                                    "- Each point = one key finding or fact. Max 5 points.\n"
+                                    "- Keep each point to 1-2 sentences.\n"
+                                    "- End with a one-line 'Summary:' conclusion.\n"
+                                    "- If the answer is not in the text, say: 'This information is not available in the case transcript.'\n\n"
+                                    f"CASE TEXT:\n{detail.text[:4000]}"
+                                )},
+                                {"role": "user", "content": request.message}
+                            ],
+                            "max_tokens": 600,
+                            "temperature": 0.0,
+                        }
+                    )
+                    if resp.status_code == 200:
+                        answer = resp.json()["choices"][0]["message"]["content"]
+                        logger.info(f"Precedent chat via DeepSeek successful")
+                        return PrecedentChatResponse(response=answer)
+                    else:
+                        logger.warning(f"DeepSeek failed with {resp.status_code}: {resp.text}")
+                
+                # Fallback: Gemini (using OpenAI-compatible endpoint)
+                if settings.gemini_api_key:
+                    logger.info("DeepSeek failed or unavailable, falling back to Gemini")
+                    resp = await client.post(
+                        f"https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions",
+                        params={"key": settings.gemini_api_key},
+                        headers={"Content-Type": "application/json"},
+                        json={
+                            "model": "gemini-2.0-flash",
+                            "messages": [
+                                {"role": "system", "content": (
+                                    f"You are a DIFC legal analyst. Answer questions about the case: {detail.title}.\n"
+                                    f"{lang_instruction}\n"
+                                    "Rules:\n"
+                                    "- Answer ONLY based on the case text provided.\n"
+                                    "- Format your answer as clear numbered points.\n"
+                                    "- Each point = one key finding or fact. Max 5 points.\n"
+                                    "- Keep each point to 1-2 sentences.\n"
+                                    "- End with a one-line 'Summary:' conclusion.\n"
+                                    "- If the answer is not in the text, say: 'This information is not available in the case transcript.'\n\n"
+                                    f"CASE TEXT:\n{detail.text[:4000]}"
+                                )},
+                                {"role": "user", "content": request.message}
+                            ],
+                            "max_tokens": 600,
+                            "temperature": 0.0,
+                        }
+                    )
+                    resp.raise_for_status()
+                    answer = resp.json()["choices"][0]["message"]["content"]
+                    logger.info("Precedent chat via Gemini successful")
+                    return PrecedentChatResponse(response=answer)
+                
+                raise HTTPException(status_code=502, detail="Both DeepSeek and Gemini services failed")
             except Exception as e:
                 logger.error(f"Precedent chat failed: {e}")
                 raise HTTPException(status_code=502, detail=f"AI service failed: {str(e)}")

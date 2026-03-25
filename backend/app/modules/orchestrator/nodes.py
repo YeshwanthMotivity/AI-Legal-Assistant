@@ -375,59 +375,103 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=30) as client:
             for item in results[:5]:
                 try:
-                    resp = await client.post(
-                        "https://api.groq.com/openai/v1/chat/completions",
-                        headers={"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"},
-                        json={
-                            "model": settings.groq_model,
-                            "response_format": {"type": "json_object"},
-                            "messages": [
-                                {"role": "system", "content": (
-                                    "You are a DIFC legal case parser. Extract from the court text and return ONLY valid JSON — no markdown, no explanation.\n"
-                                    "Schema: {\"case_name\": \"X v Y or null\", \"claimant\": \"name or null\", "
-                                    "\"respondent\": \"name or null\", \"year\": \"4-digit string or null\", "
-                                    "\"outcome\": \"Awarded|Dismissed|Partial|Settled|null\", "
-                                    "\"summary\": \"1-2 sentence factual summary\"}\n"
-                                    "Look for 'Claimant:' and 'Respondent:' labels. If not explicit, look for 'X v Y' patterns. "
-                                    "For outcome look for awarded/dismissed/ordered to pay language."
-                                )},
-                                {"role": "user", "content": _smart_slice(item["text"], 3000)}
-                            ],
-                            "max_tokens": 200,
-                            "temperature": 0.0,
-                        }
-                    )
-                    resp.raise_for_status()
-                    groq_raw = resp.json()["choices"][0]["message"]["content"]
-                    parsed = json.loads(groq_raw)
-                    if parsed.get("case_name"):
-                        item["title"] = parsed["case_name"]
-                    
-                    # Validate party names — reject generic labels and cited-case prefixes
-                    _BAD_PARTY = {None, "", "the Claimant", "Claimant", "claimant",
-                                  "the Defendant", "Defendant", "defendant",
-                                  "the Respondent", "Respondent", "See transcript", "N/A"}
-                    _BAD_PREFIX = ("In ", "See ", "As in ", "Cited in", "Relying on",
-                                   "Although ", "Those ", "Court of Appeal in ",
-                                   "Justice ", "Lady ", "Lord ")
-                    
-                    raw_claimant = parsed.get("claimant")
-                    raw_respondent = parsed.get("respondent")
-                    
-                    if raw_claimant and raw_claimant not in _BAD_PARTY and not raw_claimant.startswith(_BAD_PREFIX):
-                        item["claimant"] = raw_claimant
-                    else:
-                        item["claimant"] = None
-                    
-                    if raw_respondent and raw_respondent not in _BAD_PARTY and not raw_respondent.startswith(_BAD_PREFIX):
-                        item["respondent"] = raw_respondent
-                    else:
-                        item["respondent"] = None
-                    
-                    item["outcome"]    = parsed.get("outcome") or item.get("outcome", "")
-                    item["year"]       = parsed.get("year") or item.get("year", "N/A")
-                    item["summary"]    = parsed.get("summary", "")
-                    item["text"]       = parsed.get("summary", item["text"])
+                    # Primary: Groq
+                    parsed = None
+                    if settings.groq_api_key:
+                        try:
+                            resp = await client.post(
+                                "https://api.groq.com/openai/v1/chat/completions",
+                                headers={"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"},
+                                json={
+                                    "model": settings.groq_model,
+                                    "response_format": {"type": "json_object"},
+                                    "messages": [
+                                        {"role": "system", "content": (
+                                            "You are a DIFC legal case parser. Extract from the court text and return ONLY valid JSON — no markdown, no explanation.\n"
+                                            "Schema: {\"case_name\": \"X v Y or null\", \"claimant\": \"name or null\", "
+                                            "\"respondent\": \"name or null\", \"year\": \"4-digit string or null\", "
+                                            "\"outcome\": \"Awarded|Dismissed|Partial|Settled|null\", "
+                                            "\"summary\": \"1-2 sentence factual summary\"}\n"
+                                        )},
+                                        {"role": "user", "content": _smart_slice(item["text"], 3000)}
+                                    ],
+                                    "max_tokens": 200,
+                                    "temperature": 0.0,
+                                }
+                            )
+                            if resp.status_code == 200:
+                                parsed = resp.json()
+                                logger.info(f"Groq parsing successful for {item['title']}")
+                            else:
+                                logger.warning(f"Groq failed with {resp.status_code}, trying fallback")
+                        except Exception as e:
+                            logger.warning(f"Groq call failed: {e}")
+
+                    # Fallback: Gemini
+                    if not parsed and settings.gemini_api_key:
+                        try:
+                            resp = await client.post(
+                                f"https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions",
+                                params={"key": settings.gemini_api_key},
+                                headers={"Content-Type": "application/json"},
+                                json={
+                                    "model": "gemini-2.0-flash",
+                                    "response_format": {"type": "json_object"},
+                                    "messages": [
+                                        {"role": "system", "content": (
+                                            "You are a DIFC legal case parser. Extract from the court text and return ONLY valid JSON.\n"
+                                            "Schema: {\"case_name\": \"X v Y or null\", \"claimant\": \"name or null\", "
+                                            "\"respondent\": \"name or null\", \"year\": \"4-digit string or null\", "
+                                            "\"outcome\": \"Awarded|Dismissed|Partial|Settled|null\", "
+                                            "\"summary\": \"1-2 sentence factual summary\"}\n"
+                                        )},
+                                        {"role": "user", "content": _smart_slice(item["text"], 3000)}
+                                    ],
+                                    "max_tokens": 200,
+                                    "temperature": 0.0,
+                                }
+                            )
+                            if resp.status_code == 200:
+                                parsed = resp.json()
+                                logger.info(f"Gemini parsing successful for {item['title']}")
+                        except Exception as e:
+                            logger.warning(f"Gemini fallback failed: {e}")
+
+                    if parsed:
+                        content = parsed["choices"][0]["message"]["content"]
+                        if isinstance(content, str):
+                            data = json.loads(content)
+                        else:
+                            data = content
+                        
+                        if data.get("case_name"):
+                            item["title"] = data["case_name"]
+                        
+                        # Validate party names — reject generic labels and cited-case prefixes
+                        _BAD_PARTY = {None, "", "the Claimant", "Claimant", "claimant",
+                                      "the Defendant", "Defendant", "defendant",
+                                      "the Respondent", "Respondent", "See transcript", "N/A"}
+                        _BAD_PREFIX = ("In ", "See ", "As in ", "Cited in", "Relying on",
+                                       "Although ", "Those ", "Court of Appeal in ",
+                                       "Justice ", "Lady ", "Lord ")
+                        
+                        raw_claimant = data.get("claimant")
+                        raw_respondent = data.get("respondent")
+                        
+                        if raw_claimant and raw_claimant not in _BAD_PARTY and not raw_claimant.startswith(_BAD_PREFIX):
+                            item["claimant"] = raw_claimant
+                        else:
+                            item["claimant"] = None
+                        
+                        if raw_respondent and raw_respondent not in _BAD_PARTY and not raw_respondent.startswith(_BAD_PREFIX):
+                            item["respondent"] = raw_respondent
+                        else:
+                            item["respondent"] = None
+                        
+                        item["outcome"]    = data.get("outcome") or item.get("outcome", "")
+                        item["year"]       = data.get("year") or item.get("year", "N/A")
+                        item["summary"]    = data.get("summary", "")
+                        item["text"]       = data.get("summary", item["text"])
                 except Exception:
                     pass
                     
@@ -527,35 +571,71 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=30) as client:
             for item in results[:5]:
                 item["content"] = _strip_noise(item["content"])
-                try:
-                    resp = await client.post(
-                        "https://api.groq.com/openai/v1/chat/completions",
-                        headers={"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"},
-                        json={
-                            "model": settings.groq_model,
-                            "response_format": {"type": "json_object"},
-                            "messages": [
-                                {"role": "system", "content": (
-                                    "You are a DIFC legal article parser. Return ONLY valid JSON — no markdown, no explanation.\n"
-                                    "Schema: {\"article_number\": \"e.g. Article 19(2) or null\", \"article_title\": \"short title or null\", "
-                                    "\"law_name\": \"full law name\", \"summary\": \"1-2 sentence plain English explanation\"}"
-                                )},
-                                {"role": "user", "content": item["content"][:1500]}
-                            ],
-                            "max_tokens": 120,
-                            "temperature": 0.0,
-                        }
-                    )
-                    resp.raise_for_status()
-                    parsed = json.loads(resp.json()["choices"][0]["message"]["content"])
+                # Primary: Groq
+                parsed = None
+                if settings.groq_api_key:
+                    try:
+                        resp = await client.post(
+                            "https://api.groq.com/openai/v1/chat/completions",
+                            headers={"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"},
+                            json={
+                                "model": settings.groq_model,
+                                "response_format": {"type": "json_object"},
+                                "messages": [
+                                    {"role": "system", "content": (
+                                        "You are a DIFC legal article parser. Return ONLY valid JSON — no markdown, no explanation.\n"
+                                        "Schema: {\"article_number\": \"e.g. Article 19(2) or null\", \"article_title\": \"short title or null\", "
+                                        "\"law_name\": \"full law name\", \"summary\": \"1-2 sentence plain English explanation\"}"
+                                    )},
+                                    {"role": "user", "content": item["content"][:1500]}
+                                ],
+                                "max_tokens": 120,
+                                "temperature": 0.0,
+                            }
+                        )
+                        if resp.status_code == 200:
+                            parsed = json.loads(resp.json()["choices"][0]["message"]["content"])
+                            logger.info(f"Groq law parsing successful for {item['title']}")
+                        else:
+                            logger.warning(f"Groq law parsing failed with {resp.status_code}, trying fallback")
+                    except Exception as e:
+                        logger.warning(f"Groq law parsing call failed: {e}")
+
+                # Fallback: Gemini
+                if not parsed and settings.gemini_api_key:
+                    try:
+                        resp = await client.post(
+                            f"https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions",
+                            params={"key": settings.gemini_api_key},
+                            headers={"Content-Type": "application/json"},
+                            json={
+                                "model": "gemini-2.0-flash",
+                                "response_format": {"type": "json_object"},
+                                "messages": [
+                                    {"role": "system", "content": (
+                                        "You are a DIFC legal article parser. Return ONLY valid JSON.\n"
+                                        "Schema: {\"article_number\": \"e.g. Article 19(2) or null\", \"article_title\": \"short title or null\", "
+                                        "\"law_name\": \"full law name\", \"summary\": \"1-2 sentence plain English explanation\"}"
+                                    )},
+                                    {"role": "user", "content": item["content"][:1500]}
+                                ],
+                                "max_tokens": 120,
+                                "temperature": 0.0,
+                            }
+                        )
+                        if resp.status_code == 200:
+                            parsed = json.loads(resp.json()["choices"][0]["message"]["content"])
+                            logger.info(f"Gemini law parsing successful for {item['title']}")
+                    except Exception as e:
+                        logger.warning(f"Gemini law parsing fallback failed: {e}")
+
+                if parsed:
                     item["article_number"] = parsed.get("article_number")
                     item["article_title"]  = parsed.get("article_title")
                     item["law_name"]       = parsed.get("law_name") or item.get("title", "")
                     item["content"]        = parsed.get("summary", item["content"])
                     if parsed.get("article_number"):
                         item["title"] = parsed["article_number"]
-                except Exception:
-                    pass
 
         duration = time.time() - start_time
         logger.info(f"--- Node: law_search_node finished in {duration:.2f}s")
@@ -797,19 +877,8 @@ def _flatten_to_text(data: Any, indent: int = 0) -> str:
 
 
 def _select_model(state: AnalysisState) -> tuple[str, str, float]:
-    """Determines the best model for the case complexity (Fast Qwen 1.5B)."""
-    precedents = state.get("precedents", [])
-    laws = state.get("laws", [])
-    
-    # Simple complexity scoring kept for potential future routing, but now standardizing on Qwen-2.5 1.5B.
-    complexity_score = 0.3
-    if len(precedents) > 3: complexity_score += 0.2
-    if len(laws) > 5: complexity_score += 0.2
-    if len(state.get("context", {}).get("case_metadata", {}).get("description", "")) > 1000:
-        complexity_score += 0.2
-        
-    model_url = settings.ollama_url
-    model_label = "qwen2.5:1.5b-instruct"
+    model_url = "https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions"
+    model_label = "gemini-2.0-flash"
         
     return model_url, model_label, complexity_score
 
@@ -1011,9 +1080,9 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             "complexity_score":  round(complexity_score, 2),
         }
 
-    # Execute Qwen 1.5B via Ollama
+    # Execute Gemini
     try:
-        content = await _call_ollama(settings.ollama_url, 120, model_label)
+        content = await _call_gemini(120, model_label)
         return _normalize_reasoning(content, model_label, "ok")
     except Exception as e:
         return _error_result(state, start_time, complexity_score, repr(e))
@@ -1156,24 +1225,24 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
     )
 
     try:
-        model_url = f"{settings.ollama_url}/api/generate"
-        prompt = f"System: {system_prompt}\n\nUser Context: {user_prompt}\n\nAssistant Response:"
+        model_url = "https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions"
         payload = {
-            "model": settings.ollama_model_fallback,
-            "prompt": prompt,
+            "model": "gemini-2.0-flash",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
             "stream": False,
-            "options": {
-                "num_ctx": 4096,
-                "temperature": 0.2,
-                "num_predict": NODE_TOKEN_LIMITS["drafting"]
-            }
+            "temperature": 0.2,
+            "max_tokens": NODE_TOKEN_LIMITS["drafting"]
         }
         headers = {"Content-Type": "application/json"}
+        params = {"key": settings.gemini_api_key}
         async with httpx.AsyncClient(timeout=120) as client:
-            response = await client.post(model_url, headers=headers, json=payload)
+            response = await client.post(model_url, params=params, headers=headers, json=payload)
             response.raise_for_status()
             data = response.json()
-            draft_content = _cleanse_text(str(data.get("response", "")))
+            draft_content = _cleanse_text(str(data.get("choices", [{}])[0].get("message", {}).get("content", "")))
     except Exception as e:
         logger.warning(f"judgment_drafting_agent_node failed: {e}, using reasoning fallback")
         draft_content = reasoning.get("draft_judgment") or reasoning.get("reasoning") or ""
