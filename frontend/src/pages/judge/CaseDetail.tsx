@@ -487,8 +487,9 @@ const CaseDetail = () => {
                         
                         const cleanArticleContent = (text: string): string => {
                           if (!text) return ''
-                          const cleaned = text.replace(/^[a-z,;:\s()\d]+(?=[A-Z])/, '').trim()
-                          return cleaned || text.trim()
+                          // Trim leading lowercase/conjunction fragments
+                          const cleaned = text.replace(/^[a-z,;:\s()\d\-–]+(?=[A-Z"(])/, '').trim()
+                          return cleaned.length > 20 ? cleaned : text.trim()
                         };
                         
                         return (
@@ -508,7 +509,7 @@ const CaseDetail = () => {
                                </div>
                             </div>
                             <p className="text-[12px] text-muted-foreground leading-relaxed italic font-medium line-clamp-3 group-hover/article:text-foreground transition-colors">
-                              {cleanArticleContent(content) || 'Referenced in case analysis. See full transcript for application context.'}
+                              {cleanArticleContent(content) || 'Relevant article — see full legal framework for complete text.'}
                             </p>
                           </div>
                         );

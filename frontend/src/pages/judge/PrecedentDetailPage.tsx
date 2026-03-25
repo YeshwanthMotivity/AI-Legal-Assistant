@@ -52,12 +52,12 @@ function splitTranscript(text: string): string[] {
   })
 }
 
-const getSectionLabel = (text: string, prevLabel: string | null): string | null => {
+const getSectionLabel = (text: string): string | null => {
   const slice = text.slice(0, 120).toLowerCase()
   if (/\bfacts?\b|\bclaimant\b|\bemployed\b|\bbackground\b|\bparties\b/.test(slice)) return 'facts'
   if (/\barticle\s+\d+|\blaw\b|\bstatute\b|\bregulation\b|\bprovision\b/.test(slice)) return 'legalAnalysis'
   if (/\bjudgment\b|\border\b|\baward\b|\bdismiss|\bfinding\b|\bdecision\b/.test(slice)) return 'judgment'
-  return prevLabel // carry forward the section label so it doesn't reset on every paragraph
+  return null
 }
 
 const PrecedentDetailPage: React.FC = () => {
@@ -72,6 +72,9 @@ const PrecedentDetailPage: React.FC = () => {
   const [chatMessage, setChatMessage] = useState('')
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([])
   const chatEndRef = useRef<HTMLDivElement>(null)
+
+  const [aiSummary, setAiSummary] = useState<string | null>(null)
+  const [summaryLoading, setSummaryLoading] = useState(false)
 
   const { data: precedent, isLoading, error } = useQuery({
     queryKey: ['precedent', id, i18n.language],
@@ -97,6 +100,20 @@ const PrecedentDetailPage: React.FC = () => {
       setMessages((prev) => [...prev, { role: 'ai', content: data.response }])
     },
   })
+
+  useEffect(() => {
+    if (!precedent?.text || aiSummary) return
+    setSummaryLoading(true)
+    
+    // Use the existing chatWithPrecedent API to get a summary
+    chatWithPrecedent(id || '', 
+      'In 3 sentences, summarize: (1) what this case is about, (2) what the claimant claimed, (3) what the court decided. Be concise and plain.',
+      i18n.language
+    )
+      .then(data => setAiSummary(data.response))
+      .catch(() => setAiSummary(null))
+      .finally(() => setSummaryLoading(false))
+  }, [precedent?.text, id, i18n.language])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -185,6 +202,29 @@ const PrecedentDetailPage: React.FC = () => {
                       <p className="text-[11px] text-muted-foreground italic">{t('judge.workspace.judicialRecordSubtitle')}</p>
                    </div>
                 </div>
+
+                {/* Case Quick Summary Banner */}
+                <div className="bg-primary/5 border border-primary/15 rounded-2xl p-6 mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <span className="text-[11px] font-black uppercase tracking-widest text-primary">
+                      Quick Case Summary
+                    </span>
+                  </div>
+                  {summaryLoading ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin shrink-0" />
+                      <p className="text-xs text-muted-foreground italic animate-pulse">Generating case summary...</p>
+                    </div>
+                  ) : aiSummary ? (
+                    <p className="text-sm leading-relaxed text-foreground/80 font-medium">{aiSummary}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic">
+                      {precedent?.category || 'DIFC Judicial Precedent'} — {precedent?.year || 'N/A'}
+                    </p>
+                  )}
+                </div>
+
                 <div className="text-foreground/90 selection:bg-primary/20 space-y-4">
                   {precedent.text.trimStart()[0] === precedent.text.trimStart()[0].toLowerCase() && (
                     <p className="text-[11px] text-muted-foreground/60 italic mb-4 flex items-center gap-2">
@@ -197,17 +237,14 @@ const PrecedentDetailPage: React.FC = () => {
                     return splitTranscript(precedent.text).map((paragraph, idx) => {
                       const trimmed = paragraph.trim()
                       const isNumbered = /^\d+\./.test(trimmed)
-                      
-                      // Remove the dependency on prevLabel from getSectionLabel if we use this method, or just call it:
-                      // Wait! The user provided this standard payload:
-                      const sectionLabel = getSectionLabel(trimmed, lastSection)
+                      const sectionLabel = getSectionLabel(trimmed)
                       const showLabel = sectionLabel !== null && sectionLabel !== lastSection
                       if (showLabel) lastSection = sectionLabel
 
                       return (
-                        <div key={idx} className="space-y-4">
+                        <div key={idx} className="space-y-1">
                           {showLabel && (
-                            <div className="flex items-center gap-2 mt-8 mb-4">
+                            <div className="flex items-center gap-2 mt-8 mb-3">
                               <Badge className="bg-primary/20 text-primary border-primary/30 font-black uppercase text-[10px] tracking-widest px-3 py-1">
                                 {t(`judge.workspace.sections.${sectionLabel}`)}
                               </Badge>
