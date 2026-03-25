@@ -116,36 +116,63 @@ const PrecedentDetailPage: React.FC = () => {
     setAnalysisLoading(true)
     setAnalysisError(false)
 
-    const prompt = `Analyze this DIFC court case transcript and respond ONLY with a JSON object. No extra text.
-{
-  "nature": "One sentence describing the type of dispute",
-  "parties": { "claimant": "Name or role of claimant", "respondent": "Name or role of respondent" },
-  "keyFacts": ["Fact 1", "Fact 2", "Fact 3", "Fact 4"],
-  "legalIssues": ["Issue 1", "Issue 2", "Issue 3"],
-  "courtAnalysis": "2-3 sentences on how the court analyzed the case",
-  "outcome": "What the court decided",
-  "legalBasis": "Which articles or laws the court relied on"
-}`
+    // Step 1: Ask 5 simple focused questions sequentially
+    const extractField = async (question: string): Promise<string> => {
+      try {
+        const res = await chatWithPrecedent(id || '', question, i18n.language)
+        return (res.response || '').trim()
+      } catch {
+        return ''
+      }
+    }
 
-    chatWithPrecedent(id || '', prompt, i18n.language)
-      .then(data => {
-        try {
-          let text = data.response.trim()
-          if (text.toLowerCase().startsWith('json')) text = text.slice(4).trim()
-          const start = text.indexOf('{')
-          const end = text.lastIndexOf('}')
-          if (start !== -1 && end !== -1) {
-            const parsed = JSON.parse(text.slice(start, end + 1))
-            setCaseAnalysis(parsed)
-          } else {
-            setAnalysisError(true)
-          }
-        } catch {
-          setAnalysisError(true)
-        }
-      })
-      .catch(() => setAnalysisError(true))
-      .finally(() => setAnalysisLoading(false))
+    const buildAnalysis = async () => {
+      try {
+        const [nature, claimant, respondent, outcome, legalBasis] = await Promise.all([
+          extractField('In one sentence, what type of dispute is this case about?'),
+          extractField('Who is the claimant or plaintiff in this case? Give only the name or role, nothing else.'),
+          extractField('Who is the respondent or defendant in this case? Give only the name or role, nothing else.'),
+          extractField('What did the court decide or order in this case? Give a brief 1-2 sentence answer.'),
+          extractField('Which specific laws or articles did the court rely on? List them briefly.'),
+        ])
+
+        // Step 2: Ask for facts and issues as numbered lists
+        const factsRaw = await extractField(
+          'List the 3-4 most important facts of this case as short bullet points. Start each with a dash (-).'
+        )
+        const issuesRaw = await extractField(
+          'List the 2-3 main legal issues the court had to decide. Start each with a dash (-).'
+        )
+        const courtAnalysis = await extractField(
+          'In 2 sentences, how did the court analyze the evidence and reach its decision?'
+        )
+
+        // Parse bullet lists
+        const parseBullets = (text: string): string[] =>
+          text.split('\\n')
+            .map(l => l.replace(/^[-•*]\\s*/, '').trim())
+            .filter(l => l.length > 10)
+
+        setCaseAnalysis({
+          nature: nature || 'Employment dispute before the DIFC Court.',
+          parties: {
+            claimant: claimant || 'Claimant (see transcript)',
+            respondent: respondent || 'Respondent (see transcript)',
+          },
+          keyFacts: parseBullets(factsRaw).slice(0, 4),
+          legalIssues: parseBullets(issuesRaw).slice(0, 3),
+          courtAnalysis: courtAnalysis || '',
+          outcome: outcome || 'See judgment section of transcript.',
+          legalBasis: legalBasis || 'DIFC Employment Law',
+        })
+      } catch {
+        setAnalysisError(true)
+      } finally {
+        setAnalysisLoading(false)
+      }
+    }
+
+    buildAnalysis()
   }, [precedent?.text, id, i18n.language])
 
   useEffect(() => {
@@ -402,11 +429,12 @@ const PrecedentDetailPage: React.FC = () => {
                 {!analysisLoading && !caseAnalysis && (
                   <div className="text-foreground/90 space-y-4">
                     {analysisError && (
-                      <div className="flex items-center gap-3 p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl mb-4">
+                      <div className="flex items-center gap-3 p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl mb-6">
                         <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                        <p className="text-xs text-amber-800 font-medium">
-                          Could not generate structured analysis. Showing raw transcript below.
-                        </p>
+                        <div>
+                          <p className="text-xs text-amber-800 font-bold">AI analysis unavailable for this case.</p>
+                          <p className="text-xs text-amber-700 mt-0.5">The full transcript is shown below for manual review.</p>
+                        </div>
                       </div>
                     )}
                     {splitTranscript(precedent.text).map((paragraph, idx) => {
