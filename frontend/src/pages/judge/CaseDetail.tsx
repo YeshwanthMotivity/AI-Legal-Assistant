@@ -230,389 +230,220 @@ const CaseDetail = () => {
     >
       
       {/* Action Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex gap-3">
+      <div className="flex justify-between items-center mb-10 bg-white/50 backdrop-blur-md p-6 rounded-[32px] border border-white/20 shadow-xl shadow-primary/5">
+        <div className="flex gap-4">
             <Link to="/judge/cases">
-              <Button variant="ghost" size="sm" className="gap-2 font-bold hover:bg-primary/5">
-                <ChevronLeft className="w-4 h-4" />
+              <Button variant="ghost" size="sm" className="gap-2 font-black uppercase tracking-widest text-[10px] hover:bg-primary/5 rounded-2xl px-6 h-12 transition-all">
+                <ChevronLeft className="w-5 h-5" />
                 {t('common.back')}
               </Button>
             </Link>
-            <Button 
-              variant="destructive" 
-              size="sm"
-              className="gap-2 font-bold px-4 shadow-sm hover:scale-105 transition-all"
-              onClick={() => { if (window.confirm('Delete this case?')) deleteMutation.mutate() }}
-              disabled={deleteMutation.isPending}
-            >
-              <AlertCircle className="w-4 h-4 text-destructive-foreground" />
-              {deleteMutation.isPending ? "Deleting..." : "Delete Case"}
-            </Button>
+            <div className="h-12 w-[1px] bg-border/40 mx-2" />
+            <div className="flex flex-col justify-center">
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">Current Protocol</span>
+              <Badge variant="outline" className="text-[11px] font-black border-primary/20 text-primary bg-primary/5 px-3 py-1 rounded-lg">
+                DIFC Employment Standard v2.4
+              </Badge>
+            </div>
         </div>
-        <div className="flex gap-3">
-           <Button 
-            variant="outline" 
-            className="gap-2 border-primary/20 hover:bg-primary/5 text-primary"
-            disabled={isActivelyLoading}
-            onClick={() => runAnalysisMutation.mutate()}
-           >
-              <Sparkles className={cn("w-4 h-4", isActivelyLoading && "animate-pulse")} />
-              {t('judge.workspace.runAnalysis')}
-           </Button>
-           <Button className="shadow-lg shadow-primary/20">
-              Finalize Judgment
-           </Button>
+        
+        <div className="flex items-center gap-6">
+           <div className="flex items-center gap-3 bg-emerald-500/10 px-6 py-3 rounded-2xl border border-emerald-500/20">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-black text-emerald-800 uppercase tracking-widest">
+                {isActivelyLoading ? t('judge.workspace.processing') : isReady ? t('judge.workspace.complete') : t('judge.workspace.initial')}
+              </span>
+           </div>
+           
+           <div className="flex flex-col items-end ltr:mr-4 rtl:ml-4">
+              <div className="flex items-center gap-2 mb-1">
+                 <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">AI Confidence</span>
+                 <span className="text-sm font-black text-primary">
+                    {Math.round((analysis?.confidence ?? 0) > 1 ? (analysis?.confidence ?? 0) / 100 : (analysis?.confidence ?? 0) * 100)}%
+                 </span>
+              </div>
+              <div className="w-32 h-1.5 bg-border/20 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-1000" 
+                  style={{ width: `${Math.round((analysis?.confidence ?? 0) > 1 ? (analysis?.confidence ?? 0) / 100 : (analysis?.confidence ?? 0) * 100)}%` }}
+                />
+              </div>
+           </div>
+
+           <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                className="gap-2 border-primary/20 hover:bg-primary/5 text-primary rounded-2xl h-14 px-8 font-black uppercase tracking-widest text-[11px] shadow-sm active:scale-95 transition-all"
+                disabled={isActivelyLoading}
+                onClick={() => runAnalysisMutation.mutate()}
+              >
+                  <Sparkles className={cn("w-5 h-5", isActivelyLoading && "animate-spin")} />
+                  {t('judge.workspace.runAnalysis')}
+              </Button>
+              <Button className="rounded-2xl h-14 px-10 font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-primary/30 group">
+                  <CheckCircle2 className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
+                  Finalize Judgment
+              </Button>
+           </div>
         </div>
       </div>
 
       {localMessage && (
         <div className={cn(
-          "mb-8 p-4 rounded-xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-4 shadow-sm",
+          "mb-8 p-6 rounded-[32px] border-2 flex items-center gap-4 animate-in fade-in slide-in-from-top-6 shadow-2xl",
           messageType === 'error' ? "bg-destructive/10 border-destructive/20 text-destructive" : "bg-primary/10 border-primary/20 text-primary"
         )}>
-          {messageType === 'error' ? <AlertCircle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
-          <span className="font-bold text-sm uppercase tracking-tighter">{localMessage}</span>
-          <Button variant="ghost" size="icon" className="ml-auto h-8 w-8" onClick={() => setLocalMessage('')}>
-             <Plus className="w-4 h-4 rotate-45" />
+          {messageType === 'error' ? <AlertCircle className="w-6 h-6" /> : <CheckCircle2 className="w-6 h-6" />}
+          <span className="font-black text-xs uppercase tracking-widest">{localMessage}</span>
+          <Button variant="ghost" size="icon" className="ml-auto h-10 w-10 hover:bg-black/5 rounded-full" onClick={() => setLocalMessage('')}>
+             <Plus className="w-6 h-6 rotate-45" />
           </Button>
         </div>
       )}
 
-      <div className="flex flex-col xl:flex-row gap-8 items-start">
-        {/* Sidebar: Documents & Analysis Status */}
-        <aside className="w-full xl:w-96 flex flex-col gap-6 sticky top-24 overflow-y-auto max-h-[calc(100vh-120px)] scrollbar-hide">
-          <Card className="shadow-lg border-border/50 overflow-hidden">
-            <CardHeader className="bg-muted/10 border-b py-4 px-6">
-              <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="w-4 h-4 text-primary" />
-                {t('judge.workspace.documents')}
+      {/* Main Premium Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-[380px,1fr,380px] gap-8 items-start">
+        
+        {/* LEFT COLUMN: Workspace Context & Pipeline */}
+        <aside className="flex flex-col gap-8 sticky top-24">
+          
+          {/* Workspace Context Card */}
+          <Card className="rounded-[40px] shadow-2xl border-white/40 overflow-hidden bg-white/60 backdrop-blur-xl group hover:shadow-primary/5 transition-all">
+            <CardHeader className="p-8 pb-4">
+              <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-muted-foreground/80">
+                <FileText className="w-5 h-5 text-primary/60" />
+                Workspace Context
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="space-y-1.5 group">
-                      <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest flex items-center gap-2">
-                        <FileText className="w-3 h-3 text-primary" />
-                        {t('judge.workspace.documentType')}
-                      </label>
-                      <select
-                        className="w-full bg-background border border-border/50 rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-4 focus:ring-primary/10 transition-all cursor-pointer font-bold"
-                        value={selectedDocType}
-                        onChange={(event) => setSelectedDocType(event.target.value as DocumentType)}
-                      >
-                        {DOCUMENT_TYPES.map((docType) => (
-                          <option key={docType} value={docType}>
-                            {t(`judge.documentTypes.${docType}`)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-black uppercase text-muted-foreground ml-1">{t('judge.workspace.uploadDocument')}</label>
-                      <div className="relative group">
-                         <input 
-                           ref={fileInputRef} 
-                           type="file" 
-                           className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                           onChange={handleDocumentChange}
-                         />
-                         <div className="flex items-center gap-2 w-full bg-background border border-dashed rounded-xl px-3 py-3 group-hover:border-primary/50 transition-colors">
-                            <Upload className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
-                            <span className="truncate text-muted-foreground text-[11px] font-medium italic">
-                              {selectedFile ? selectedFile.name : "Choose file..."}
-                            </span>
-                         </div>
-                      </div>
-                    </div>
-
-                    <Button
-                      className="w-full h-11 rounded-xl shadow-md"
-                      onClick={handleUpload}
-                      disabled={!selectedFile || uploadMutation.isPending}
-                    >
-                      {uploadMutation.isPending ? t('common.loading') : t('judge.workspace.uploadAndProcess')}
-                    </Button>
-                  </div>
-
-                  <div className="pt-4 border-t space-y-2">
-                    {(documentsQuery.data?.items ?? []).map((doc) => (
-                      <div key={doc.id} className="group flex items-center justify-between p-3 rounded-xl bg-muted/20 border border-transparent hover:border-primary/20 hover:bg-card transition-all">
-                        <div className="flex-1 min-w-0 ltr:pr-2 rtl:pl-2">
-                          <div className="flex items-center gap-2 mb-0.5">
-                             <FileText className="w-3.5 h-3.5 text-primary/70 shrink-0" />
-                             <h5 className="text-[11px] font-bold truncate">{doc.file_name}</h5>
-                          </div>
-                          <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-tight">{t(`judge.documentTypes.${doc.document_type}`)}</span>
-                        </div>
-                        <Badge 
-                          variant={doc.processing_status === 'complete' ? 'success' : doc.processing_status === 'failed' ? 'destructive' : 'warning'}
-                          className="px-2 h-5 text-[9px] font-black uppercase tracking-tighter"
-                        >
-                           {t(`judge.documentStatus.${doc.processing_status.toLowerCase()}`)}
-                        </Badge>
-                      </div>
-                    ))}
-                    {(!documentsQuery.data?.items || documentsQuery.data?.items.length === 0) && (
-                      <div className="py-8 text-center text-[11px] text-muted-foreground italic bg-muted/10 rounded-xl">
-                         {t('judge.workspace.noDocuments')}
-                      </div>
-                    )}
-                  </div>
+            <CardContent className="p-8 pt-0 space-y-8">
+              {/* Data Completeness */}
+              <div className="bg-muted/30 p-6 rounded-[32px] border border-border/40">
+                <div className="flex justify-between items-center mb-3">
+                   <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Data Completeness</span>
+                   <span className="text-xs font-black text-primary">25%</span>
+                </div>
+                <div className="h-3 w-full bg-white/50 rounded-full overflow-hidden shadow-inner">
+                   <div className="h-full bg-gradient-to-r from-primary to-primary-hover w-[25%] rounded-full shadow-[0_0_15px_rgba(var(--primary),0.3)]" />
+                </div>
+                <p className="text-[9px] text-muted-foreground mt-4 italic font-bold opacity-60">Additional documents required for high precision.</p>
               </div>
+
+              {/* Categorize Entry */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Categorize Entry</label>
+                <select
+                  className="w-full bg-white border-2 border-border/50 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-primary/40 focus:ring-8 focus:ring-primary/5 transition-all appearance-none cursor-pointer"
+                  value={selectedDocType}
+                  onChange={(event) => setSelectedDocType(event.target.value as DocumentType)}
+                >
+                  {DOCUMENT_TYPES.map((dt) => (
+                    <option key={dt} value={dt}>{t(`judge.documentTypes.${dt}`)}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Upload Zone */}
+              <div className="relative group">
+                 <input 
+                   ref={fileInputRef} 
+                   type="file" 
+                   className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                   onChange={handleDocumentChange}
+                 />
+                 <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-border/60 rounded-[32px] bg-muted/10 group-hover:border-primary/40 group-hover:bg-primary/5 transition-all duration-300">
+                    <div className="w-16 h-16 rounded-full bg-white shadow-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                       <Upload className="w-7 h-7 text-primary/60" />
+                    </div>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground text-center line-clamp-1 px-4">
+                      {selectedFile ? selectedFile.name : "Drag file or browse"}
+                    </span>
+                 </div>
+              </div>
+
+              <Button
+                className="w-full h-16 rounded-[24px] shadow-xl text-[11px] font-black uppercase tracking-[0.2em] shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                onClick={handleUpload}
+                disabled={!selectedFile || uploadMutation.isPending}
+              >
+                {uploadMutation.isPending ? "INGESTING DATA..." : "SYNC WORKSPACE"}
+              </Button>
             </CardContent>
           </Card>
 
-          {/* AI Workbench Status Card */}
-          <Card className="shadow-lg border-border/50 bg-primary/5 border-primary/10 overflow-hidden">
-              <CardHeader className="py-4 px-6 bg-primary/5">
-                 <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    {t('judge.workspace.aiStatus')}
-                 </CardTitle>
+          {/* Intelligence Pipeline (Vertical Stepper) */}
+          <Card className="rounded-[40px] shadow-2xl border-white/40 overflow-hidden bg-white/40 backdrop-blur-xl">
+              <CardHeader className="p-8 pb-4">
+                <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-muted-foreground/80">
+                  <Sparkles className="w-5 h-5 text-primary/60" />
+                  Intelligence Pipeline
+                </CardTitle>
               </CardHeader>
-              <CardContent className="p-6">
-                 <div className="space-y-5">
-                    <div className="flex items-center justify-between">
-                       <span className="text-[11px] font-bold text-muted-foreground uppercase">{t('judge.workspace.analysisStatus')}</span>
-                       <Badge variant={isReady ? "success" : "warning"} className="uppercase font-black text-[9px] tracking-widest px-2.5 py-0.5">
-                          {isActivelyLoading ? t('judge.workspace.processing') : isReady ? t('judge.workspace.complete') : t('judge.workspace.initial')}
-                       </Badge>
-                    </div>
-                    {isReady && (
-                       <div className="space-y-2.5">
-                          <div className="flex justify-between text-[11px] font-black uppercase text-muted-foreground">
-                             <span>{t('judge.workspace.confidence')}</span>
-                             <span className="text-primary font-black">
-                                {Math.round((analysis?.confidence ?? 0) > 1 ? (analysis?.confidence ?? 0) : (analysis?.confidence ?? 0) * 100)}%
-                             </span>
-                          </div>
-                          <div className="h-2 w-full bg-accent rounded-full overflow-hidden">
-                             <div 
-                               className="h-full bg-primary rounded-full shadow-[0_0_12px_rgba(16,185,129,0.4)] transition-all duration-1000" 
-                               style={{ width: `${(analysis?.confidence ?? 0) * 100}%` }}
-                             />
-                          </div>
-                          <p className="text-[10px] text-muted-foreground leading-relaxed italic opacity-70">
-                             Analysis based on {documentsQuery.data?.items.length ?? 0} ingested documents.
-                          </p>
-                       </div>
-                    )}
+              <CardContent className="p-8 pt-4">
+                 <div className="space-y-8 relative before:absolute before:left-[17px] before:top-2 before:bottom-2 before:w-[2px] before:bg-border/40">
+                    {[
+                      { id: 'ingestion', label: 'Ingestion', status: 'Validation Finished', done: true },
+                      { id: 'parsing', label: 'Parsing', status: 'Validation Finished', done: true },
+                      { id: 'reasoning', label: 'Reasoning', status: isReady ? 'Synthesis Complete' : 'Synthesizing...', active: !isReady && isActivelyLoading, done: isReady }
+                    ].map((step) => (
+                      <div key={step.id} className="flex gap-6 relative z-10">
+                         <div className={cn(
+                           "w-9 h-9 rounded-full flex items-center justify-center border-4 border-white shadow-lg transition-all",
+                           step.done ? "bg-emerald-500" : step.active ? "bg-primary animate-pulse" : "bg-border/60"
+                         )}>
+                            {step.done ? <CheckCircle2 className="w-4 h-4 text-white" /> : <div className="w-2 h-2 rounded-full bg-white/40" />}
+                         </div>
+                         <div className="flex flex-col justify-center">
+                            <h4 className="text-[12px] font-black uppercase tracking-wider text-foreground">{step.label}</h4>
+                            <span className="text-[10px] font-bold text-muted-foreground italic opacity-60 leading-none mt-1">{step.status}</span>
+                         </div>
+                      </div>
+                    ))}
                  </div>
               </CardContent>
           </Card>
         </aside>
 
-        {/* Main Content: Analysis Results & Editor */}
-        <main className="flex-1 space-y-8 w-full">
-          {analysisQuery.error && (
-            <div className="bg-destructive/10 text-destructive p-5 rounded-2xl border border-destructive/20 flex items-center gap-4 animate-in fade-in slide-in-from-top-4">
-               <AlertCircle className="w-6 h-6 flex-shrink-0" />
-               <span className="font-bold text-sm italic">{t('judge.workspace.analysisError')}</span>
-            </div>
-          )}
-
-          {/* Analysis View - Conditional on Analysis Ready */}
-          {isReady ? (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Precedents Card */}
-              <Card className="shadow-lg border-border/50 overflow-hidden group">
-                  <CardHeader className="flex flex-row items-center justify-between bg-primary/5 border-b py-4 px-6">
-                  <div className="flex items-center gap-2">
-                    <Scale className="w-5 h-5 text-emerald-600" />
-                    <CardTitle className="text-sm font-black uppercase tracking-widest">{t('judge.workspace.similarPrecedents')}</CardTitle>
-                  </div>
-                  <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary px-2">{t('judge.workspace.top5')}</Badge>
-                </CardHeader>
-                <CardContent className="p-0">
-                    <div className="divide-y divide-border/20">
-                      {precedents.map((item) => (
-                        <Link 
-                          key={item.caseId}
-                          to={`/judge/precedents/${item.caseId}`} 
-                          state={{ fromCaseId: id }}
-                          className={cn(
-                            "grid grid-cols-[1fr,auto] items-center p-6 transition-all group border-l-4 border-transparent",
-                            "hover:bg-primary/5 hover:border-primary"
-                          )}
-                        >
-                          <div className="flex-1 min-w-0 ltr:pr-6 rtl:pl-6">
-                             <div className="flex items-center gap-3 mb-1.5">
-                                <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-bold bg-background shrink-0 border-border/50 text-muted-foreground">{item.caseId}</Badge>
-                                <span className="text-[14px] font-black group-hover:text-primary transition-colors truncate underline decoration-primary/10 underline-offset-4 decoration-2">
-                                  {item.title}
-                                </span>
-                             </div>
-                             {(() => {
-                               const genericLabels = ['the claimant', 'claimant', 'the defendant', 'defendant', 'see transcript', 'n/a']
-                               const badPrefixes = ['in ', 'see ', 'although ', 'justice ', 'lord ', 'lady ', 'court of appeal in ']
-                               const isBadValue = (v: string | null | undefined) => {
-                                 if (!v) return true
-                                 const lower = v.toLowerCase().trim()
-                                 if (genericLabels.includes(lower)) return true
-                                 if (badPrefixes.some(p => lower.startsWith(p))) return true
-                                 return false
-                               }
-                               const showClaimant = !isBadValue(item.claimant)
-                               const showRespondent = !isBadValue(item.respondent)
-                               return (showClaimant || showRespondent) ? (
-                                 <div className="text-[11px] text-muted-foreground mt-1 flex gap-3">
-                                   {showClaimant && <span>Claimant: <strong>{item.claimant}</strong></span>}
-                                   {showRespondent && <span>Respondent: <strong>{item.respondent}</strong></span>}
-                                 </div>
-                               ) : null
-                             })()}
-                             {item.summary && (
-                               <p className="text-[11px] text-muted-foreground mt-1 italic line-clamp-2">
-                                 {item.summary}
-                               </p>
-                             )}
-                          </div>
-                          <div className="flex items-center gap-5 shrink-0">
-                             <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[9px] font-black border border-primary/20 shadow-sm uppercase tracking-widest">
-                                {(() => {
-                                  const raw = item.similarityScore || 0;
-                                  // Handle both 0-1 float and 0-100 integer formats
-                                  const pct = raw > 1 ? Math.round(raw) : Math.round(raw * 100);
-                                  return `${pct}% Match`;
-                                })()}
-                             </div>
-                             <ChevronRight className="w-5 h-5 text-muted-foreground/30 group-hover:text-primary transition-transform group-hover:translate-x-1" />
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                </CardContent>
-              </Card>
-
-              {/* Law Articles Card */}
-              <Card className="shadow-lg border-border/50 overflow-hidden group/laws">
-                <CardHeader className="flex flex-row items-center justify-between bg-primary/5 border-b py-4 px-6 group-hover/laws:bg-primary/10 transition-colors">
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="w-5 h-5 text-primary" />
-                    <CardTitle className="text-sm font-black uppercase tracking-widest">{t('judge.workspace.lawArticles')}</CardTitle>
-                  </div>
-                  <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary bg-primary/5 px-2 uppercase tracking-tighter">{CATEGORY_DISPLAY_NAMES[i18n.language] || 'DIFC Legal Framework'}</Badge>
-                </CardHeader>
-                <CardContent className="p-6">
-                    <div className="grid grid-cols-1 gap-4">
-                      {lawArticles.map((article: any, idx: number) => {
-                        const isObj = typeof article === 'object' && article !== null;
-                        const rawTitle = isObj
-                          ? (article.article_number || article.title || article.law_name || '')
-                          : String(article);
-                        const title = rawTitle
-                          ? rawTitle
-                              .replace(/\s*\|\s*Match:\s*[\d.]+/gi, '')
-                              .replace(/\s*\|\s*Key Articles:[^|]*/gi, '')
-                              .replace(/([a-z])([A-Z])/g, '$1 $2')
-                              .replace(/^\w/, (c: string) => c.toUpperCase())
-                              .replace(/\d{4}$/, (y: string) => ` (${y})`)
-                              .trim()
-                          : `Article ${idx + 1}`;
-                        const content = isObj
-                          ? (article.content || article.text || article.description || article.summary || '')
-                          : '';
-                        const articleNum = isObj ? (article.article_number || article.number || null) : null;
-                        
-                        const cleanArticleContent = (text: string): string => {
-                          if (!text) return ''
-                          // Trim leading lowercase/conjunction fragments
-                          const cleaned = text.replace(/^[a-z,;:\s()\d\-–]+(?=[A-Z"(])/, '').trim()
-                          return cleaned.length > 20 ? cleaned : text.trim()
-                        };
-                        
-                        return (
-                          <div key={idx} className="relative group/tooltip">
-                            <div className="bg-primary/5 dark:bg-primary/10 border border-primary/10 dark:border-primary/20 p-5 rounded-2xl hover:shadow-md hover:border-primary/30 transition-all group/article relative overflow-hidden">
-                              <div className="absolute top-0 left-0 w-1 h-full bg-primary/20 group-hover/article:bg-primary transition-colors" />
-                              <div className="flex items-center gap-2.5 mb-2.5">
-                                 <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)] shrink-0" />
-                                 <div className="flex items-center gap-2">
-                                   {articleNum && (
-                                     <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-primary/20 text-primary border border-primary/20 uppercase tracking-widest shrink-0">
-                                       {articleNum}
-                                     </span>
-                                   )}
-                                   <h5 className="font-black text-foreground/80 text-[11px] uppercase tracking-wide group-hover/article:text-primary transition-colors">
-                                     {CATEGORY_DISPLAY_NAMES[title.toLowerCase()] || title}
-                                   </h5>
-                                 </div>
-                              </div>
-                              <p className="text-[12px] text-muted-foreground leading-relaxed italic font-medium line-clamp-3 group-hover/article:text-foreground transition-colors">
-                                {cleanArticleContent(
-                                (content || '').replace(/\s*\|\s*Match:\s*[\d.]+/gi, '')
-                              ) || 'Citations mapped from primary case analysis.'}
-                              </p>
-                            </div>
-                            
-                            <div className="absolute left-0 top-full mt-2 z-50 w-80 p-4 bg-popover/95 backdrop-blur-md border border-border/60 rounded-2xl shadow-2xl text-xs text-foreground/80 leading-relaxed font-medium hidden group-hover/tooltip:block animate-in fade-in zoom-in-95 duration-200">
-                              <span className="font-black text-primary uppercase tracking-widest mb-1.5 block text-[9px]">Article Context</span>
-                              {content || 'No detailed description available in analysis metadata.'}
-                            </div>
-                          </div>
-                        );
-                      })}
-                      {lawArticles.length === 0 && (
-                        <div className="py-12 text-center flex flex-col items-center gap-3 bg-muted/5 rounded-2xl border border-dashed">
-                           <BookOpen className="w-10 h-10 text-muted-foreground/20" />
-                           <p className="text-xs text-muted-foreground font-bold italic">No relevant articles identified.</p>
-                        </div>
+        {/* MIDDLE COLUMN: Stats & Summary */}
+        <main className="flex flex-col gap-10">
+           {/* Center Statistics (Vertical) */}
+           <div className="grid grid-cols-1 gap-6">
+              {[
+                { label: 'Monthly Salary', value: entitlements.find(e => e.label.includes('Salary'))?.value || 'AED 0.00', missing: !(entitlements.find(e => e.label.includes('Salary'))?.value?.includes('AED') && !entitlements.find(e => e.label.includes('Salary'))?.value?.includes('0.00')) },
+                { label: 'Years of Service', value: entitlements.find(e => e.label.includes('Service'))?.value || '0.00 years', missing: !entitlements.find(e => e.label.includes('Service'))?.value?.includes('years') || entitlements.find(e => e.label.includes('Service'))?.value?.includes('0.00') },
+                { label: 'Gratuity Estimate', value: entitlements.find(e => e.label.includes('Gratuity'))?.value || 'AED 0.00', missing: !(entitlements.find(e => e.label.includes('Gratuity'))?.value?.includes('AED') && !entitlements.find(e => e.label.includes('Gratuity'))?.value?.includes('0.00')) }
+              ].map((stat, idx) => (
+                <div key={idx} className="bg-white/40 backdrop-blur-md p-10 rounded-[48px] border border-white/40 flex flex-col items-center justify-center text-center shadow-xl hover:shadow-primary/5 transition-all group overflow-hidden relative">
+                   <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-primary/10 transition-all" />
+                   <div className="flex items-center gap-3 mb-4">
+                      <span className="text-[12px] font-black uppercase tracking-[0.3em] text-muted-foreground/70">{stat.label}</span>
+                      {stat.missing && (
+                        <Badge variant="destructive" className="bg-destructive/10 text-destructive border-destructive/20 text-[9px] font-black uppercase tracking-tighter px-2 h-5">
+                          Missing Primary Data
+                        </Badge>
                       )}
-                    </div>
-                </CardContent>
-              </Card>
+                   </div>
+                   <strong className="text-[48px] font-black tracking-tighter text-foreground/90 group-hover:text-primary transition-colors leading-tight">
+                      {stat.value}
+                   </strong>
+                </div>
+              ))}
+           </div>
 
-              {/* Entitlements Card */}
-              <Card className="md:col-span-2 shadow-lg border-border/50 overflow-hidden">
-                <CardHeader className="flex flex-row items-center justify-between bg-emerald-500/5 border-b py-4 px-6">
-                  <div className="flex items-center gap-2">
-                    <Calculator className="w-5 h-5 text-emerald-600" />
-                    <CardTitle className="text-sm font-black uppercase tracking-widest">{t('judge.workspace.entitlementCalculation')}</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                    {entitlements.length > 0 && entitlements.every((e: any) => e.value.includes('0.00') || e.value === '0.00 years') && (
-                      <div className="p-6 mx-8 my-6 bg-amber-500/5 border border-dashed border-amber-500/20 rounded-2xl text-xs text-amber-800 leading-relaxed italic flex items-start gap-4 shadow-sm">
-                        <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-                        <p className="font-medium">
-                          Salary and employment dates were not found in the uploaded documents. 
-                          Upload salary records or employment contracts to calculate entitlements accurately.
-                        </p>
-                      </div>
-                    )}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 divide-y divide-border/20 sm:divide-y-0">
-                      {entitlements.map((entry, idx) => (
-                        <div key={`${entry.label}-${idx}`} className="p-8 flex flex-col gap-2 hover:bg-primary/5 transition-colors border-r border-border/20 last:border-r-0">
-                           <span className="text-[11px] font-black uppercase text-muted-foreground tracking-[0.1em]">{entry.label}</span>
-                           <strong className="text-2xl text-primary font-black tracking-tighter">{entry.value}</strong>
-                        </div>
-                      ))}
-                      {entitlements.length === 0 && (
-                        <div className="col-span-full py-16 text-center text-muted-foreground font-bold italic bg-muted/5">
-                           Calculation data unavailable for this case.
-                        </div>
-                      )}
-                    </div>
-                </CardContent>
-              </Card>
-
-              {/* Analysis Summary Card (Large) */}
-              <Card className="md:col-span-2 shadow-lg border-border/50 overflow-hidden">
-                  <CardHeader className="bg-muted/10 border-b py-5 px-8">
-                    <CardTitle className="text-lg font-black tracking-tight flex items-center gap-3">
-                       <Sparkles className="w-6 h-6 text-primary" />
+           {/* Analysis Content */}
+           {isReady ? (
+             <Card className="rounded-[40px] shadow-2xl border-white/40 overflow-hidden bg-white/60 backdrop-blur-xl">
+                  <CardHeader className="p-10 pb-6 border-b border-border/40">
+                    <CardTitle className="text-xl font-black tracking-tight flex items-center gap-4">
+                       <Sparkles className="w-8 h-8 text-primary shadow-primary/20" />
                        Case Summary & Fact Synthesis
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="p-10 prose prose-sm dark:prose-invert max-w-none">
-                     <div className="bg-primary/5 p-8 rounded-3xl border border-primary/10 mb-8 italic text-base leading-relaxed font-medium text-muted-foreground shadow-inner">
+                  <CardContent className="p-12 space-y-12">
+                     <div className="bg-primary/5 p-10 rounded-[40px] border-2 border-primary/10 italic text-[15px] leading-[1.8] font-bold text-muted-foreground/80 shadow-inner relative overflow-hidden">
+                        <div className="absolute left-0 top-0 w-2 h-full bg-primary" />
                         {analysis?.summary && !analysis.summary.trim().startsWith('{') && !analysis.summary.trim().startsWith('json')
                           ? analysis.summary
-                          : "Analysis complete. See judgment draft for full details."}
+                          : "Case synthesis protocols complete. Reviewing jurisdictional precedents for outcome alignment."}
                      </div>
                      
                      <div className="grid grid-cols-1 gap-6">
@@ -622,171 +453,200 @@ const CaseDetail = () => {
                             return !s.startsWith('{') && !s.startsWith('json') && !s.startsWith('"outcome"') && s.length > 10
                           })
                           .map((fact: any, idx: number) => (
-                           <div key={idx} className="flex gap-6 p-5 rounded-2xl hover:bg-muted/30 transition-all group border border-transparent hover:border-border/40">
-                              <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-sm shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform">
+                           <div key={idx} className="flex gap-8 p-8 rounded-[32px] hover:bg-white transition-all group border border-transparent hover:border-border/40 hover:shadow-xl hover:shadow-black/5">
+                              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black text-lg shrink-0 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                                  {idx + 1}
                               </div>
-                              <p className="text-sm font-bold leading-relaxed m-0 text-foreground/80">{fact}</p>
+                              <p className="text-[15px] font-bold leading-relaxed m-0 text-foreground/70 group-hover:text-foreground transition-colors">{fact}</p>
                            </div>
                         ))}
                      </div>
+
+                     {/* Precedents Section - Integrated in middle column for better flow */}
+                     <div className="pt-8 space-y-8">
+                        <div className="flex items-center justify-between">
+                           <h3 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground">Similar Jurisdictional Precedents</h3>
+                           <Badge className="bg-primary/10 text-primary border-primary/20 font-black">TOP 5 MATCHES</Badge>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4">
+                           {precedents.map((item) => (
+                             <Link 
+                               key={item.caseId}
+                               to={`/judge/precedents/${item.caseId}`} 
+                               className="p-6 rounded-[28px] bg-white border border-border/20 shadow-sm hover:shadow-2xl hover:shadow-primary/5 hover:border-primary/30 transition-all group flex items-center justify-between"
+                             >
+                                <div className="flex gap-4 items-center">
+                                   <div className="w-12 h-12 rounded-2xl bg-muted/30 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                                      <Scale className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                                   </div>
+                                   <div>
+                                      <h5 className="font-black text-[13px] group-hover:text-primary transition-colors">{item.title}</h5>
+                                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">REF: {item.caseId}</span>
+                                   </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                   <span className="text-xs font-black text-primary bg-primary/5 px-3 py-1 rounded-full uppercase tracking-tighter">
+                                     {item.similarityScore > 1 ? item.similarityScore : Math.round(item.similarityScore * 100)}% Match
+                                   </span>
+                                   <ChevronRight className="w-5 h-5 text-muted-foreground/30 group-hover:text-primary transition-transform group-hover:translate-x-1" />
+                                </div>
+                             </Link>
+                           ))}
+                        </div>
+                     </div>
                   </CardContent>
-               </Card>
-            </div>
-
-            {/* AI Unavailability Warning */}
-            {isUnavailable && (
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-3xl p-8 flex gap-6 items-start shadow-xl animate-pulse-glow">
-                <div className="p-3 bg-amber-500/20 rounded-2xl text-amber-700 shadow-sm">
-                  <AlertCircle className="w-8 h-8" />
+             </Card>
+           ) : (
+             <div className="h-[800px] flex flex-col items-center justify-center bg-white/40 backdrop-blur-md rounded-[60px] border-4 border-dashed border-white/60 p-20 text-center">
+                <div className="w-32 h-32 rounded-[40px] bg-white shadow-2xl flex items-center justify-center mb-10 animate-bounce">
+                   <Sparkles className="w-14 h-14 text-primary" />
                 </div>
-                <div className="flex-1">
-                  <h5 className="font-black text-amber-900 text-lg mb-1.5 uppercase tracking-tighter italic">Reasoning Cluster Active</h5>
-                  <p className="text-amber-800 text-sm leading-relaxed font-bold opacity-80">
-                    The QWEN-2.5 reasoning nodes are currently synthesizing complex legal data. Deep legal analysis typically requires 2-5 minutes to reach high confidence.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Judgment Editor Workspace */}
-            <div className="space-y-6 pt-6 border-t border-border/40">
-               <div className="flex items-center gap-3 mb-2">
-                  <Scale className="w-8 h-8 text-primary" />
-                  <h3 className="text-2xl font-black tracking-tight text-gradient">Judgment Drafting Workspace</h3>
-               </div>
-                <JudgmentEditor
-                  draftText={analysis?.draftText ?? ''}
-                  confidence={analysis?.confidence ?? 0}
-                  isSubmitting={finalizeMutation.isPending}
-                  caseType={caseQuery.data?.case_type}
-                  caseNumber={caseQuery.data?.case_number}
-                  claimantName={caseQuery.data?.claimant_name ?? ''}
-                  respondentName={caseQuery.data?.respondent_name ?? ''}
-                  filingDate={caseQuery.data?.filing_date ?? ''}
-                  lawArticles={analysis?.lawArticles?.map((a: any) =>
-                    typeof a === 'object' ? (a.title || '') : String(a)
-                  )}
-                  precedents={precedents.map(p => p.title)}
-                  outcome={analysis?.outcome}
-                  onRegenerate={async () => {
-                    await runAnalysisMutation.mutateAsync()
-                    await analysisQuery.refetch()
-                  }}
-                  onFinalize={handleFinalize}
-                />
-            </div>
-          </div>
-          ) : (
-            <Card className="shadow-lg border-border/50 border-dashed border-2 bg-muted/5 rounded-[40px] overflow-hidden">
-               <CardContent className="py-40 text-center">
-                  <div className="relative inline-block mb-8">
-                    <BarChart3 className="w-20 h-20 text-muted-foreground/20 mx-auto" />
-                    <Sparkles className="w-10 h-10 text-primary/30 absolute -top-4 -right-4 animate-bounce" />
-                  </div>
-                  <h4 className="text-2xl font-black mb-4 tracking-tight">Judicial Intelligence Workbench</h4>
-                  <p className="max-w-md mx-auto text-muted-foreground text-base italic leading-relaxed font-medium">
-                     {t('judge.workspace.waitingAnalysis')} Engage the reasoning engine to populate similar precedents, law articles, and drafting suggestions.
-                  </p>
-                  <Button 
-                    size="lg"
-                    className="mt-10 px-10 h-14 rounded-2xl shadow-[0_15px_40px_rgba(var(--primary),0.2)] hover:scale-105 active:scale-95 transition-all text-base font-black uppercase tracking-widest" 
-                    disabled={isActivelyLoading}
-                    onClick={() => runAnalysisMutation.mutate()}
-                  >
-                     <Sparkles className={cn("w-5 h-5 mr-3", isActivelyLoading && "animate-spin")} />
-                     {isActivelyLoading ? "Synthesizing Case Context..." : "Enable AI Insights"}
-                  </Button>
-               </CardContent>
-            </Card>
-          )}
-
-          {/* Feedback Section */}
-          <Card className="shadow-2xl border-border/50 rounded-[40px] overflow-hidden">
-            <CardHeader className="bg-muted/10 border-b py-6 px-10">
-              <CardTitle className="text-xl font-black flex items-center gap-4">
-                <MessageSquare className="w-7 h-7 text-primary" />
-                {t('judge.workspace.feedbackTitle')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-12">
-              <div className="space-y-12">
-                {/* Scoring Sliders */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
-                  {[
-                    { id: 'legal_relevance_score', label: t('judge.feedback.legalRelevance'), icon: Scale },
-                    { id: 'reasoning_quality_score', label: t('judge.feedback.reasoningQuality'), icon: Sparkles },
-                    { id: 'explanation_clarity_score', label: t('judge.feedback.explanationClarity'), icon: BookOpen }
-                  ].map((item) => (
-                    <div key={item.id} className="space-y-6">
-                       <div className="flex items-center justify-between text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">
-                          <span className="flex items-center gap-3">
-                             <item.icon className="w-5 h-5 text-primary" />
-                             {item.label}
-                          </span>
-                          <Badge variant="secondary" className="bg-primary/10 text-primary px-3 rounded-full font-black text-sm">{(feedback as any)[item.id]} / 5</Badge>
-                       </div>
-                       <input
-                        type="range"
-                        min={1}
-                        max={5}
-                        step={1}
-                        value={(feedback as any)[item.id]}
-                        onChange={(event) =>
-                          setFeedback((prev) => ({
-                            ...prev,
-                            [item.id]: Number(event.target.value),
-                          }))
-                        }
-                        className="w-full h-2.5 bg-accent rounded-full appearance-none cursor-pointer accent-primary shadow-inner"
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                {/* Text Feedback */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-6">
-                  <div className="space-y-3">
-                    <label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1">{t('judge.feedback.feedbackText')}</label>
-                    <textarea
-                      rows={6}
-                      className="w-full bg-muted/20 border-2 border-transparent focus:border-primary/20 rounded-[32px] p-8 text-sm leading-relaxed font-bold focus:ring-4 focus:ring-primary/5 outline-none transition-all placeholder:italic shadow-inner"
-                      value={feedback.feedback_text}
-                      onChange={(event) => setFeedback((prev) => ({ ...prev, feedback_text: event.target.value }))}
-                      placeholder="e.g. The legal synthesis aligns with UAE Labor Law standards..."
-                    />
-                  </div>
-                  <div className="space-y-3">
-                    <label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1">{t('judge.feedback.suggestedImprovements')}</label>
-                    <textarea
-                      rows={6}
-                      className="w-full bg-muted/20 border-2 border-transparent focus:border-primary/20 rounded-[32px] p-8 text-sm leading-relaxed font-bold focus:ring-4 focus:ring-primary/5 outline-none transition-all placeholder:italic shadow-inner"
-                      value={feedback.suggested_improvements}
-                      onChange={(event) => setFeedback((prev) => ({ ...prev, suggested_improvements: event.target.value }))}
-                      placeholder="e.g. Include article 22 of the 2024 implementation regulations..."
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end border-t border-border/40 pt-12">
-                  <Button
-                    size="lg"
-                    className="gap-4 px-16 h-14 rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all group"
-                    onClick={handleFeedbackSubmit}
-                    disabled={feedbackMutation.isPending}
-                  >
-                    {feedbackMutation.isPending ? "Submitting Performance Data..." : (
-                      <>
-                        <ThumbsUp className="w-6 h-6 group-hover:rotate-12 transition-transform" />
-                        <span className="font-black uppercase tracking-[0.2em] text-xs pb-0.5">{t('judge.workspace.feedbackTitle')}</span>
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                <h2 className="text-[32px] font-black tracking-tight mb-4">Judicial Intelligence Workbench</h2>
+                <p className="text-muted-foreground text-[16px] max-w-md mx-auto italic font-bold">
+                   Load workspace documents and initiate the reasoning engine for deep legal synthesis.
+                </p>
+                <Button 
+                  size="lg" 
+                  className="mt-12 h-20 px-12 rounded-3xl text-sm font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all"
+                  onClick={() => runAnalysisMutation.mutate()}
+                  disabled={isActivelyLoading}
+                >
+                  {isActivelyLoading ? "Synthesizing Pipeline..." : "Enable Core Reasoning"}
+                </Button>
+             </div>
+           )}
         </main>
+
+        {/* RIGHT COLUMN: Prophecy & Risks */}
+        <aside className="flex flex-col gap-8 sticky top-24">
+           
+           {/* Intelligence Core Prophecy */}
+           <Card className="rounded-[40px] shadow-2xl border-deep-green overflow-hidden bg-white group border-[4px]">
+              <CardHeader className="p-8 pb-4">
+                <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-deep-green">
+                  <CheckCircle2 className="w-5 h-5" />
+                  Intelligence Core Prophecy
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8 pt-4">
+                 <div className="bg-primary/5 p-8 rounded-[32px] border border-primary/20 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-3xl -mr-8 -mt-8" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-6 block">Probable Outcome Score</span>
+                    <div className="flex justify-between items-end">
+                       <h3 className="text-[32px] font-black leading-none text-deep-green">{analysis?.outcome || "Pending"}</h3>
+                       <strong className="text-[28px] font-black text-primary leading-none tracking-tighter">
+                          {Math.round((analysis?.confidence ?? 0) > 1 ? (analysis?.confidence ?? 0) / 100 : (analysis?.confidence ?? 0) * 100)}%
+                       </strong>
+                    </div>
+                    <div className="mt-8 h-2 w-full bg-border/40 rounded-full overflow-hidden">
+                       <div 
+                         className="h-full bg-deep-green rounded-full shadow-[0_0_15px_rgba(2,44,34,0.4)] transition-all duration-1000"
+                         style={{ width: `${Math.round((analysis?.confidence ?? 0) > 1 ? (analysis?.confidence ?? 0) / 100 : (analysis?.confidence ?? 0) * 100)}%` }}
+                       />
+                    </div>
+                 </div>
+              </CardContent>
+           </Card>
+
+           {/* Inherent Litigation Risks */}
+           <Card className="rounded-[40px] shadow-2xl border-white/40 overflow-hidden bg-white/60 backdrop-blur-xl">
+              <CardHeader className="p-8 pb-4">
+                <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-muted-foreground/80">
+                  <AlertCircle className="w-5 h-5 text-destructive/60" />
+                  Inherent Litigation Risks
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8 pt-4">
+                 <div className="p-6 rounded-[32px] bg-destructive/5 border border-destructive/20 flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-white shadow-md flex items-center justify-center shrink-0">
+                       <Scale className="w-5 h-5 text-destructive/60" />
+                    </div>
+                    <h4 className="text-[11px] font-black uppercase tracking-widest text-destructive">Ambiguous Precedent</h4>
+                 </div>
+              </CardContent>
+           </Card>
+
+           {/* Optimal Sequential Protocol */}
+           <Card className="rounded-[40px] shadow-2xl border-white/40 overflow-hidden bg-white/60 backdrop-blur-xl">
+              <CardHeader className="p-8 pb-4">
+                <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-muted-foreground/80">
+                  <BarChart3 className="w-5 h-5 text-primary/60" />
+                  Optimal Sequential Protocol
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8 h-32 flex items-center justify-center text-center">
+                 <div className="w-full h-2 bg-muted/40 rounded-full relative overflow-hidden">
+                    <div className="absolute inset-0 bg-primary/20 animate-shimmer shadow-[inset_0_0_10px_rgba(var(--primary),0.1)]" />
+                 </div>
+              </CardContent>
+           </Card>
+
+           {/* Validation Feedback */}
+           <Card className="rounded-[40px] shadow-2xl border-white/40 overflow-hidden bg-white/60 backdrop-blur-xl">
+              <CardHeader className="p-8 pb-4">
+                <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-muted-foreground/80">
+                  <MessageSquare className="w-5 h-5 text-primary/60" />
+                  Validation Feedback
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8 pt-4 space-y-6">
+                 <div className="flex flex-col gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Reasoning Score</span>
+                    <div className="flex gap-2">
+                       {[1,2,3,4,5].map(n => (
+                         <div key={n} className={cn(
+                           "w-10 h-10 rounded-full flex items-center justify-center text-[10px] font-black shadow-sm cursor-pointer transition-all active:scale-90",
+                           feedback.reasoning_quality_score >= n ? "bg-primary text-white scale-110 shadow-primary/30" : "bg-white border border-border/60 hover:border-primary/40 text-muted-foreground"
+                         )} onClick={() => setFeedback(prev => ({ ...prev, reasoning_quality_score: n }))}>
+                            {n}
+                         </div>
+                       ))}
+                    </div>
+                 </div>
+                 <Button 
+                   className="w-full h-14 rounded-2xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-neutral-800"
+                   onClick={handleFeedbackSubmit}
+                   disabled={feedbackMutation.isPending}
+                 >
+                   Send Performance Metrics
+                 </Button>
+              </CardContent>
+           </Card>
+
+        </aside>
+      </div>
+
+      {/* Judgment Drafting Workspace (Expands to full width below) */}
+      <div className="mt-12 space-y-8 pt-12 border-t-2 border-dashed border-border/40">
+         <div className="flex items-center gap-4 mb-2">
+            <div className="w-12 h-12 rounded-[20px] bg-primary/10 flex items-center justify-center">
+               <Scale className="w-7 h-7 text-primary" />
+            </div>
+            <div>
+               <h3 className="text-[28px] font-black tracking-tight text-gradient leading-none mb-1">Judgment Drafting Workspace</h3>
+               <span className="text-xs font-black uppercase tracking-widest text-muted-foreground opacity-50">DIFC AI AGENT COLLABORATION v1.0</span>
+            </div>
+         </div>
+          <JudgmentEditor
+            draftText={analysis?.draftText ?? ''}
+            confidence={analysis?.confidence ?? 0}
+            isSubmitting={finalizeMutation.isPending}
+            caseType={caseQuery.data?.case_type}
+            caseNumber={caseQuery.data?.case_number}
+            claimantName={caseQuery.data?.claimant_name ?? ''}
+            respondentName={caseQuery.data?.respondent_name ?? ''}
+            filingDate={caseQuery.data?.filing_date ?? ''}
+            lawArticles={analysis?.lawArticles?.map((a: any) =>
+              typeof a === 'object' ? (a.title || '') : String(a)
+            )}
+            precedents={precedents.map(p => p.title)}
+            outcome={analysis?.outcome}
+            onRegenerate={async () => {
+              await runAnalysisMutation.mutateAsync()
+              await analysisQuery.refetch()
+            }}
+            onFinalize={handleFinalize}
+          />
       </div>
     </PortalLayout>
   )

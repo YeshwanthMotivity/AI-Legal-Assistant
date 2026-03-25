@@ -1134,22 +1134,62 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
     # Align with keys expected by OrchestratorService.run_analysis and get_case_analysis
     # Use search results from state if the LLM didn't provide specific citations
     # Ensure law articles are always objects with title/content
-    def _to_precedent_obj(item):
+    def _to_precedent_obj(item, search_pool: list[dict]):
         if not item: return None
+        
+        # If item is already a search result dict, just normalize it
         if isinstance(item, dict):
             return {
                 "caseId": item.get("case_id") or item.get("id"),
                 "title": item.get("case_name") or item.get("title") or "Unknown Case",
+                "claimant": item.get("claimant"),
+                "respondent": item.get("respondent"),
+                "summary": item.get("summary"),
                 "similarityScore": item.get("score") or item.get("similarity_score") or 1.0
             }
-        return {
-            "caseId": None,
-            "title": str(item),
-            "similarityScore": 1.0
-        }
             
-        # Case-insensitive filter
-        return {"title": title, "content": short_content}
+        # 2. Check for positional placeholders like "Precedent 1", "Case 2"
+        pos_match = re.search(r"(?:Precedent|Case|Result)\s*(\d+)", title_str, re.IGNORECASE)
+        if pos_match:
+            idx = int(pos_match.group(1)) - 1
+            if 0 <= idx < len(search_pool):
+                best_match = search_pool[idx]
+                return {
+                    "caseId": best_match.get("case_id") or best_match.get("id"),
+                    "title": best_match.get("title") or title_str,
+                    "claimant": best_match.get("claimant"),
+                    "respondent": best_match.get("respondent"),
+                    "summary": best_match.get("summary"),
+                    "similarityScore": 0.95 - (idx * 0.05)
+                }
+
+        # 3. Fuzzy ratio match
+        best_match = None
+        best_ratio = 0.0
+        for pool_item in search_pool:
+            pool_title = pool_item.get("title") or ""
+            # Simple fuzzy ratio check
+            ratio = difflib.SequenceMatcher(None, title_str.lower(), pool_title.lower()).ratio()
+            if ratio > best_ratio:
+                best_ratio = ratio
+                best_match = pool_item
+        
+        if best_match and (best_ratio > 0.6 or title_str.lower() in (best_match.get("title") or "").lower()):
+            return {
+                "caseId": best_match.get("case_id") or best_match.get("id"),
+                "title": best_match.get("title") or title_str,
+                "claimant": best_match.get("claimant"),
+                "respondent": best_match.get("respondent"),
+                "summary": best_match.get("summary"),
+                "similarityScore": best_match.get("score") or 1.0
+            }
+            
+        # Fallback if no pool match
+        return {
+            "caseId": f"ref-{title_str[:12].lower().replace(' ', '-')}", # Better than None
+            "title": title_str,
+            "similarityScore": 0.5
+        }
 
     def _to_article_obj(item):
         if not item: return None
@@ -1167,8 +1207,20 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
     # Filter out Nones from the list comprehension
     law_articles = [obj for l in raw_laws if (obj := _to_article_obj(l)) is not None]
 
-    raw_precedents = reasoning.get("cited_cases") or state.get("precedents", [])
-    similar_precedents = [obj for p in raw_precedents if (obj := _to_precedent_obj(p)) is not None]
+    # 3. Standardize Entitlements for Sidebar Widgets
+    raw_entitlements = reasoning.get("entitlement_breakdown") or state.get("entitlements", [])
+    entitlement_map = {str(e.get("label", "")).lower(): e.get("value", "AED 0.00") for e in raw_entitlements if isinstance(e, dict)}
+    
+    entitlement_breakdown = [
+        {"label": "Monthly Salary",     "value": entitlement_map.get("monthly salary") or entitlement_map.get("salary") or "AED 0.00"},
+        {"label": "Years of Service",  "value": entitlement_map.get("years of service") or entitlement_map.get("service") or "0.00 years"},
+        {"label": "Gratuity Estimate", "value": entitlement_map.get("gratuity estimate") or entitlement_map.get("gratuity") or "AED 0.00"}
+    ]
+    # Append any other entitlements found
+    known_labels = {"monthly salary", "salary", "years of service", "service", "gratuity estimate", "gratuity"}
+    for e in raw_entitlements:
+        if isinstance(e, dict) and str(e.get("label", "")).lower() not in known_labels:
+            entitlement_breakdown.append(e)
 
     explainability = {
         "summary": reasoning.get("summary", ""),
