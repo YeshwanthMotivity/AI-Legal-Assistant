@@ -1154,7 +1154,7 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
             if 0 <= idx < len(search_pool):
                 best_match = search_pool[idx]
                 return {
-                    "caseId": best_match.get("similar_case_id") or best_match.get("case_id") or best_match.get("id"),
+                    "case_id": best_match.get("similar_case_id") or best_match.get("case_id") or best_match.get("id"),
                     "title": best_match.get("title") or best_match.get("case_title") or title_str,
                     "claimant": best_match.get("claimant"),
                     "respondent": best_match.get("respondent"),
@@ -1175,7 +1175,7 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
         
         if best_match and (best_ratio > 0.6 or title_str.lower() in (best_match.get("title") or best_match.get("case_title") or "").lower()):
             return {
-                "caseId": best_match.get("similar_case_id") or best_match.get("case_id") or best_match.get("id"),
+                "case_id": best_match.get("similar_case_id") or best_match.get("case_id") or best_match.get("id"),
                 "title": best_match.get("title") or best_match.get("case_title") or title_str,
                 "claimant": best_match.get("claimant"),
                 "respondent": best_match.get("respondent"),
@@ -1185,7 +1185,7 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
             
         # Fallback if no pool match
         return {
-            "caseId": f"ref-{title_str[:12].lower().replace(' ', '-')}", # Better than None
+            "case_id": f"ref-{title_str[:12].lower().replace(' ', '-')}", # Better than None
             "title": title_str,
             "similarityScore": 0.5
         }
