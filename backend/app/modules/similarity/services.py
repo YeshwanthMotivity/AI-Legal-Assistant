@@ -1,9 +1,9 @@
 import asyncio
 from typing import Any
 import uuid
-import httpx
 import logging
 import re
+import os
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from qdrant_client import QdrantClient
@@ -546,25 +546,30 @@ class SimilarityService:
             f"{detail.text}"
         )
         
-        # Use Ollama (Qwen) as primary
+        # Use x.ai (Grok) as primary
         async with httpx.AsyncClient(timeout=300.0) as client:
             try:
-                url = f"{settings.ollama_url}/api/chat"
+                url = "https://api.x.ai/v1/chat/completions"
                 payload = {
-                    "model": "qwen2.5:1.5b-instruct",
+                    "model": "grok-4-1-fast",
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": request.message}
                     ],
-                    "stream": False
+                    "stream": False,
+                    "temperature": 0.0
+                }
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {os.environ.get('XAI_API_KEY')}"
                 }
                 
-                logger.info(f"Sending chat request to Ollama fallback (qwen2.5:1.5b-instruct)")
-                response = await client.post(url, json=payload, timeout=300.0)
+                logger.info(f"Sending chat request to x.ai (grok-4-1-fast)")
+                response = await client.post(url, headers=headers, json=payload, timeout=300.0)
                 response.raise_for_status()
                 data = response.json()
                 
-                answer = data.get("message", {}).get("content", str(data))
+                answer = data.get("choices", [{}])[0].get("message", {}).get("content", str(data))
                 return PrecedentChatResponse(response=answer)
             except Exception as e:
                 logger.error(f"Precedent chat fallback failed: {e}")

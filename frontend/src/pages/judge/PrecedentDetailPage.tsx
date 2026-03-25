@@ -155,8 +155,8 @@ const PrecedentDetailPage: React.FC = () => {
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([])
   const chatEndRef = useRef<HTMLDivElement>(null)
 
-
-
+  const [aiSummary, setAiSummary] = useState<string>('')
+  const [summaryLoading, setSummaryLoading] = useState(false)
   const { data: precedent, isLoading, error } = useQuery({
     queryKey: ['precedent', id, i18n.language],
     queryFn: () => getPrecedent(id || '', i18n.language),
@@ -182,7 +182,32 @@ const PrecedentDetailPage: React.FC = () => {
     },
   })
 
-
+  // Dynamic x.ai Summary Generation
+  useEffect(() => {
+    if (!precedent?.text || aiSummary || summaryLoading) return
+    setSummaryLoading(true)
+    
+    fetch('https://api.x.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_XAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'grok-4-1-fast',
+        messages: [{
+          role: 'user',
+          content: `In 2-3 sentences max, summarize this DIFC court case — who sued whom, what the dispute was about, and the outcome. Be concise and factual.\n\n${precedent.text.slice(0, 3000)}`
+        }],
+        temperature: 0,
+        stream: false
+      })
+    })
+    .then(r => r.json())
+    .then(d => setAiSummary(d.choices?.[0]?.message?.content || ''))
+    .catch(err => console.error('x.ai summary fetch failed:', err))
+    .finally(() => setSummaryLoading(false))
+  }, [precedent?.text, aiSummary])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -292,15 +317,18 @@ const PrecedentDetailPage: React.FC = () => {
                       type RowType = { label: string; value: unknown; type: 'text' | 'outcome' | 'summary' }
                       const rows: RowType[] = [
                         { label: 'Court',       value: 'DIFC Courts',                                    type: 'text' },
-                        { label: 'Source',      value: precedent.title,                                   type: 'text' },
-                        { label: 'Case Title',  value: cleanTitle,                                        type: 'text' },
                         { label: 'Reference',   value: id,                                                type: 'text' },
                         ...(year ? [{ label: 'Year', value: year, type: 'text' as const }] : []),
-                        { label: 'Claimant',    value: parties.claimant,                                  type: 'text' },
-                        { label: 'Respondent',  value: parties.respondent,                                type: 'text' },
                         { label: 'Case Type',   value: precedent.category || 'DIFC Judicial Precedent',  type: 'text' },
+                        ...(parties.claimant ? [{ label: 'Claimant', value: parties.claimant,  type: 'text' as const }] : []),
+                        ...(parties.respondent ? [{ label: 'Respondent', value: parties.respondent,  type: 'text' as const }] : []),
                         ...(outcomeStyle ? [{ label: 'Outcome', value: outcomeStyle, type: 'outcome' as const }] : []),
-                        ...(cleanSummary ? [{ label: 'Summary', value: cleanSummary, type: 'summary' as const }] : []),
+                        ...(aiSummary || summaryLoading ? [{
+                          label: 'Summary',
+                          value: summaryLoading ? 'Generating AI summary...' : aiSummary,
+                          type: 'summary' as const
+                        }] : []),
+                        { label: 'Source',      value: precedent.title,                                   type: 'text' },
                       ]
 
                       return rows.map((row, i) => (

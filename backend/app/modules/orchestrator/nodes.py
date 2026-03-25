@@ -3,11 +3,14 @@ import logging
 import time
 import re
 from datetime import datetime
-from typing import Any
+from typing import Any, difflib # Kept Any, added difflib as per user's edit
+import uuid
+import os
 
 import asyncio
 import httpx
-from fastapi import HTTPException
+from fastapi import HTTPException # Kept HTTPException, as it's from fastapi
+from typing import Any # This line is redundant if Any is already imported above, but user's edit implies it. Let's assume they meant to add AnyHTTPException from somewhere else, but it's not standard. I will interpret "from typing import AnyHTTPException" as an error and keep the original "from fastapi import HTTPException" and ensure `Any` is available.
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -757,24 +760,25 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
 
     # ── 4. Model Callers ──────────────────────────────────────────────────────
     async def _call_ollama(url: str, timeout_seconds: int, model_name: str) -> str:
-        logger.info(f"reasoning_agent_node: calling Ollama/{model_name} at {url}")
+        logger.info(f"reasoning_agent_node: calling x.ai (grok-4-1-fast)")
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
-            # Use /api/generate
-            prompt = f"System: {system_prompt}\n\nUser Context: {user_prompt}\n\nAssistant Response (JSON ONLY):"
             payload = {
-                "model": model_name,
-                "prompt": prompt,
+                "model": "grok-4-1-fast",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
                 "stream": False,
-                "options": {
-                    "num_ctx": 4096,
-                    "temperature": 0.1,
-                    "num_predict": NODE_TOKEN_LIMITS["reasoning"]
-                },
+                "temperature": 0.1
             }
-            response = await client.post(f"{url}/api/generate", json=payload)
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {os.environ.get('XAI_API_KEY')}"
+            }
+            response = await client.post("https://api.x.ai/v1/chat/completions", headers=headers, json=payload, timeout=timeout_seconds)
             response.raise_for_status()
             data = response.json()
-            return str(data.get("response", ""))
+            return str(data.get("choices", [{}])[0].get("message", {}).get("content", ""))
 
 
     # ── 5. JSON parsing helpers ───────────────────────────────────────────────
@@ -1026,24 +1030,26 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
     )
 
     try:
-        model_url = settings.ollama_url
-        model_name = "qwen2.5:1.5b-instruct"
-        prompt = f"System: {system_prompt}\n\nUser: {user_prompt}\n\nJudgment:"
+    try:
+        model_url = "https://api.x.ai/v1/chat/completions"
         payload = {
-            "model": model_name,
-            "prompt": prompt,
+            "model": "grok-4-1-fast",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
             "stream": False,
-            "options": {
-                "num_ctx": 3072,
-                "temperature": 0.05,
-                "num_predict": NODE_TOKEN_LIMITS.get("drafting", 800),
-            },
+            "temperature": 0.05
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {os.environ.get('XAI_API_KEY')}"
         }
         async with httpx.AsyncClient(timeout=120) as client:
-            response = await client.post(f"{model_url}/api/generate", json=payload)
+            response = await client.post(model_url, headers=headers, json=payload)
             response.raise_for_status()
             data = response.json()
-            draft_content = _cleanse_text(str(data.get("response", "")))
+            draft_content = _cleanse_text(str(data.get("choices", [{}])[0].get("message", {}).get("content", "")))
     except Exception as e:
         logger.warning(f"judgment_drafting_agent_node failed: {e}, using reasoning fallback")
         draft_content = reasoning.get("draft_judgment") or reasoning.get("reasoning") or ""
