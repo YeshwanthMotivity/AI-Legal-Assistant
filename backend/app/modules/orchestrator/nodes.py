@@ -1220,6 +1220,15 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
         if isinstance(e, dict) and str(e.get("label", "")).lower() not in known_labels:
             entitlement_breakdown.append(e)
 
+    # 4. Resolve Cited Precedents with Search Results
+    search_pool = state.get("similar_precedents", []) or state.get("search_results", [])
+    raw_precedents = reasoning.get("cited_cases") or state.get("precedents", [])
+    similar_precedents = []
+    for p in raw_precedents:
+        obj = _to_precedent_obj(p, search_pool)
+        if obj:
+            similar_precedents.append(obj)
+
     explainability = {
         "summary": reasoning.get("summary", ""),
         "facts": reasoning.get("facts", []),
