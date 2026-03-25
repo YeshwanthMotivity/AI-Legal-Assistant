@@ -473,7 +473,22 @@ class SimilarityService:
         raw_text = payload.get("raw_text") or payload.get("text") or ""
         
         # Groq Extraction: Full text dynamic lookup bypassing isolated chunk exceptions
-        if not payload.get("claimant") and raw_text:
+        _BAD_CLAIMANT_PREFIXES = [
+            "In ", "See ", "Although ", "Those ", "Court of Appeal in ",
+            "Justice ", "Lady ", "Lord ", "As found in ", "Vv ",
+        ]
+        _BAD_CLAIMANT_EXACT = {
+            "the Claimant", "Claimant", "the Defendant", "Defendant",
+            "claimant", "defendant", "Sanjiv Singhal / BTAC", "Group Ltd",
+            "See transcript", "N/A", "",
+        }
+        existing_claimant = payload.get("claimant") or ""
+        claimant_is_bad = (
+            not existing_claimant
+            or existing_claimant in _BAD_CLAIMANT_EXACT
+            or any(existing_claimant.startswith(p) for p in _BAD_CLAIMANT_PREFIXES)
+        )
+        if claimant_is_bad and raw_text:
             try:
                 async with httpx.AsyncClient(timeout=15) as http:
                     r = await http.post(

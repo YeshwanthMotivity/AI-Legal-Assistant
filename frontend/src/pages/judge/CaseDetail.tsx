@@ -448,8 +448,16 @@ const CaseDetail = () => {
                              </div>
                              {(() => {
                                const genericLabels = ['the claimant', 'claimant', 'the defendant', 'defendant', 'see transcript', 'n/a']
-                               const showClaimant = item.claimant && !genericLabels.includes(item.claimant.toLowerCase())
-                               const showRespondent = item.respondent && !genericLabels.includes(item.respondent.toLowerCase())
+                               const badPrefixes = ['in ', 'see ', 'although ', 'justice ', 'lord ', 'lady ', 'court of appeal in ']
+                               const isBadValue = (v: string | null | undefined) => {
+                                 if (!v) return true
+                                 const lower = v.toLowerCase().trim()
+                                 if (genericLabels.includes(lower)) return true
+                                 if (badPrefixes.some(p => lower.startsWith(p))) return true
+                                 return false
+                               }
+                               const showClaimant = !isBadValue(item.claimant)
+                               const showRespondent = !isBadValue(item.respondent)
                                return (showClaimant || showRespondent) ? (
                                  <div className="text-[11px] text-muted-foreground mt-1 flex gap-3">
                                    {showClaimant && <span>Claimant: <strong>{item.claimant}</strong></span>}
