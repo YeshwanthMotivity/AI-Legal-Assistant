@@ -151,11 +151,16 @@ async def extract_entities(text: str) -> list[dict]:
 
     try:
         url = "https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions"
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             params = {"key": settings.gemini_api_key}
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {settings.gemini_api_key}"
+            }
             response = await client.post(
                 url,
                 params=params,
+                headers=headers,
                 json={
                     "model": "gemini-2.0-flash",
                     "response_format": {"type": "json_object"},

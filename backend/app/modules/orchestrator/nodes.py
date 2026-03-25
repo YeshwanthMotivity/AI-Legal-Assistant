@@ -972,8 +972,12 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             "max_tokens": NODE_TOKEN_LIMITS["reasoning"]
         }
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {settings.gemini_api_key}"
+            }
+            # Also keep key in params as a fallback
             params = {"key": settings.gemini_api_key}
-            headers = {"Content-Type": "application/json"}
             response = await client.post(model_url, params=params, headers=headers, json=payload, timeout=timeout_seconds)
             
             if response.status_code != 200:
@@ -1243,7 +1247,10 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
             "temperature": 0.2,
             "max_tokens": NODE_TOKEN_LIMITS["drafting"]
         }
-        headers = {"Content-Type": "application/json"}
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {settings.gemini_api_key}"
+        }
         params = {"key": settings.gemini_api_key}
         async with httpx.AsyncClient(timeout=120) as client:
             response = await client.post(model_url, params=params, headers=headers, json=payload)

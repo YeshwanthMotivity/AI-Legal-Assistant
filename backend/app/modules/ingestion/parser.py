@@ -146,9 +146,14 @@ class LegalStructureParser:
 
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 params = {"key": settings.gemini_api_key}
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {settings.gemini_api_key}"
+                }
                 response = await client.post(
                     self.url,
                     params=params,
+                    headers=headers,
                     json={
                         "model": "gemini-2.0-flash",
                         "response_format": {"type": "json_object"},

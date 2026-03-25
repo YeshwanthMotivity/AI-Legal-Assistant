@@ -186,9 +186,14 @@ async def extract_structure(
         url = "https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions"
         async with httpx.AsyncClient(timeout=120.0) as client:
             params = {"key": settings.gemini_api_key}
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {settings.gemini_api_key}"
+            }
             response = await client.post(
                 url,
                 params=params,
+                headers=headers,
                 json=payload
             )
             response.raise_for_status()
