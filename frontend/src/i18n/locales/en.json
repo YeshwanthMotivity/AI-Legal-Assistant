@@ -311,7 +311,7 @@
       "articleContext": "Article Context",
       "noArticleDesc": "No detailed description available in analysis metadata.",
       "citationsMapped": "Citations mapped from primary case analysis.",
-      "salaryWarning": "Salary and employment dates were not found in the uploaded documents. Upload salary records or employment contracts to calculate entitlements accurately.",
+      "salaryEmploymentNotFound": "Salary and employment dates were not found in the uploaded documents. Upload salary records or employment contracts to calculate entitlements accurately.",
       "analysisComplete": "Analysis complete. See judgment draft for full details.",
       "submittingFeedback": "Submitting Performance Data...",
       "claimantLabel": "Claimant",

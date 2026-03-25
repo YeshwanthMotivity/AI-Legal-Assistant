@@ -299,7 +299,7 @@ const PrecedentDetailPage: React.FC = () => {
     >
       <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-12rem)] min-h-[600px]">
         {/* Main Content - Case Text */}
-        <main className="flex-1 min-w-0 flex flex-col gap-6">
+        <main className="flex-1 min-w-0 max-w-4xl flex flex-col gap-6">
           <Card className="flex-1 shadow-sm border-border/50 overflow-hidden flex flex-col">
             <CardHeader className="bg-muted/10 border-b py-5 flex flex-row items-center justify-between px-8">
               <div className="flex items-center gap-3">
@@ -472,7 +472,7 @@ const PrecedentDetailPage: React.FC = () => {
         </main>
 
         {/* Sidebar - AI Chat & Comparison Tabs */}
-        <aside className="w-full lg:w-[480px] flex flex-col shrink-0">
+        <aside className="w-full lg:w-[500px] flex flex-col shrink-0">
           <Card className="h-full shadow-xl border-primary/20 overflow-hidden flex flex-col bg-card/50 backdrop-blur-sm">
             {/* Tab Header */}
             <div className="flex border-b bg-muted/30">
