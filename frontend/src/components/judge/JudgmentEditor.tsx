@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { useTranslation } from 'react-i18next'
-import { 
-  RotateCcw, 
-  CheckCircle2, 
+import {
+  RotateCcw,
+  CheckCircle2,
   AlertCircle,
   Scale,
   DollarSign,
@@ -25,7 +25,6 @@ interface JudgmentEditorProps {
   draftText: string
   confidence: number
   isSubmitting: boolean
-  caseType?: string
   caseNumber?: string
   claimantName?: string
   respondentName?: string
@@ -48,7 +47,6 @@ const JudgmentEditor = ({
   draftText,
   confidence,
   isSubmitting,
-  caseType,
   caseNumber,
   claimantName,
   respondentName,
@@ -98,28 +96,28 @@ const JudgmentEditor = ({
     <Card className="shadow-2xl border-outline-variant/30 overflow-hidden rounded-3xl bg-surface-container-lowest dark:bg-surface-container">
       <CardHeader className="bg-surface-container-low dark:bg-surface-container-high border-b border-outline-variant/20 py-6 px-10 flex flex-row items-center justify-between">
         <div className="flex items-center gap-3">
-           <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
-             <Scale className="w-5 h-5" />
-           </div>
-           <div>
-             <CardTitle className="text-xl font-headline font-semibold tracking-tight text-on-surface">Judicial Record Editor</CardTitle>
-             <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-60">Manual Review & Finalization</p>
-           </div>
+          <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+            <Scale className="w-5 h-5" />
+          </div>
+          <div>
+            <CardTitle className="text-xl font-headline font-semibold tracking-tight text-on-surface">{t('judge.judgment.judicialRecordEditor')}</CardTitle>
+            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-60">{t('judge.judgment.manualReviewFinalization')}</p>
+          </div>
         </div>
-        
+
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3 bg-surface-container-lowest dark:bg-surface-container px-4 py-2 rounded-xl border border-outline-variant/30 shadow-sm">
             <div className="flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="text-[10px] font-bold uppercase text-on-surface-variant tracking-widest">Logic Confidence</span>
+              <span className="text-[10px] font-bold uppercase text-on-surface-variant tracking-widest">{t('judge.judgment.logicConfidence')}</span>
             </div>
             <div className="h-1.5 w-24 bg-outline-variant/20 rounded-full overflow-hidden">
-              <div 
+              <div
                 className={cn(
                   "h-full rounded-full transition-all duration-1000",
                   progress > 70 ? "bg-emerald-500" : progress > 40 ? "bg-amber-500" : "bg-error"
                 )}
-                style={{ width: `${progress}%` }} 
+                style={{ width: `${progress}%` }}
               />
             </div>
             <span className="text-xs font-black text-primary">{progress}%</span>
@@ -132,7 +130,7 @@ const JudgmentEditor = ({
             onClick={() => setShowTemplatePanel(!showTemplatePanel)}
           >
             <FileText className="w-4 h-4" />
-            Legal Templates
+            {t('judge.judgment.legalTemplates')}
             <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", showTemplatePanel && "rotate-180")} />
           </Button>
         </div>
@@ -140,7 +138,7 @@ const JudgmentEditor = ({
         {showTemplatePanel && (
           <div className="absolute top-[80px] right-10 z-[60] w-72 bg-surface-container-lowest border border-outline-variant/30 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
             <div className="p-4 border-b border-outline-variant/20 bg-surface-container-low">
-              <p className="text-[10px] font-bold uppercase text-on-surface-variant tracking-widest">Select Case Blueprint</p>
+              <p className="text-[10px] font-bold uppercase text-on-surface-variant tracking-widest">{t('judge.judgment.selectCaseBlueprint')}</p>
             </div>
             <div className="p-3 space-y-2">
               {Object.entries(i18n.language === 'ar' ? TEMPLATE_LABELS_AR : TEMPLATE_LABELS).map(([key, label]) => (
@@ -176,84 +174,84 @@ const JudgmentEditor = ({
 
       <CardContent className="p-0">
         <div className="grid grid-cols-1 xl:grid-cols-[380px,1fr] divide-x divide-outline-variant/20">
-          
+
           {/* LEFT: AI INSIGHTS & INJECTION */}
           <div className="bg-surface-container-low/30 p-8 space-y-8 overflow-y-auto max-h-[800px]">
-             
-             <div className="space-y-4">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
-                  <Sparkles className="w-3.5 h-3.5 text-primary" />
-                  Proposed AI Stance
-                </h4>
-                <div className="p-5 rounded-2xl bg-surface-container-low border border-outline-variant/30 shadow-inner">
-                  <div className="flex items-center justify-between mb-4">
-                     <span className="text-[11px] font-bold uppercase tracking-tighter text-on-surface-variant">Predicted Outcome</span>
-                     <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-2 py-0.5 text-[9px] font-bold uppercase">{outcome || 'Accepted'}</Badge>
+
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                {t('judge.judgment.proposedAiStance')}
+              </h4>
+              <div className="p-5 rounded-2xl bg-surface-container-low border border-outline-variant/30 shadow-inner">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[11px] font-bold uppercase tracking-tighter text-on-surface-variant">{t('judge.judgment.predictedOutcome')}</span>
+                  <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-2 py-0.5 text-[9px] font-bold uppercase">{outcome || t('judge.judgment.accept')}</Badge>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-[10px] font-bold uppercase tracking-widest h-9 rounded-lg border-primary/20 text-primary hover:bg-primary/5"
+                  onClick={() => insertIntoEditor(`${t('judge.judgment.predictedOutcome').toUpperCase()}: ${outcome || t('judge.judgment.accept').toUpperCase()}`)}
+                >
+                  {t('judge.judgment.injectIntoDraft')}
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
+                <BookOpen className="w-3.5 h-3.5 text-primary" />
+                {t('judge.judgment.relevantCitations')}
+              </h4>
+              <div className="flex flex-col gap-3">
+                {(lawArticles || []).map((art, i) => (
+                  <div key={i} className="group flex items-center justify-between p-3.5 rounded-xl border border-outline-variant/20 bg-surface-container-lowest hover:border-primary/50 transition-all">
+                    <span className="text-[11px] font-bold text-on-surface tracking-tight truncate max-w-[180px]">{art}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 rounded-lg text-primary hover:bg-primary/10"
+                      onClick={() => insertIntoEditor(`${t('judge.workspace.lawArticles').toUpperCase()}: ${art}`)}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full text-[10px] font-bold uppercase tracking-widest h-9 rounded-lg border-primary/20 text-primary hover:bg-primary/5"
-                    onClick={() => insertIntoEditor(`PREDICTED OUTCOME: ${outcome || 'ACCEPTED'}`)}
-                  >
-                    Inject Into Draft
-                  </Button>
-                </div>
-             </div>
+                ))}
+              </div>
+            </div>
 
-             <div className="space-y-4">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
-                  <BookOpen className="w-3.5 h-3.5 text-primary" />
-                  Relevant Citations
-                </h4>
-                <div className="flex flex-col gap-3">
-                   {(lawArticles || []).map((art, i) => (
-                     <div key={i} className="group flex items-center justify-between p-3.5 rounded-xl border border-outline-variant/20 bg-surface-container-lowest hover:border-primary/50 transition-all">
-                        <span className="text-[11px] font-bold text-on-surface tracking-tight truncate max-w-[180px]">{art}</span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-7 w-7 p-0 rounded-lg text-primary hover:bg-primary/10"
-                          onClick={() => insertIntoEditor(`CITING ARTICLE: ${art}`)}
-                        >
-                           <Plus className="w-3.5 h-3.5" />
-                        </Button>
-                     </div>
-                   ))}
-                </div>
-             </div>
-
-             <div className="space-y-4">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
-                  <Scale className="w-3.5 h-3.5 text-primary" />
-                  Similar Precedents
-                </h4>
-                <div className="flex flex-col gap-3">
-                   {(precedents || []).map((prec, i) => (
-                     <div key={i} className="group flex items-center justify-between p-3.5 rounded-xl border border-outline-variant/20 bg-surface-container-lowest hover:border-primary/50 transition-all">
-                        <span className="text-[11px] font-bold text-on-surface tracking-tight truncate max-w-[180px]">{prec}</span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-7 w-7 p-0 rounded-lg text-primary hover:bg-primary/10"
-                          onClick={() => insertIntoEditor(`REFERENCING PRECEDENT: ${prec}`)}
-                        >
-                           <Plus className="w-3.5 h-3.5" />
-                        </Button>
-                     </div>
-                   ))}
-                </div>
-             </div>
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
+                <Scale className="w-3.5 h-3.5 text-primary" />
+                {t('judge.judgment.similarPrecedents')}
+              </h4>
+              <div className="flex flex-col gap-3">
+                {(precedents || []).map((prec, i) => (
+                  <div key={i} className="group flex items-center justify-between p-3.5 rounded-xl border border-outline-variant/20 bg-surface-container-lowest hover:border-primary/50 transition-all">
+                    <span className="text-[11px] font-bold text-on-surface tracking-tight truncate max-w-[180px]">{prec}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 rounded-lg text-primary hover:bg-primary/10"
+                      onClick={() => insertIntoEditor(`${t('judge.workspace.similarPrecedents').toUpperCase()}: ${prec}`)}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* RIGHT: EDITOR */}
           <div className="p-8 space-y-8">
             <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest overflow-hidden focus-within:ring-4 focus-within:ring-primary/5 transition-all shadow-inner" dir="ltr">
-              <ReactQuill 
-                theme="snow" 
-                value={content} 
-                onChange={setContent} 
-                className="judgment-editor min-h-[500px]" 
+              <ReactQuill
+                theme="snow"
+                value={content}
+                onChange={setContent}
+                className="judgment-editor min-h-[500px]"
               />
             </div>
 
@@ -261,11 +259,11 @@ const JudgmentEditor = ({
               <div className="space-y-2">
                 <label className="text-[11px] font-bold uppercase text-on-surface-variant tracking-widest ml-1 flex items-center gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-                  Judicial Decision
+                  {t('judge.judgment.judicialDecision')}
                 </label>
-                <select 
+                <select
                   className="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer font-bold text-on-surface"
-                  value={decision} 
+                  value={decision}
                   onChange={(event) => setDecision(event.target.value)}
                 >
                   <option value="accept">{t('judge.judgment.accept')}</option>
@@ -277,27 +275,27 @@ const JudgmentEditor = ({
               <div className="space-y-2">
                 <label className="text-[11px] font-bold uppercase text-on-surface-variant tracking-widest ml-1 flex items-center gap-2">
                   <DollarSign className="w-3.5 h-3.5 text-primary" />
-                  Compensation Award
+                  {t('judge.judgment.compensationAward')}
                 </label>
                 <input
                   className="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none font-bold placeholder:italic text-on-surface"
                   value={compensationAmount}
                   onChange={(event) => setCompensationAmount(event.target.value)}
-                  placeholder="AED 0,000.00"
+                  placeholder={t('judge.judgment.compensationPlaceholder')}
                 />
               </div>
 
               <div className="md:col-span-2 space-y-2">
                 <label className="text-[11px] font-bold uppercase text-on-surface-variant tracking-widest ml-1 flex items-center gap-2">
                   <MessageSquare className="w-3.5 h-3.5 text-primary" />
-                  Judicial Logic Synthesis
+                  {t('judge.judgment.judicialLogicSynthesis')}
                 </label>
                 <textarea
                   className="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl p-5 text-sm focus:ring-2 focus:ring-primary/20 outline-none min-h-[140px] transition-all placeholder:italic text-on-surface"
                   rows={5}
                   value={reasoning}
                   onChange={(event) => setReasoning(event.target.value)}
-                  placeholder="Summarize the core legal reasoning for this record..."
+                  placeholder={t('judge.judgment.summarizeReasoningPlaceholder')}
                 />
               </div>
             </div>
@@ -310,30 +308,30 @@ const JudgmentEditor = ({
             )}
 
             <div className="flex justify-end gap-5 pt-8 border-t border-outline-variant/20 items-center">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 className="gap-2 border-outline-variant/30 text-primary hover:bg-primary/5 h-12 px-8 rounded-xl font-bold uppercase tracking-widest text-[11px] shadow-sm"
                 onClick={onRegenerate}
               >
                 <RotateCcw className="w-4 h-4" />
                 {t('judge.workspace.regenerate')}
               </Button>
-              <Button 
-                type="button" 
+              <Button
+                type="button"
                 className="gap-2 h-12 px-12 rounded-xl bg-primary text-on-primary font-bold uppercase tracking-widest text-[11px] shadow-2xl shadow-primary/30 hover:scale-[1.02] transition-all"
-                onClick={handleFinalize} 
+                onClick={handleFinalize}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />
-                    Processing Final Record
+                    {t('judge.judgment.processingFinalRecord')}
                   </div>
                 ) : (
                   <>
                     <CheckCircle2 className="w-4 h-4" />
-                    Finalize Decision
+                    {t('judge.judgment.finalizeDecision')}
                   </>
                 )}
               </Button>

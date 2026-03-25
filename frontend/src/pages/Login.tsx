@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/useAuth'
-import { Globe, HelpCircle, User, Lock, EyeOff, Eye, ArrowRight, Network } from 'lucide-react'
+import { Globe, User, Lock, EyeOff, Eye, ArrowRight, Network } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import BackgroundPreview from '../components/architecture/BackgroundPreview'
@@ -19,6 +19,10 @@ const Login = () => {
   const [isArchOpen, setIsArchOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+
+  useEffect(() => {
+    document.documentElement.classList.add('dark')
+  }, [])
 
   const toggleLanguage = () => {
     const nextLang = i18n.language.startsWith('ar') ? 'en' : 'ar'
@@ -133,10 +137,10 @@ const Login = () => {
                     </label>
                     <div className="relative">
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 w-5 h-5" />
-                      <input 
-                        className="w-full bg-surface-container-low border-b-2 border-outline-variant/20 focus:border-tertiary focus:ring-0 text-on-surface py-4 pl-12 pr-4 transition-all duration-300 outline-none gold-glow" 
-                        id="email" 
-                        placeholder="justice.smith@firm.ae" 
+                      <input
+                        className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant/20 focus:border-tertiary focus:ring-0 rounded-none text-on-surface py-4 pl-12 pr-4 transition-all duration-300 outline-none gold-glow"
+                        id="email"
+                        placeholder="justice.smith@firm.ae"
                         type="text"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
@@ -157,10 +161,10 @@ const Login = () => {
                     </div>
                     <div className="relative">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 w-5 h-5" />
-                      <input 
-                        className="w-full bg-surface-container-low border-b-2 border-outline-variant/20 focus:border-tertiary focus:ring-0 text-on-surface py-4 pl-12 pr-12 transition-all duration-300 outline-none gold-glow" 
-                        id="password" 
-                        placeholder="••••••••••••" 
+                      <input
+                        className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant/20 focus:border-tertiary focus:ring-0 rounded-none text-on-surface py-4 pl-12 pr-12 transition-all duration-300 outline-none gold-glow"
+                        id="password"
+                        placeholder="••••••••••••"
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}

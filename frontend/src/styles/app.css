@@ -26,61 +26,61 @@
   --color-gold: #d4af37;
   --color-deep-green: #022c22;
 
-  /* LexAI UAE Custom Palette */
-  --color-surface-bright: #f7f9fb;
-  --color-surface-container: #eceef0;
-  --color-error-container: #ffdad6;
+  /* Sovereign Legal Intelligence Palette */
+  --color-surface-bright: #353944;
+  --color-surface-container: #1c1f2a;
+  --color-error-container: #93000a;
   --color-on-primary-fixed-variant: #234f3f;
-  --color-secondary-fixed: #dfe2f1;
-  --color-on-surface-variant: #414944;
+  --color-secondary-fixed: #d8e3fb;
+  --color-on-surface-variant: #c0c8c3;
   --color-on-tertiary-fixed: #241a00;
-  --color-inverse-primary: #a2d1bb;
-  --color-outline: #717974;
+  --color-inverse-primary: #3b6756;
+  --color-outline: #8a938d;
   --color-tertiary-fixed: #ffe088;
   --color-on-tertiary-fixed-variant: #574500;
-  --color-on-background: #191c1e;
-  --color-on-secondary-fixed: #171b26;
-  --color-outline-variant: #c0c8c3;
-  --color-secondary: #5a5e6a;
-  --color-tertiary: #735c00;
-  --color-secondary-fixed-dim: #c3c6d4;
-  --color-background-lexai: #f7f9fb;
-  --color-on-error-container: #93000a;
+  --color-on-background: #dfe2f1;
+  --color-on-secondary-fixed: #111c2d;
+  --color-outline-variant: #414944;
+  --color-secondary: #bcc7de;
+  --color-tertiary: #e9c349;
+  --color-secondary-fixed-dim: #bcc7de;
+  --color-background-lexai: #0f131d;
+  --color-on-error-container: #ffdad6;
   --color-primary-fixed: #beedd7;
-  --color-error: #ba1a1a;
-  --color-inverse-on-surface: #eff1f3;
-  --color-on-primary: #ffffff;
-  --color-on-secondary: #ffffff;
-  --color-surface-dim: #d8dadc;
-  --color-on-tertiary: #ffffff;
-  --color-surface-tint: #3b6756;
+  --color-error: #ffb4ab;
+  --color-inverse-on-surface: #2c303b;
+  --color-on-primary: #073829;
+  --color-on-secondary: #263143;
+  --color-surface-dim: #0f131d;
+  --color-on-tertiary: #3c2f00;
+  --color-surface-tint: #a2d1bb;
   --color-on-tertiary-container: #4e3d00;
   --color-tertiary-fixed-dim: #e9c349;
   --color-tertiary-container: #cba72f;
   --color-on-primary-fixed: #002116;
   --color-on-primary-container: #7ba894;
   --color-primary-container: #0f3d2e;
-  --color-surface-container-high: #e6e8ea;
-  --color-surface-variant: #e0e3e5;
-  --color-primary: #00261a;
-  --color-inverse-surface: #2d3133;
-  --color-on-error: #ffffff;
-  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-high: #262a35;
+  --color-surface-variant: #313540;
+  --color-primary: #a2d1bb;
+  --color-inverse-surface: #dfe2f1;
+  --color-on-error: #690005;
+  --color-surface-container-lowest: #0a0e18;
   --color-primary-fixed-dim: #a2d1bb;
-  --color-on-surface: #191c1e;
-  --color-on-secondary-container: #606471;
-  --color-secondary-container: #dfe2f1;
-  --color-surface-container-highest: #e0e3e5;
-  --color-surface-container-low: #f2f4f6;
-  --color-surface: #f7f9fb;
-  --color-on-secondary-fixed-variant: #434652;
+  --color-on-surface: #dfe2f1;
+  --color-on-secondary-container: #aeb9d0;
+  --color-secondary-container: #3e495d;
+  --color-surface-container-highest: #313540;
+  --color-surface-container-low: #171b26;
+  --color-surface: #0f131d;
+  --color-on-secondary-fixed-variant: #3c475a;
 
   --font-headline: 'Newsreader', serif;
   --font-body: 'Inter', sans-serif;
   --font-label: 'Inter', sans-serif;
 
 
-  /* Transitions & Animations (Migrated from tailwind.config.js) */
+  /* Transitions & Animations */
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
   --animate-fade-in-up: fade-in-up 0.4s ease-out forwards;
@@ -110,80 +110,66 @@
 }
 
 :root {
-  /* Emerald Green Scale (HEX Precision) */
-  --emerald-50: #ecfdf5;
-  --emerald-100: #d1fae5;
-  --emerald-200: #a7f3d0;
-  --emerald-300: #6ee7b7;
-  --emerald-400: #34d399;
-  --emerald-500: #10b981;
-  --emerald-600: #059669;
-  --emerald-700: #047857;
-  --emerald-800: #065f46;
-  --emerald-900: #064e3b;
-
-  /* Semantic Variables (Driving most components) */
-  --primary: var(--emerald-600); /* 4.6:1 WCAG AA Contrast against white */
-  --primary-foreground: #ffffff;
-  --primary-hover: var(--emerald-700);
-  --primary-light: var(--emerald-50);
+  /* Semantic Variables (Sovereign Theme - Default Dark) */
+  --primary: #a2d1bb;
+  --primary-foreground: #073829;
+  --primary-hover: #beedd7;
+  --primary-light: #0f3d2e;
   
-  --success: var(--emerald-600);
+  --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
   --info: #3b82f6;
 
   /* Layout Base */
-  --bg-base: #f9fafb;
-  --bg-surface: #ffffff;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f0fdf8;
-  --bg-sidebar: #f8fafc; /* Standard clean sidebar */
-  --sidebar-active: #ecfdf5;
-  --sidebar-text: #111827;
+  --bg-base: #0f131d;
+  --bg-surface: #171b26;
+  --bg-card: #1c1f2a;
+  --bg-card-hover: #262a35;
+  --bg-sidebar: #0a0e18;
+  --sidebar-active: #171b26;
+  --sidebar-text: #dfe2f1;
   
-  --border-color: #e5e7eb;
-  --border-subtle: rgba(16, 185, 129, 0.1);
-  --border-light: #f3f4f6;
+  --border-color: #414944;
+  --border-subtle: rgba(162, 209, 187, 0.1);
+  --border-light: #313540;
   
-  --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --text-muted: #6b7280;
-  --text-accent: #10b981;
+  --text-primary: #dfe2f1;
+  --text-secondary: #c0c8c3;
+  --text-muted: #8a938d;
+  --text-accent: #e9c349;
   
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
   
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 
-  --radius-xl: 24px;
-
-  --font-body: 'Inter', 'Cairo', system-ui, sans-serif;
-  --font-heading: 'Inter', 'Cairo', system-ui, sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-heading: 'Newsreader', serif;
 }
 
 [data-theme='dark'] {
-  --bg-base: #0f172a;
-  --bg-surface: #1e293b;
-  --bg-card: #1e293b;
-  --bg-card-hover: #334155;
-  --bg-sidebar: #0f172a;
+  --bg-base: #0f131d;
+  --bg-surface: #171b26;
+  --bg-card: #1c1f2a;
+  --bg-card-hover: #262a35;
+  --bg-sidebar: #0a0e18;
   
-  --primary: #34d399;
-  --primary-foreground: #022c22;
+  --primary: #a2d1bb;
+  --primary-foreground: #073829;
   
-  --border-color: #334155;
-  --border-subtle: rgba(52, 211, 153, 0.1);
-  --border-light: #1e293b;
+  --border-color: #414944;
+  --border-subtle: rgba(162, 209, 187, 0.1);
+  --border-light: #313540;
   
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --text-accent: #34d399;
+  --text-primary: #dfe2f1;
+  --text-secondary: #c0c8c3;
+  --text-muted: #8a938d;
+  --text-accent: #e9c349;
 }
 
 /* Base Styles */
@@ -211,31 +197,21 @@ h1, h2, h3, .judicial-title {
 
 /* Glassmorphism Utilities */
 .glass {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(12px) saturate(180%);
   -webkit-backdrop-filter: blur(12px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-[data-theme='dark'] .glass {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(20px) saturate(190%);
   -webkit-backdrop-filter: blur(20px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-}
-
-[data-theme='dark'] .glass-strong {
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  background: linear-gradient(135deg, var(--primary), #ffe088);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -246,7 +222,7 @@ h1, h2, h3, .judicial-title {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px; /* WCAG 2.5.8 touch target */
+  min-height: 44px;
   padding: 0.5rem 1.5rem;
   border-radius: var(--radius-md);
   font-weight: 500;
@@ -262,7 +238,6 @@ h1, h2, h3, .judicial-title {
   background: var(--primary);
   color: var(--primary-foreground);
   box-shadow: var(--shadow-sm);
-  border-bottom: 2px solid rgba(0,0,0,0.15); /* Subtle depth */
 }
 
 .btn-primary:hover {
@@ -279,8 +254,7 @@ h1, h2, h3, .judicial-title {
 }
 
 .btn-secondary:hover {
-  background: var(--bg-sidebar);
-  border-color: var(--border-color);
+  background: var(--bg-card-hover);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -298,15 +272,10 @@ h1, h2, h3, .judicial-title {
   border: 1px solid transparent;
 }
 
-.status-badge.pending { background: #fef3c7; color: #92400e; border-color: #fde68a; }
-.status-badge.active { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
-.status-badge.done { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
-.status-badge.failed { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
-
-[data-theme='dark'] .status-badge.pending { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border-color: rgba(245, 158, 11, 0.2); }
-[data-theme='dark'] .status-badge.active { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-color: rgba(59, 130, 246, 0.2); }
-[data-theme='dark'] .status-badge.done { background: rgba(16, 185, 129, 0.1); color: #34d399; border-color: rgba(16, 185, 129, 0.2); }
-[data-theme='dark'] .status-badge.failed { background: rgba(239, 68, 68, 0.1); color: #f87171; border-color: rgba(239, 68, 68, 0.2); }
+.status-badge.pending { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border-color: rgba(245, 158, 11, 0.2); }
+.status-badge.active { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-color: rgba(59, 130, 246, 0.2); }
+.status-badge.done { background: rgba(16, 185, 129, 0.1); color: #34d399; border-color: rgba(16, 185, 129, 0.2); }
+.status-badge.failed { background: rgba(239, 68, 68, 0.1); color: #f87171; border-color: rgba(239, 68, 68, 0.2); }
 
 @layer base {
   /* Forms */
@@ -325,7 +294,7 @@ h1, h2, h3, .judicial-title {
   input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    box-shadow: 0 0 0 4px rgba(162, 209, 187, 0.1);
   }
 
   input::placeholder {
@@ -334,188 +303,158 @@ h1, h2, h3, .judicial-title {
   }
 }
 
-/* Tabs */
-.tab-container {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 2.5rem;
-  background: var(--emerald-50);
-  padding: 0.4rem;
-  border-radius: var(--radius-md);
-  width: fit-content;
-}
-
-.tab-btn {
-  padding: 0.6rem 1.5rem;
-  border-radius: var(--radius-sm);
-  border: none;
-  background: transparent;
-  color: var(--emerald-800);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tab-btn.active {
-  background: #ffffff;
-  color: var(--emerald-700);
-  box-shadow: var(--shadow-sm);
-}
-
-/* Case Detail Specifics */
-.workspace-grid {
-  display: grid;
-  grid-template-columns: 380px 1fr;
-  gap: 2.5rem;
-}
-
-@media (max-width: 1024px) {
-  .workspace-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.decision-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  margin: 2rem 0;
-  padding: 2rem;
-  background: var(--bg-base);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-}
-
-.decision-row label {
-  flex: 1;
-  min-width: 200px;
-}
-
-/* Grids */
-.grid-dashboard {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 2rem;
-}
-
-/* LexAI UAE Custom Login Classes */
+/* Custom Login Styles (Sovereign Theme) */
 .islamic-pattern {
   background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l2.5 7.5L40 10l-7.5 2.5L30 20l-2.5-7.5L20 10l7.5-2.5L30 0zm0 40l2.5 7.5L40 50l-7.5 2.5L30 60l-2.5-7.5L20 50l7.5-2.5L30 40zM0 30l7.5 2.5L10 40l2.5-7.5L20 30l-7.5-2.5L10 20l-2.5 7.5L0 30zm40 0l7.5 2.5L50 40l2.5-7.5L60 30l-7.5-2.5L50 20l-2.5 7.5L40 30z' fill='%23a2d1bb' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
 }
+
 .glass-card {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
+
 .gold-glow:focus {
   box-shadow: 0 0 15px -3px rgba(233, 195, 73, 0.3);
 }
 
 /* LexAI UAE Utility Classes */
 .editorial-shadow {
-  box-shadow: 0 20px 40px rgba(11, 15, 25, 0.06);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
+
 .ghost-border {
   border-bottom: 1px solid rgba(192, 200, 195, 0.15);
 }
+
 .glass-nav {
   backdrop-filter: blur(20px);
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(10, 15, 26, 0.8);
 }
 
-[data-theme='dark'] .editorial-shadow {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-[data-theme='dark'] .glass-nav {
-  background: rgba(15, 23, 42, 0.85);
-}
+/* =============================================
+   LIGHT THEME — applied when .dark is NOT on html
+   ============================================= */
+html:not(.dark) {
+  /* Tailwind color token overrides */
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f4f7f5;
+  --color-surface-container: #eaf0ec;
+  --color-surface-container-high: #dde7e1;
+  --color-surface-container-highest: #cfdbd4;
+  --color-surface: #f8fbf8;
+  --color-surface-bright: #ffffff;
+  --color-surface-dim: #dde7e1;
+  --color-surface-variant: #dde7e1;
+  --color-on-surface: #0f1f17;
+  --color-on-surface-variant: #3d5245;
+  --color-on-background: #0f1f17;
+  --color-outline: #6f8577;
+  --color-outline-variant: #bfd0c7;
+  --color-primary: #1a7a52;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #aee8c5;
+  --color-on-primary-container: #002113;
+  --color-primary-fixed: #aee8c5;
+  --color-secondary: #4c6358;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #cee8d9;
+  --color-on-secondary-container: #09201a;
+  --color-tertiary: #3d6a00;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #b4f466;
+  --color-on-tertiary-container: #0f2000;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #410002;
+  --color-inverse-surface: #2d3730;
+  --color-inverse-on-surface: #eef2ed;
+  --color-inverse-primary: #8dcbaa;
 
-/* ======================================================== */
-/* LexAI UAE - Dark Mode Color Token Overrides              */
-/* Applied via [data-theme='dark'] to make @theme classes   */
-/* respond correctly when dark mode is active.              */
-/* ======================================================== */
-.dark, [data-theme='dark'] {
-  /* Primary */
-  --color-primary: #4ade80;
-  --color-on-primary: #00261a;
-  --color-primary-container: #1a3d2e;
-  --color-on-primary-container: #a7f3d0;
-  --color-primary-fixed: #1e3a2e;
-  --color-primary-fixed-dim: #4ade80;
-  --color-on-primary-fixed: #d1fae5;
-  --color-inverse-primary: #00261a;
+  /* Legacy CSS variable overrides */
+  --primary: #1a7a52;
+  --primary-foreground: #ffffff;
+  --primary-hover: #15633f;
+  --primary-light: #aee8c5;
+  --bg-base: #f8fbf8;
+  --bg-surface: #f4f7f5;
+  --bg-card: #eaf0ec;
+  --bg-card-hover: #dde7e1;
+  --bg-sidebar: #ffffff;
+  --sidebar-active: #eaf0ec;
+  --sidebar-text: #0f1f17;
+  --border-color: #bfd0c7;
+  --border-subtle: rgba(26, 122, 82, 0.15);
+  --border-light: #cfdbd4;
+  --text-primary: #0f1f17;
+  --text-secondary: #3d5245;
+  --text-muted: #6f8577;
+  --text-accent: #3d6a00;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.12);
 
-  /* Secondary */
-  --color-secondary: #a0a8b8;
-  --color-on-secondary: #1e2130;
-  --color-secondary-container: #2a2d3d;
-  --color-on-secondary-container: #c8cdd8;
-  --color-secondary-fixed: #2a2d3d;
-  --color-secondary-fixed-dim: #a0a8b8;
-
-  /* Tertiary */
-  --color-tertiary: #e9c349;
-  --color-on-tertiary: #1a1200;
-  --color-tertiary-container: #2e2500;
-  --color-on-tertiary-container: #ffe07a;
-  --color-tertiary-fixed: #3a2f00;
-  --color-tertiary-fixed-dim: #e9c349;
-  --color-on-tertiary-fixed: #ffe07a;
-  --color-on-tertiary-fixed-variant: #c9a020;
-
-  /* Surface */
-  --color-surface: #0f172a;
-  --color-surface-bright: #1e293b;
-  --color-surface-dim: #0b111e;
-  --color-surface-variant: #1e293b;
-  --color-surface-tint: #4ade80;
-  --color-surface-container-lowest: #0a0f1a;
-  --color-surface-container-low: #111827;
-  --color-surface-container: #1a2235;
-  --color-surface-container-high: #1e293b;
-  --color-surface-container-highest: #273347;
-  --color-inverse-surface: #e2e8f0;
-  --color-inverse-on-surface: #1e293b;
-
-  /* On-Surface */
-  --color-on-surface: #e2e8f0;
-  --color-on-surface-variant: #94a3b8;
-  --color-on-background: #e2e8f0;
-
-  /* Outline */
-  --color-outline: #4b5563;
-  --color-outline-variant: #334155;
-
-  /* Error */
-  --color-error: #f87171;
-  --color-on-error: #1a0000;
-  --color-error-container: #3b1010;
-  --color-on-error-container: #fca5a5;
-
-  /* Background */
-  --color-background: #0f172a;
-  --color-background-lexai: #0f172a;
-}
-
-/* ======================================================== */
-/* Shadcn UI Token Dark Mode Overrides                      */
-/* Makes Card, Button, Table components dark-mode-aware     */
-/* ======================================================== */
-.dark, [data-theme='dark'] {
-  /* Shadcn-compatible tokens */
-  --color-card: #1a2235;
-  --color-card-foreground: #e2e8f0;
-  --color-foreground: #e2e8f0;
-  --color-muted: #1e293b;
-  --color-muted-foreground: #94a3b8;
-  --color-border: #334155;
-  --color-input: #1e293b;
-  --color-ring: #4ade80;
-  --color-popover: #1a2235;
-  --color-popover-foreground: #e2e8f0;
-  --color-accent: #1e3a2e;
-  --color-accent-foreground: #a7f3d0;
-  --color-destructive: #f87171;
+  /* Shadcn color tokens */
+  --color-background: #f8fbf8;
+  --color-foreground: #0f1f17;
+  --color-card: #ffffff;
+  --color-card-foreground: #0f1f17;
+  --color-muted: #eaf0ec;
+  --color-muted-foreground: #3d5245;
+  --color-border: #bfd0c7;
+  --color-input: #f4f7f5;
+  --color-ring: #1a7a52;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0f1f17;
+  --color-accent: #aee8c5;
+  --color-accent-foreground: #002113;
+  --color-destructive: #ba1a1a;
   --color-destructive-foreground: #ffffff;
+}
+
+html:not(.dark) body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+}
+
+html:not(.dark) .glass-strong {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(191, 208, 199, 0.6);
+}
+
+html:not(.dark) .glass {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(191, 208, 199, 0.4);
+}
+
+html:not(.dark) .glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(191, 208, 199, 0.5);
+}
+
+html:not(.dark) .editorial-shadow {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+html:not(.dark) .glass-nav {
+  background: rgba(248, 251, 248, 0.9);
+}
+
+/* Shadcn UI Dark Mode Overrides */
+.dark, [data-theme='dark'] {
+  --color-card: #1c1f2a;
+  --color-card-foreground: #dfe2f1;
+  --color-foreground: #dfe2f1;
+  --color-muted: #171b26;
+  --color-muted-foreground: #c0c8c3;
+  --color-border: #414944;
+  --color-input: #171b26;
+  --color-ring: #a2d1bb;
+  --color-popover: #1c1f2a;
+  --color-popover-foreground: #dfe2f1;
+  --color-accent: #0f3d2e;
+  --color-accent-foreground: #7ba894;
+  --color-destructive: #ffb4ab;
+  --color-destructive-foreground: #690005;
 }

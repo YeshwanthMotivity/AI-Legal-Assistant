@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { FileText, Upload, Sparkles, CheckCircle2, AlertCircle, Clock, Check, BarChart3, Database } from 'lucide-react'
+import { FileText, Upload, Calculator } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -17,12 +17,12 @@ interface DocumentsPanelProps {
   fileInputRef: any
   onUpload: () => void
   isUploading: boolean
-  pollingStatus?: string
+  entitlements?: any[]
 }
 
 const DOCUMENT_TYPES: DocumentType[] = [
-  'contract', 'financial_record', 'termination_notice', 'witness_statement', 
-  'employment_contract', 'salary_records', 'termination_letter', 'evidence', 
+  'contract', 'financial_record', 'termination_notice', 'witness_statement',
+  'employment_contract', 'salary_records', 'termination_letter', 'evidence',
   'court_order', 'other'
 ]
 
@@ -37,126 +37,136 @@ const DocumentsPanel = ({
   fileInputRef,
   onUpload,
   isUploading,
-  pollingStatus
+  entitlements = [],
 }: DocumentsPanelProps) => {
   const { t } = useTranslation()
 
-  // Simulated completeness
-  const completeness = Math.min(100, (documents.length / 4) * 100)
-  const isComplete = completeness >= 100
+  const docCount = documents.length
+  const readinessLabel = isReady
+    ? t('judge.workspace.complete')
+    : isActivelyLoading
+    ? t('judge.workspace.processing')
+    : t('judge.workspace.awaiting')
 
-  const getStepStatus = (step: string) => {
-    if (isReady) return 'complete'
-    if (isActivelyLoading && pollingStatus?.toLowerCase().includes(step.toLowerCase())) return 'active'
-    return 'pending'
-  }
-
-  const steps = ['Ingestion', 'Parsing', 'Reasoning', 'Synthesis']
+  const readinessBadgeClass = isReady
+    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+    : isActivelyLoading
+    ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+    : 'bg-outline-variant/10 text-muted-foreground border-outline-variant/20'
 
   return (
-    <aside className="w-full xl:w-96 flex flex-col gap-6 sticky top-24 overflow-y-auto max-h-[calc(100vh-120px)] scrollbar-hide">
-      
+    <aside className="w-full flex flex-col gap-5 sticky top-[72px] overflow-y-auto max-h-[calc(100vh-88px)] scrollbar-hide">
+
       {/* Document Management Card */}
-      <Card className="shadow-lg border-outline-variant/30 bg-surface-container-lowest dark:bg-surface-container overflow-hidden">
-        <CardHeader className="bg-surface-container-low dark:bg-surface-container-high border-b border-outline-variant/20 py-4 px-6">
-          <CardTitle className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            Workspace Context
-          </CardTitle>
+      <Card className="bg-surface-container-lowest dark:bg-surface-container overflow-hidden rounded-xl editorial-shadow border border-outline-variant/30">
+        <CardHeader className="border-b border-outline-variant/20 p-5 bg-surface-container-low/40">
+          <div className="flex items-center justify-between gap-4">
+            <CardTitle className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+              <FileText className="w-3.5 h-3.5 text-primary" />
+              {t('judge.workspace.documents')}
+            </CardTitle>
+            <Badge className={cn('border text-[10px] font-bold uppercase tracking-widest px-2 py-0.5', readinessBadgeClass)}>
+              {readinessLabel}
+            </Badge>
+          </div>
         </CardHeader>
-        <CardContent className="p-6">
-          <div className="space-y-6">
-            {/* Completeness Info */}
-            <div className="bg-surface-container-low dark:bg-surface-container-high p-4 rounded-xl border border-outline-variant/20 mb-6">
-               <div className="flex items-center justify-between text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">
-                  <span className="flex items-center gap-1.5"><Database className="w-3.5 h-3.5" /> Data Completeness</span>
-                  <span className={cn(isComplete ? "text-emerald-500" : "text-amber-500")}>{Math.round(completeness)}%</span>
-               </div>
-               <div className="h-1.5 w-full bg-outline-variant/20 rounded-full overflow-hidden mb-2">
-                  <div className={cn("h-full transition-all duration-1000", isComplete ? "bg-emerald-500" : "bg-amber-500")} style={{ width: `${completeness}%` }} />
-               </div>
-               <p className="text-[10px] text-on-surface-variant font-medium italic opacity-70">
-                 {isComplete ? "Full context profile available." : "Additional documents required for high precision."}
-               </p>
-            </div>
+        <CardContent className="p-5">
+          <div className="space-y-5">
 
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase text-on-surface-variant tracking-widest flex items-center gap-2 ml-1">
-                  Categorize Entry
-                </label>
-                <select
-                  className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2.5 text-xs focus:border-tertiary focus:ring-1 focus:ring-tertiary/20 outline-none transition-all cursor-pointer font-bold text-on-surface"
-                  value={selectedDocType}
-                  onChange={(e) => setSelectedDocType(e.target.value as DocumentType)}
-                >
-                  {DOCUMENT_TYPES.map((dt) => (
-                    <option key={dt} value={dt}>{t(`judge.documentTypes.${dt}`)}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="relative group">
-                   <input 
-                     ref={fileInputRef} 
-                     type="file" 
-                     className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                     onChange={onFileSelect}
-                   />
-                   <div className="flex flex-col items-center gap-3 w-full bg-surface-container-low border border-dashed border-outline-variant/30 rounded-xl px-4 py-8 group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-300 transition-colors">
-                      <div className="w-10 h-10 rounded-full bg-surface-container-lowest flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-all shadow-sm">
-                         <Upload className="w-5 h-5" />
-                      </div>
-                      <span className="text-on-surface-variant text-[11px] font-bold uppercase tracking-widest text-center">
-                        {selectedFileName ? selectedFileName : "Drag File or Browse"}
-                      </span>
-                   </div>
-                </div>
-              </div>
-
-              <Button
-                className="w-full h-10 rounded-lg bg-primary text-on-primary shadow-lg shadow-primary/20 font-bold text-xs uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all"
-                onClick={onUpload}
-                disabled={!selectedFileName || isUploading}
+            {/* Upload Controls */}
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                {t('judge.workspace.categorizeEntry')}
+              </label>
+              <select
+                className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all cursor-pointer font-medium text-on-surface"
+                value={selectedDocType}
+                onChange={(e) => setSelectedDocType(e.target.value as DocumentType)}
               >
-                {isUploading ? (
-                   <div className="flex items-center gap-2">
-                     <div className="w-3.5 h-3.5 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />
-                     Uploading...
-                   </div>
-                ) : "Inject Context"}
-              </Button>
+                {DOCUMENT_TYPES.map((dt) => (
+                  <option key={dt} value={dt}>{t(`judge.documentTypes.${dt}`)}</option>
+                ))}
+              </select>
             </div>
 
-            <div className="pt-4 border-t border-outline-variant/30 space-y-3">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Attached Repositories</h4>
-              {documents.map((doc) => (
-                <div key={doc.id} className="group flex items-center justify-between p-3 rounded-lg bg-surface-container-low border border-transparent hover:border-outline-variant/50 hover:bg-surface-container-high transition-all">
-                  <div className="flex-1 min-w-0 pr-4">
-                    <div className="flex items-center gap-2 mb-0.5">
-                       <FileText className="w-3.5 h-3.5 text-primary/70 shrink-0" />
-                       <h5 className="text-[11px] font-bold text-on-surface truncate tracking-tight">{doc.file_name}</h5>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] uppercase text-on-surface-variant font-bold tracking-tight bg-surface-container-high px-1.5 py-0.5 rounded border border-outline-variant/30">{t(`judge.documentTypes.${doc.document_type}`)}</span>
-                    </div>
-                  </div>
-                  <Badge 
-                    className={cn(
-                      "px-2 h-5 text-[9px] font-bold uppercase tracking-tighter border shadow-none",
-                      doc.processing_status === 'complete' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : 
-                      doc.processing_status === 'failed' ? "bg-error-container text-on-error-container border-error/20" : 
-                      "bg-amber-500/10 text-amber-500 border-amber-500/20 animate-pulse"
-                    )}
-                  >
-                     {doc.processing_status}
-                  </Badge>
+            <div className="relative group">
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                onChange={onFileSelect}
+              />
+              <div className="flex flex-col items-center gap-3 w-full bg-surface-container-low border border-dashed border-outline-variant/30 rounded-lg p-5 group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-200">
+                <div className="w-9 h-9 rounded-full bg-surface-container-lowest flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-all shadow-sm">
+                  <Upload className="w-4 h-4" />
                 </div>
-              ))}
-              {documents.length === 0 && (
-                <div className="py-8 text-center text-[10px] text-on-surface-variant font-bold uppercase tracking-widest opacity-50 bg-surface-container-low/50 rounded-xl border border-dashed border-outline-variant/20">
-                   Awaiting Document Input
+                <span className="text-xs font-medium text-on-surface-variant text-center leading-snug">
+                  {selectedFileName ? selectedFileName : t('judge.workspace.dragFileBrowse')}
+                </span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">
+                  {t('judge.workspace.fileFormats')}
+                </span>
+              </div>
+            </div>
+
+            <Button
+              className="w-full h-9 rounded-lg bg-primary text-on-primary font-semibold text-xs uppercase tracking-wider transition-all duration-200 gap-2"
+              onClick={onUpload}
+              disabled={!selectedFileName || isUploading}
+            >
+              {isUploading ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />
+                  {t('judge.workspace.uploading')}
+                </>
+              ) : t('judge.workspace.injectContext')}
+            </Button>
+
+            {/* Document List */}
+            <div className="pt-4 border-t border-outline-variant/20 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  {t('judge.workspace.attachedRepositories')}
+                </h4>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  {docCount} {t('judge.workspace.total')}
+                </span>
+              </div>
+
+              {documents.length === 0 ? (
+                <div className="py-5 text-center text-xs text-muted-foreground bg-surface-container-low/50 rounded-lg border border-dashed border-outline-variant/20">
+                  {t('judge.workspace.noDocuments')}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {documents.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-surface-container-low border border-outline-variant/20 hover:border-outline-variant/40 transition-all duration-200"
+                    >
+                      <div className="flex-1 min-w-0 pr-3">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <FileText className="w-3 h-3 text-primary/70 shrink-0" />
+                          <h5 className="text-xs font-semibold text-on-surface truncate">{doc.file_name}</h5>
+                        </div>
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
+                          {t(`judge.documentTypes.${doc.document_type}`)}
+                        </span>
+                      </div>
+                      <Badge
+                        className={cn(
+                          'px-1.5 h-5 text-[9px] font-bold uppercase tracking-widest border shadow-none shrink-0',
+                          doc.processing_status === 'complete' || doc.processing_status === 'completed' || doc.processing_status === 'embedded'
+                            ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                            : doc.processing_status === 'failed'
+                            ? 'bg-red-500/10 text-red-600 border-red-500/20'
+                            : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                        )}
+                      >
+                        {t(`judge.documentStatus.${doc.processing_status}`) || doc.processing_status}
+                      </Badge>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -164,48 +174,50 @@ const DocumentsPanel = ({
         </CardContent>
       </Card>
 
-      {/* AI Reasoning Stepper */}
-      <Card className="shadow-lg border-outline-variant/30 bg-surface-container-lowest dark:bg-surface-container overflow-hidden">
-        <CardHeader className="py-4 px-6 bg-primary/5">
-           <CardTitle className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-primary">
-              <Sparkles className="w-4 h-4" />
-              Intelligence Pipeline
-           </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6">
-           <div className="flex flex-col gap-6 relative">
-              {/* Vertical dotted line */}
-              <div className="absolute left-3.5 top-2 bottom-2 w-0.5 bg-dashed border-l border-outline-variant/30 z-0" />
-
-              {steps.map((step, idx) => {
-                const status = getStepStatus(step)
+      {/* ENTITLEMENT CALCULATION */}
+      {entitlements.length > 0 && (
+        <Card className="bg-surface-container-lowest dark:bg-surface-container overflow-hidden rounded-xl editorial-shadow border border-outline-variant/30">
+          <CardHeader className="p-5 border-b border-outline-variant/20 bg-surface-container-low/40">
+            <CardTitle className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+              <Calculator className="w-3.5 h-3.5 text-primary" />
+              {t('judge.workspace.entitlementCalculation')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-outline-variant/20">
+              {entitlements.map((e, idx) => {
+                const isZero = e.value?.includes('0.00')
                 return (
-                  <div key={step} className="flex items-start gap-4 z-10">
-                    <div className={cn(
-                      "w-7 h-7 rounded-full flex items-center justify-center transition-all duration-500 shadow-lg",
-                      status === 'complete' ? "bg-emerald-500 text-on-primary shadow-emerald-500/20" : 
-                      status === 'active' ? "bg-primary text-on-primary shadow-primary/20 animate-pulse" : 
-                      "bg-surface-container-high text-on-surface-variant border border-outline-variant/30"
-                    )}>
-                       {status === 'complete' ? <Check className="w-3.5 h-3.5" /> : <span className="text-[10px] font-bold">{idx + 1}</span>}
+                  <div key={idx} className="px-4 py-3 flex items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground truncate">
+                          {e.label}
+                        </span>
+                        {isZero && (
+                          <Badge className="bg-red-500/10 text-red-600 text-[9px] font-bold uppercase px-1.5 h-4 border border-red-500/20 shrink-0">
+                            {t('judge.workspace.missingData')}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="h-1 w-full bg-outline-variant/20 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-emerald-500 transition-all duration-300"
+                          style={{ width: isZero ? '0%' : '75%' }}
+                        />
+                      </div>
                     </div>
-                    <div className="flex flex-col">
-                       <span className={cn(
-                         "text-[11px] font-bold tracking-widest uppercase transition-colors",
-                         status === 'complete' || status === 'active' ? "text-on-surface" : "text-on-surface-variant opacity-60"
-                       )}>
-                         {step}
-                       </span>
-                       <span className="text-[9px] text-on-surface-variant font-medium">
-                         {status === 'complete' ? "Validation Finished" : status === 'active' ? "Synthesizing Node..." : "Pending Sequence"}
-                       </span>
-                    </div>
+                    <strong className={cn('text-sm shrink-0', isZero ? 'text-muted-foreground font-normal' : 'text-on-surface font-semibold')}>
+                      {e.value}
+                    </strong>
                   </div>
                 )
               })}
-           </div>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
     </aside>
   )
 }

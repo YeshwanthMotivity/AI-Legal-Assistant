@@ -2,22 +2,19 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { 
-  Plus, 
-  Search, 
-  Briefcase, 
-  Clock, 
-  CheckCircle2, 
+import {
+  Plus,
+  Search,
+  Clock,
+  CheckCircle2,
   Gavel,
   History,
   FileText,
-  Eye
 } from 'lucide-react'
 import PortalLayout from '../../components/layout/PortalLayout'
 import CreateCaseModal from '../../components/judge/CreateCaseModal'
 import { createCase, getJudgeCases } from '../../api/judge'
 import type { CaseResponse, CreateCaseRequest } from '../../types/judge'
-import StatCard from '@/components/StatCard'
 import { cn } from '@/lib/utils'
 
 interface CaseListProps {
@@ -61,7 +58,6 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
     },
   })
 
-  // Filter cases based on search and status
   const filterBySearch = (item: CaseResponse) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
@@ -95,59 +91,59 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
   }, [casesQuery.data])
 
   return (
-    <PortalLayout title="Chamber Registry" subtitle="Manage and prioritize your assigned case portfolio">
-      
-      {/* 1. Top Metrics (Matched exactly to Dashboard style) */}
+    <PortalLayout title={t('judge.caseList.chamberRegistry')} subtitle={t('judge.caseList.managePortfolio')}>
+
+      {/* 1. Top Metrics */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
           <div>
-            <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">Active Portfolio</p>
+            <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">{t('judge.caseList.activePortfolio')}</p>
             <h3 className="font-headline text-3xl font-medium text-primary">
               {casesQuery.isLoading ? '...' : String(stats.active).padStart(2, '0')}
             </h3>
           </div>
           <div className="flex items-center mt-4 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
             <Gavel className="w-4 h-4 mr-1" />
-            <span>Currently assigned</span>
+            <span>{t('judge.caseList.currentlyAssigned')}</span>
           </div>
         </div>
-        
+
         <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
           <div>
-            <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">AI Scored & Ready</p>
+            <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">{t('judge.caseList.aiScoredReady')}</p>
             <h3 className="font-headline text-3xl font-medium text-primary">
               {casesQuery.isLoading ? '...' : String(stats.ready).padStart(2, '0')}
             </h3>
           </div>
           <div className="flex items-center mt-4 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="w-4 h-4 mr-1" />
-            <span>Ready for review</span>
+            <span>{t('judge.dashboard.readyForReview')}</span>
           </div>
         </div>
-        
+
         <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
           <div>
-            <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">Critical Hearings</p>
+            <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">{t('judge.caseList.criticalHearings')}</p>
             <h3 className="font-headline text-3xl font-medium text-primary">
               {casesQuery.isLoading ? '...' : String(stats.urgent).padStart(2, '0')}
             </h3>
           </div>
           <div className="flex items-center mt-4 text-[11px] font-medium text-error">
             <Clock className="w-4 h-4 mr-1 text-error" />
-            <span>Require urgent attention</span>
+            <span>{t('judge.caseList.requireUrgentAttention')}</span>
           </div>
         </div>
-        
+
         <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
           <div>
-            <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">Decisions Issued</p>
+            <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">{t('judge.caseList.decisionsIssued')}</p>
             <h3 className="font-headline text-3xl font-medium text-primary">
               {casesQuery.isLoading ? '...' : String(stats.finalized).padStart(2, '0')}
             </h3>
           </div>
           <div className="flex items-center mt-4 text-[11px] font-medium text-on-surface-variant">
             <History className="w-4 h-4 mr-1 text-on-surface-variant" />
-            <span>Archived cases</span>
+            <span>{t('judge.caseList.archivedCases')}</span>
           </div>
         </div>
       </section>
@@ -155,45 +151,48 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
       <div className="flex flex-col gap-8">
         {/* Filtering & Actions Ribbon */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-surface-container-lowest dark:bg-surface-container p-4 rounded-lg editorial-shadow border border-outline-variant/30">
-          
+
           <div className="flex bg-surface-container-low dark:bg-surface-container-high p-1.5 rounded border border-outline-variant/20 w-full lg:w-auto">
             <button
               onClick={() => setActiveTab('assigned')}
               className={cn(
                 "px-6 py-2 rounded text-[11px] font-bold uppercase tracking-wider transition-all",
-                activeTab === 'assigned' 
-                  ? "bg-surface-container-lowest dark:bg-surface-container text-primary shadow-sm border border-outline-variant/20" 
+                activeTab === 'assigned'
+                  ? "bg-surface-container-lowest dark:bg-surface-container text-primary shadow-sm border border-outline-variant/20"
                   : "text-on-surface-variant hover:text-on-surface"
               )}
             >
-              Active Docket
+              {t('judge.caseList.activeDocket')}
             </button>
             <button
               onClick={() => setActiveTab('previous')}
               className={cn(
                 "px-6 py-2 rounded text-[11px] font-bold uppercase tracking-wider transition-all",
-                activeTab === 'previous' 
-                  ? "bg-surface-container-lowest dark:bg-surface-container text-primary shadow-sm border border-outline-variant/20" 
+                activeTab === 'previous'
+                  ? "bg-surface-container-lowest dark:bg-surface-container text-primary shadow-sm border border-outline-variant/20"
                   : "text-on-surface-variant hover:text-on-surface"
               )}
             >
-              Archive
+              {t('judge.caseList.archive')}
             </button>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
-             <div className="relative w-full sm:w-80">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
-                <input 
-                  className="w-full bg-surface-container-low dark:bg-surface-container border border-outline-variant/30 rounded py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary/20 transition-all font-medium text-on-surface"
-                  placeholder="Query Case ID, Party, or Topic..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-             </div>
-            <button className="text-[11px] font-bold uppercase tracking-wider text-on-primary py-2.5 px-6 bg-primary hover:opacity-90 rounded transition-colors flex items-center shadow-lg shadow-primary/20 w-full sm:w-auto justify-center" onClick={() => setIsModalOpen(true)}>
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+              <input
+                className="w-full bg-surface-container-low dark:bg-surface-container border border-outline-variant/30 rounded py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary/20 transition-all font-medium text-on-surface"
+                placeholder={t('judge.caseList.searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <button
+              className="text-[11px] font-bold uppercase tracking-wider text-on-primary py-2.5 px-6 bg-primary hover:opacity-90 rounded transition-colors flex items-center shadow-lg shadow-primary/20 w-full sm:w-auto justify-center"
+              onClick={() => setIsModalOpen(true)}
+            >
               <Plus className="w-3.5 h-3.5 mr-2" />
-              File New Action
+              {t('judge.caseList.fileNewAction')}
             </button>
           </div>
         </div>
@@ -201,72 +200,72 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
         {/* Success Banner */}
         {banner && (
           <div className="bg-primary-fixed/20 text-primary p-4 rounded-lg border-l-4 border-primary flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
-             <CheckCircle2 className="w-4 h-4" />
-             <span className="font-semibold text-sm">{banner}</span>
-             <button className="ml-auto p-1 text-primary/70 hover:text-primary rounded-full transition-colors" onClick={() => setBanner('')}>
-                <Plus className="w-5 h-5 rotate-45" />
-             </button>
+            <CheckCircle2 className="w-4 h-4" />
+            <span className="font-semibold text-sm">{banner}</span>
+            <button className="ml-auto p-1 text-primary/70 hover:text-primary rounded-full transition-colors" onClick={() => setBanner('')}>
+              <Plus className="w-5 h-5 rotate-45" />
+            </button>
           </div>
         )}
 
-        {/* Priority Case Queue style list */}
+        {/* Case List */}
         <div className="space-y-4">
           {casesQuery.isLoading ? (
-             <div className="p-10 text-center animate-pulse text-on-surface-variant">Synchronizing Cases...</div>
+            <div className="p-10 text-center animate-pulse text-on-surface-variant">{t('judge.caseList.synchronizingCases')}</div>
           ) : casesQuery.isError ? (
-             <div className="p-10 text-center text-error border border-error/20 bg-error-container/10 rounded-lg">
-               Error loading case portfolio.
-             </div>
+            <div className="p-10 text-center text-error border border-error/20 bg-error-container/10 rounded-lg">
+              {t('judge.caseList.errorLoadingPortfolio')}
+            </div>
           ) : visibleCases.length === 0 ? (
-             <div className="p-10 text-center italic text-on-surface-variant bg-surface-container-lowest dark:bg-surface-container rounded-lg border border-outline-variant/30">
-               Your docket is clear or no cases match your search.
-             </div>
+            <div className="p-10 text-center italic text-on-surface-variant bg-surface-container-lowest dark:bg-surface-container rounded-lg border border-outline-variant/30">
+              {t('judge.caseList.docketClear')}
+            </div>
           ) : (
             <div className="space-y-4">
               {visibleCases.map((c) => {
                 const isUrgent = c.hearing_date && new Date(c.hearing_date) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-                
+
                 return (
                   <div key={c.id} className="bg-surface-container-lowest dark:bg-surface-container p-5 rounded-lg editorial-shadow border border-outline-variant/30 hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-all duration-300">
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <span className="text-[10px] font-bold text-tertiary tracking-widest uppercase mb-1 block">
-                          Case ID: {c.case_number || c.id.substring(0,8).toUpperCase()}
+                          {t('judge.caseList.caseIdLabel')}: {c.case_number || c.id.substring(0, 8).toUpperCase()}
                         </span>
-                        <h5 className="font-headline text-xl text-on-surface font-semibold">{c.title || 'Untitled Action'}</h5>
+                        <h5 className="font-headline text-xl text-on-surface font-semibold">{c.title || t('judge.caseList.untitledAction')}</h5>
                       </div>
                       <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-tighter rounded ${
                         isUrgent ? 'bg-error-container text-on-error-container' : 'bg-secondary-container text-on-secondary-container'
                       }`}>
-                        {isUrgent ? 'Urgent' : c.status === 'DraftGenerated' ? 'Draft Ready' : 'Processing'}
+                        {isUrgent ? t('judge.caseList.urgent') : c.status === 'DraftGenerated' ? t('judge.caseList.draftReady') : t('judge.caseList.processing')}
                       </span>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div className="space-y-1">
                         <p className="text-[11px] text-on-surface-variant font-medium flex items-center">
                           <FileText className="w-3 h-3 mr-1 text-primary" />
-                          AI Insight: {c.case_type ? t(`judge.caseTypes.${c.case_type}`) : 'General dispute'} alignment
+                          {t('judge.caseList.aiInsightLabel')}: {c.case_type ? t(`judge.caseTypes.${c.case_type}`) : t('judge.caseList.generalDispute')} {t('judge.caseList.alignment')}
                         </p>
                         <p className="text-[11px] text-on-surface-variant font-medium flex items-center">
                           <History className="w-3 h-3 mr-1 text-primary" />
-                          {c.status === 'AIAnalysisReady' ? 'Precedents matched' : c.status === 'DraftGenerated' ? 'Draft Ready' : 'Processing pending'}
+                          {c.status === 'AIAnalysisReady' ? t('judge.caseList.precedentsMatched') : c.status === 'DraftGenerated' ? t('judge.caseList.draftReady') : t('judge.caseList.processingPending')}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[11px] text-on-surface-variant font-medium uppercase tracking-wider">Hearing Date</p>
+                        <p className="text-[11px] text-on-surface-variant font-medium uppercase tracking-wider">{t('judge.caseList.hearingDate')}</p>
                         <p className="text-sm font-bold text-primary">
-                          {c.hearing_date ? new Date(c.hearing_date).toLocaleDateString() : 'Unscheduled'}
+                          {c.hearing_date ? new Date(c.hearing_date).toLocaleDateString() : t('judge.caseList.unscheduled')}
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-3 pt-4 border-t border-outline-variant/30">
-                      <button 
+                      <button
                         className="text-[11px] font-bold uppercase tracking-wider text-on-primary py-2 px-4 bg-primary hover:opacity-90 rounded transition-colors flex items-center"
                         onClick={() => navigate(`/judge/cases/${c.id}`)}
                       >
-                        Open Case
+                        {t('judge.caseList.openCase')}
                       </button>
                     </div>
                   </div>
@@ -277,10 +276,11 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
         </div>
       </div>
 
-      {/* Contextual Floating Action Button (FAB) */}
-      <button 
+      {/* Floating Action Button */}
+      <button
         className="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform duration-300 z-50"
         onClick={() => setIsModalOpen(true)}
+        title={t('judge.caseList.fileNewAction')}
       >
         <Plus className="w-6 h-6" />
       </button>

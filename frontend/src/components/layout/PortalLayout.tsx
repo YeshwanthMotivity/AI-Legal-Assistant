@@ -137,10 +137,10 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
         <div className="px-6 py-5 mx-4 mb-6 rounded-3xl bg-primary/5 border border-primary/10 glass-strong">
           <div className="flex items-center gap-2.5 mb-2.5">
              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-             <span className="text-[10px] font-black uppercase tracking-widest text-primary">AI Reasoning Node</span>
+             <span className="text-[10px] font-black uppercase tracking-widest text-primary">{t('judge.judgment.aiReasoningNode')}</span>
           </div>
           <p className="text-[10px] text-muted-foreground/80 leading-relaxed font-medium">
-             Synthesizing deep legal insights via <span className="text-primary font-bold">BGE-M3</span> & <span className="text-primary font-bold">Qdrant</span> technology.
+             {t('judge.judgment.aiReasoningDesc')}
           </p>
         </div>
 
