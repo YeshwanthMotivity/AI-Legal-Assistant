@@ -5,23 +5,18 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { 
   Plus, 
   Search, 
-  Filter, 
   Briefcase, 
   Clock, 
   CheckCircle2, 
-  AlertCircle,
   Gavel,
   History,
-  ExternalLink
+  FileText,
+  Eye
 } from 'lucide-react'
 import PortalLayout from '../../components/layout/PortalLayout'
 import CreateCaseModal from '../../components/judge/CreateCaseModal'
 import { createCase, getJudgeCases } from '../../api/judge'
 import type { CaseResponse, CreateCaseRequest } from '../../types/judge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import StatCard from '@/components/StatCard'
 import { cn } from '@/lib/utils'
 
@@ -41,6 +36,7 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
   const [activeTab, setActiveTab] = useState<DashboardTab>('assigned')
   const [isModalOpen, setIsModalOpen] = useState(openCreateOnLoad)
   const [banner, setBanner] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const casesQuery = useQuery({
     queryKey: ['judge-cases'],
@@ -65,14 +61,25 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
     },
   })
 
+  // Filter cases based on search and status
+  const filterBySearch = (item: CaseResponse) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (item.title && item.title.toLowerCase().includes(q)) ||
+      (item.case_number && item.case_number.toLowerCase().includes(q)) ||
+      (item.case_type && item.case_type.toLowerCase().includes(q))
+    );
+  }
+
   const assignedCases = useMemo(
-    () => (casesQuery.data?.items ?? []).filter((item) => !FINAL_STATUSES.has(item.status)),
-    [casesQuery.data?.items]
+    () => (casesQuery.data?.items ?? []).filter((item) => !FINAL_STATUSES.has(item.status)).filter(filterBySearch),
+    [casesQuery.data?.items, searchQuery]
   )
 
   const previousCases = useMemo(
-    () => (casesQuery.data?.items ?? []).filter((item) => FINAL_STATUSES.has(item.status)),
-    [casesQuery.data?.items]
+    () => (casesQuery.data?.items ?? []).filter((item) => FINAL_STATUSES.has(item.status)).filter(filterBySearch),
+    [casesQuery.data?.items, searchQuery]
   )
 
   const visibleCases: CaseResponse[] = activeTab === 'assigned' ? assignedCases : previousCases
@@ -88,134 +95,195 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
   }, [casesQuery.data])
 
   return (
-    <PortalLayout title={t('judge.dashboard.title')} subtitle={t('judge.dashboard.subtitle')}>
+    <PortalLayout title="Chamber Registry" subtitle="Manage and prioritize your assigned case portfolio">
       
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard label="Active Cases" value={stats.active} icon={Gavel} />
-        <StatCard label="Ready for Review" value={stats.ready} icon={CheckCircle2} className="border-l-4 border-l-emerald-500" />
-        <StatCard label="Urgent Hearings" value={stats.urgent} icon={Clock} className="border-l-4 border-l-amber-500" />
-        <StatCard label="Resolved & Finalized" value={stats.finalized} icon={History} className="border-l-4 border-l-indigo-500" />
-      </div>
+      {/* 1. Top Metrics (Matched exactly to Dashboard style) */}
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
+          <div>
+            <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">Active Portfolio</p>
+            <h3 className="font-headline text-3xl font-medium text-primary">
+              {casesQuery.isLoading ? '...' : String(stats.active).padStart(2, '0')}
+            </h3>
+          </div>
+          <div className="flex items-center mt-4 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+            <Gavel className="w-4 h-4 mr-1" />
+            <span>Currently assigned</span>
+          </div>
+        </div>
+        
+        <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
+          <div>
+            <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">AI Scored & Ready</p>
+            <h3 className="font-headline text-3xl font-medium text-primary">
+              {casesQuery.isLoading ? '...' : String(stats.ready).padStart(2, '0')}
+            </h3>
+          </div>
+          <div className="flex items-center mt-4 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2 className="w-4 h-4 mr-1" />
+            <span>Ready for review</span>
+          </div>
+        </div>
+        
+        <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
+          <div>
+            <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">Critical Hearings</p>
+            <h3 className="font-headline text-3xl font-medium text-primary">
+              {casesQuery.isLoading ? '...' : String(stats.urgent).padStart(2, '0')}
+            </h3>
+          </div>
+          <div className="flex items-center mt-4 text-[11px] font-medium text-error">
+            <Clock className="w-4 h-4 mr-1 text-error" />
+            <span>Require urgent attention</span>
+          </div>
+        </div>
+        
+        <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
+          <div>
+            <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">Decisions Issued</p>
+            <h3 className="font-headline text-3xl font-medium text-primary">
+              {casesQuery.isLoading ? '...' : String(stats.finalized).padStart(2, '0')}
+            </h3>
+          </div>
+          <div className="flex items-center mt-4 text-[11px] font-medium text-on-surface-variant">
+            <History className="w-4 h-4 mr-1 text-on-surface-variant" />
+            <span>Archived cases</span>
+          </div>
+        </div>
+      </section>
 
-      <div className="flex flex-col gap-6">
-        {/* Actions & Filters Bar */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex gap-2 p-1 bg-muted/30 rounded-xl border w-full sm:w-auto">
+      <div className="flex flex-col gap-8">
+        {/* Filtering & Actions Ribbon */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-surface-container-lowest dark:bg-surface-container p-4 rounded-lg editorial-shadow border border-outline-variant/30">
+          
+          <div className="flex bg-surface-container-low dark:bg-surface-container-high p-1.5 rounded border border-outline-variant/20 w-full lg:w-auto">
             <button
               onClick={() => setActiveTab('assigned')}
               className={cn(
-                "flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-bold transition-all",
-                activeTab === 'assigned' ? "bg-card text-primary shadow-sm" : "hover:bg-card/50 text-muted-foreground"
+                "px-6 py-2 rounded text-[11px] font-bold uppercase tracking-wider transition-all",
+                activeTab === 'assigned' 
+                  ? "bg-surface-container-lowest dark:bg-surface-container text-primary shadow-sm border border-outline-variant/20" 
+                  : "text-on-surface-variant hover:text-on-surface"
               )}
             >
-              {t('judge.dashboard.assignedCases')}
+              Active Docket
             </button>
             <button
               onClick={() => setActiveTab('previous')}
               className={cn(
-                "flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-bold transition-all",
-                activeTab === 'previous' ? "bg-card text-primary shadow-sm" : "hover:bg-card/50 text-muted-foreground"
+                "px-6 py-2 rounded text-[11px] font-bold uppercase tracking-wider transition-all",
+                activeTab === 'previous' 
+                  ? "bg-surface-container-lowest dark:bg-surface-container text-primary shadow-sm border border-outline-variant/20" 
+                  : "text-on-surface-variant hover:text-on-surface"
               )}
             >
-              {t('judge.dashboard.previousCases')}
+              Archive
             </button>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-             <div className="relative flex-1 sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+             <div className="relative w-full sm:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
                 <input 
-                  className="w-full bg-card border rounded-lg pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
-                  style={{ paddingLeft: '3rem' }}
-                  placeholder="Search cases..."
+                  className="w-full bg-surface-container-low dark:bg-surface-container border border-outline-variant/30 rounded py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary/20 transition-all font-medium text-on-surface"
+                  placeholder="Query Case ID, Party, or Topic..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
              </div>
-            <Button className="shadow-lg shadow-primary/20 gap-2 px-6" onClick={() => setIsModalOpen(true)}>
-              <Plus className="w-4 h-4" />
-              {t('judge.dashboard.createCase')}
-            </Button>
+            <button className="text-[11px] font-bold uppercase tracking-wider text-on-primary py-2.5 px-6 bg-primary hover:opacity-90 rounded transition-colors flex items-center shadow-lg shadow-primary/20 w-full sm:w-auto justify-center" onClick={() => setIsModalOpen(true)}>
+              <Plus className="w-3.5 h-3.5 mr-2" />
+              File New Action
+            </button>
           </div>
         </div>
 
-        {/* Banner Section */}
+        {/* Success Banner */}
         {banner && (
-          <div className="bg-emerald-500/10 text-emerald-600 px-6 py-4 rounded-xl border border-emerald-500/20 flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
-             <CheckCircle2 className="w-5 h-5" />
-             <span className="font-bold text-sm">{banner}</span>
-             <Button variant="ghost" size="icon" className="ml-auto h-8 w-8 hover:bg-emerald-500/10" onClick={() => setBanner('')}>
-                <Plus className="w-4 h-4 rotate-45" />
-             </Button>
+          <div className="bg-primary-fixed/20 text-primary p-4 rounded-lg border-l-4 border-primary flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+             <CheckCircle2 className="w-4 h-4" />
+             <span className="font-semibold text-sm">{banner}</span>
+             <button className="ml-auto p-1 text-primary/70 hover:text-primary rounded-full transition-colors" onClick={() => setBanner('')}>
+                <Plus className="w-5 h-5 rotate-45" />
+             </button>
           </div>
         )}
 
-        {/* Case Table Card */}
-        <Card className="shadow-sm border-border/50">
-          <CardContent className="p-0">
-            {casesQuery.isLoading ? (
-               <div className="py-20 text-center text-muted-foreground italic">{t('common.loading')}</div>
-            ) : casesQuery.isError ? (
-               <div className="py-20 text-center text-destructive">{t('common.error')}</div>
-            ) : visibleCases.length === 0 ? (
-               <div className="py-20 text-center flex flex-col items-center gap-4">
-                  <Briefcase className="w-12 h-12 text-muted-foreground/20" />
-                  <p className="text-muted-foreground italic">{t('judge.dashboard.noCases')}</p>
-               </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/10">
-                    <TableHead className="pl-6">{t('case.caseNumber')}</TableHead>
-                    <TableHead>{t('clerk.forms.title')}</TableHead>
-                    <TableHead>{t('case.caseType')}</TableHead>
-                    <TableHead>{t('case.status')}</TableHead>
-                    <TableHead>Hearing Date</TableHead>
-                    <TableHead className="pr-6 text-right">{t('common.actions')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {visibleCases.map((item) => (
-                    <TableRow key={item.id} className="group hover:bg-muted/5 cursor-pointer" onClick={() => navigate(`/judge/cases/${item.id}`)}>
-                      <TableCell className="pl-6 font-bold text-primary">{item.case_number}</TableCell>
-                      <TableCell className="font-medium max-w-xs truncate">{item.title}</TableCell>
-                      <TableCell>
-                        <span className="text-xs uppercase text-muted-foreground font-black tracking-wider">
-                          {t(`judge.caseTypes.${item.case_type}`)}
+        {/* Priority Case Queue style list */}
+        <div className="space-y-4">
+          {casesQuery.isLoading ? (
+             <div className="p-10 text-center animate-pulse text-on-surface-variant">Synchronizing Cases...</div>
+          ) : casesQuery.isError ? (
+             <div className="p-10 text-center text-error border border-error/20 bg-error-container/10 rounded-lg">
+               Error loading case portfolio.
+             </div>
+          ) : visibleCases.length === 0 ? (
+             <div className="p-10 text-center italic text-on-surface-variant bg-surface-container-lowest dark:bg-surface-container rounded-lg border border-outline-variant/30">
+               Your docket is clear or no cases match your search.
+             </div>
+          ) : (
+            <div className="space-y-4">
+              {visibleCases.map((c) => {
+                const isUrgent = c.hearing_date && new Date(c.hearing_date) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+                
+                return (
+                  <div key={c.id} className="bg-surface-container-lowest dark:bg-surface-container p-5 rounded-lg editorial-shadow border border-outline-variant/30 hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-all duration-300">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <span className="text-[10px] font-bold text-tertiary tracking-widest uppercase mb-1 block">
+                          Case ID: {c.case_number || c.id.substring(0,8).toUpperCase()}
                         </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={
-                            item.status === 'Finalized' ? 'success' : 
-                            ['AIAnalysisReady', 'DraftGenerated'].includes(item.status) ? 'default' : 
-                            'warning'
-                          }
-                          className="px-2 py-0.5 text-[10px] font-black uppercase"
-                        >
-                          {t(`status.${item.status}`)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm font-medium">
-                        {item.hearing_date ? new Date(item.hearing_date).toLocaleDateString() : '-'}
-                      </TableCell>
-                      <TableCell className="pr-6 text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-8 gap-2 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 rounded-lg text-primary"
-                        >
-                          {activeTab === 'assigned' ? t('judge.dashboard.openCase') : t('judge.dashboard.viewCase')}
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                        <h5 className="font-headline text-xl text-on-surface font-semibold">{c.title || 'Untitled Action'}</h5>
+                      </div>
+                      <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-tighter rounded ${
+                        isUrgent ? 'bg-error-container text-on-error-container' : 'bg-secondary-container text-on-secondary-container'
+                      }`}>
+                        {isUrgent ? 'Urgent' : c.status === 'DraftGenerated' ? 'Draft Ready' : 'Processing'}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="space-y-1">
+                        <p className="text-[11px] text-on-surface-variant font-medium flex items-center">
+                          <FileText className="w-3 h-3 mr-1 text-primary" />
+                          AI Insight: {c.case_type ? t(`judge.caseTypes.${c.case_type}`) : 'General dispute'} alignment
+                        </p>
+                        <p className="text-[11px] text-on-surface-variant font-medium flex items-center">
+                          <History className="w-3 h-3 mr-1 text-primary" />
+                          {c.status === 'AIAnalysisReady' ? 'Precedents matched' : c.status === 'DraftGenerated' ? 'Draft Ready' : 'Processing pending'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[11px] text-on-surface-variant font-medium uppercase tracking-wider">Hearing Date</p>
+                        <p className="text-sm font-bold text-primary">
+                          {c.hearing_date ? new Date(c.hearing_date).toLocaleDateString() : 'Unscheduled'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3 pt-4 border-t border-outline-variant/30">
+                      <button 
+                        className="text-[11px] font-bold uppercase tracking-wider text-on-primary py-2 px-4 bg-primary hover:opacity-90 rounded transition-colors flex items-center"
+                        onClick={() => navigate(`/judge/cases/${c.id}`)}
+                      >
+                        Open Case
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Contextual Floating Action Button (FAB) */}
+      <button 
+        className="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform duration-300 z-50"
+        onClick={() => setIsModalOpen(true)}
+      >
+        <Plus className="w-6 h-6" />
+      </button>
 
       <CreateCaseModal
         isOpen={isModalOpen}

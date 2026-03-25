@@ -27,52 +27,53 @@
   --color-deep-green: #022c22;
 
   /* LexAI UAE Custom Palette */
-  --color-outline-variant: #414944;
-  --color-on-primary-fixed: #002116;
-  --color-inverse-surface: #dfe2f1;
-  --color-on-secondary-fixed: #111c2d;
-  --color-outline: #8a938d;
-  --color-on-error-container: #ffdad6;
-  --color-surface: #0f131d;
-  --color-secondary-container: #3e495d;
-  --color-tertiary: #e9c349;
-  --color-primary-fixed-dim: #a2d1bb;
-  --color-on-tertiary-fixed-variant: #574500;
-  /****/
-  --color-on-surface-variant: #c0c8c3;
-  --color-primary-fixed: #beedd7;
-  --color-tertiary-fixed: #ffe088;
-  --color-on-tertiary-fixed: #241a00;
-  --color-on-surface: #dfe2f1;
-  --color-surface-container: #1c1f2a;
-  --color-inverse-primary: #3b6756;
-  --color-tertiary-fixed-dim: #e9c349;
-  --color-secondary-fixed-dim: #bcc7de;
-  --color-surface-dim: #0f131d;
-  --color-on-secondary: #263143;
-  --color-surface-container-highest: #313540;
-  --color-on-tertiary-container: #4e3d00;
-  --color-surface-variant: #313540;
-  --color-secondary-fixed: #d8e3fb;
-  --color-surface-container-lowest: #0a0e18;
-  --color-on-primary: #073829;
-  --color-error-container: #93000a;
-  --color-on-error: #690005;
-  --color-error: #ffb4ab;
+  --color-surface-bright: #f7f9fb;
+  --color-surface-container: #eceef0;
+  --color-error-container: #ffdad6;
   --color-on-primary-fixed-variant: #234f3f;
-  --color-surface-container-high: #262a35;
-  --color-on-primary-container: #7ba894;
-  --color-surface-container-low: #171b26;
-  --color-inverse-on-surface: #2c303b;
-  --color-on-background: #dfe2f1;
-  --color-surface-tint: #a2d1bb;
-  --color-secondary: #bcc7de;
-  --color-on-secondary-fixed-variant: #3c475a;
-  --color-on-tertiary: #3c2f00;
+  --color-secondary-fixed: #dfe2f1;
+  --color-on-surface-variant: #414944;
+  --color-on-tertiary-fixed: #241a00;
+  --color-inverse-primary: #a2d1bb;
+  --color-outline: #717974;
+  --color-tertiary-fixed: #ffe088;
+  --color-on-tertiary-fixed-variant: #574500;
+  --color-on-background: #191c1e;
+  --color-on-secondary-fixed: #171b26;
+  --color-outline-variant: #c0c8c3;
+  --color-secondary: #5a5e6a;
+  --color-tertiary: #735c00;
+  --color-secondary-fixed-dim: #c3c6d4;
+  --color-background-lexai: #f7f9fb;
+  --color-on-error-container: #93000a;
+  --color-primary-fixed: #beedd7;
+  --color-error: #ba1a1a;
+  --color-inverse-on-surface: #eff1f3;
+  --color-on-primary: #ffffff;
+  --color-on-secondary: #ffffff;
+  --color-surface-dim: #d8dadc;
+  --color-on-tertiary: #ffffff;
+  --color-surface-tint: #3b6756;
+  --color-on-tertiary-container: #4e3d00;
+  --color-tertiary-fixed-dim: #e9c349;
   --color-tertiary-container: #cba72f;
-  --color-on-secondary-container: #aeb9d0;
+  --color-on-primary-fixed: #002116;
+  --color-on-primary-container: #7ba894;
   --color-primary-container: #0f3d2e;
-  --color-surface-bright: #353944;
+  --color-surface-container-high: #e6e8ea;
+  --color-surface-variant: #e0e3e5;
+  --color-primary: #00261a;
+  --color-inverse-surface: #2d3133;
+  --color-on-error: #ffffff;
+  --color-surface-container-lowest: #ffffff;
+  --color-primary-fixed-dim: #a2d1bb;
+  --color-on-surface: #191c1e;
+  --color-on-secondary-container: #606471;
+  --color-secondary-container: #dfe2f1;
+  --color-surface-container-highest: #e0e3e5;
+  --color-surface-container-low: #f2f4f6;
+  --color-surface: #f7f9fb;
+  --color-on-secondary-fixed-variant: #434652;
 
   --font-headline: 'Newsreader', serif;
   --font-body: 'Inter', sans-serif;
@@ -410,3 +411,111 @@ h1, h2, h3, .judicial-title {
   box-shadow: 0 0 15px -3px rgba(233, 195, 73, 0.3);
 }
 
+/* LexAI UAE Utility Classes */
+.editorial-shadow {
+  box-shadow: 0 20px 40px rgba(11, 15, 25, 0.06);
+}
+.ghost-border {
+  border-bottom: 1px solid rgba(192, 200, 195, 0.15);
+}
+.glass-nav {
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+[data-theme='dark'] .editorial-shadow {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+[data-theme='dark'] .glass-nav {
+  background: rgba(15, 23, 42, 0.85);
+}
+
+/* ======================================================== */
+/* LexAI UAE - Dark Mode Color Token Overrides              */
+/* Applied via [data-theme='dark'] to make @theme classes   */
+/* respond correctly when dark mode is active.              */
+/* ======================================================== */
+.dark, [data-theme='dark'] {
+  /* Primary */
+  --color-primary: #4ade80;
+  --color-on-primary: #00261a;
+  --color-primary-container: #1a3d2e;
+  --color-on-primary-container: #a7f3d0;
+  --color-primary-fixed: #1e3a2e;
+  --color-primary-fixed-dim: #4ade80;
+  --color-on-primary-fixed: #d1fae5;
+  --color-inverse-primary: #00261a;
+
+  /* Secondary */
+  --color-secondary: #a0a8b8;
+  --color-on-secondary: #1e2130;
+  --color-secondary-container: #2a2d3d;
+  --color-on-secondary-container: #c8cdd8;
+  --color-secondary-fixed: #2a2d3d;
+  --color-secondary-fixed-dim: #a0a8b8;
+
+  /* Tertiary */
+  --color-tertiary: #e9c349;
+  --color-on-tertiary: #1a1200;
+  --color-tertiary-container: #2e2500;
+  --color-on-tertiary-container: #ffe07a;
+  --color-tertiary-fixed: #3a2f00;
+  --color-tertiary-fixed-dim: #e9c349;
+  --color-on-tertiary-fixed: #ffe07a;
+  --color-on-tertiary-fixed-variant: #c9a020;
+
+  /* Surface */
+  --color-surface: #0f172a;
+  --color-surface-bright: #1e293b;
+  --color-surface-dim: #0b111e;
+  --color-surface-variant: #1e293b;
+  --color-surface-tint: #4ade80;
+  --color-surface-container-lowest: #0a0f1a;
+  --color-surface-container-low: #111827;
+  --color-surface-container: #1a2235;
+  --color-surface-container-high: #1e293b;
+  --color-surface-container-highest: #273347;
+  --color-inverse-surface: #e2e8f0;
+  --color-inverse-on-surface: #1e293b;
+
+  /* On-Surface */
+  --color-on-surface: #e2e8f0;
+  --color-on-surface-variant: #94a3b8;
+  --color-on-background: #e2e8f0;
+
+  /* Outline */
+  --color-outline: #4b5563;
+  --color-outline-variant: #334155;
+
+  /* Error */
+  --color-error: #f87171;
+  --color-on-error: #1a0000;
+  --color-error-container: #3b1010;
+  --color-on-error-container: #fca5a5;
+
+  /* Background */
+  --color-background: #0f172a;
+  --color-background-lexai: #0f172a;
+}
+
+/* ======================================================== */
+/* Shadcn UI Token Dark Mode Overrides                      */
+/* Makes Card, Button, Table components dark-mode-aware     */
+/* ======================================================== */
+.dark, [data-theme='dark'] {
+  /* Shadcn-compatible tokens */
+  --color-card: #1a2235;
+  --color-card-foreground: #e2e8f0;
+  --color-foreground: #e2e8f0;
+  --color-muted: #1e293b;
+  --color-muted-foreground: #94a3b8;
+  --color-border: #334155;
+  --color-input: #1e293b;
+  --color-ring: #4ade80;
+  --color-popover: #1a2235;
+  --color-popover-foreground: #e2e8f0;
+  --color-accent: #1e3a2e;
+  --color-accent-foreground: #a7f3d0;
+  --color-destructive: #f87171;
+  --color-destructive-foreground: #ffffff;
+}

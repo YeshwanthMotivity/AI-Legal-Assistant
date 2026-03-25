@@ -30,6 +30,7 @@ interface PortalLayoutProps {
   title: string
   subtitle?: string
   children: ReactNode
+  hideHeaderContent?: boolean
 }
 
 interface SidebarItemProps {
@@ -58,7 +59,7 @@ const SidebarItem = ({ icon: Icon, label, href, active, collapsed }: SidebarItem
   </NavLink>
 );
 
-const PortalLayout = ({ title, subtitle, children }: PortalLayoutProps) => {
+const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLayoutProps) => {
   const { t, i18n } = useTranslation()
   const { user, logout } = useAuth()
   const location = useLocation()
@@ -172,30 +173,27 @@ const PortalLayout = ({ title, subtitle, children }: PortalLayoutProps) => {
         )}
       >
         {/* Header Enhancement */}
-        <header className="sticky top-0 z-30 w-full glass-strong border-b px-10 py-5 flex justify-between items-center h-[88px]">
-          <div className="animate-in fade-in slide-in-from-top-2 duration-500">
-            <h1 className="text-3xl font-black tracking-tighter text-gradient leading-none">
-              {title}
-            </h1>
-            {subtitle && (
-              <p className="text-xs text-muted-foreground font-bold mt-1.5 opacity-70 italic">
-                {subtitle}
-              </p>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-8">
-            <div className="hidden lg:flex items-center gap-5 text-muted-foreground/40">
-              <Search className="w-5 h-5 cursor-pointer hover:text-primary transition-all hover:scale-110 active:scale-95" />
-              <Bell className="w-5 h-5 cursor-pointer hover:text-primary transition-all hover:scale-110 active:scale-95" />
-              <Settings className="w-5 h-5 cursor-pointer hover:text-primary transition-all hover:scale-110 active:scale-95" />
+        {!hideHeaderContent && (
+          <header className="sticky top-0 z-30 w-full glass-strong border-b px-10 py-5 flex justify-between items-center h-[88px]">
+            <div className="animate-in fade-in slide-in-from-top-2 duration-500">
+              <h1 className="text-3xl font-black tracking-tighter text-gradient leading-none">
+                {title}
+              </h1>
+              {subtitle && (
+                <p className="text-xs text-muted-foreground font-bold mt-1.5 opacity-70 italic">
+                  {subtitle}
+                </p>
+              )}
             </div>
-            <div className="flex items-center gap-4 border-l border-border/40 pl-8 h-10">
-              <ThemeToggle />
-              <LanguageToggle />
+            
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-4 border-border/40 h-10">
+                <ThemeToggle />
+                <LanguageToggle />
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
+        )}
 
         {/* Page Content Container */}
         <div className="p-10 max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
