@@ -62,6 +62,75 @@ const getSectionLabel = (text: string): string | null => {
   return null
 }
 
+function extractCaseTitle(text: string, fallback: string): string {
+  // Pattern: "X v Y [YEAR] DIFC" or "X v Y" in legal text
+  const vMatch = text.match(/([A-Z][A-Za-z\\s&,.'()-]{3,50})\\s+v\\s+([A-Z][A-Za-z\\s&,.'()-]{3,50})\\s+\\[(\\d{4})\\]/);
+  if (vMatch) return `${vMatch[1].trim()} v ${vMatch[2].trim()}`;
+  
+  // Shorter "X v Y" without year
+  const shortV = text.match(/([A-Z][A-Za-z\\s]{3,40})\\s+v\\s+([A-Z][A-Za-z\\s]{3,40})[^\\w]/);
+  if (shortV) return `${shortV[1].trim()} v ${shortV[2].trim()}`;
+  
+  // If fallback looks like a filename, return generic
+  if (/^[a-z0-9_-]+$/.test(fallback)) return 'DIFC Court Case';
+  return fallback;
+}
+
+function extractParties(text: string): { claimant: string; respondent: string } {
+  // "X v Y [year]" pattern
+  const match = text.match(/([A-Z][A-Za-z\\s&,.'()-]{3,50})\\s+v\\s+([A-Z][A-Za-z\\s&,.'()-]{3,50})\\s+\\[(\\d{4})\\]/);
+  if (match) {
+    return { claimant: match[1].trim(), respondent: match[2].trim() };
+  }
+  // Fallback: look for "Claimant: X" or "Defendant: X" patterns
+  const claimantMatch = text.match(/[Cc]laimant[:\\s]+([A-Z][A-Za-z\\s]{2,40})(?:\\n|,|\\.)/);
+  const defendantMatch = text.match(/[Dd]efendant[:\\s]+([A-Z][A-Za-z\\s]{2,40})(?:\\n|,|\\.)/);
+  return {
+    claimant: claimantMatch?.[1]?.trim() || 'See transcript',
+    respondent: defendantMatch?.[1]?.trim() || 'See transcript',
+  };
+}
+
+function extractSummary(text: string): string {
+  if (!text) return '';
+  
+  // Try to find the case name line "X v Y [year]" and use surrounding context
+  const titleMatch = text.match(/([A-Z][A-Za-z\\s&]+v\\s+[A-Z][A-Za-z\\s&]+\\[(\\d{4})\\][^\\n]*)/);
+  
+  // Find sentences that contain key judgment language
+  const sentences = text
+    .replace(/\\n+/g, ' ')
+    .split(/(?<=[.!?])\\s+/)
+    .filter(s => s.length > 40 && s.length < 400);
+  
+  // Prefer sentences with outcome/decision language
+  const outcomeSentence = sentences.find(s =>
+    /\\b(court (found|held|ordered|dismissed|awarded)|judgment|claimant (is|was) entitled|claim (succeeded|failed)|awarded|dismissed)\\b/i.test(s)
+  );
+  
+  // Prefer sentences with factual background
+  const factSentence = sentences.find(s =>
+    /\\b(employed|employment|wages|salary|termination|dismissed|contract|dispute)\\b/i.test(s)
+  );
+  
+  const parts = [factSentence, outcomeSentence]
+    .filter(Boolean)
+    .filter((v, i, arr) => arr.indexOf(v) === i) // dedupe
+    .slice(0, 2);
+  
+  if (parts.length > 0) {
+    return parts.join(' ').replace(/\\s+/g, ' ').trim();
+  }
+  
+  // Last resort: first 2 clean sentences
+  return sentences.slice(0, 2).join(' ').trim();
+}
+
+function extractYear(text: string): string {
+  const match = text.match(/\\[(\\d{4})\\]\\s+DIFC/);
+  return match ? match[1] : 'N/A';
+}
+
 const PrecedentDetailPage: React.FC = () => {
   const { t, i18n } = useTranslation()
   const { id } = useParams<{ id: string }>()
@@ -201,26 +270,35 @@ const PrecedentDetailPage: React.FC = () => {
                     <h5 className="text-[11px] font-black uppercase tracking-widest text-primary">Case Details</h5>
                   </div>
                   <div className="divide-y divide-border/20">
-                    {[
-                      { label: 'Court',      value: 'DIFC Courts' },
-                      { label: 'Case Title', value: precedent.title },
-                      { label: 'Reference',  value: id },
-                      { label: 'Year',       value: precedent.year || 'N/A' },
-                      { label: 'Case Type',  value: precedent.category || 'DIFC Judicial Precedent' },
-                      { label: 'Outcome',    value: precedent.outcome || 'See transcript' },
-                      { label: 'Summary',    value: precedent.summary || null },
-                    ]
-                      .filter(row => row.value)
-                      .map((row, i) => (
-                        <div key={i} className="grid grid-cols-[140px_1fr] gap-4 px-6 py-3.5 hover:bg-muted/10 transition-colors">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-0.5">
-                            {row.label}
-                          </span>
-                          <span className="text-sm font-medium text-foreground/85 leading-relaxed">
-                            {row.value}
-                          </span>
-                        </div>
-                      ))}
+                    {(() => {
+                      const parties = extractParties(precedent.text)
+                      const cleanTitle = extractCaseTitle(precedent.text, precedent.title)
+                      const cleanSummary = extractSummary(precedent.text)
+                      
+                      return [
+                        { label: 'Court',       value: 'DIFC Courts' },
+                        { label: 'Source',      value: precedent.title },
+                        { label: 'Case Title',  value: cleanTitle },
+                        { label: 'Reference',   value: id },
+                        { label: 'Year',        value: precedent.year || extractYear(precedent.text) },
+                        { label: 'Claimant',    value: parties.claimant },
+                        { label: 'Respondent',  value: parties.respondent },
+                        { label: 'Case Type',   value: precedent.category || 'DIFC Judicial Precedent' },
+                        { label: 'Outcome',     value: precedent.outcome || 'See transcript' },
+                        { label: 'Summary',     value: cleanSummary || null },
+                      ]
+                        .filter(row => row.value)
+                        .map((row, i) => (
+                          <div key={i} className="grid grid-cols-[140px_1fr] gap-4 px-6 py-3.5 hover:bg-muted/10 transition-colors">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-0.5">
+                              {row.label}
+                            </span>
+                            <span className={`text-sm font-medium text-foreground/85 leading-relaxed ${row.label === 'Summary' ? 'italic text-muted-foreground' : ''}`}>
+                              {row.value}
+                            </span>
+                          </div>
+                        ))
+                    })()}
 
                     {/* Cited Laws row - only if available */}
                     {(precedent.cited_laws?.length ?? 0) > 0 && (
