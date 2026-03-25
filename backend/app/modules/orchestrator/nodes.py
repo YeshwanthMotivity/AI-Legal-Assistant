@@ -955,17 +955,15 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             },
         }
 
-    # ── 4. Gemini API Caller ──────────────────────────────────────────────────
-    async def _call_gemini(timeout_seconds: int, model_name: str) -> str:
-        logger.info(f"reasoning_agent_node: calling gemini ({model_name})")
-        
-        # Consolidate system/user prompts for maximum compatibility with Gemini OpenAI endpoint
-        consolidated_prompt = f"{system_prompt}\n\nUSER CONTEXT:\n{user_prompt}"
+    # ── 4. Groq API Caller ────────────────────────────────────────────────────
+    async def _call_groq(timeout_seconds: int, model_name: str) -> str:
+        logger.info(f"reasoning_agent_node: calling groq ({model_name})")
         
         payload = {
             "model": model_name,
             "messages": [
-                {"role": "user", "content": consolidated_prompt}
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
             ],
             "stream": False,
             "temperature": 0.1,
@@ -974,14 +972,12 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {settings.gemini_api_key}"
+                "Authorization": f"Bearer {settings.groq_api_key1}"
             }
-            # Also keep key in params as a fallback
-            params = {"key": settings.gemini_api_key}
-            response = await client.post(model_url, params=params, headers=headers, json=payload, timeout=timeout_seconds)
+            response = await client.post(model_url, headers=headers, json=payload, timeout=timeout_seconds)
             
             if response.status_code != 200:
-                logger.error(f"Gemini API Error {response.status_code}: {response.text}")
+                logger.error(f"Groq API Error {response.status_code}: {response.text}")
                 response.raise_for_status()
                 
             data = response.json()
