@@ -1147,6 +1147,7 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
             }
             
         # 2. Check for positional placeholders like "Precedent 1", "Case 2"
+        title_str = str(item)
         pos_match = re.search(r"(?:Precedent|Case|Result)\s*(\d+)", title_str, re.IGNORECASE)
         if pos_match:
             idx = int(pos_match.group(1)) - 1
