@@ -485,6 +485,10 @@ const CaseDetail = () => {
                           : '';
                         const articleNum = isObj ? (article.article_number || article.number || null) : null;
                         
+                        const cleanArticleContent = (text: string): string => {
+                          return text.replace(/^[a-z,;\s(]+/, '').trim()
+                        };
+                        
                         return (
                           <div key={idx} className="bg-primary/5 dark:bg-primary/10 border border-primary/10 dark:border-primary/20 p-5 rounded-2xl hover:shadow-md hover:border-primary/30 transition-all group/article relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-1 h-full bg-primary/20 group-hover/article:bg-primary transition-colors" />
@@ -502,7 +506,7 @@ const CaseDetail = () => {
                                </div>
                             </div>
                             <p className="text-[12px] text-muted-foreground leading-relaxed italic font-medium line-clamp-3 group-hover/article:text-foreground transition-colors">
-                              {content || 'Referenced in case analysis. See full transcript for application context.'}
+                              {content ? cleanArticleContent(content) : 'Referenced in case analysis. See full transcript for application context.'}
                             </p>
                           </div>
                         );

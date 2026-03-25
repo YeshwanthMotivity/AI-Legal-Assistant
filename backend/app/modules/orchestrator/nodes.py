@@ -714,10 +714,23 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         "}\n\n"
         "CRITICAL: draft_judgment must be a COURT RULING about the specific parties and facts — NEVER a copy of law text or metadata. NEVER return '[object Object]'."
     )
-    user_prompt = json.dumps(
-        {"case_id": state["case_id"], "context": state.get("context", {})},
-        ensure_ascii=False,
-    )
+    ctx = state.get("context", {})
+    meta = ctx.get("case_metadata", {})
+    # Send a trimmed context so 1.5b model can handle it
+    trimmed_context = {
+        "case_id": state["case_id"],
+        "claimant": meta.get("claimant", ""),
+        "respondent": meta.get("respondent", ""),
+        "case_type": meta.get("case_type", ""),
+        "description": str(meta.get("description", ""))[:500],
+        "similar_precedents": ctx.get("legal_authority", {}).get("similar_precedents", [])[:2],
+        "statutes": [
+            {"title": s.get("title", ""), "content": str(s.get("content", ""))[:200]}
+            for s in ctx.get("legal_authority", {}).get("relevant_statutes", [])[:3]
+        ] if isinstance(ctx.get("legal_authority", {}).get("relevant_statutes", []), list) else [],
+        "document_fragments": ctx.get("document_evidence_fragments", [])[:2],
+    }
+    user_prompt = json.dumps(trimmed_context, ensure_ascii=False)
 
     # ── 3. Build payload with per-node token limit ────────────────────────────
     def _build_payload(model_name: str, system: str, user: str) -> dict:
@@ -939,48 +952,76 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: judgment_drafting_agent_node starting for case {state['case_id']}")
     reasoning = state.get("reasoning", {})
-    raw_draft = reasoning.get("draft_judgment") or ""
-    draft_content = _cleanse_text(raw_draft)
-    
-    if not draft_content or _is_hallucination(draft_content):
-        draft_content = _cleanse_text(reasoning.get("reasoning", "No reasoning provided."))
+    context = state.get("context", {})
+    meta = context.get("case_metadata", {})
 
-    def _to_str(item):
-        if isinstance(item, dict):
-            # Check most common keys for laws and precedents
-            return (item.get("title") or item.get("case_name") or 
-                    item.get("law_name") or item.get("article_number") or str(item))
-        return str(item)
+    claimant = meta.get("claimant", "Claimant")
+    respondent = meta.get("respondent", "Respondent")
+    case_type = meta.get("case_type", "Employment Dispute")
+    case_id = state["case_id"]
+    outcome = reasoning.get("outcome", "Approved")
+    cited_laws = reasoning.get("cited_laws", [])
+    cited_cases = reasoning.get("cited_cases", [])
+    facts_summary = " ".join(reasoning.get("facts", []))[:800]
+    reasoning_text = str(reasoning.get("reasoning", ""))[:600]
 
-    # Deduplicate and Filter Citations
-    raw_laws = reasoning.get("cited_laws", [])
-    if not raw_laws:
-        raw_laws = state.get("laws", [])
-        
-    raw_cases = reasoning.get("cited_cases", [])
-    if not raw_cases:
-        raw_cases = state.get("precedents", [])
+    system_prompt = (
+        "You are a DIFC Court Judge writing an official judgment. "
+        "Write ONLY the court ruling document. Do NOT copy law text or document metadata. "
+        "Use the case facts and legal reasoning provided to write the judgment.\n\n"
+        "OUTPUT FORMAT (use exactly):\n"
+        "DIFC COURTS - TRIBUNAL\n"
+        f"CASE REFERENCE: {case_id}\n"
+        f"CLAIMANT: {claimant}\n"
+        f"RESPONDENT: {respondent}\n\n"
+        "🧾 JUDGMENT SUMMARY\n"
+        "[One sentence stating what this case is about and the tribunal's decision]\n\n"
+        "🔹 FINDINGS OF FACT\n"
+        "1. [Key finding]\n"
+        "2. [Key finding]\n"
+        "3. [Key finding]\n\n"
+        "🔹 LEGAL ANALYSIS\n"
+        "[How the cited laws apply to these specific facts]\n\n"
+        "🔹 DECISION & ORDERS\n"
+        "[Specific order — what must be paid or done, or why claim is dismissed]\n\n"
+        "🔹 LEGAL BASIS\n"
+        "[The exact articles that ground this decision]\n\n"
+        "Signed: DIFC Small Claims Tribunal\n"
+        "--- END OF JUDGMENT ---"
+    )
 
-    # Filter out hallucinations and deduplicate by string representation
-    unique_laws = []
-    seen_laws = set()
-    for l in raw_laws:
-        s = _to_str(l)
-        if s and not _is_hallucination(s) and s not in seen_laws:
-            unique_laws.append(s)
-            seen_laws.add(s)
+    user_prompt = (
+        f"Case Type: {case_type}\n"
+        f"Outcome: {outcome}\n"
+        f"Key Facts: {facts_summary}\n"
+        f"Legal Reasoning: {reasoning_text}\n"
+        f"Cited Laws: {', '.join(cited_laws[:5])}\n"
+        f"Cited Cases: {', '.join(cited_cases[:3])}\n\n"
+        "Write the official court judgment now."
+    )
 
-    unique_cases = []
-    seen_cases = set()
-    for c in raw_cases:
-        s = _to_str(c)
-        if s and not _is_hallucination(s) and s not in seen_cases:
-            unique_cases.append(s)
-            seen_cases.add(s)
-
-    # Build HTML sections
-    law_items = "".join([f"<li>{l}</li>" for l in unique_laws]) or "<li>No specific articles cited.</li>"
-    case_items = "".join([f"<li>{c}</li>" for c in unique_cases]) or "<li>No specific precedents cited.</li>"
+    try:
+        model_url = settings.ollama_url
+        model_name = "qwen2.5:1.5b-instruct"
+        prompt = f"System: {system_prompt}\n\nUser: {user_prompt}\n\nJudgment:"
+        payload = {
+            "model": model_name,
+            "prompt": prompt,
+            "stream": False,
+            "options": {
+                "num_ctx": 3072,
+                "temperature": 0.05,
+                "num_predict": NODE_TOKEN_LIMITS.get("drafting", 800),
+            },
+        }
+        async with httpx.AsyncClient(timeout=120) as client:
+            response = await client.post(f"{model_url}/api/generate", json=payload)
+            response.raise_for_status()
+            data = response.json()
+            draft_content = _cleanse_text(str(data.get("response", "")))
+    except Exception as e:
+        logger.warning(f"judgment_drafting_agent_node failed: {e}, using reasoning fallback")
+        draft_content = reasoning.get("draft_judgment") or reasoning.get("reasoning") or ""
 
     final_draft = (
         f"<div style='font-family: inherit; color: #1a1a1a;'>"
@@ -992,27 +1033,22 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
         f"<div style='line-height: 1.7; white-space: pre-wrap; font-size: 15px;'>"
         f"{draft_content}"
         f"</div>"
-        
-        f"<div style='margin-top: 40px; padding-top: 15px; border-top: 1px dashed #ccc; font-size: 11px; font-weight: bold; color: #999; text-align: center;'>"
-        f"--- END OF AI DRAFT ---"
-        f"</div>"
         f"</div>"
     )
 
     from app.modules.ingestion.minio_client import upload_file
-    payload = final_draft.encode("utf-8")
+    payload_bytes = final_draft.encode("utf-8")
     try:
         await upload_file(
             bucket="judgment-drafts",
             key=f"{state['case_id']}/draft.txt",
-            data=payload,
-            length=len(payload),
+            data=payload_bytes,
+            length=len(payload_bytes),
             content_type="text/plain; charset=utf-8",
         )
     except Exception:
-        # Draft persistence to DB still continues even if object storage is unavailable.
         pass
 
     duration = time.time() - start_time
     logger.info(f"--- Node: judgment_drafting_agent_node finished in {duration:.2f}s")
-    return {"draft_text": final_draft}
+    return {"draft_judgment": final_draft, "draft_text": final_draft}
