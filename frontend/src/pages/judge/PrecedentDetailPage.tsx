@@ -192,15 +192,18 @@ const PrecedentDetailPage: React.FC = () => {
                        ⓘ {t('judge.workspace.transcriptBeginNote')}
                     </p>
                   )}
-                  {splitTranscript(precedent.text)
-                    .reduce<{ text: string; section: string | null }[]>((acc, paragraph) => {
-                      const prevSection = acc.length > 0 ? acc[acc.length - 1].section : null
-                      return [...acc, { text: paragraph.trim(), section: getSectionLabel(paragraph.trim(), prevSection) }]
-                    }, [])
-                    .map(({ text: trimmed, section: sectionLabel }, idx, arr) => {
-                      const isNumbered = /^\d+\./.test(trimmed);
-                      const showLabel = sectionLabel && (idx === 0 || arr[idx - 1].section !== sectionLabel);
+                  {(() => {
+                    let lastSection: string | null = null
+                    return splitTranscript(precedent.text).map((paragraph, idx) => {
+                      const trimmed = paragraph.trim()
+                      const isNumbered = /^\d+\./.test(trimmed)
                       
+                      // Remove the dependency on prevLabel from getSectionLabel if we use this method, or just call it:
+                      // Wait! The user provided this standard payload:
+                      const sectionLabel = getSectionLabel(trimmed, lastSection)
+                      const showLabel = sectionLabel !== null && sectionLabel !== lastSection
+                      if (showLabel) lastSection = sectionLabel
+
                       return (
                         <div key={idx} className="space-y-4">
                           {showLabel && (
@@ -211,17 +214,16 @@ const PrecedentDetailPage: React.FC = () => {
                               <div className="h-[1px] flex-1 bg-gradient-to-r from-primary/30 to-transparent" />
                             </div>
                           )}
-                          <p 
-                            className={cn(
-                              "transition-colors hover:text-foreground leading-relaxed",
-                              isNumbered && "pl-4 border-l-2 border-primary/20 font-semibold text-foreground py-2 bg-primary/5 rounded-r-lg"
-                            )}
-                          >
+                          <p className={cn(
+                            "transition-colors hover:text-foreground leading-relaxed",
+                            isNumbered && "pl-4 border-l-2 border-primary/20 font-semibold text-foreground py-2 bg-primary/5 rounded-r-lg"
+                          )}>
                             {trimmed}
                           </p>
                         </div>
-                      );
-                    })}
+                      )
+                    })
+                  })()}
                 </div>
               </div>
             </CardContent>

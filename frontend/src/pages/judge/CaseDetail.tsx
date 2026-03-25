@@ -486,7 +486,9 @@ const CaseDetail = () => {
                         const articleNum = isObj ? (article.article_number || article.number || null) : null;
                         
                         const cleanArticleContent = (text: string): string => {
-                          return text.replace(/^[a-z,;\s(]+/, '').trim()
+                          if (!text) return ''
+                          const cleaned = text.replace(/^[a-z,;:\s()\d]+(?=[A-Z])/, '').trim()
+                          return cleaned || text.trim()
                         };
                         
                         return (
@@ -506,7 +508,7 @@ const CaseDetail = () => {
                                </div>
                             </div>
                             <p className="text-[12px] text-muted-foreground leading-relaxed italic font-medium line-clamp-3 group-hover/article:text-foreground transition-colors">
-                              {content ? cleanArticleContent(content) : 'Referenced in case analysis. See full transcript for application context.'}
+                              {cleanArticleContent(content) || 'Referenced in case analysis. See full transcript for application context.'}
                             </p>
                           </div>
                         );

@@ -575,6 +575,12 @@ def _extract_json_object(raw: str) -> dict[str, Any] | None:
     raw = (raw or "").strip()
     if not raw:
         return None
+        
+    cleaned = raw.strip()
+    if cleaned.lower().startswith('json'):
+        cleaned = cleaned[4:].strip()
+    raw = cleaned
+
     try:
         parsed = json.loads(raw)
         if isinstance(parsed, dict):
@@ -603,6 +609,9 @@ def _cleanse_text(text: Any) -> str:
     
     if not text:
         return ""
+    
+    # Strip emojis from judgment drafts
+    text = re.sub(r'[\U0001F300-\U0001FFFF\U00002700-\U000027BF🔹🧾📌]', '', str(text)).strip()
     
     # If it is a dict or list, we must flatten it to a readable sentence/bullet list
     # instead of just doing json.dumps (which looks bad to users)
@@ -973,17 +982,17 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
         f"CASE REFERENCE: {case_id}\n"
         f"CLAIMANT: {claimant}\n"
         f"RESPONDENT: {respondent}\n\n"
-        "🧾 JUDGMENT SUMMARY\n"
+        "JUDGMENT SUMMARY\n"
         "[One sentence stating what this case is about and the tribunal's decision]\n\n"
-        "🔹 FINDINGS OF FACT\n"
+        "FINDINGS OF FACT\n"
         "1. [Key finding]\n"
         "2. [Key finding]\n"
         "3. [Key finding]\n\n"
-        "🔹 LEGAL ANALYSIS\n"
+        "LEGAL ANALYSIS\n"
         "[How the cited laws apply to these specific facts]\n\n"
-        "🔹 DECISION & ORDERS\n"
+        "DECISION & ORDERS\n"
         "[Specific order — what must be paid or done, or why claim is dismissed]\n\n"
-        "🔹 LEGAL BASIS\n"
+        "LEGAL BASIS\n"
         "[The exact articles that ground this decision]\n\n"
         "Signed: DIFC Small Claims Tribunal\n"
         "--- END OF JUDGMENT ---"
