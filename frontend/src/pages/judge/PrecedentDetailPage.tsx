@@ -83,9 +83,6 @@ const PrecedentDetailPage: React.FC = () => {
     enabled: !!id,
   })
 
-  // Temporary debug for observing precedent vector fields
-  console.log('Precedent data:', precedent)
-
   const { data: sourceCaseAnalysis, isLoading: isLoadingSource } = useQuery({
     queryKey: ['case-analysis', fromCaseId],
     queryFn: () => getAnalysis(fromCaseId as string),
@@ -274,7 +271,7 @@ const PrecedentDetailPage: React.FC = () => {
                         let lastSection: string | null = null
                         return splitTranscript(precedent.text).map((paragraph, idx) => {
                           const trimmed = paragraph.trim()
-                          const isNumbered = /^\\d+\\./.test(trimmed)
+                          const isNumbered = /^\d+\./.test(trimmed)
                           const sectionLabel = getSectionLabel(trimmed)
                           const showLabel = sectionLabel !== null && sectionLabel !== lastSection
                           if (showLabel) lastSection = sectionLabel
