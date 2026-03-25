@@ -549,30 +549,28 @@ class SimilarityService:
             f"{detail.text}"
         )
         
-        # Use x.ai (Grok) as primary
+        # Use Local Ollama (Qwen)
         async with httpx.AsyncClient(timeout=300.0) as client:
             try:
-                url = "https://api.x.ai/v1/chat/completions"
+                url = f"{settings.ollama_url}/api/generate"
+                prompt = f"System: {system_prompt}\n\nUser: {request.message}\n\nAssistant:"
                 payload = {
-                    "model": "grok-4-1-fast",
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": request.message}
-                    ],
+                    "model": settings.ollama_model_primary,
+                    "prompt": prompt,
                     "stream": False,
-                    "temperature": 0.0
+                    "options": {
+                        "temperature": 0.1,
+                        "num_predict": 1000
+                    }
                 }
-                headers = {
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {os.environ.get('XAI_API_KEY')}"
-                }
+                headers = {"Content-Type": "application/json"}
                 
-                logger.info(f"Sending chat request to x.ai (grok-4-1-fast)")
+                logger.info(f"Sending chat request to Ollama ({settings.ollama_model_primary})")
                 response = await client.post(url, headers=headers, json=payload, timeout=300.0)
                 response.raise_for_status()
                 data = response.json()
                 
-                answer = data.get("choices", [{}])[0].get("message", {}).get("content", str(data))
+                answer = data.get("response", "Could not generate an answer.")
                 return PrecedentChatResponse(response=answer)
             except Exception as e:
                 logger.error(f"Precedent chat fallback failed: {e}")
