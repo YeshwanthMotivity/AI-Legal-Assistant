@@ -504,6 +504,8 @@ async def context_builder_node(state: AnalysisState) -> dict[str, Any]:
 
     case_metadata = {
         "title": safe_val(case.title if case else ""),
+        "case_type": safe_val(case.case_type.value if case and hasattr(case.case_type, "value") else (case.case_type if case else "")),
+        "filing_date": safe_val(case.filing_date.strftime("%d-%m-%Y") if case and getattr(case, "filing_date", None) else ""),
         "claimant": safe_val(case.claimant_name if case else ""),
         "respondent": safe_val(case.respondent_name if case else ""),
         "description": safe_val(case.description if case else ""),
