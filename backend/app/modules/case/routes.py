@@ -109,6 +109,7 @@ async def assign_case(
 async def analyze_case(
     case_id: str,
     background_tasks: BackgroundTasks,
+    language: str = "en",
     service: CaseService = Depends(get_case_service),
     current_user: dict = Depends(require_role(UserRole.JUDGE))
 ):
@@ -120,7 +121,7 @@ async def analyze_case(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Case not found"
         )
-    return await service.analyze_case(case_id, background_tasks)
+    return await service.analyze_case(case_id, background_tasks, language=language)
 
 
 @router.get("/{case_id}/analysis", response_model=CaseAnalysisResponse)

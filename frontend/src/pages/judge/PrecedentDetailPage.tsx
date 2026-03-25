@@ -267,7 +267,7 @@ const PrecedentDetailPage: React.FC = () => {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-4">
            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto" />
-           <p className="text-muted-foreground font-medium animate-pulse">Establishing secure legal context...</p>
+           <p className="text-muted-foreground font-medium animate-pulse">{t('judge.workspace.loadingContext')}</p>
         </div>
       </div>
     )
@@ -280,12 +280,12 @@ const PrecedentDetailPage: React.FC = () => {
            <AlertCircle className="w-12 h-12" />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-foreground">Failed to Load Precedent</h3>
-          <p className="text-muted-foreground max-w-sm mx-auto mt-2 italic">We encountered an issue retrieving the judicial details for this case reference.</p>
+          <h3 className="text-xl font-bold text-foreground">{t('judge.workspace.failedToLoad')}</h3>
+          <p className="text-muted-foreground max-w-sm mx-auto mt-2 italic">{t('judge.workspace.failedToLoadDesc')}</p>
         </div>
         <Button onClick={() => navigate(-1)} variant="outline" className="gap-2">
           <ChevronLeft className="w-4 h-4" />
-          Go Back
+          {t('judge.workspace.goBack')}
         </Button>
       </div>
     )
@@ -295,6 +295,7 @@ const PrecedentDetailPage: React.FC = () => {
     <PortalLayout 
       title={precedent.title} 
       subtitle={`${precedent.year || 'N/A'} | ${precedent.category || 'DIFC Judicial Precedent'}`}
+      hideSidebar={true}
     >
       <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-12rem)] min-h-[600px]">
         {/* Main Content - Case Text */}
@@ -329,8 +330,8 @@ const PrecedentDetailPage: React.FC = () => {
                 <div className="flex items-center gap-4 py-4 px-6 bg-primary/5 rounded-2xl border border-primary/10">
                   <Scale className="w-8 h-8 text-primary/40 shrink-0" />
                   <div>
-                    <h4 className="text-sm font-black uppercase tracking-wider text-primary">Judicial Record</h4>
-                    <p className="text-[11px] text-muted-foreground italic">Official transcript from the DIFC Court of First Instance</p>
+                    <h4 className="text-sm font-black uppercase tracking-wider text-primary">{t('judge.workspace.judicialRecord')}</h4>
+                    <p className="text-[11px] text-muted-foreground italic">{t('judge.workspace.judicialRecordSubtitle')}</p>
                   </div>
                 </div>
 
@@ -338,7 +339,7 @@ const PrecedentDetailPage: React.FC = () => {
                 <div className="border border-border/40 rounded-2xl overflow-hidden">
                   <div className="bg-muted/20 px-6 py-3 border-b border-border/30 flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-primary" />
-                    <h5 className="text-[11px] font-black uppercase tracking-widest text-primary">Case Details</h5>
+                    <h5 className="text-[11px] font-black uppercase tracking-widest text-primary">{t('judge.workspace.caseDetails')}</h5>
                   </div>
                   <div className="divide-y divide-border/20">
                     {(() => {
@@ -354,19 +355,19 @@ const PrecedentDetailPage: React.FC = () => {
 
                       type RowType = { label: string; value: unknown; type: 'text' | 'outcome' | 'summary' }
                       const rows: RowType[] = [
-                        { label: 'Court',       value: 'DIFC Courts',                                    type: 'text' },
-                        { label: 'Reference',   value: id,                                                type: 'text' },
-                        ...(year ? [{ label: 'Year', value: year, type: 'text' as const }] : []),
-                        { label: 'Case Type',   value: precedent.category || 'DIFC Judicial Precedent',  type: 'text' },
-                        ...(parties.claimant ? [{ label: 'Claimant', value: parties.claimant,  type: 'text' as const }] : []),
-                        ...(parties.respondent ? [{ label: 'Respondent', value: parties.respondent,  type: 'text' as const }] : []),
-                        ...(outcomeStyle ? [{ label: 'Outcome', value: outcomeStyle, type: 'outcome' as const }] : []),
+                        { label: t('judge.workspace.court'),       value: 'DIFC Courts',                                    type: 'text' },
+                        { label: t('judge.workspace.reference'),   value: id,                                                type: 'text' },
+                        ...(year ? [{ label: t('judge.workspace.year'), value: year, type: 'text' as const }] : []),
+                        { label: t('judge.workspace.caseType'),   value: precedent.category || 'DIFC Judicial Precedent',  type: 'text' },
+                        ...(parties.claimant ? [{ label: t('judge.workspace.claimantLabel'), value: parties.claimant,  type: 'text' as const }] : []),
+                        ...(parties.respondent ? [{ label: t('judge.workspace.respondentLabel'), value: parties.respondent,  type: 'text' as const }] : []),
+                        ...(outcomeStyle ? [{ label: t('judge.workspace.outcome'), value: outcomeStyle, type: 'outcome' as const }] : []),
                         ...(aiSummary || summaryLoading ? [{
-                          label: 'Summary',
-                          value: summaryLoading ? 'Generating AI summary...' : aiSummary,
+                          label: t('judge.workspace.summary'),
+                          value: summaryLoading ? t('judge.workspace.generatingAiSummary') : aiSummary,
                           type: 'summary' as const
                         }] : []),
-                        { label: 'Source',      value: precedent.title,                                   type: 'text' },
+                        { label: t('judge.workspace.source'),      value: precedent.title,                                   type: 'text' },
                       ]
 
                       return rows.map((row, i) => (
@@ -392,7 +393,7 @@ const PrecedentDetailPage: React.FC = () => {
                     {(precedent.cited_laws?.length ?? 0) > 0 && (
                       <div className="grid grid-cols-[140px_1fr] gap-4 px-6 py-3.5 hover:bg-muted/10 transition-colors">
                         <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-0.5">
-                          Laws Cited
+                          {t('judge.workspace.lawsCited')}
                         </span>
                         <div className="flex flex-wrap gap-1.5">
                           {(precedent.cited_laws || []).slice(0, 5).map((law: string, i: number) => (
@@ -410,7 +411,7 @@ const PrecedentDetailPage: React.FC = () => {
                 <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/10 rounded-xl">
                   <MessageSquare className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    <span className="font-black text-primary">Want a deeper analysis?</span> Use the AI Assistant on the right to ask questions about this case — key rulings, legal reasoning, how it compares to your current case, and more.
+                    <span className="font-black text-primary">{t('judge.workspace.deeperAnalysis')}</span> {t('judge.workspace.deeperAnalysisDesc')}
                   </p>
                 </div>
 
@@ -420,7 +421,7 @@ const PrecedentDetailPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <BookOpen className="w-4 h-4 text-muted-foreground" />
                       <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
-                        Full Transcript
+                        {t('judge.workspace.fullTranscript')}
                       </span>
                     </div>
                     <ChevronRight className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-90" />

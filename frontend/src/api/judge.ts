@@ -288,8 +288,10 @@ export const getCaseDocuments = async (caseId: string): Promise<DocumentListResp
   }
 }
 
-export const runAnalysis = async (caseId: string): Promise<{ case_id: string; status: string }> => {
-  const response = await apiClient.post<{ case_id: string; status: string }>(`/cases/${caseId}/analyze`)
+export const runAnalysis = async (caseId: string, language: string = 'en'): Promise<{ case_id: string; status: string }> => {
+  const response = await apiClient.post<{ case_id: string; status: string }>(`/cases/${caseId}/analyze`, null, {
+    params: { language }
+  })
   return response.data
 }
 

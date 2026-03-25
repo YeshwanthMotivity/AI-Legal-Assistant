@@ -892,9 +892,18 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
     model_url, model_label, complexity_score = _select_model(state)
 
     # ── 2. Prompts ───────────────────────────────────────────────────────────
+    query_lang = state.get("query_language", "en")
+    language_instr = "Language: English."
+    if query_lang == "ar":
+        language_instr = (
+            "LANGUAGE: ARABIC (العربية).\n"
+            "CRITICAL: ALL fields in the JSON response (summary, facts, reasoning, cited_laws, draft_judgment) MUST be written in PROFESSAL ARABIC.\n"
+            "يجب أن تكون جميع المخرجات باللغة العربية الفصحى وبأسلوب قانوني رصين."
+        )
+
     system_prompt = (
         "You are a Chief Legal Officer for DIFC UAE Labor Law. Provide a precise, professional legal analysis in JSON format.\n"
-        f"Language: {state.get('query_language', 'en')}.\n\n"
+        f"{language_instr}\n\n"
         "RESPONSE SCHEMA (STRICT):\n"
         "{\n"
         "  \"outcome\": \"Approved\" | \"Rejected\" | \"Partial\",\n"
