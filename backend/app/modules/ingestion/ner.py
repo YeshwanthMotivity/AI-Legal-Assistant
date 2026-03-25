@@ -150,25 +150,21 @@ async def extract_entities(text: str) -> list[dict]:
     )
 
     try:
-        url = "https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions"
+        url = "https://api.groq.com/openai/v1/chat/completions"
         async with httpx.AsyncClient(timeout=120.0) as client:
-            params = {"key": settings.gemini_api_key}
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {settings.gemini_api_key}"
+                "Authorization": f"Bearer {settings.groq_api_key1}"
             }
             response = await client.post(
                 url,
-                params=params,
                 headers=headers,
                 json={
-                    "model": "gemini-2.0-flash",
+                    "model": "llama-3.3-70b-versatile",
                     "response_format": {"type": "json_object"},
                     "messages": [
-                        {
-                            "role": "user",
-                            "content": f"{system_prompt}\n\nDocument text to extract from:\n\n{text[:4000]}"
-                        }
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": text[:4000]}
                     ],
                     "temperature": 0.1
                 }

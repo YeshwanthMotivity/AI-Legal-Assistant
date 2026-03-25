@@ -40,7 +40,8 @@ class Settings(BaseSettings):
     # Service URLs
     ollama_url: str = "http://10.10.0.1:11434"
     groq_api_key: str = ""
-    groq_model: str = "llama-3.1-8b-instant"
+    groq_api_key1: str = ""
+    groq_model: str = "llama-3.3-70b-versatile"
     deepseek_api_key: str = ""
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.0-flash"

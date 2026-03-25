@@ -145,22 +145,21 @@ class LegalStructureParser:
             input_text = text[:8000]
 
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                params = {"key": settings.gemini_api_key}
                 headers = {
                     "Content-Type": "application/json",
-                    "Authorization": f"Bearer {settings.gemini_api_key}"
+                    "Authorization": f"Bearer {settings.groq_api_key1}"
                 }
                 response = await client.post(
-                    self.url,
-                    params=params,
+                    "https://api.groq.com/openai/v1/chat/completions",
                     headers=headers,
                     json={
-                        "model": "gemini-2.0-flash",
+                        "model": "llama-3.3-70b-versatile",
                         "response_format": {"type": "json_object"},
                         "messages": [
+                            {"role": "system", "content": self.SYSTEM_PROMPT},
                             {
                                 "role": "user",
-                                "content": f"{self.SYSTEM_PROMPT}\n\nParse the following legal text:\n\n{input_text}"
+                                "content": f"Parse the following legal text:\n\n{input_text}"
                             }
                         ],
                         "temperature": 0.0

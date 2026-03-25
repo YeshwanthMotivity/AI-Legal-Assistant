@@ -183,16 +183,26 @@ async def extract_structure(
     }
 
     try:
-        url = "https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions"
+        url = "https://api.groq.com/openai/v1/chat/completions"
         async with httpx.AsyncClient(timeout=120.0) as client:
-            params = {"key": settings.gemini_api_key}
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {settings.gemini_api_key}"
+                "Authorization": f"Bearer {settings.groq_api_key1}"
+            }
+            payload = {
+                "model": "llama-3.3-70b-versatile",
+                "response_format": {"type": "json_object"},
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt + truncated_text
+                    }
+                ],
+                "temperature": 0.1,
+                "max_tokens": 1024
             }
             response = await client.post(
                 url,
-                params=params,
                 headers=headers,
                 json=payload
             )

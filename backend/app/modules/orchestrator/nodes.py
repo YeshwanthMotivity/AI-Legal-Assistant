@@ -877,8 +877,8 @@ def _flatten_to_text(data: Any, indent: int = 0) -> str:
 
 
 def _select_model(state: AnalysisState) -> tuple[str, str, float]:
-    model_url = "https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions"
-    model_label = "gemini-2.0-flash"
+    model_url = "https://api.groq.com/openai/v1/chat/completions"
+    model_label = "llama-3.3-70b-versatile"
     complexity_score = 0.5
         
     return model_url, model_label, complexity_score
@@ -1092,9 +1092,9 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             "complexity_score":  round(complexity_score, 2),
         }
 
-    # Execute Gemini
+    # Execute Groq
     try:
-        content = await _call_gemini(120, model_label)
+        content = await _call_groq(120, model_label)
         return _normalize_reasoning(content, model_label, "ok")
     except Exception as e:
         return _error_result(state, start_time, complexity_score, repr(e))
@@ -1237,25 +1237,24 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
     )
 
     try:
-        model_url = "https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions"
+        model_url = "https://api.groq.com/openai/v1/chat/completions"
         payload = {
-            "model": "gemini-2.0-flash",
+            "model": "llama-3.3-70b-versatile",
             "messages": [
-                {"role": "user", "content": f"{system_prompt}\n\nUSER INPUT:\n{user_prompt}"}
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
             ],
-            "stream": False,
             "temperature": 0.2,
             "max_tokens": NODE_TOKEN_LIMITS["drafting"]
         }
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {settings.gemini_api_key}"
+            "Authorization": f"Bearer {settings.groq_api_key1}"
         }
-        params = {"key": settings.gemini_api_key}
         async with httpx.AsyncClient(timeout=120) as client:
-            response = await client.post(model_url, params=params, headers=headers, json=payload)
+            response = await client.post(model_url, headers=headers, json=payload)
             if response.status_code != 200:
-                logger.error(f"Gemini Drafting API Error {response.status_code}: {response.text}")
+                logger.error(f"Groq Drafting API Error {response.status_code}: {response.text}")
                 response.raise_for_status()
             data = response.json()
             draft_content = _cleanse_text(str(data.get("choices", [{}])[0].get("message", {}).get("content", "")))
