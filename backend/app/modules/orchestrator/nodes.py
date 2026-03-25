@@ -725,8 +725,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         "description": str(meta.get("description", ""))[:500],
         "similar_precedents": ctx.get("legal_authority", {}).get("similar_precedents", [])[:2],
         "statutes": [
-            {"title": s.get("title", ""), "content": str(s.get("content", ""))[:200]}
-            for s in ctx.get("legal_authority", {}).get("relevant_statutes", [])[:3]
+            str(s)[:400] for s in ctx.get("legal_authority", {}).get("relevant_statutes", [])[:3]
         ] if isinstance(ctx.get("legal_authority", {}).get("relevant_statutes", []), list) else [],
         "document_fragments": ctx.get("document_evidence_fragments", [])[:2],
     }
