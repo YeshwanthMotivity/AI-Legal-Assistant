@@ -783,20 +783,37 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         parsed = _extract_json_object(content)
         if not parsed:
             if content and len(content) > 50:
-                logger.warning(f"{used_label} returned non-JSON, using as raw reasoning.")
-                cleansed_content = _cleanse_text(content)
+                logger.warning(f"{used_label} returned non-JSON, attempting manual field extraction.")
+                
+                # Try to manually extract fields using regex as last resort
+                def _extract_field(text: str, key: str) -> str:
+                    pattern = rf'"{key}"\s*:\s*"((?:[^"\\]|\\.)*)"'
+                    match = re.search(pattern, text)
+                    return match.group(1) if match else ""
+                
+                def _extract_list_field(text: str, key: str) -> list:
+                    pattern = rf'"{key}"\s*:\s*\[(.*?)\]'
+                    match = re.search(pattern, text, re.DOTALL)
+                    if not match:
+                        return []
+                    items_str = match.group(1)
+                    items = re.findall(r'"((?:[^"\\]|\\.)*)"', items_str)
+                    return items
+                
                 result = {
-                    "outcome": (
-                        "Partial" if "partial" in cleansed_content.lower()
-                        else "Approved" if "approve" in cleansed_content.lower()
-                        else "Rejected"
-                    ),
-                    "reasoning": cleansed_content if cleansed_content.strip() else "Analysis complete. See draft for details.",
-                    "cited_laws": [],
-                    "cited_cases": [],
-                    "confidence": 0.5,
-                    "draft_judgment": cleansed_content,
+                    "outcome":        _extract_field(content, "outcome") or "Approved",
+                    "summary":        _extract_field(content, "summary") or "",
+                    "facts":          _extract_list_field(content, "facts"),
+                    "reasoning":      _extract_field(content, "reasoning") or "Analysis complete. See draft for details.",
+                    "cited_laws":     _extract_list_field(content, "cited_laws"),
+                    "cited_cases":    _extract_list_field(content, "cited_cases"),
+                    "confidence":     0.5,
+                    "draft_judgment": _extract_field(content, "draft_judgment") or "",
                 }
+                
+                # If we still couldn't get a summary, don't show raw JSON
+                if not result["summary"] and not result["facts"]:
+                    result["reasoning"] = "Analysis complete. See draft for details."
             else:
                 result = {
                     "outcome": None,

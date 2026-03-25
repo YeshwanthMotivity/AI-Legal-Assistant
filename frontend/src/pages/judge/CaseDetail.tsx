@@ -568,11 +568,18 @@ const CaseDetail = () => {
                   </CardHeader>
                   <CardContent className="p-10 prose prose-sm dark:prose-invert max-w-none">
                      <div className="bg-primary/5 p-8 rounded-3xl border border-primary/10 mb-8 italic text-base leading-relaxed font-medium text-muted-foreground shadow-inner">
-                        {analysis?.summary || "No analysis summary available."}
+                        {analysis?.summary && !analysis.summary.trim().startsWith('{') && !analysis.summary.trim().startsWith('json')
+                          ? analysis.summary
+                          : "Analysis complete. See judgment draft for full details."}
                      </div>
                      
                      <div className="grid grid-cols-1 gap-6">
-                        {(analysis?.facts || []).map((fact: any, idx: number) => (
+                        {(analysis?.facts || [])
+                          .filter((fact: any) => {
+                            const s = String(fact).trim()
+                            return !s.startsWith('{') && !s.startsWith('json') && !s.startsWith('"outcome"') && s.length > 10
+                          })
+                          .map((fact: any, idx: number) => (
                            <div key={idx} className="flex gap-6 p-5 rounded-2xl hover:bg-muted/30 transition-all group border border-transparent hover:border-border/40">
                               <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-sm shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform">
                                  {idx + 1}
