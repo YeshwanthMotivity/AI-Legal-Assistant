@@ -337,6 +337,27 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
                     "text": payload.get("raw_text", "")[:2000],
                     "score": score
                 })
+        async with httpx.AsyncClient(timeout=30) as client:
+            for item in results[:5]:
+                try:
+                    resp = await client.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        headers={"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"},
+                        json={
+                            "model": settings.groq_model,
+                            "messages": [
+                                {"role": "system", "content": "From this court case excerpt, extract: case name (X v Y format if present), year, and a 1-2 sentence summary of the dispute and outcome. Be concise."},
+                                {"role": "user", "content": item["text"][:600]}
+                            ],
+                            "max_tokens": 120,
+                            "temperature": 0.0,
+                        }
+                    )
+                    resp.raise_for_status()
+                    item["text"] = resp.json()["choices"][0]["message"]["content"]
+                except Exception:
+                    pass
+                    
         duration = time.time() - start_time
         logger.info(f"--- Node: precedent_search_node finished in {duration:.2f}s")
         return {"precedents": results[:5]}
@@ -430,6 +451,27 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
                     "content": content,
                     "score": score
                 })
+        async with httpx.AsyncClient(timeout=30) as client:
+            for item in results[:5]:
+                try:
+                    resp = await client.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        headers={"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"},
+                        json={
+                            "model": settings.groq_model,
+                            "messages": [
+                                {"role": "system", "content": "Extract and return ONLY: article number, article title, and a 1-2 sentence plain English summary of what this law article covers. Format: 'Article X(Y) - Title: [title]. Summary: [summary]'"},
+                                {"role": "user", "content": item["content"][:600]}
+                            ],
+                            "max_tokens": 120,
+                            "temperature": 0.0,
+                        }
+                    )
+                    resp.raise_for_status()
+                    item["content"] = resp.json()["choices"][0]["message"]["content"]
+                except Exception:
+                    pass
+
         duration = time.time() - start_time
         logger.info(f"--- Node: law_search_node finished in {duration:.2f}s")
         return {"laws": results[:5]}

@@ -38,7 +38,9 @@ class Settings(BaseSettings):
     minio_port: int = 9000
     
     # Service URLs
-    ollama_url: str = "http://localhost:11434"
+    ollama_url: str = "http://10.10.0.1:11434"
+    groq_api_key: str = ""
+    groq_model: str = "llama-3.1-8b-instant"
     bge_m3_url: str = "http://bge_m3:8001"
     bge_reranker_url: str = "http://bge_reranker:8002"
     ollama_model_primary: str = "qwen2.5:1.5b-instruct"
