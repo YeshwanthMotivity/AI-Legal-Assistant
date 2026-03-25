@@ -243,6 +243,15 @@ const CaseDetail = () => {
               lawArticles={lawArticles}
               precedents={precedents}
             />
+            <div className="mt-6">
+              <DecisionSupport 
+                caseId={id ?? ''} 
+                onFeedbackSuccess={() => {
+                  setMessageType('success')
+                  setLocalMessage(t('judge.workspace.feedbackSuccess'))
+                }}
+              />
+            </div>
           </div>
 
         </div>
