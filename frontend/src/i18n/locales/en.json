@@ -4,7 +4,8 @@
     "suite": "Legal Intelligence Suite",
     "insights": "Intelligent Legal Insights <br/>Powered by UAE Law.",
     "accuracy": "Legal Accuracy",
-    "statutes": "Statutes Indexed"
+    "statutes": "Statutes Indexed",
+    "systemArchitecture": "System Architecture"
   },
   "common": {
     "welcome": "Welcome",

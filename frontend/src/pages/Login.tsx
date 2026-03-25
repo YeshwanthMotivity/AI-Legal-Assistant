@@ -1,10 +1,12 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/useAuth'
-import { Globe, HelpCircle, User, Lock, EyeOff, Eye, ArrowRight } from 'lucide-react'
+import { Globe, HelpCircle, User, Lock, EyeOff, Eye, ArrowRight, Network } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import BackgroundPreview from '../components/architecture/BackgroundPreview'
+import ArchitectureModal from '../components/architecture/ArchitectureModal'
 
 const Login = () => {
   const { t, i18n } = useTranslation()
@@ -14,6 +16,7 @@ const Login = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [isArchOpen, setIsArchOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
@@ -45,23 +48,34 @@ const Login = () => {
         <div className="flex items-center gap-6">
           <button 
             onClick={toggleLanguage}
-            className="text-emerald-50/70 hover:text-amber-200 transition-colors duration-300 flex items-center gap-2"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 bg-white/5 hover:bg-white/10 text-emerald-50 text-sm transition-all duration-300"
           >
-            <Globe className="w-5 h-5" />
-            <span className="font-label text-xs uppercase tracking-widest">
+            <Globe className="w-4 h-4" />
+            <span className="font-medium tracking-wide">
               {i18n.language.startsWith('ar') ? 'AR' : 'EN'}
             </span>
           </button>
-          {/* <button className="text-emerald-50/70 hover:text-amber-200 transition-colors duration-300">
-            <HelpCircle className="w-6 h-6" />
-          </button> */}
+          
+          <button 
+            onClick={() => setIsArchOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-emerald-50/90 hover:text-amber-200 hover:border-amber-200/50 transition-all duration-300 backdrop-blur-md"
+          >
+            <Network className="w-4 h-4" />
+            <span className="text-xs font-bold tracking-widest uppercase">{t('landing.systemArchitecture')}</span>
+          </button>
         </div>
       </nav>
 
-      <main className="min-h-screen flex flex-col md:flex-row">
-        {/* Left Section: Branding & Visuals */}
-        <section className="relative w-full md:w-1/2 min-h-[409px] md:min-h-screen flex flex-col justify-center px-12 lg:px-24 overflow-hidden bg-gradient-to-br from-[#0B0F19] to-[#0F3D2E]">
-          <div className="absolute inset-0 islamic-pattern pointer-events-none"></div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
+        
+        {/* Left Side - Branding & Architecture Preview */}
+        <section className="relative hidden lg:flex flex-col justify-center px-16 xl:px-24 border-r border-white/5 bg-gradient-to-br from-surface to-[#0B1521] overflow-hidden">
+          
+          <BackgroundPreview />
+
+          {/* Background Islamic Geometric Pattern (reduced opacity for arch preview) */}
+          <div className="absolute inset-0 islamic-pattern opacity-[0.03] pointer-events-none mix-blend-overlay" />
+          
           
           {/* Abstract Neural Network Decoration */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] opacity-10 pointer-events-none">
@@ -97,7 +111,7 @@ const Login = () => {
         </section>
 
         {/* Right Section: Login Form */}
-        <section className="w-full md:w-1/2 min-h-screen flex items-center justify-center p-6 md:p-12 lg:p-24 bg-surface">
+        <section className="flex flex-col items-center justify-center p-6 md:p-12 lg:p-24 bg-surface relative z-10 w-full">
           <div className="w-full max-w-md space-y-10">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -223,8 +237,11 @@ const Login = () => {
             </div> */}
           </div>
         </section>
-      </main>
-
+      </div>
+      
+      {/* Architecture Explorer Modal */}
+      <ArchitectureModal isOpen={isArchOpen} onClose={() => setIsArchOpen(false)} />
+    
       {/* Footer */}
       <footer className="fixed bottom-0 left-0 w-full z-50 flex flex-col md:flex-row justify-center items-center px-8 py-4 backdrop-blur-md bg-surface-container-lowest/80 border-t border-white/5">
         <p className="text-on-surface-variant/50 font-inter text-[10px] uppercase tracking-[0.1em]">© 2026 Motivity Labs. High-End Legal Intelligence.</p>
