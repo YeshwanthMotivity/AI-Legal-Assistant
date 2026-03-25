@@ -174,7 +174,7 @@ async def extract_structure(
         "messages": [
             {
                 "role": "user",
-                "content": prompt + truncated_text
+                "content": f"{prompt}\n\nDOCUMENT TEXT TO PARSE:\n{truncated_text}"
             }
         ],
         "stream": False,

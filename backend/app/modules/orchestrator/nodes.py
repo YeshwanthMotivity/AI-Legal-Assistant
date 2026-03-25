@@ -955,26 +955,33 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             },
         }
 
-    # ── 4. Model Callers ──────────────────────────────────────────────────────
-    async def _call_ollama(url: str, timeout_seconds: int, model_name: str) -> str:
-        logger.info(f"reasoning_agent_node: calling ollama ({model_name}) at {url}")
-        prompt = f"System: {system_prompt}\n\nUser Context: {user_prompt}\n\nAssistant Response (JSON ONLY):"
+    # ── 4. Gemini API Caller ──────────────────────────────────────────────────
+    async def _call_gemini(timeout_seconds: int, model_name: str) -> str:
+        logger.info(f"reasoning_agent_node: calling gemini ({model_name})")
+        
+        # Consolidate system/user prompts for maximum compatibility with Gemini OpenAI endpoint
+        consolidated_prompt = f"{system_prompt}\n\nUSER CONTEXT:\n{user_prompt}"
+        
         payload = {
             "model": model_name,
-            "prompt": prompt,
+            "messages": [
+                {"role": "user", "content": consolidated_prompt}
+            ],
             "stream": False,
-            "options": {
-                "num_ctx": 4096,
-                "temperature": 0.1,
-                "num_predict": NODE_TOKEN_LIMITS["reasoning"]
-            }
+            "temperature": 0.1,
+            "max_tokens": NODE_TOKEN_LIMITS["reasoning"]
         }
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
+            params = {"key": settings.gemini_api_key}
             headers = {"Content-Type": "application/json"}
-            response = await client.post(f"{url}/api/generate", headers=headers, json=payload, timeout=timeout_seconds)
-            response.raise_for_status()
+            response = await client.post(model_url, params=params, headers=headers, json=payload, timeout=timeout_seconds)
+            
+            if response.status_code != 200:
+                logger.error(f"Gemini API Error {response.status_code}: {response.text}")
+                response.raise_for_status()
+                
             data = response.json()
-            return str(data.get("response", ""))
+            return str(data.get("choices", [{}])[0].get("message", {}).get("content", ""))
 
 
     # ── 5. JSON parsing helpers ───────────────────────────────────────────────
@@ -1230,8 +1237,7 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
         payload = {
             "model": "gemini-2.0-flash",
             "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": f"{system_prompt}\n\nUSER INPUT:\n{user_prompt}"}
             ],
             "stream": False,
             "temperature": 0.2,
@@ -1241,7 +1247,9 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
         params = {"key": settings.gemini_api_key}
         async with httpx.AsyncClient(timeout=120) as client:
             response = await client.post(model_url, params=params, headers=headers, json=payload)
-            response.raise_for_status()
+            if response.status_code != 200:
+                logger.error(f"Gemini Drafting API Error {response.status_code}: {response.text}")
+                response.raise_for_status()
             data = response.json()
             draft_content = _cleanse_text(str(data.get("choices", [{}])[0].get("message", {}).get("content", "")))
     except Exception as e:

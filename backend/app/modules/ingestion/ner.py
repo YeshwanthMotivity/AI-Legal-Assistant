@@ -160,8 +160,10 @@ async def extract_entities(text: str) -> list[dict]:
                     "model": "gemini-2.0-flash",
                     "response_format": {"type": "json_object"},
                     "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": text[:4000]}
+                        {
+                            "role": "user",
+                            "content": f"{system_prompt}\n\nDocument text to extract from:\n\n{text[:4000]}"
+                        }
                     ],
                     "temperature": 0.1
                 }

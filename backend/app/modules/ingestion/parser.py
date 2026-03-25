@@ -153,10 +153,9 @@ class LegalStructureParser:
                         "model": "gemini-2.0-flash",
                         "response_format": {"type": "json_object"},
                         "messages": [
-                            {"role": "system", "content": self.SYSTEM_PROMPT},
                             {
                                 "role": "user",
-                                "content": f"Parse the following legal text:\n\n{input_text}"
+                                "content": f"{self.SYSTEM_PROMPT}\n\nParse the following legal text:\n\n{input_text}"
                             }
                         ],
                         "temperature": 0.0
