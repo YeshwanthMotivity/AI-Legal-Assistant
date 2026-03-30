@@ -199,6 +199,7 @@ const CaseDetail = () => {
             const editorElem = document.getElementById('judgment-editor-workspace')
             editorElem?.scrollIntoView({ behavior: 'smooth' })
           }}
+          onDelete={() => deleteMutation.mutate()}
         />
 
         {/* Global Notifications Section */}
