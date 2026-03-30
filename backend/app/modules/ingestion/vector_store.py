@@ -26,13 +26,18 @@ async def upsert_chunks(
         for idx, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
             point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{document_id}:{idx}"))
             
+            # Get language from metadata if available, otherwise default to "en"
+            chunk_lang = "en"
+            if metadata and idx < len(metadata):
+                chunk_lang = metadata[idx].get("language", "en")
+
             payload = {
                 "case_id": case_id,
                 "document_id": document_id,
                 "chunk_index": idx,
                 "doc_type": doc_type,
                 "raw_text": chunk,
-                "language": "en", # Default
+                "language": chunk_lang,
             }
             
             # Merge additional semantic metadata if provided

@@ -104,6 +104,7 @@ async def seed_judgments(db: AsyncSession, limit: int = None, force: bool = Fals
                     "jurisdiction": jurisdiction,
                     "category": folder_name,
                     "case_name": os.path.splitext(file_name)[0],
+                    "language": language,   # Pass detected language
                 },
                 force=force
             )
@@ -158,6 +159,7 @@ async def seed_laws(db: AsyncSession, limit: int = None, force: bool = False):
                     "category": law_category,
                     "jurisdiction": "UAE/DIFC",
                     "is_law": True,
+                    "language": language,   # Pass detected language
                 },
                 force=force
             )
