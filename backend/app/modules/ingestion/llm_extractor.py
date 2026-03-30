@@ -166,14 +166,14 @@ async def extract_structure(
         prompt = _select_prompt(doc_type, language)
         truncated_text = text[:8000] if len(text) > 8000 else text
         
-        url = "https://api.groq.com/openai/v1/chat/completions"
+        model = _select_model(language)
+        url = f"{settings.ollama_url}/v1/chat/completions"
         async with httpx.AsyncClient(timeout=120.0) as client:
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {settings.groq_api_key1}"
             }
             payload = {
-                "model": "llama-3.3-70b-versatile",
+                "model": model,
                 "response_format": {"type": "json_object"},
                 "messages": [
                     {
