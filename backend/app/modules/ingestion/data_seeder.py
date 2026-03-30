@@ -33,7 +33,13 @@ FOLDER_TO_CASE_TYPE = {
     "termination-judgement": CaseType.WRONGFUL_TERMINATION,
 }
 
-DATA_ROOT = "/app/data/DIFC (Dubai International Financial Centre Court)"
+# Flexibility for local vs container execution
+DATA_DIR = os.environ.get("DATA_DIR", "/app/data")
+# if /app/data doesn't exist, try local ./data (relative to repo root)
+if not os.path.exists(DATA_DIR):
+    DATA_DIR = "data"
+
+DATA_ROOT = os.path.join(DATA_DIR, "DIFC (Dubai International Financial Centre Court)")
 
 def detect_language(file_name: str) -> str:
     """Simple heuristic to detect language from filename."""
@@ -42,7 +48,7 @@ def detect_language(file_name: str) -> str:
         return "ar"
     return "en"
 
-async def seed_judgments(db: AsyncSession, limit: int = None, force: bool = False):
+async def seed_judgments(db: AsyncSession, limit: int = None, force: bool = False, filter_str: str = None):
     judgment_dir = os.path.join(DATA_ROOT, "Court_Judgments")
 
     if not os.path.exists(judgment_dir):
@@ -60,6 +66,9 @@ async def seed_judgments(db: AsyncSession, limit: int = None, force: bool = Fals
 
         logger.info(f"Scanning folder: {root}")
         for file_name in files:
+            # ✅ Skip others if filter is set
+            if filter_str and filter_str not in file_name:
+                continue
 
             if not file_name.lower().endswith(".pdf"):
                 continue
@@ -77,6 +86,13 @@ async def seed_judgments(db: AsyncSession, limit: int = None, force: bool = Fals
 
             logger.info(f"Seeding judgment: {file_path} [Lang: {language}]")
 
+            # ✅ Detect court (Lawsuit 6 of 2025 is Dubai Primary Court)
+            court_name = "DIFC Court"
+            jurisdiction = "DIFC"
+            if "Lawsuit_6_2025" in file_name:
+                court_name = "Dubai Primary Court"
+                jurisdiction = "Dubai"
+
             await process_file(
                 db,
                 file_path,
@@ -84,8 +100,8 @@ async def seed_judgments(db: AsyncSession, limit: int = None, force: bool = Fals
                 "court_order",
                 collection_name="difc_precedents",
                 extra_metadata={
-                    "court": "DIFC Court",
-                    "jurisdiction": "DIFC",
+                    "court": court_name,
+                    "jurisdiction": jurisdiction,
                     "category": folder_name,
                     "case_name": os.path.splitext(file_name)[0],
                 },
@@ -162,30 +178,28 @@ async def process_file(
 ):
     file_name = os.path.basename(file_path)
 
+    # Calculate relative path for storage_key (important for pipeline file reading)
+    storage_key = os.path.relpath(file_path, DATA_DIR)
+    
     # Check if already ingested
-    result = await db.execute(select(Document).where(Document.storage_key == file_path))
+    result = await db.execute(select(Document).where(Document.storage_key == storage_key))
     existing = result.scalars().first()
     if existing:
         if not force:
-            logger.info(f"Skipping {file_path} — already ingested (use --force to override)")
+            logger.info(f"Skipping {file_name} — already ingested (use --force to override)")
             return
         else:
-            logger.info(f"Force re-ingesting {file_path} — deleting old record...")
-            # Delete the existing document and case to avoid conflicts
-            # Note: In a production app you'd be more careful, but for a seeder this is fine.
+            logger.info(f"Force re-ingesting {file_name} — deleting old record...")
             await db.delete(existing)
-            # Find and delete the case if it was a seeded case
             case_result = await db.execute(select(Case).where(Case.id == existing.case_id))
             existing_case = case_result.scalars().first()
             if existing_case:
                 await db.delete(existing_case)
             await db.commit()
 
-    # Deterministic IDs based on file path
-    # Using uuid5(uuid.NAMESPACE_URL, file_path) ensures the same file always has the same IDs
-    doc_id = str(uuid.uuid5(uuid.NAMESPACE_URL, file_path))
-    # For cases, use the directory path so all files in one folder belong to one case
-    case_folder = os.path.dirname(file_path)
+    # Deterministic IDs based on storage key
+    doc_id = str(uuid.uuid5(uuid.NAMESPACE_URL, storage_key))
+    case_folder = os.path.dirname(storage_key)
     case_id = str(uuid.uuid5(uuid.NAMESPACE_URL, case_folder))
     
     # Deterministic case number: prefix + first 16 chars of UUID
@@ -194,26 +208,34 @@ async def process_file(
     
     logger.info(f"Processing {file_name} as {doc_type} in collection {collection_name}...")
 
-    # 1. Create Case record
-    new_case = Case(
-        id=case_id,
-        case_number=case_number,
-        case_type=case_type,
-        title=f"Seeded Case: {file_name}",
-        claimant_name="Seeded Claimant",
-        respondent_name="Seeded Respondent",
-        description=f"Automated evaluation case for {file_name}.",
-        notes="Document uploaded via automated seeder.",
-        status=CaseStatus.CREATED
-    )
-    db.add(new_case)
+    # 1. Create Case record if not exists
+    case_result = await db.execute(select(Case).where(Case.id == case_id))
+    existing_case = case_result.scalars().first()
+    
+    if not existing_case:
+        new_case = Case(
+            id=case_id,
+            case_number=case_number,
+            case_type=case_type,
+            title=f"Seeded Case: {file_name}",
+            claimant_name="Seeded Claimant",
+            respondent_name="Seeded Respondent",
+            description=f"Automated evaluation case for {file_name}.",
+            notes="Document uploaded via automated seeder.",
+            status=CaseStatus.CREATED
+        )
+        db.add(new_case)
+        case_to_update = new_case
+    else:
+        case_to_update = existing_case
+        logger.info(f"Using existing case: {case_to_update.case_number}")
     
     # 2. Create Document record
     new_doc = Document(
         id=doc_id,
         case_id=case_id,
         file_name=file_name,
-        storage_key=file_path,
+        storage_key=storage_key,
         mime_type="application/pdf",
         document_type=doc_type.lower() if hasattr(doc_type, "lower") else doc_type, # Sync with lowercase Enum
         processing_status=ProcessingStatus.PENDING
@@ -226,7 +248,7 @@ async def process_file(
         result = await run_ingestion_pipeline(
             document_id=doc_id,
             case_id=case_id,
-            storage_key=file_path,
+            storage_key=storage_key,
             mime_type="application/pdf",
             doc_type=doc_type.lower() if hasattr(doc_type, "lower") else doc_type, # Pass string value to pipeline
             db=db,
@@ -241,25 +263,26 @@ async def process_file(
             extracted_claimant = parties.get("claimant")
             extracted_respondent = parties.get("defendant") or parties.get("respondent")
             
-            # Re-fetch or use new_case? Since we are in the same session, new_case is tracked.
-            if extracted_title: new_case.title = extracted_title
-            if extracted_claimant: new_case.claimant_name = extracted_claimant
-            if extracted_respondent: new_case.respondent_name = extracted_respondent
+            # Re-fetch or use case_to_update? Since we are in the same session, case_to_update is tracked.
+            if extracted_title: case_to_update.title = extracted_title
+            if extracted_claimant: case_to_update.claimant_name = extracted_claimant
+            if extracted_respondent: case_to_update.respondent_name = extracted_respondent
             await db.commit()
             
         print(f"Successfully ingested {file_name}", flush=True)
     except Exception as e:
         print(f"Failed to ingest {file_name}: {e}", flush=True)
 
-async def main(limit: int = None, seed_all: bool = False, force: bool = False):
+async def main(limit: int = None, seed_all: bool = False, force: bool = False, filter_str: str = None):
     async with AsyncSessionLocal() as db:
         if seed_all:
              await seed_laws(db, force=force)
-        await seed_judgments(db, limit=limit, force=force)
+        await seed_judgments(db, limit=limit, force=force, filter_str=filter_str)
 
 if __name__ == "__main__":
     import sys
     limit_arg = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else None
     seed_all_arg = "--all" in sys.argv
     force_arg = "--force" in sys.argv
-    asyncio.run(main(limit=limit_arg, seed_all=seed_all_arg, force=force_arg))
+    filter_arg = next((arg.split("=")[1] for arg in sys.argv if arg.startswith("--filter=")), None)
+    asyncio.run(main(limit=limit_arg, seed_all=seed_all_arg, force=force_arg, filter_str=filter_arg))
