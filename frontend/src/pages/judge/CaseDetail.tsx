@@ -44,7 +44,7 @@ const DOCUMENT_TYPES: DocumentType[] = [
 ]
 
 const CaseDetail = () => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
   const { id } = useParams<{ id: string }>()
 
@@ -114,7 +114,7 @@ const CaseDetail = () => {
   })
 
   const runAnalysisMutation = useMutation({
-    mutationFn: () => runAnalysis(id as string),
+    mutationFn: () => runAnalysis(id as string, i18n.language),
     onSuccess: async () => {
       setAnalysisRequested(true)
       await analysisQuery.refetch()
@@ -220,7 +220,7 @@ const CaseDetail = () => {
         <div className="grid grid-cols-12 gap-6 px-6 mt-8 items-start">
 
           {/* ZONE 1: INPUT (Documents + Entitlements) */}
-          <div className="col-span-12 xl:col-span-4">
+          <div className="col-span-12 xl:col-span-4 space-y-8 h-full sticky top-24 self-start">
             <DocumentsPanel
               documents={documentsQuery.data?.items ?? []}
               isActivelyLoading={isActivelyLoading}

@@ -12,8 +12,7 @@ import {
   Sparkles,
   FileText,
   ChevronDown,
-  BookOpen,
-  Plus
+  BookOpen
 } from 'lucide-react'
 import { buildTemplate, TEMPLATE_LABELS, TEMPLATE_LABELS_AR } from '@/constants/judgmentTemplates'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -88,9 +87,6 @@ const JudgmentEditor = ({
     })
   }
 
-  const insertIntoEditor = (text: string) => {
-    setContent(prev => prev + `<p><b>${text}</b></p>`)
-  }
 
   return (
     <Card className="shadow-2xl border-outline-variant/30 overflow-hidden rounded-3xl bg-surface-container-lowest dark:bg-surface-container">
@@ -173,76 +169,8 @@ const JudgmentEditor = ({
       </CardHeader>
 
       <CardContent className="p-0">
-        <div className="grid grid-cols-1 xl:grid-cols-[380px,1fr] divide-x divide-outline-variant/20">
+        <div className="grid grid-cols-1 divide-x divide-outline-variant/20">
 
-          {/* LEFT: AI INSIGHTS & INJECTION */}
-          <div className="bg-surface-container-low/30 p-8 space-y-8 overflow-y-auto max-h-[800px]">
-
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-primary" />
-                {t('judge.judgment.proposedAiStance')}
-              </h4>
-              <div className="p-5 rounded-2xl bg-surface-container-low border border-outline-variant/30 shadow-inner">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-[11px] font-bold uppercase tracking-tighter text-on-surface-variant">{t('judge.judgment.predictedOutcome')}</span>
-                  <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-2 py-0.5 text-[9px] font-bold uppercase">{outcome || t('judge.judgment.accept')}</Badge>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-[10px] font-bold uppercase tracking-widest h-9 rounded-lg border-primary/20 text-primary hover:bg-primary/5"
-                  onClick={() => insertIntoEditor(`${t('judge.judgment.predictedOutcome').toUpperCase()}: ${outcome || t('judge.judgment.accept').toUpperCase()}`)}
-                >
-                  {t('judge.judgment.injectIntoDraft')}
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
-                <BookOpen className="w-3.5 h-3.5 text-primary" />
-                {t('judge.judgment.relevantCitations')}
-              </h4>
-              <div className="flex flex-col gap-3">
-                {(lawArticles || []).map((art, i) => (
-                  <div key={i} className="group flex items-center justify-between p-3.5 rounded-xl border border-outline-variant/20 bg-surface-container-lowest hover:border-primary/50 transition-all">
-                    <span className="text-[11px] font-bold text-on-surface tracking-tight truncate max-w-[180px]">{art}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0 rounded-lg text-primary hover:bg-primary/10"
-                      onClick={() => insertIntoEditor(`${t('judge.workspace.lawArticles').toUpperCase()}: ${art}`)}
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
-                <Scale className="w-3.5 h-3.5 text-primary" />
-                {t('judge.judgment.similarPrecedents')}
-              </h4>
-              <div className="flex flex-col gap-3">
-                {(precedents || []).map((prec, i) => (
-                  <div key={i} className="group flex items-center justify-between p-3.5 rounded-xl border border-outline-variant/20 bg-surface-container-lowest hover:border-primary/50 transition-all">
-                    <span className="text-[11px] font-bold text-on-surface tracking-tight truncate max-w-[180px]">{prec}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0 rounded-lg text-primary hover:bg-primary/10"
-                      onClick={() => insertIntoEditor(`${t('judge.workspace.similarPrecedents').toUpperCase()}: ${prec}`)}
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
 
           {/* RIGHT: EDITOR */}
           <div className="p-8 space-y-8">

@@ -220,13 +220,21 @@ const PrecedentDetailPage: React.FC = () => {
   // Dynamic x.ai Summary Generation
   useEffect(() => {
     if (!precedent?.text || aiSummary || summaryLoading) return
+    
+    // Safety check for API key to prevent Bearer error
+    const apiKey = import.meta.env.VITE_GROQ_API_KEY
+    if (!apiKey || apiKey === 'undefined' || apiKey === '') {
+      console.warn('VITE_GROQ_API_KEY is missing, skipping AI summary generation')
+      return
+    }
+
     setSummaryLoading(true)
     
     fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`
+        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
         model: 'llama-3.1-8b-instant',

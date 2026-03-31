@@ -21,7 +21,7 @@ class OrchestratorService:
         self.case_repository = CaseRepository(db)
         self.judgment_repository = JudgmentRepository(db)
 
-    async def run_analysis(self, case_id: str) -> dict[str, Any]:
+    async def run_analysis(self, case_id: str, language: str = "en") -> dict[str, Any]:
         case = await self.case_repository.update_status(case_id, CaseStatus.AI_ANALYSIS_PENDING)
         if not case:
             raise ValueError(f"Case not found: {case_id}")
@@ -42,6 +42,7 @@ class OrchestratorService:
             "draft_text": "",
             "error": None,
             "model_used": None,
+            "query_language": language,
             "db": self.db,
         }
         import logging
