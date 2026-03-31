@@ -15,8 +15,6 @@ import PortalLayout from '../../components/layout/PortalLayout'
 import JudgmentEditor from '../../components/judge/JudgmentEditor'
 import CaseContextBar from '../../components/judge/workspace/CaseContextBar'
 import DocumentsPanel from '../../components/judge/workspace/DocumentsPanel'
-import IntelligenceCenter from '../../components/judge/workspace/IntelligenceCenter'
-import DecisionSupport from '../../components/judge/workspace/DecisionSupport'
 import { CATEGORY_DISPLAY_NAMES } from '../../constants/legal'
 import {
   getCase,

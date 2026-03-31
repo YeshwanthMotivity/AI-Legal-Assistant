@@ -379,7 +379,18 @@ class SimilarityService:
         client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
         point = None
 
-        # Step 1: Try direct UUID fetch
+        def _scroll_filter(must_conditions):
+            """Use scroll for filter-only lookups (no vector query needed)."""
+            search_filter = Filter(must=must_conditions)
+            results, _ = client.scroll(
+                collection_name="difc_precedents",
+                scroll_filter=search_filter,
+                limit=1,
+                with_payload=True,
+            )
+            return results[0] if results else None
+
+        # Step 1: Try direct UUID/numeric ID fetch
         try:
             is_valid_uuid = False
             try:
@@ -399,36 +410,28 @@ class SimilarityService:
         except Exception as e:
             logger.warning(f"Direct ID retrieve failed: {e}")
 
-        # Step 2: If language is AR, try to find the Arabic version of this case
-        if language == "ar":
-            # Get the case_name from the EN version first, then find AR counterpart
-            en_payload = point.payload if point and hasattr(point, "payload") else {}
+        # Step 2: If language is AR and we found EN, try to find Arabian version
+        if language == "ar" and point:
+            en_payload = point.payload if hasattr(point, "payload") else {}
             case_name = en_payload.get("case_name") or en_payload.get("case_title") or ""
             
             if case_name:
-                def _find_ar_version():
-                    search_filter = Filter(
-                        must=[
+                try:
+                    ar_point = await asyncio.get_event_loop().run_in_executor(
+                        None, _scroll_filter,
+                        [
                             FieldCondition(key="language", match=MatchValue(value="ar")),
                             FieldCondition(key="case_name", match=MatchValue(value=case_name)),
                         ]
                     )
-                    results = client.query_points(
-                        collection_name="difc_precedents",
-                        query_filter=search_filter,
-                        limit=1,
-                        with_payload=True,
-                    )
-                    pts = results.points if hasattr(results, "points") else results
-                    return pts[0] if pts else None
+                    if ar_point:
+                        point = ar_point
+                except Exception as e:
+                    logger.warning(f"AR version search failed: {e}")
 
-                ar_point = await asyncio.get_event_loop().run_in_executor(None, _find_ar_version)
-                if ar_point:
-                    point = ar_point  # use AR version
-
-        # Step 3: Fallback — search by case_id
+        # Step 3: Fallback — search by case_id field
         if not point:
-            def _qdrant_filter_search():
+            try:
                 must_conditions = [
                     FieldCondition(key="case_id", match=MatchValue(value=precedent_id))
                 ]
@@ -436,34 +439,39 @@ class SimilarityService:
                     must_conditions.append(
                         FieldCondition(key="language", match=MatchValue(value="ar"))
                     )
-                search_filter = Filter(must=must_conditions)
-                results = client.query_points(
-                    collection_name="difc_precedents",
-                    query_filter=search_filter,
-                    limit=1,
-                    with_payload=True,
-                )
-                points = results.points if hasattr(results, "points") else results
-                return points[0] if points else None
+                point = await asyncio.get_event_loop().run_in_executor(None, _scroll_filter, must_conditions)
+            except Exception as e:
+                logger.warning(f"case_id search failed: {e}")
 
-            point = await asyncio.get_event_loop().run_in_executor(None, _qdrant_filter_search)
-
-        # Step 4: Final fallback — any version regardless of language
+        # Step 4: Fallback — search by case_id without language filter
         if not point:
-            def _fallback_search():
-                search_filter = Filter(
-                    must=[FieldCondition(key="case_id", match=MatchValue(value=precedent_id))]
+            try:
+                point = await asyncio.get_event_loop().run_in_executor(
+                    None, _scroll_filter,
+                    [FieldCondition(key="case_id", match=MatchValue(value=precedent_id))]
                 )
-                results = client.query_points(
-                    collection_name="difc_precedents",
-                    query_filter=search_filter,
-                    limit=1,
-                    with_payload=True,
-                )
-                pts = results.points if hasattr(results, "points") else results
-                return pts[0] if pts else None
+            except Exception as e:
+                logger.warning(f"case_id fallback search failed: {e}")
 
-            point = await asyncio.get_event_loop().run_in_executor(None, _fallback_search)
+        # Step 5: Fallback — search by case_name (the ID might be a case name)
+        if not point:
+            try:
+                point = await asyncio.get_event_loop().run_in_executor(
+                    None, _scroll_filter,
+                    [FieldCondition(key="case_name", match=MatchValue(value=precedent_id))]
+                )
+            except Exception as e:
+                logger.warning(f"case_name search failed: {e}")
+
+        # Step 6: Fallback — search by storage_key
+        if not point:
+            try:
+                point = await asyncio.get_event_loop().run_in_executor(
+                    None, _scroll_filter,
+                    [FieldCondition(key="storage_key", match=MatchValue(value=precedent_id))]
+                )
+            except Exception as e:
+                logger.warning(f"storage_key search failed: {e}")
 
         if not point:
             raise HTTPException(status_code=404, detail="Precedent not found")
