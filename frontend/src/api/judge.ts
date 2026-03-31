@@ -155,24 +155,7 @@ const sanitizeDraftText = (value: string): string => {
 
   let cleanContent = content
 
-  // 1. Strip any leading/embedded JSON-like block: { "KEY": "value", ... }
-  //    This handles LLM outputs that mix raw JSON metadata with prose
-  cleanContent = cleanContent.replace(/^\{[\s\S]*?\}\s*/g, '')
-
-  // 2. Strip lines that look like raw JSON key-value pairs: "KEY": "value",
-  cleanContent = cleanContent
-    .split('\n')
-    .filter(line => {
-      const trimmed = line.trim()
-      // Skip lines that are pure JSON key-value pairs
-      if (/^"[A-Z\s_]+"\s*:\s*"/.test(trimmed)) return false
-      // Skip lone braces
-      if (trimmed === '{' || trimmed === '}' || trimmed === '{,' || trimmed === '},') return false
-      return true
-    })
-    .join('\n')
-
-  // 3. Remove context/meta blobs
+  // 1. Remove context/meta blobs at the start/end
   const contextPatterns = [
     /^AI Draft:\s*$/im,
     /Source Context:[\s\S]*?Analysis:/i,
@@ -182,36 +165,61 @@ const sanitizeDraftText = (value: string): string => {
     cleanContent = cleanContent.replace(pattern, '')
   }
 
-  // 4. If the content still starts with { after cleanup, try to find the actual prose
-  if (cleanContent.trim().startsWith('{')) {
-    const marker = 'Preliminary legal analysis'
-    const markerIndex = cleanContent.indexOf(marker)
-    if (markerIndex >= 0) {
-      cleanContent = cleanContent.slice(markerIndex).trim()
-    } else {
-      // Last resort: strip everything between { and }
-      cleanContent = cleanContent.replace(/^\{[\s\S]*?\}\s*/g, '').trim()
+  // 2. Remove outer braces if the LLM wrapped the whole thing in a JSON block
+  cleanContent = cleanContent.replace(/^[\s\n]*\{/, '').replace(/\}[\s\n]*$/, '')
+
+  // 3. Process line by line to unwrap pseudo-JSON
+  const lines = cleanContent.split('\n')
+  const processedLines: string[] = []
+
+  for (const line of lines) {
+    let trimmed = line.trim()
+    if (!trimmed) {
+      processedLines.push('')
+      continue
     }
+
+    // Skip pure garbage lines from broken JSON arrays
+    if (trimmed === '{' || trimmed === '}' || trimmed === '},' || trimmed === '],') continue
+
+    // Handle "HEADER KEY": "Long text value...",
+    const singleLineMatch = trimmed.match(/^"([A-Z\s&_]+)"\s*:\s*"?([^"{}]+)"?,?$/)
+    if (singleLineMatch) {
+      processedLines.push(`### ${singleLineMatch[1]}`)
+      if (singleLineMatch[2].trim()) {
+        processedLines.push(singleLineMatch[2].trim())
+      }
+      continue
+    }
+
+    // Handle "HEADER KEY":  (where text follows on next lines)
+    const headerMatch = trimmed.match(/^"([A-Z\s&_]+)"\s*:\s*$/)
+    if (headerMatch) {
+      processedLines.push(`### ${headerMatch[1]}`)
+      continue
+    }
+
+    // Strip wrapping quotes and trailing commas from regular text lines
+    trimmed = trimmed.replace(/^"/, '').replace(/",?$/, '').replace(/,$/, '')
+    
+    // Ignore pure string matches like "DIFC COURTS - TRIBUNAL" if they aren't headers
+    if (trimmed.length < 5) continue
+
+    processedLines.push(trimmed)
   }
 
-  cleanContent = cleanContent.trim()
-  if (!cleanContent) return ''
+  // Normalize blank lines
+  const normalized = processedLines.join('\n').replace(/\n{3,}/g, '\n\n')
 
-  // Normalize bullets & clean whitespace
-  const normalized = cleanContent
-    .replace(/•\s*/g, '\n• ')
-    .replace(/\n{3,}/g, '\n\n')
-
-  // Convert plain text to structured HTML for Quill
-  const lines = normalized.split('\n')
-  const htmlLines = lines.map(line => {
+  // Convert to structured HTML for Quill
+  const htmlLines = normalized.split('\n').map(line => {
     const trimmed = line.trim()
     if (!trimmed) return '<p><br></p>'
     
-    // Section headers in ALL CAPS with quotes: "FINDINGS OF FACT":
-    const sectionMatch = trimmed.match(/^"([A-Z\s&]+)":\s*$/)
-    if (sectionMatch) {
-      return `<h3 style="margin-top: 20px; margin-bottom: 8px; border-bottom: 2px solid #f1f5f9; padding-bottom: 4px;"><strong>${sectionMatch[1]}</strong></h3>`
+    // Process the headers we created
+    if (trimmed.startsWith('### ')) {
+      const title = trimmed.substring(4)
+      return `<h3 style="margin-top: 20px; margin-bottom: 8px; border-bottom: 2px solid #f1f5f9; padding-bottom: 4px;"><strong>${title}</strong></h3>`
     }
 
     // Numbered section headers like "1. DISPOSITION AND OUTCOME"
@@ -225,7 +233,7 @@ const sanitizeDraftText = (value: string): string => {
       return `<p style="margin-bottom: 4px;">${highlighted}</p>`
     }
     
-    // Bold key-value lines like "Employee Name: Ahmed" (but not JSON)
+    // Bold key-value lines like "Employee Name: Ahmed" 
     if (trimmed.includes(':') && trimmed.split(':')[0].length < 40 && !trimmed.startsWith('"')) {
       const [key, ...rest] = trimmed.split(':')
       return `<p style="margin-bottom: 4px;"><strong>${key}:</strong>${rest.join(':')}</p>`

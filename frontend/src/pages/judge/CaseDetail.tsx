@@ -265,7 +265,7 @@ const CaseDetail = () => {
             </Card>
 
             {/* SIMILAR PRECEDENTS */}
-            {precedents.length > 0 && (
+            {(isReady || precedents.length > 0) && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-on-surface">
@@ -277,66 +277,75 @@ const CaseDetail = () => {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4">
-                  {precedents.map((item) => {
-                    const pct = Math.round(
-                      (item.similarityScore || 0) > 1
-                        ? item.similarityScore
-                        : (item.similarityScore || 0) * 100
-                    )
-                    const isHighMatch = pct >= 70
-                    return (
-                      <Link
-                        key={item.caseId}
-                        to={`/judge/precedents/${item.caseId}`}
-                        state={{ fromCaseId: id }}
-                        className="group bg-surface-container-low p-5 rounded-xl border border-outline-variant/30 hover:border-primary/40 hover:shadow-md transition-all duration-200 block"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0 space-y-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                                {t('judge.workspace.rulingId')}: {item.caseId}
-                              </span>
-                              {isHighMatch && (
-                                <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-bold uppercase px-1.5 h-4">
-                                  {t('judge.workspace.strongMatch')}
-                                </Badge>
-                              )}
+                {precedents.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-4">
+                    {precedents.map((item) => {
+                      const pct = Math.round(
+                        (item.similarityScore || 0) > 1
+                          ? item.similarityScore
+                          : (item.similarityScore || 0) * 100
+                      )
+                      const isHighMatch = pct >= 70
+                      return (
+                        <Link
+                          key={item.caseId}
+                          to={`/judge/precedents/${item.caseId}`}
+                          state={{ fromCaseId: id }}
+                          className="group bg-surface-container-low p-5 rounded-xl border border-outline-variant/30 hover:border-primary/40 hover:shadow-md transition-all duration-200 block"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0 space-y-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                  {t('judge.workspace.rulingId')}: {item.caseId}
+                                </span>
+                                {isHighMatch && (
+                                  <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-bold uppercase px-1.5 h-4">
+                                    {t('judge.workspace.strongMatch')}
+                                  </Badge>
+                                )}
+                              </div>
+                              <h5 className="text-sm font-semibold text-on-surface leading-snug">{item.title}</h5>
+                              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                                {item.summary?.substring(0, 110) || t('judge.workspace.legalAlignmentFound')}
+                              </p>
                             </div>
-                            <h5 className="text-sm font-semibold text-on-surface leading-snug">{item.title}</h5>
-                            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                              {item.summary?.substring(0, 110) || t('judge.workspace.legalAlignmentFound')}
-                            </p>
+                            <div className="shrink-0 text-right space-y-1.5">
+                              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                {t('judge.workspace.similarity')}
+                              </div>
+                              <div className="text-2xl font-black text-emerald-600">{pct}%</div>
+                              <div className="w-16 h-1.5 bg-outline-variant/20 rounded-full overflow-hidden ml-auto">
+                                <div
+                                  className="h-full bg-emerald-500 transition-all duration-300"
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            </div>
                           </div>
-                          <div className="shrink-0 text-right space-y-1.5">
-                            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                              {t('judge.workspace.similarity')}
-                            </div>
-                            <div className="text-2xl font-black text-emerald-600">{pct}%</div>
-                            <div className="w-16 h-1.5 bg-outline-variant/20 rounded-full overflow-hidden ml-auto">
-                              <div
-                                className="h-full bg-emerald-500 transition-all duration-300"
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
+                          <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-outline-variant/20">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">
+                              {t('judge.workspace.detailView')}
+                            </span>
+                            <ChevronRight className="w-3 h-3 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                           </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-outline-variant/20">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">
-                            {t('judge.workspace.detailView')}
-                          </span>
-                          <ChevronRight className="w-3 h-3 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                        </div>
-                      </Link>
-                    )
-                  })}
-                </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="bg-surface-container-low p-6 rounded-xl border border-dashed border-outline-variant/30 text-center flex flex-col items-center justify-center space-y-2">
+                    <Scale className="w-6 h-6 text-muted-foreground/50" />
+                    <p className="text-sm text-muted-foreground italic">
+                      {t('judge.workspace.noPrecedentsFound', 'No highly similar precedents found for this case.')}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
             {/* LAW ARTICLES */}
-            {lawArticles.length > 0 && (
+            {(isReady || lawArticles.length > 0) && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-on-surface">
@@ -348,33 +357,42 @@ const CaseDetail = () => {
                   </span>
                 </div>
 
-                <Card className="bg-surface-container-low border border-outline-variant/30 rounded-xl overflow-hidden">
-                  <CardContent className="p-0">
-                    <div className="divide-y divide-outline-variant/20">
-                      {lawArticles.map((art: any, idx: number) => {
-                        const title = typeof art === 'string' ? art : (art.title || art.article_number || `Article ${idx + 1}`)
-                        const content = typeof art === 'object' ? (art.content || '') : ''
-                        return (
-                          <div key={idx} className="px-6 py-5">
-                            <div className="flex items-center gap-4">
-                              <div className="shrink-0 w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                                <FileText className="w-4 h-4 text-emerald-600" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <span className="text-xs font-bold uppercase tracking-widest text-emerald-700">
-                                  {title}
-                                </span>
-                                {content && (
-                                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{content}</p>
-                                )}
+                {lawArticles.length > 0 ? (
+                  <Card className="bg-surface-container-low border border-outline-variant/30 rounded-xl overflow-hidden">
+                    <CardContent className="p-0">
+                      <div className="divide-y divide-outline-variant/20">
+                        {lawArticles.map((art: any, idx: number) => {
+                          const title = typeof art === 'string' ? art : (art.title || art.article_number || `Article ${idx + 1}`)
+                          const content = typeof art === 'object' ? (art.content || '') : ''
+                          return (
+                            <div key={idx} className="px-6 py-5">
+                              <div className="flex items-center gap-4">
+                                <div className="shrink-0 w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                                  <FileText className="w-4 h-4 text-emerald-600" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-xs font-bold uppercase tracking-widest text-emerald-700">
+                                    {title}
+                                  </span>
+                                  {content && (
+                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{content}</p>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
+                          )
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="bg-surface-container-low p-6 rounded-xl border border-dashed border-outline-variant/30 text-center flex flex-col items-center justify-center space-y-2">
+                    <BookOpen className="w-6 h-6 text-muted-foreground/50" />
+                    <p className="text-sm text-muted-foreground italic">
+                      {t('judge.workspace.noLawsFound', 'No specific laws were heavily cited in the AI determination.')}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
