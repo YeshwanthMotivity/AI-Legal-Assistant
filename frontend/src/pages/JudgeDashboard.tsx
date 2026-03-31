@@ -253,56 +253,16 @@ export default function JudgeDashboard() {
           {/* Right Column (40%) */}
           <div className="col-span-12 lg:col-span-5 space-y-10">
             
-            {/* 3. AI Case Insights Panel */}
-            <section className="bg-primary p-6 rounded-lg text-on-primary editorial-shadow relative overflow-hidden">
-              <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
-              <div className="flex items-center justify-between mb-6 relative z-10">
-                <h4 className="font-headline text-xl font-medium flex items-center text-on-primary">
-                  <Sparkles className="w-5 h-5 mr-2" /> Case Insights Deep-Dive
-                </h4>
-                <span className="text-[10px] bg-tertiary px-2 py-0.5 rounded uppercase font-bold tracking-widest text-on-tertiary">
-                  Real-time
-                </span>
-              </div>
-              
-              <div className="space-y-4 relative z-10">
-                <div>
-                  <p className="text-[10px] text-primary-fixed uppercase tracking-widest mb-1">Executive Summary</p>
-                  <p className="text-sm text-on-primary/80 leading-relaxed italic">
-                    "{focusCase ? `This ${focusCase.case_type ? focusCase.case_type.replace('_',' ') : 'legal'} dispute (${focusCase.case_number || focusCase.id.substring(0,6)}) hinges on statutory precedents in related tribunals. Previous rulings favor the plaintiff if documentation proves explicit intent of breach.` : 'Select a case from the queue to run dynamic real-time AI inference.'}"
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white/10 p-3 rounded-lg border border-white/10">
-                    <p className="text-[10px] text-primary-fixed uppercase mb-1">Risk Indicators</p>
-                    <div className="flex items-center">
-                      <div className="h-1.5 flex-1 bg-white/20 rounded-full overflow-hidden mr-2">
-                        <div className="h-full bg-error w-3/4"></div>
-                      </div>
-                      <span className="text-xs font-bold text-on-primary">75%</span>
-                    </div>
-                  </div>
-                  <div className="bg-white/10 p-3 rounded-lg border border-white/10">
-                    <p className="text-[10px] text-primary-fixed uppercase mb-1">Similarity Score</p>
-                    <div className="flex items-center">
-                      <div className="h-1.5 flex-1 bg-white/20 rounded-full overflow-hidden mr-2">
-                        <div className="h-full bg-inverse-primary w-4/5"></div>
-                      </div>
-                      <span className="text-xs font-bold text-on-primary">82%</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="pt-4">
-                  <p className="text-[10px] text-primary-fixed uppercase tracking-widest mb-2">Relevant UAE Laws</p>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="text-[9px] border border-white/20 px-2 py-1 rounded-full bg-white/5 text-on-primary">Federal Law No. 2 (2015)</span>
-                    <span className="text-[9px] border border-white/20 px-2 py-1 rounded-full bg-white/5 text-on-primary">Decree Law No. 32 (2021)</span>
-                    <span className="text-[9px] border border-white/20 px-2 py-1 rounded-full bg-white/5 text-on-primary">Article 144.2</span>
-                  </div>
-                </div>
-              </div>
+            {/* AI Workflow Summary (Replacing Deep Dive) */}
+            <section className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow border border-outline-variant/30 relative overflow-hidden">
+               <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-headline text-xl font-medium flex items-center text-primary">
+                    <Sparkles className="w-5 h-5 mr-2" /> Recent Activity Log
+                  </h4>
+               </div>
+               <p className="text-sm text-on-surface-variant italic">
+                 {focusCase ? `System currently synchronized with case ${focusCase.case_number || focusCase.id.substring(0,8)}.` : 'No recent case activity detected.'}
+               </p>
             </section>
 
             {/* 4. Judgment Workflow Tracker */}

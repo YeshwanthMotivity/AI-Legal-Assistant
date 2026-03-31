@@ -144,26 +144,28 @@ const DocumentsPanel = ({
                       key={doc.id}
                       className="flex items-center justify-between p-3 rounded-lg bg-surface-container-low border border-outline-variant/20 hover:border-outline-variant/40 transition-all duration-200"
                     >
-                      <div className="flex-1 min-w-0 pr-3">
-                        <div className="flex items-center gap-1.5 mb-0.5">
+                      <div className="flex-1 min-w-0 pr-2">
+                        <div className="flex items-center gap-1.5 mb-1">
                           <FileText className="w-3 h-3 text-primary/70 shrink-0" />
                           <h5 className="text-xs font-semibold text-on-surface truncate">{doc.file_name}</h5>
                         </div>
-                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
-                          {t(`judge.documentTypes.${doc.document_type}`)}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-widest truncate">
+                            {t(`judge.documentTypes.${doc.document_type}`)}
+                          </span>
+                        </div>
                       </div>
                       <Badge
                         className={cn(
-                          'px-1.5 h-5 text-[9px] font-bold uppercase tracking-widest border shadow-none shrink-0',
-                          doc.processing_status === 'complete' || doc.processing_status === 'completed' || doc.processing_status === 'embedded'
+                          'px-1.5 h-4.5 text-[8px] font-bold uppercase tracking-widest border shadow-none shrink-0',
+                          (doc.processing_status?.toLowerCase() === 'complete' || doc.processing_status?.toLowerCase() === 'completed' || doc.processing_status?.toLowerCase() === 'embedded' || doc.processing_status?.toLowerCase() === 'ocr_complete')
                             ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-                            : doc.processing_status === 'failed'
+                            : doc.processing_status?.toLowerCase() === 'failed'
                             ? 'bg-red-500/10 text-red-600 border-red-500/20'
                             : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                         )}
                       >
-                        {t(`judge.documentStatus.${doc.processing_status}`) || doc.processing_status}
+                        {t(`judge.documentStatus.${doc.processing_status?.toLowerCase()}`) || doc.processing_status}
                       </Badge>
                     </div>
                   ))}

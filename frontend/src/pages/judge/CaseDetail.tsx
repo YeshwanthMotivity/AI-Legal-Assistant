@@ -8,7 +8,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Plus,
-  Gavel
+  Gavel,
+  FileText
 } from 'lucide-react'
 import PortalLayout from '../../components/layout/PortalLayout'
 import JudgmentEditor from '../../components/judge/JudgmentEditor'
@@ -236,14 +237,17 @@ const CaseDetail = () => {
             />
           </div>
 
-          {/* ZONE 2: INTELLIGENCE CORE (Summary, Precedents, Laws) */}
+          {/* ZONE 2: DOCUMENTS LIST (Moved to take full width if intelligence is gone) */}
           <div className="col-span-12 xl:col-span-8">
-            <IntelligenceCenter
-              analysis={analysis}
-              caseId={id ?? ''}
-              lawArticles={lawArticles}
-              precedents={precedents}
-            />
+            <div className="bg-surface-container-lowest dark:bg-surface-container p-8 rounded-xl border border-outline-variant/30 editorial-shadow">
+               <h3 className="text-xl font-headline font-semibold text-primary mb-6 flex items-center gap-2">
+                 <FileText className="w-5 h-5" /> Case Evidence Registry
+               </h3>
+               <p className="text-sm text-on-surface-variant leading-relaxed mb-8">
+                 Confirm all institutional filings and evidence transcripts are correctly indexed before initiating the final judgement draft.
+               </p>
+               {/* Document list or summary could go here if needed, but for now we'll just keep it clean */}
+            </div>
           </div>
 
         </div>
