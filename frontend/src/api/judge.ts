@@ -154,25 +154,48 @@ const sanitizeDraftText = (value: string): string => {
   if (!content) return ''
 
   let cleanContent = content
-  // Remove full JSON objects that might be prefixed
-  const patterns = [
-    /^\{[\s\S]*"case_id"\s*:[^}]*\}/, 
-    /^\{[\s\S]*"context"\s*:[^}]*\}/,
-    /^AI Draft:\s*$/i,
-    /Source Context:[\s\S]*?Analysis:/i
+
+  // 1. Strip any leading/embedded JSON-like block: { "KEY": "value", ... }
+  //    This handles LLM outputs that mix raw JSON metadata with prose
+  cleanContent = cleanContent.replace(/^\{[\s\S]*?\}\s*/g, '')
+
+  // 2. Strip lines that look like raw JSON key-value pairs: "KEY": "value",
+  cleanContent = cleanContent
+    .split('\n')
+    .filter(line => {
+      const trimmed = line.trim()
+      // Skip lines that are pure JSON key-value pairs
+      if (/^"[A-Z\s_]+"\s*:\s*"/.test(trimmed)) return false
+      // Skip lone braces
+      if (trimmed === '{' || trimmed === '}' || trimmed === '{,' || trimmed === '},') return false
+      return true
+    })
+    .join('\n')
+
+  // 3. Remove context/meta blobs
+  const contextPatterns = [
+    /^AI Draft:\s*$/im,
+    /Source Context:[\s\S]*?Analysis:/i,
+    /^\{[\s\S]*"context"\s*:[\s\S]*?\}\s*/,
   ]
-  const hasContextBlob = patterns.some((p) => p.test(content)) || content.includes('"context":')
-  
-  if (hasContextBlob) {
+  for (const pattern of contextPatterns) {
+    cleanContent = cleanContent.replace(pattern, '')
+  }
+
+  // 4. If the content still starts with { after cleanup, try to find the actual prose
+  if (cleanContent.trim().startsWith('{')) {
     const marker = 'Preliminary legal analysis'
-    const markerIndex = content.indexOf(marker)
+    const markerIndex = cleanContent.indexOf(marker)
     if (markerIndex >= 0) {
-      cleanContent = content.slice(markerIndex).trim()
+      cleanContent = cleanContent.slice(markerIndex).trim()
     } else {
-      // Remove any top-level JSON structure
-      cleanContent = content.replace(/^\{[\s\S]*?\}\s*/g, '').trim()
+      // Last resort: strip everything between { and }
+      cleanContent = cleanContent.replace(/^\{[\s\S]*?\}\s*/g, '').trim()
     }
   }
+
+  cleanContent = cleanContent.trim()
+  if (!cleanContent) return ''
 
   // Normalize bullets & clean whitespace
   const normalized = cleanContent
@@ -185,6 +208,12 @@ const sanitizeDraftText = (value: string): string => {
     const trimmed = line.trim()
     if (!trimmed) return '<p><br></p>'
     
+    // Section headers in ALL CAPS with quotes: "FINDINGS OF FACT":
+    const sectionMatch = trimmed.match(/^"([A-Z\s&]+)":\s*$/)
+    if (sectionMatch) {
+      return `<h3 style="margin-top: 20px; margin-bottom: 8px; border-bottom: 2px solid #f1f5f9; padding-bottom: 4px;"><strong>${sectionMatch[1]}</strong></h3>`
+    }
+
     // Numbered section headers like "1. DISPOSITION AND OUTCOME"
     if (/^\d+\.\s+[A-Z\s,]+$/.test(trimmed)) {
       return `<h3 style="margin-top: 20px; margin-bottom: 8px; border-bottom: 2px solid #f1f5f9; padding-bottom: 4px;"><strong>${trimmed}</strong></h3>`
@@ -192,13 +221,12 @@ const sanitizeDraftText = (value: string): string => {
     
     // Bullet points or key-value highlights
     if (trimmed.startsWith('•') || trimmed.startsWith('-')) {
-      // Highlight potential case slugs in monospace
       const highlighted = trimmed.replace(/([a-z0-9]+-(?:case|eng)[a-z0-09-]*)/gi, '<code style="background: #f1f5f9; padding: 1px 4px; border-radius: 4px; font-family: monospace; font-size: 0.9em; color: #475569;">$1</code>')
       return `<p style="margin-bottom: 4px;">${highlighted}</p>`
     }
     
-    // Bold key-value lines like "Employee Name: Ahmed"
-    if (trimmed.includes(':') && trimmed.split(':')[0].length < 40) {
+    // Bold key-value lines like "Employee Name: Ahmed" (but not JSON)
+    if (trimmed.includes(':') && trimmed.split(':')[0].length < 40 && !trimmed.startsWith('"')) {
       const [key, ...rest] = trimmed.split(':')
       return `<p style="margin-bottom: 4px;"><strong>${key}:</strong>${rest.join(':')}</p>`
     }
@@ -207,6 +235,7 @@ const sanitizeDraftText = (value: string): string => {
   })
   return htmlLines.join('')
 }
+
 
 const normalizeCaseAnalysis = (raw: RawCaseAnalysisResponse): CaseAnalysisResponse => {
   const analysis = raw.analysis ?? {}
