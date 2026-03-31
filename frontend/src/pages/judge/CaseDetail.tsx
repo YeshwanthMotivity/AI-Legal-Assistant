@@ -1,14 +1,18 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
 import { 
   Sparkles, 
   CheckCircle2,
   AlertCircle,
   Plus,
-  Gavel
+  Gavel,
+  Scale,
+  BookOpen,
+  ChevronRight,
+  FileText
 } from 'lucide-react'
 import PortalLayout from '../../components/layout/PortalLayout'
 import JudgmentEditor from '../../components/judge/JudgmentEditor'
@@ -26,6 +30,8 @@ import {
 import { useCaseAnalysisPolling } from '../../hooks/useCaseAnalysisPolling'
 import type { DocumentType, JudgmentRequest } from '../../types/judge'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
 const DOCUMENT_TYPES: DocumentType[] = [
@@ -234,22 +240,144 @@ const CaseDetail = () => {
             />
           </div>
 
-          {/* ZONE 2: CASE SUMMARY */}
-          <div className="col-span-12 xl:col-span-8">
-            <div className="bg-surface-container-lowest dark:bg-surface-container p-8 rounded-xl border border-outline-variant/30 editorial-shadow">
-               <h3 className="text-xl font-headline font-semibold text-primary mb-6 flex items-center gap-2">
-                 <Sparkles className="w-5 h-5" /> {t('judge.workspace.caseSummary')}
-               </h3>
-               {analysis?.summary ? (
-                 <p className="text-sm text-on-surface leading-relaxed">
-                   {analysis.summary}
-                 </p>
-               ) : (
-                 <p className="text-sm text-on-surface-variant leading-relaxed italic">
-                   {t('judge.workspace.activateIntelligenceDesc')}
-                 </p>
-               )}
-            </div>
+          {/* ZONE 2: INTELLIGENCE (Summary + Precedents + Laws) */}
+          <div className="col-span-12 xl:col-span-8 space-y-8">
+
+            {/* CASE SUMMARY */}
+            <Card className="bg-surface-container-lowest dark:bg-surface-container overflow-hidden rounded-xl editorial-shadow border border-outline-variant/30">
+              <CardHeader className="p-5 border-b border-outline-variant/20 bg-surface-container-low/40">
+                <CardTitle className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  {t('judge.workspace.caseSummary')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-5">
+                {analysis?.summary ? (
+                  <p className="text-sm text-on-surface leading-relaxed">
+                    {analysis.summary}
+                  </p>
+                ) : (
+                  <p className="text-sm text-on-surface-variant leading-relaxed italic">
+                    {t('judge.workspace.activateIntelligenceDesc')}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* SIMILAR PRECEDENTS */}
+            {precedents.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-on-surface">
+                    <Scale className="w-4 h-4 text-primary" />
+                    {t('judge.workspace.precedentAnalysis')}
+                  </h3>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    {precedents.length} {t('judge.workspace.total')}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  {precedents.map((item) => {
+                    const pct = Math.round(
+                      (item.similarityScore || 0) > 1
+                        ? item.similarityScore
+                        : (item.similarityScore || 0) * 100
+                    )
+                    const isHighMatch = pct >= 70
+                    return (
+                      <Link
+                        key={item.caseId}
+                        to={`/judge/precedents/${item.caseId}`}
+                        state={{ fromCaseId: id }}
+                        className="group bg-surface-container-low p-5 rounded-xl border border-outline-variant/30 hover:border-primary/40 hover:shadow-md transition-all duration-200 block"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                {t('judge.workspace.rulingId')}: {item.caseId}
+                              </span>
+                              {isHighMatch && (
+                                <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-bold uppercase px-1.5 h-4">
+                                  {t('judge.workspace.strongMatch')}
+                                </Badge>
+                              )}
+                            </div>
+                            <h5 className="text-sm font-semibold text-on-surface leading-snug">{item.title}</h5>
+                            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                              {item.summary?.substring(0, 110) || t('judge.workspace.legalAlignmentFound')}
+                            </p>
+                          </div>
+                          <div className="shrink-0 text-right space-y-1.5">
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                              {t('judge.workspace.similarity')}
+                            </div>
+                            <div className="text-2xl font-black text-emerald-600">{pct}%</div>
+                            <div className="w-16 h-1.5 bg-outline-variant/20 rounded-full overflow-hidden ml-auto">
+                              <div
+                                className="h-full bg-emerald-500 transition-all duration-300"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-outline-variant/20">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">
+                            {t('judge.workspace.detailView')}
+                          </span>
+                          <ChevronRight className="w-3 h-3 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* LAW ARTICLES */}
+            {lawArticles.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-on-surface">
+                    <BookOpen className="w-4 h-4 text-primary" />
+                    {t('judge.workspace.legalFramework')}
+                  </h3>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    {lawArticles.length} {t('judge.workspace.total')}
+                  </span>
+                </div>
+
+                <Card className="bg-surface-container-low border border-outline-variant/30 rounded-xl overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="divide-y divide-outline-variant/20">
+                      {lawArticles.map((art: any, idx: number) => {
+                        const title = typeof art === 'string' ? art : (art.title || art.article_number || `Article ${idx + 1}`)
+                        const content = typeof art === 'object' ? (art.content || '') : ''
+                        return (
+                          <div key={idx} className="px-6 py-5">
+                            <div className="flex items-center gap-4">
+                              <div className="shrink-0 w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                                <FileText className="w-4 h-4 text-emerald-600" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-xs font-bold uppercase tracking-widest text-emerald-700">
+                                  {title}
+                                </span>
+                                {content && (
+                                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{content}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
           </div>
 
         </div>
