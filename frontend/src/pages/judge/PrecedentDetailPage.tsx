@@ -479,7 +479,7 @@ const PrecedentDetailPage: React.FC = () => {
         </main>
 
         {/* Sidebar - AI Chat & Comparison Tabs */}
-        <aside className="w-full lg:w-[480px] flex flex-col shrink-0">
+        <aside className="w-full lg:w-[560px] xl:w-[640px] flex flex-col shrink-0">
           <Card className="h-full shadow-xl border-primary/20 overflow-hidden flex flex-col bg-card/50 backdrop-blur-sm">
             {/* Tab Header */}
             <div className="flex border-b bg-muted/30">
