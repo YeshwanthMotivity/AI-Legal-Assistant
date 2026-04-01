@@ -362,19 +362,19 @@ const PrecedentDetailPage: React.FC = () => {
 
                       type RowType = { label: string; value: unknown; type: 'text' | 'outcome' | 'summary' }
                       const rows: RowType[] = [
-                        { label: 'Court',       value: 'DIFC Courts',                                    type: 'text' },
-                        { label: 'Reference',   value: id,                                                type: 'text' },
-                        ...(year ? [{ label: 'Year', value: year, type: 'text' as const }] : []),
-                        { label: 'Case Type',   value: precedent.category || 'DIFC Judicial Precedent',  type: 'text' },
-                        ...(parties.claimant ? [{ label: 'Claimant', value: parties.claimant,  type: 'text' as const }] : []),
-                        ...(parties.respondent ? [{ label: 'Respondent', value: parties.respondent,  type: 'text' as const }] : []),
-                        ...(outcomeStyle ? [{ label: 'Outcome', value: outcomeStyle, type: 'outcome' as const }] : []),
+                        { label: t('judge.workspace.court'),       value: 'DIFC Courts',                                    type: 'text' },
+                        { label: t('judge.workspace.reference'),   value: id,                                                type: 'text' },
+                        ...(year ? [{ label: t('judge.workspace.year'), value: year, type: 'text' as const }] : []),
+                        { label: t('judge.workspace.caseTypeField'),   value: precedent.category || 'DIFC Judicial Precedent',  type: 'text' },
+                        ...(parties.claimant ? [{ label: t('judge.form.claimant'), value: parties.claimant,  type: 'text' as const }] : []),
+                        ...(parties.respondent ? [{ label: t('judge.form.respondent'), value: parties.respondent,  type: 'text' as const }] : []),
+                        ...(outcomeStyle ? [{ label: t('judge.workspace.outcome'), value: outcomeStyle, type: 'outcome' as const }] : []),
                         ...(aiSummary || summaryLoading ? [{
-                          label: 'Summary',
+                          label: t('judge.workspace.summary'),
                           value: summaryLoading ? 'Generating AI summary...' : aiSummary,
                           type: 'summary' as const
                         }] : []),
-                        { label: 'Source',      value: precedent.title,                                   type: 'text' },
+                        { label: t('judge.workspace.source'),      value: precedent.title,                                   type: 'text' },
                       ]
 
                       return rows.map((row, i) => (
@@ -400,7 +400,7 @@ const PrecedentDetailPage: React.FC = () => {
                     {(precedent.cited_laws?.length ?? 0) > 0 && (
                       <div className="grid grid-cols-[140px_1fr] gap-4 px-6 py-3.5 hover:bg-muted/10 transition-colors">
                         <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-0.5">
-                          Laws Cited
+                          {t('judge.workspace.lawsCited')}
                         </span>
                         <div className="flex flex-wrap gap-1.5">
                           {(precedent.cited_laws || []).slice(0, 5).map((law: string, i: number) => (
@@ -545,9 +545,9 @@ const PrecedentDetailPage: React.FC = () => {
                   </div>
                   <div className="flex flex-wrap justify-center gap-2 pt-4">
                      {[
-                       { label: 'Summary', query: 'Can you provide a concise summary of the legal reasoning in this case?' },
-                       { label: 'Impact', query: 'What was the legal impact and precedent set by this ruling?' },
-                       { label: 'Key Ruling', query: 'What are the key judicial findings or specific findings in this case?' }
+                       { label: t('judge.workspace.chatSummaryBtn'), query: t('judge.workspace.chatSummaryPrompt') },
+                       { label: t('judge.workspace.chatImpactBtn'), query: t('judge.workspace.chatImpactPrompt') },
+                       { label: t('judge.workspace.chatKeyFindingsBtn'), query: t('judge.workspace.chatKeyFindingsPrompt') }
                      ].map(item => (
                        <button 
                          key={item.label} 

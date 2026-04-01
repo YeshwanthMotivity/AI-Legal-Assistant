@@ -41,11 +41,11 @@ const CaseComparison = ({ currentCase, precedentCase }: CaseComparisonProps) => 
   const { t, i18n } = useTranslation();
 
   const comparisonData: ComparisonData[] = [
-    { field: 'Case Type',          currentValue: currentCase.type,         precedentValue: precedentCase.type },
-    { field: 'Key Facts',          currentValue: currentCase.facts,        precedentValue: precedentCase.facts },
-    { field: 'Legal Issues',       currentValue: currentCase.issues,       precedentValue: precedentCase.issues },
-    { field: 'Decision Outcome',   currentValue: currentCase.outcome,      precedentValue: precedentCase.outcome },
-    { field: 'Compensation/Award', currentValue: currentCase.compensation, precedentValue: precedentCase.compensation },
+    { field: t('judge.workspace.caseTypeField') || 'Case Type',          currentValue: currentCase.type,         precedentValue: precedentCase.type },
+    { field: t('judge.workspace.keyFactsField') || 'Key Facts',          currentValue: currentCase.facts,        precedentValue: precedentCase.facts },
+    { field: t('judge.workspace.legalIssuesField') || 'Legal Issues',       currentValue: currentCase.issues,       precedentValue: precedentCase.issues },
+    { field: t('judge.workspace.decisionOutcomeField') || 'Decision Outcome',   currentValue: currentCase.outcome,      precedentValue: precedentCase.outcome },
+    { field: t('judge.workspace.compensationAwardField') || 'Compensation/Award', currentValue: currentCase.compensation, precedentValue: precedentCase.compensation },
   ];
 
   return (

@@ -934,23 +934,23 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         "  \"cited_cases\": [\"Case References or Precedents\"],\n"
         "  \"confidence\": 0.0 to 1.0,\n"
         "  \"draft_judgment\": \"Write a COURT RULING document using the case facts. NEVER copy law metadata. Use this format EXACTLY:\\n"
-        "DIFC COURTS - TRIBUNAL\\n"
-        "CASE REFERENCE: [case_id]\\n"
-        "CLAIMANT: [claimant name]\\n"
-        "RESPONDENT: [respondent name]\\n\\n"
-        "🧾 JUDGMENT SUMMARY\\n"
-        "This Tribunal has considered the claim of [claimant] against [respondent] regarding [case type].\\n\\n"
-        "🔹 FINDINGS OF FACT\\n"
+        f"{'محاكم مركز دبي المالي العالمي - المحكمة' if state.get('query_language') == 'ar' else 'DIFC COURTS - TRIBUNAL'}\\n"
+        f"{'المرجع:' if state.get('query_language') == 'ar' else 'CASE REFERENCE:'} [case_id]\\n"
+        f"{'المدعي:' if state.get('query_language') == 'ar' else 'CLAIMANT:'} [claimant name]\\n"
+        f"{'المدعى عليه:' if state.get('query_language') == 'ar' else 'RESPONDENT:'} [respondent name]\\n\\n"
+        f"{'🧾 ملخص الحكم' if state.get('query_language') == 'ar' else '🧾 JUDGMENT SUMMARY'}\\n"
+        f"{'نظرت هذه المحكمة في دعوى [المدعي] ضد [المدعى عليه] بشأن [نوع القضية].' if state.get('query_language') == 'ar' else 'This Tribunal has considered the claim of [claimant] against [respondent] regarding [case type].'}\\n\\n"
+        f"{'🔹 النتائج الواقعية' if state.get('query_language') == 'ar' else '🔹 FINDINGS OF FACT'}\\n"
         "1. [Finding from case evidence]\\n"
         "2. [Finding from case evidence]\\n\\n"
-        "🔹 LEGAL ANALYSIS\\n"
+        f"{'🔹 التحليل القانوني' if state.get('query_language') == 'ar' else '🔹 LEGAL ANALYSIS'}\\n"
         "[How the cited articles apply to the specific facts]\\n\\n"
-        "🔹 DECISION & ORDERS\\n"
+        f"{'🔹 القرار والأوامر' if state.get('query_language') == 'ar' else '🔹 DECISION & ORDERS'}\\n"
         "The Tribunal ORDERS: [specific remedy or dismissal with amounts if applicable]\\n\\n"
-        "🔹 LEGAL BASIS\\n"
+        f"{'🔹 السند القانوني' if state.get('query_language') == 'ar' else '🔹 LEGAL BASIS'}\\n"
         "[Exact article citations that ground this decision]\"\n"
         "}\n\n"
-        "CRITICAL: draft_judgment must be a COURT RULING about the specific parties and facts — NEVER a copy of law text or metadata. NEVER return '[object Object]'."
+        f"{'CRITICAL: draft_judgment must be a COURT RULING about the specific parties and facts. YOU MUST WRITE THE DRAFT IN ARABIC. NEVER return [object Object].' if state.get('query_language') == 'ar' else 'CRITICAL: draft_judgment must be a COURT RULING about the specific parties and facts — NEVER a copy of law text or metadata. NEVER return [object Object].'}"
     )
     ctx = state.get("context", {})
     meta = ctx.get("case_metadata", {})
@@ -1257,7 +1257,8 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
         "LEGAL BASIS\n"
         "[The exact articles that ground this decision]\n\n"
         "Signed: DIFC Small Claims Tribunal\n"
-        "--- END OF JUDGMENT ---"
+        "--- END OF JUDGMENT ---\n\n"
+        f"{'CRITICAL INSTRUCTION: You MUST write the ENTIRE judgment in ARABIC. Do NOT output any English text. Translate all headings, names, and content.' if state.get('query_language') == 'ar' else 'Write the judgment in English.'}"
     )
 
     user_prompt = (
@@ -1287,8 +1288,8 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
     final_draft = (
         f"<div style='font-family: inherit; color: #1a1a1a;'>"
         f"<div style='text-align: center; border-bottom: 2px dashed #cecece; margin-bottom: 24px; padding-bottom: 16px;'>"
-        f"<h2 style='margin: 0; font-size: 18px; font-weight: 900; letter-spacing: 0.5px;'>DIFC COURTS - TRIBUNAL</h2>"
-        f"<p style='margin: 5px 0; font-size: 12px; color: #666;'>CASE REFERENCE: {state['case_id']}</p>"
+        f"<h2 style='margin: 0; font-size: 18px; font-weight: 900; letter-spacing: 0.5px;'>{'محاكم مركز دبي المالي العالمي - المحكمة' if state.get('query_language') == 'ar' else 'DIFC COURTS - TRIBUNAL'}</h2>"
+        f"<p style='margin: 5px 0; font-size: 12px; color: #666;'>{'المرجع:' if state.get('query_language') == 'ar' else 'CASE REFERENCE:'} {state['case_id']}</p>"
         f"</div>"
         
         f"<div style='line-height: 1.7; white-space: pre-wrap; font-size: 15px;'>"
