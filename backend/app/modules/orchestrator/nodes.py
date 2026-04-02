@@ -376,65 +376,34 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
             for item in results[:5]:
                 parsed = None
                 try:
-                    # Primary: Groq (only if key present)
-                    if settings.groq_api_key:
-                        resp = await client.post(
-                            "https://api.groq.com/openai/v1/chat/completions",
-                            headers={"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"},
-                            json={
-                                "model": settings.groq_model,
-                                "response_format": {"type": "json_object"},
-                                "messages": [
-                                    {"role": "system", "content": (
-                                        f"You are a DIFC legal case parser. Extract from the court text and return ONLY valid JSON — no markdown, no explanation.\n"
-                                        f"Schema: {{\"case_name\": \"X v Y or null\", \"claimant\": \"name or null\", "
-                                        f"\"respondent\": \"name or null\", \"year\": \"4-digit string or null\", "
-                                        f"\"outcome\": \"Awarded|Dismissed|Partial|Settled|null\", "
-                                        f"\"summary\": \"1-2 sentence factual summary\"}}\n"
-                                        f"{'CRITICAL: Translate the summary and outcome into Arabic.' if state.get('ui_language') == 'ar' else ''}"
-                                    )},
-                                    {"role": "user", "content": _smart_slice(item["text"], 3000)}
-                                ],
-                                "max_tokens": 200,
-                                "temperature": 0.0,
-                            }
-                        )
-                        if resp.status_code == 200:
-                            parsed = resp.json()
-                            logger.info(f"Groq parsing successful for {item['title']}")
+                    # Exclusive: Local Intelligence (Ollama)
+                    content = await _call_ollama(
+                        model_url=f"{settings.ollama_url}/api/generate",
+                        model_name=settings.ollama_model_fallback,
+                        system=(
+                            f"You are a DIFC legal case parser. Extract from the court text and return ONLY valid JSON.\n"
+                            f"Schema: {{\"case_name\": \"X v Y or null\", \"claimant\": \"name or null\", "
+                            f"\"respondent\": \"name or null\", \"year\": \"4-digit string or null\", "
+                            f"\"outcome\": \"Awarded|Dismissed|Partial|Settled|null\", "
+                            f"\"summary\": \"1-2 sentence factual summary\"}}\n"
+                            f"{'CRITICAL: Translate the summary and outcome into Arabic.' if state.get('ui_language') == 'ar' else ''}"
+                        ),
+                        user=_smart_slice(item["text"], 3000),
+                        token_limit=300
+                    )
+                    
+                    if content:
+                        # Attempt to extract JSON from Ollama response
+                        import json
+                        import re
+                        json_match = re.search(r"\{[\s\S]*\}", content)
+                        if json_match:
+                            parsed_data = json.loads(json_match.group(0))
+                            # Wrap in OpenAI-like shape for compatibility with existing parser logic below
+                            parsed = {"choices": [{"message": {"content": parsed_data}}]}
+                            logger.info(f"Local Ollama parsing successful for {item['title']}")
                 except Exception as e:
-                    logger.warning(f"Groq call failed for {item['title']}: {e}")
-
-                try:
-                    # Fallback: Gemini
-                    if not parsed and settings.gemini_api_key:
-                        resp = await client.post(
-                            f"https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions",
-                            params={"key": settings.gemini_api_key},
-                            headers={"Content-Type": "application/json"},
-                            json={
-                                "model": "gemini-2.0-flash",
-                                "response_format": {"type": "json_object"},
-                                "messages": [
-                                    {"role": "system", "content": (
-                                        f"You are a DIFC legal case parser. Extract from the court text and return ONLY valid JSON.\n"
-                                        f"Schema: {{\"case_name\": \"X v Y or null\", \"claimant\": \"name or null\", "
-                                        f"\"respondent\": \"name or null\", \"year\": \"4-digit string or null\", "
-                                        f"\"outcome\": \"Awarded|Dismissed|Partial|Settled|null\", "
-                                        f"\"summary\": \"1-2 sentence factual summary\"}}\n"
-                                        f"{'CRITICAL: Translate the summary and outcome into Arabic.' if state.get('ui_language') == 'ar' else ''}"
-                                    )},
-                                    {"role": "user", "content": _smart_slice(item["text"], 3000)}
-                                ],
-                                "max_tokens": 200,
-                                "temperature": 0.0,
-                            }
-                        )
-                        if resp.status_code == 200:
-                            parsed = resp.json()
-                            logger.info(f"Gemini parsing successful for {item['title']}")
-                except Exception as e:
-                    logger.warning(f"Gemini call failed for {item['title']}: {e}")
+                    logger.warning(f"Local Ollama parsing failed for {item['title']}: {e}")
 
                 if parsed:
                     try:
@@ -573,65 +542,31 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
                 item["content"] = _strip_noise(item["content"])
                 parsed = None
                 try:
-                    # Primary: Groq (only if key present)
-                    if settings.groq_api_key:
-                        resp = await client.post(
-                            "https://api.groq.com/openai/v1/chat/completions",
-                            headers={"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"},
-                            json={
-                                "model": settings.groq_model,
-                                "response_format": {"type": "json_object"},
-                                "messages": [
-                                    {"role": "system", "content": (
-                                        f"You are a DIFC legal article parser. Return ONLY valid JSON — no markdown, no explanation.\n"
-                                        f"Schema: {{\"article_number\": \"e.g. Article 19(2) or null\", \"article_title\": \"short title or null\", "
-                                        f"\"law_name\": \"full law name\", \"summary\": \"1-2 sentence plain English explanation\"}}\n"
-                                        f"{'CRITICAL: Translate the summary, article title and law name into Arabic.' if state.get('ui_language') == 'ar' else ''}"
-                                    )},
-                                    {"role": "user", "content": item["content"][:1500]}
-                                ],
-                                "max_tokens": 120,
-                                "temperature": 0.0,
-                            }
-                        )
-                        if resp.status_code == 200:
-                            data = resp.json()
-                            content = data["choices"][0]["message"]["content"]
-                            parsed = json.loads(content) if isinstance(content, str) else content
-                            logger.info(f"Groq law parsing successful for {item['title']}")
+                    # Exclusive: Local Intelligence (Ollama)
+                    content = await _call_ollama(
+                        model_url=f"{settings.ollama_url}/api/generate",
+                        model_name=settings.ollama_model_fallback,
+                        system=(
+                            f"You are a DIFC legal article parser. Return ONLY valid JSON — no markdown, no explanation.\n"
+                            f"Schema: {{\"article_number\": \"e.g. Article 19(2) or null\", \"article_title\": \"short title or null\", "
+                            f"\"law_name\": \"full law name\", \"summary\": \"1-2 sentence plain English explanation\"}}\n"
+                            f"{'CRITICAL: Translate the summary, article title and law name into Arabic.' if state.get('ui_language') == 'ar' else ''}"
+                        ),
+                        user=item["content"][:1500],
+                        token_limit=250
+                    )
+                    
+                    if content:
+                        import json
+                        import re
+                        json_match = re.search(r"\{[\s\S]*\}", content)
+                        if json_match:
+                            parsed_data = json.loads(json_match.group(0))
+                            # Wrap for compatibility
+                            parsed = parsed_data
+                            logger.info(f"Local Ollama law parsing successful")
                 except Exception as e:
-                    logger.warning(f"Groq law parsing call failed: {e}")
-
-                try:
-                    # Fallback: Gemini
-                    if not parsed and settings.gemini_api_key:
-                        resp = await client.post(
-                            f"https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions",
-                            params={"key": settings.gemini_api_key},
-                            headers={"Content-Type": "application/json"},
-                            json={
-                                "model": "gemini-2.0-flash",
-                                "response_format": {"type": "json_object"},
-                                "messages": [
-                                    {"role": "system", "content": (
-                                        f"You are a DIFC legal article parser. Return ONLY valid JSON.\n"
-                                        f"Schema: {{\"article_number\": \"e.g. Article 19(2) or null\", \"article_title\": \"short title or null\", "
-                                        f"\"law_name\": \"full law name\", \"summary\": \"1-2 sentence plain English explanation\"}}\n"
-                                        f"{'CRITICAL: Translate the summary, article title and law name into Arabic.' if state.get('ui_language') == 'ar' else ''}"
-                                    )},
-                                    {"role": "user", "content": item["content"][:1500]}
-                                ],
-                                "max_tokens": 120,
-                                "temperature": 0.0,
-                            }
-                        )
-                        if resp.status_code == 200:
-                            data = resp.json()
-                            content = data["choices"][0]["message"]["content"]
-                            parsed = json.loads(content) if isinstance(content, str) else content
-                            logger.info(f"Gemini law parsing successful for {item['title']}")
-                except Exception as e:
-                    logger.warning(f"Gemini law parsing fallback failed: {e}")
+                    logger.warning(f"Local Ollama law parsing failed: {e}")
 
                 if parsed:
                     item["article_number"] = parsed.get("article_number")
@@ -988,36 +923,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
             },
         }
 
-    # ── 4. Groq API Caller ────────────────────────────────────────────────────
-    async def _call_groq(timeout_seconds: int, model_name: str) -> str:
-        logger.info(f"reasoning_agent_node: calling groq ({model_name})")
-        
-        payload = {
-            "model": model_name,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            "stream": False,
-            "temperature": 0.1,
-            "max_tokens": NODE_TOKEN_LIMITS["reasoning"]
-        }
-        async with httpx.AsyncClient(timeout=timeout_seconds) as client:
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {settings.groq_api_key1}"
-            }
-            response = await client.post(model_url, headers=headers, json=payload, timeout=timeout_seconds)
-            
-            if response.status_code != 200:
-                logger.error(f"Groq API Error {response.status_code}: {response.text}")
-                response.raise_for_status()
-                
-            data = response.json()
-            return str(data.get("choices", [{}])[0].get("message", {}).get("content", ""))
-
-
-    # ── 5. JSON parsing helpers ───────────────────────────────────────────────
+    # ── 4. JSON parsing helpers ───────────────────────────────────────────────
     # (parsing logic stays same)
     def _normalize_reasoning(content: str, used_label: str, status: str) -> dict[str, Any]:
         parsed = _extract_json_object(content)

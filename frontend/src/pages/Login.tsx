@@ -45,10 +45,10 @@ const Login = () => {
   }
 
   return (
-    <div className="dark bg-[#0B1521] font-body text-on-surface selection:bg-tertiary/30 min-h-screen">
+    <div className="dark bg-navy-950 font-body text-slate-200 selection:bg-emerald-500/30 min-h-screen">
       {/* Top Navigation Bar */}
-      <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-8 py-6 bg-transparent">
-        <div className="text-2xl font-headline italic text-emerald-50">{t('landing.lexAi')}</div>
+      <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-8 py-8 bg-transparent">
+        <div className="text-3xl font-headline italic font-bold text-white tracking-tight">{t('landing.lexAi')}</div>
         <div className="flex items-center gap-6">
           <button 
             onClick={toggleLanguage}
@@ -73,7 +73,7 @@ const Login = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
         
         {/* Left Side - Branding & Architecture Preview */}
-        <section className="relative hidden lg:flex flex-col justify-center px-16 xl:px-24 border-r border-white/5 bg-gradient-to-br from-[#0d1f2d] to-[#0B1521] overflow-hidden">
+        <section className="relative hidden lg:flex flex-col justify-center px-20 xl:px-32 border-r border-white/5 bg-gradient-to-br from-navy-900 to-emerald-950 overflow-hidden">
           
           <BackgroundPreview />
 
@@ -94,11 +94,11 @@ const Login = () => {
             <div className="inline-flex items-center px-3 py-1 rounded-full border border-primary/20 bg-primary-container/30 text-primary text-[10px] uppercase tracking-[0.2em] font-medium">
               {t('landing.suite')}
             </div>
-            <h1 className="text-5xl lg:text-7xl font-headline italic text-emerald-50 leading-tight">
+            <h1 className="text-6xl lg:text-8xl font-headline italic text-white leading-tight font-bold">
               {t('landing.lexAi')}
             </h1>
             <p 
-              className="text-lg lg:text-xl text-on-primary-container font-light leading-relaxed"
+              className="text-xl lg:text-2xl text-emerald-100/80 font-light leading-relaxed max-w-md"
               dangerouslySetInnerHTML={{ __html: t('landing.insights') }}
             />
             <div className="pt-8 flex gap-8 items-center border-t border-white/5">
@@ -115,30 +115,30 @@ const Login = () => {
         </section>
 
         {/* Right Section: Login Form */}
-        <section className="flex flex-col items-center justify-center p-6 md:p-12 lg:p-24 bg-[#0f1923] relative z-10 w-full">
+        <section className="flex flex-col items-center justify-center p-6 md:p-12 lg:p-24 bg-navy-900 relative z-10 w-full">
           <div className="w-full max-w-md space-y-10">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="glass-card p-10 rounded-xl space-y-8 shadow-2xl"
+              className="bg-navy-800/40 backdrop-blur-xl p-12 rounded-[2.5rem] space-y-10 border border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
             >
-              <div className="space-y-2">
-                <h2 className="text-4xl font-headline text-on-surface">{t('auth.loginButton')}</h2>
-                <p className="text-on-surface-variant font-light text-sm">{t('auth.legalIntelligence')}</p>
+              <div className="space-y-3 text-center lg:text-left">
+                <h2 className="text-5xl font-headline font-bold text-white">{t('auth.loginButton')}</h2>
+                <p className="text-emerald-500/80 font-bold uppercase tracking-[0.2em] text-[10px]">{t('auth.legalIntelligence')}</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-4">
                   {/* Email Input */}
                   <div className="group">
-                    <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant font-medium mb-2" htmlFor="email">
+                    <label className="block text-[10px] uppercase tracking-[0.3em] text-slate-400 font-bold mb-3" htmlFor="email">
                       {t('auth.institutionalEmail')}
                     </label>
                     <div className="relative">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 w-5 h-5" />
+                      <User className="absolute left-5 top-1/2 -translate-y-1/2 text-emerald-500/40 w-5 h-5 group-focus-within:text-emerald-500 transition-colors" />
                       <input
-                        className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant/20 focus:border-tertiary focus:ring-0 rounded-none text-on-surface py-4 pl-12 pr-4 transition-all duration-300 outline-none gold-glow"
+                        className="w-full bg-navy-950/50 border border-white/5 focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 rounded-2xl text-white py-4 pl-14 pr-5 transition-all duration-300 outline-none placeholder:text-slate-600"
                         id="email"
                         placeholder="justice.smith@firm.ae"
                         type="text"
@@ -151,18 +151,18 @@ const Login = () => {
 
                   {/* Password Input */}
                   <div className="group">
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="block text-[10px] uppercase tracking-widest text-on-surface-variant font-medium" htmlFor="password">
+                    <div className="flex justify-between items-center mb-3">
+                      <label className="block text-[10px] uppercase tracking-[0.3em] text-slate-400 font-bold" htmlFor="password">
                         {t('auth.accessKey')}
                       </label>
-                      <a className="text-[10px] uppercase tracking-widest text-tertiary hover:text-tertiary-fixed transition-colors" href="#">
+                      <a className="text-[10px] uppercase tracking-[0.2em] text-emerald-500 hover:text-emerald-400 transition-colors font-bold" href="#">
                         {t('auth.forgot')}
                       </a>
                     </div>
                     <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 w-5 h-5" />
+                      <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-emerald-500/40 w-5 h-5 group-focus-within:text-emerald-500 transition-colors" />
                       <input
-                        className="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant/20 focus:border-tertiary focus:ring-0 rounded-none text-on-surface py-4 pl-12 pr-12 transition-all duration-300 outline-none gold-glow"
+                        className="w-full bg-navy-950/50 border border-white/5 focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 rounded-2xl text-white py-4 pl-14 pr-14 transition-all duration-300 outline-none placeholder:text-slate-600"
                         id="password"
                         placeholder="••••••••••••"
                         type={showPassword ? "text" : "password"}
@@ -171,9 +171,9 @@ const Login = () => {
                         required
                       />
                       <button 
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-on-surface" 
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
+                         className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors" 
+                         type="button"
+                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                       </button>
@@ -193,19 +193,19 @@ const Login = () => {
 
                 {/* Login Button */}
                 <button 
-                  className="w-full py-4 bg-gradient-to-r from-tertiary to-tertiary-container text-on-tertiary-fixed font-bold text-sm uppercase tracking-[0.2em] rounded-md shadow-lg shadow-tertiary/10 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 transition-all duration-300 flex items-center justify-center gap-2" 
+                  className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm uppercase tracking-[0.3em] rounded-2xl shadow-xl shadow-emerald-900/40 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 transition-all duration-500 flex items-center justify-center gap-3" 
                   type="submit"
                   disabled={isLoading}
                 >
                   {isLoading ? (
                     <div className="flex items-center gap-3">
-                      <div className="w-4 h-4 border-2 border-on-tertiary-fixed/30 border-t-on-tertiary-fixed rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       <span>{t('auth.authenticating')}</span>
                     </div>
                   ) : (
                     <>
                       <span>{t('auth.login')}</span>
-                      <ArrowRight className="w-5 h-5" />
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </>
                   )}
                 </button>

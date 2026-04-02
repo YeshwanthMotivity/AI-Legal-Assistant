@@ -190,8 +190,7 @@ const PrecedentDetailPage: React.FC = () => {
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([])
   const chatEndRef = useRef<HTMLDivElement>(null)
 
-  const [aiSummary, setAiSummary] = useState<string>('')
-  const [summaryLoading, setSummaryLoading] = useState(false)
+  const [chatError, setChatError] = useState<string | null>(null)
   const { data: precedent, isLoading, error } = useQuery({
     queryKey: ['precedent', id, i18n.language],
     queryFn: () => getPrecedent(id || '', i18n.language),
@@ -214,45 +213,14 @@ const PrecedentDetailPage: React.FC = () => {
     mutationFn: (message: string) => chatWithPrecedent(id || '', message, i18n.language),
     onSuccess: (data) => {
       setMessages((prev) => [...prev, { role: 'ai', content: data.response }])
+      setChatError(null)
     },
+    onError: (err: any) => {
+      console.error('Chat failed:', err)
+      setChatError(t('judge.workspace.analysisError'))
+    }
   })
 
-  // Dynamic x.ai Summary Generation
-  useEffect(() => {
-    if (!precedent?.text || aiSummary || summaryLoading) return
-    
-    // Safety check for API key to prevent Bearer error
-    const apiKey = import.meta.env.VITE_GROQ_API_KEY
-    if (!apiKey || apiKey === 'undefined' || apiKey === '') {
-      console.warn('VITE_GROQ_API_KEY is missing, skipping AI summary generation')
-      return
-    }
-
-    setSummaryLoading(true)
-    
-    fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
-        messages: [{
-          role: 'user',
-          content: i18n.language === 'ar' 
-            ? `لخّص قضية محكمة مركز دبي المالي العالمي في 2-3 جمل كحد أقصى بطريقة موجزة وواقعية — من قاضى من، وما هو موضوع النزاع، وما هي النتيجة.\n\n${precedent.text.slice(0, 3000)}`
-            : `In 2-3 sentences max, summarize this DIFC court case — who sued whom, what the dispute was about, and the outcome. Be concise and factual.\n\n${precedent.text.slice(0, 3000)}`
-        }],
-        temperature: 0,
-        max_tokens: 150
-      })
-    })
-    .then(r => r.json())
-    .then(d => setAiSummary(d.choices?.[0]?.message?.content || ''))
-    .catch(err => console.error('Groq summary fetch failed:', err))
-    .finally(() => setSummaryLoading(false))
-  }, [precedent?.text, aiSummary])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -269,6 +237,7 @@ const PrecedentDetailPage: React.FC = () => {
     const userMsg = chatMessage.trim()
     setMessages((prev) => [...prev, { role: 'user', content: userMsg }])
     setChatMessage('')
+    setChatError(null)
     chatMutation.mutate(userMsg)
   }
 
@@ -371,11 +340,11 @@ const PrecedentDetailPage: React.FC = () => {
                         ...(parties.claimant ? [{ label: t('judge.form.claimant'), value: parties.claimant,  type: 'text' as const }] : []),
                         ...(parties.respondent ? [{ label: t('judge.form.respondent'), value: parties.respondent,  type: 'text' as const }] : []),
                         ...(outcomeStyle ? [{ label: t('judge.workspace.outcome'), value: outcomeStyle, type: 'outcome' as const }] : []),
-                        ...(aiSummary || summaryLoading ? [{
-                          label: t('judge.workspace.summary'),
-                          value: summaryLoading ? t('judge.workspace.generatingAiSummary') : aiSummary,
-                          type: 'summary' as const
-                        }] : []),
+                        { 
+                          label: t('judge.workspace.summary'), 
+                          value: cleanSummary,
+                          type: 'summary' as const 
+                        },
                         { label: t('judge.workspace.source'),      value: precedent.title,                                   type: 'text' },
                       ]
 
@@ -619,8 +588,6 @@ const PrecedentDetailPage: React.FC = () => {
                           title: precedent.title,
                           type: precedent.category || t('judge.workspace.difcJudicialPrecedent'),
                           facts: (() => {
-                            if (summaryLoading) return 'Generating AI summary...'
-                            if (aiSummary) return aiSummary
                             if (precedent.summary && precedent.summary.length < 500 && !precedent.summary.startsWith('with any')) return precedent.summary
                             const cleanText = (precedent.text || '')
                               .replace(/https?:\/\/\S+/g, '')

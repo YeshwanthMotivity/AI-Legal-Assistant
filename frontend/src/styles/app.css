@@ -5,26 +5,33 @@
   --font-sans: 'Inter', 'Cairo', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Emerald Mirror Precision Palette */
-  --color-primary-50: #eff6ff;
-  --color-primary-100: #dbeafe;
-  --color-primary-200: #bfdbfe;
-  --color-primary-300: #93c5fd;
-  --color-primary-400: #60a5fa;
-  --color-primary-500: #3b82f6;
-  --color-primary-600: #2563eb;
-  --color-primary-700: #1d4ed8;
-  --color-primary-800: #1e40af;
-  --color-primary-900: #1e3a8a;
+  /* Lexis Emerald Precision Palette */
+  --color-emerald-50: #F0FDF4;
+  --color-emerald-100: #DCFCE7;
+  --color-emerald-200: #BBF7D0;
+  --color-emerald-600: #16A34A;
+  --color-emerald-800: #065F46;
+
+  --color-navy-50: #F8FAFC;
+  --color-navy-100: #F1F5F9;
+  --color-navy-200: #E2E8F0;
+  --color-navy-800: #1F2937;
+  --color-navy-900: #0F172A;
+
+  --color-terracotta-100: #FEE2E2;
+  --color-terracotta-200: #FECACA;
+  --color-terracotta-800: #823F3A;
 
   --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent-red);
   --color-background: var(--bg-base);
   --color-card: var(--bg-card);
   --color-border: var(--border-color);
   --color-foreground: var(--text-primary);
   
-  --color-gold: #d4af37;
-  --color-deep-green: #022c22;
+  --color-gold: #C9A03D;
+  --color-deep-green: #065F46;
 
   /* Sovereign Legal Intelligence Palette */
   --color-surface-bright: #353944;
@@ -110,43 +117,47 @@
 }
 
 :root {
-  /* Semantic Variables (Sovereign Theme - Default Dark) */
-  --primary: #2563eb;
+  /* Lexis Emerald Theme — Light (Primary for Legal Professionals) */
+  --primary: #065F46;
   --primary-foreground: #ffffff;
-  --primary-hover: #1d4ed8;
-  --primary-light: #93c5fd;
+  --primary-hover: #044b37;
+  --primary-light: #BBF7D0;
   
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #3b82f6;
+  --secondary: #1F2937;
+  --secondary-foreground: #ffffff;
+  --accent-red: #823F3A;
+
+  --success: #16A34A;
+  --warning: #C9A03D;
+  --danger: #823F3A;
+  --info: #1F2937;
 
   /* Layout Base */
-  --bg-base: #0f172a;
-  --bg-surface: #1e293b;
-  --bg-card: #1e293b;
-  --bg-card-hover: #334155;
-  --bg-sidebar: #0f172a;
-  --sidebar-active: #1e293b;
-  --sidebar-text: #dfe2f1;
+  --bg-base: #F8FAFC;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #F1F5F9;
+  --bg-sidebar: #1F2937; 
+  --sidebar-active: #065F46;
+  --sidebar-text: #F1F5F9;
   
-  --border-color: #414944;
-  --border-subtle: rgba(37, 99, 235, 0.15);
-  --border-light: #313540;
+  --border-color: #E2E8F0;
+  --border-subtle: rgba(6, 95, 70, 0.1);
+  --border-light: #F1F5F9;
   
-  --text-primary: #dfe2f1;
-  --text-secondary: #c0c8c3;
-  --text-muted: #8a938d;
-  --text-accent: #e9c349;
+  --text-primary: #1F2937;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  --text-accent: #C9A03D;
   
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
   
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
 
   --font-body: 'Inter', sans-serif;
   --font-heading: 'Source Serif Pro', serif;
@@ -204,10 +215,11 @@ h1, h2, h3, .judicial-title {
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(20px) saturate(190%);
   -webkit-backdrop-filter: blur(20px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow-lg);
 }
 
 .text-gradient {
@@ -247,16 +259,27 @@ h1, h2, h3, .judicial-title {
 }
 
 .btn-secondary {
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  background: var(--secondary);
+  color: var(--primary-foreground);
+  border: 1px solid var(--secondary);
   box-shadow: var(--shadow-sm);
 }
 
 .btn-secondary:hover {
-  background: var(--bg-card-hover);
+  background: #111827;
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
+}
+
+.btn-outlined {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.btn-outlined:hover {
+  background: var(--primary-light);
+  transform: translateY(-1px);
 }
 
 /* Status Badges */
@@ -272,10 +295,10 @@ h1, h2, h3, .judicial-title {
   border: 1px solid transparent;
 }
 
-.status-badge.pending { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border-color: rgba(245, 158, 11, 0.2); }
-.status-badge.active { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-color: rgba(59, 130, 246, 0.2); }
-.status-badge.done { background: rgba(16, 185, 129, 0.1); color: #34d399; border-color: rgba(16, 185, 129, 0.2); }
-.status-badge.failed { background: rgba(239, 68, 68, 0.1); color: #f87171; border-color: rgba(239, 68, 68, 0.2); }
+.status-badge.pending { background: #FEF3C7; color: #92400E; border-color: #FDE68A; }
+.status-badge.active { background: #DBEAFE; color: #1E40AF; border-color: #BFDBFE; }
+.status-badge.done { background: var(--primary-light); color: var(--primary); border-color: #6FCF97; }
+.status-badge.failed { background: #FEE2E2; color: #823F3A; border-color: #FECACA; }
 
 @layer base {
   /* Forms */

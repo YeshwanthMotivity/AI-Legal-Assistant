@@ -47,18 +47,18 @@ const SidebarItem = ({ icon: Icon, label, href, active, collapsed, onClick }: Si
     to={href}
     onClick={onClick}
     className={cn(
-      "relative flex items-center gap-3 py-2 text-sm font-semibold transition-all rounded-xl mb-1 group overflow-hidden",
-      collapsed ? "px-0 justify-center" : "px-3",
+      "relative flex items-center gap-3 py-2.5 text-sm font-semibold transition-all rounded-xl mb-1 group overflow-hidden px-4",
+      collapsed ? "justify-center px-0" : "",
       active 
-        ? "bg-primary/5 text-primary shadow-sm border border-primary/10 scale-[1.01]" 
-        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground border border-transparent"
+        ? "bg-primary text-primary-foreground shadow-lg border border-primary/20 scale-[1.02]" 
+        : "text-sidebar-text/70 hover:bg-white/5 hover:text-sidebar-text border border-transparent"
     )}
     title={collapsed ? label : undefined}
   >
     {active && (
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 bg-primary rounded-r-md transition-all duration-300 shadow-[0_0_8px_rgba(37,99,235,0.5)]" />
+      <div className="absolute left-0 top-0 bottom-0 w-1 bg-white/30 rounded-r-md transition-all duration-300" />
     )}
-    <Icon className={cn("shrink-0", collapsed ? "w-6 h-6" : "w-5 h-5", active ? "text-primary" : "group-hover:scale-105 transition-transform text-muted-foreground/70 group-hover:text-primary/70")} />
+    <Icon className={cn("shrink-0", collapsed ? "w-6 h-6" : "w-5 h-5", active ? "text-white" : "group-hover:scale-105 transition-transform text-sidebar-text/50 group-hover:text-primary-light")} />
     {!collapsed && <span className="truncate">{label}</span>}
   </NavLink>
 );
@@ -117,7 +117,7 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
       {/* Static Sidebar */}
       <aside 
         className={cn(
-          "glass-strong flex flex-col fixed h-full z-40 transition-all duration-300 border-r-0 border-l-0 shadow-2xl",
+          "bg-sidebar flex flex-col fixed h-full z-40 transition-all duration-300 border-r-0 border-l-0 shadow-[4px_0_24px_rgba(0,0,0,0.15)]",
           isCollapsed ? "w-[80px]" : "w-[280px]",
           isRTL ? "right-0 border-l" : "left-0 border-r"
         )}
@@ -150,12 +150,12 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
 
         {/* AI Engine Info Card (Static) */}
         {!isCollapsed && (
-          <div className="px-6 py-5 mx-4 mb-6 rounded-3xl bg-primary/5 border border-primary/10 glass-strong">
+          <div className="px-6 py-5 mx-4 mb-6 rounded-3xl bg-black/20 border border-white/5">
             <div className="flex items-center gap-2.5 mb-2.5">
-               <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(37,99,235,0.5)]" />
-               <span className="text-[10px] font-black uppercase tracking-widest text-primary truncate">{t('judge.judgment.aiReasoningNode')}</span>
+               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+               <span className="text-[10px] font-black uppercase tracking-widest text-primary-light truncate">{t('judge.judgment.aiReasoningNode')}</span>
             </div>
-            <p className="text-[10px] text-muted-foreground/80 leading-relaxed font-medium">
+            <p className="text-[10px] text-white/40 leading-relaxed font-medium">
                {t('judge.judgment.aiReasoningDesc')}
             </p>
           </div>
@@ -209,13 +209,13 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 text-muted-foreground hover:text-primary rounded-full"
+                className="h-10 w-10 text-muted-foreground hover:text-primary rounded-xl"
                 onClick={() => setIsCollapsed(!isCollapsed)}
               >
                 {isCollapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
               </Button>
               <div>
-                <h1 className="text-3xl font-black tracking-tighter text-gradient leading-none">
+                <h1 className="text-3xl font-headline font-bold tracking-tight text-primary leading-none">
                   {title}
                 </h1>
                 {subtitle && (

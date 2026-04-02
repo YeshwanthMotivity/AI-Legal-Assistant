@@ -60,7 +60,7 @@ export default function CaseWorkflowStepper({
         
         {/* Active progress line up to current step */}
         <div 
-          className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full transition-all duration-500 ease-in-out"
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full transition-all duration-700 ease-in-out shadow-[0_0_8px_rgba(6,95,70,0.3)]"
           style={{ width: `${Math.min(100, Math.max(0, (currentStep - 1) / 4 * 100))}%` }}
         />
 
@@ -89,17 +89,16 @@ export default function CaseWorkflowStepper({
               {/* Icon Bubble */}
               <div 
                 className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 backdrop-blur-md",
+                  "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-500 backdrop-blur-md",
                   compact ? "w-8 h-8 text-xs" : "",
-                  isCompleted ? "bg-primary text-primary-foreground border-primary" : 
-                  isCurrent ? "bg-card border-primary text-primary shadow-lg" : 
-                  "bg-muted/30 border-muted text-muted-foreground",
-                  hasGlow ? "shadow-[0_0_15px_rgba(37,99,235,0.4)] ring-4 ring-primary/20" : "",
-                  isAiProcessing ? "animate-pulse ring-4 ring-tertiary/20 border-tertiary text-tertiary" : "",
+                  isCompleted ? "bg-primary text-primary-foreground border-primary shadow-md" : 
+                  isCurrent ? "bg-white border-primary text-primary shadow-lg ring-4 ring-emerald-50" : 
+                  "bg-slate-50 border-slate-200 text-slate-400",
+                  isAiProcessing ? "animate-pulse ring-4 ring-gold/20 border-gold text-gold" : "",
                   isClickable && isFuture ? "group-hover:border-primary/50 group-hover:bg-primary/5" : ""
                 )}
               >
-                <Icon className={cn(compact ? "w-4 h-4" : "w-5 h-5")} />
+                <Icon className={cn(compact ? "w-4 h-4" : "w-5 h-5", isCompleted ? "stroke-[3px]" : "")} />
               </div>
 
               {/* Label */}
@@ -115,8 +114,8 @@ export default function CaseWorkflowStepper({
                     </span>
                   )}
                   {isAiProcessing && (
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-tertiary mt-1 block animate-pulse">
-                      Processing...
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-gold mt-1 block animate-pulse">
+                      Analyzing...
                     </span>
                   )}
                 </div>

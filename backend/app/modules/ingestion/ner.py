@@ -134,6 +134,35 @@ def _regex_extract(text: str) -> list[dict]:
     return entities
 
 
+async def _call_ollama(system: str, user: str, token_limit: int = 512, response_format: str = "json") -> str:
+    """Generic Ollama /api/generate caller for ingestion tasks."""
+    payload = {
+        "model": settings.ollama_model_fallback,
+        "prompt": f"System: {system}\n\nUser Context: {user}\n\nAssistant Response:",
+        "stream": False,
+        "options": {
+            "num_ctx": 4096,
+            "temperature": 0.1,
+            "num_predict": token_limit
+        },
+    }
+    if response_format == "json":
+        payload["format"] = "json"
+        
+    async with httpx.AsyncClient(timeout=settings.ollama_timeout_seconds) as client:
+        try:
+            resp = await client.post(f"{settings.ollama_url}/api/generate", json=payload)
+            if resp.status_code != 200:
+                logger.error(f"Ollama API Error {resp.status_code}: {resp.text}")
+                return ""
+            
+            data = resp.json()
+            return str(data.get("response", "")).strip()
+        except Exception as e:
+            logger.error(f"Ollama call failed: {e}")
+            return ""
+
+
 async def extract_entities(text: str) -> list[dict]:
     """
     Extracts named entities using the fallback LLM.
@@ -150,29 +179,18 @@ async def extract_entities(text: str) -> list[dict]:
     )
 
     try:
-        url = "https://api.groq.com/openai/v1/chat/completions"
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {settings.groq_api_key1}"
-            }
-            response = await client.post(
-                url,
-                headers=headers,
-                json={
-                    "model": "llama-3.3-70b-versatile",
-                    "response_format": {"type": "json_object"},
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": text[:4000]}
-                    ],
-                    "temperature": 0.1
-                }
-            )
-            response.raise_for_status()
-            data = response.json()
-
-            content = data["choices"][0]["message"]["content"].strip()
+        # Exclusive: Local Intelligence (Ollama)
+        content = await _call_ollama(
+            system=system_prompt,
+            user=text[:4000],
+            token_limit=1000,
+            response_format="json"
+        )
+        
+        if not content:
+            raise ValueError("Local Ollama service returned empty content")
+            
+        logger.info("Local Ollama NER extraction successful")
 
         # Clean markdown fences
         content = re.sub(r"```json\s*", "", content)

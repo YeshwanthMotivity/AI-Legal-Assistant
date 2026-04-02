@@ -31,6 +31,32 @@ class SimilarityService:
         self.evaluation_repository = EvaluationEventRepository(db)
         self.case_repository = CaseRepository(db)
 
+    async def _call_ollama(self, system: str, user: str, token_limit: int = 512) -> str:
+        """Generic Ollama /api/generate caller for internal service tasks."""
+        payload = {
+            "model": settings.ollama_model_fallback,
+            "prompt": f"System: {system}\n\nUser Context: {user}\n\nAssistant Response:",
+            "stream": False,
+            "options": {
+                "num_ctx": 4096,
+                "temperature": 0.1,
+                "num_predict": token_limit
+            },
+        }
+        
+        async with httpx.AsyncClient(timeout=settings.ollama_timeout_seconds) as client:
+            try:
+                resp = await client.post(f"{settings.ollama_url}/api/generate", json=payload)
+                if resp.status_code != 200:
+                    logger.error(f"Ollama API Error {resp.status_code}: {resp.text}")
+                    return ""
+                
+                data = resp.json()
+                return str(data.get("response", "")).strip()
+            except Exception as e:
+                logger.error(f"Ollama call failed: {e}")
+                return ""
+
     async def find_similar(self, case_id: str) -> SimilarityResponse:
         """
         Find similar cases based on case summary embedding, ANN search, and reranking.
@@ -497,37 +523,25 @@ class SimilarityService:
             or any(existing_claimant.startswith(p) for p in _BAD_CLAIMANT_PREFIXES)
         )
         if claimant_is_bad and raw_text:
+            parsed = None
             try:
-                parsed = None
-                async with httpx.AsyncClient(timeout=15) as http:
-                    # Primary: Groq (settings.groq_api_key1)
-                    if settings.groq_api_key1:
-                        try:
-                            r = await http.post(
-                                "https://api.groq.com/openai/v1/chat/completions",
-                                headers={"Authorization": f"Bearer {settings.groq_api_key1}"},
-                                json={
-                                    "model": settings.groq_model,
-                                    "response_format": {"type": "json_object"},
-                                    "messages": [
-                                        {"role": "system", "content": "Extract claimant and respondent names from this DIFC case text. Return ONLY JSON: {\"claimant\": \"name\", \"respondent\": \"name\"}. Look for 'X v Y' patterns or 'Claimant:' labels."},
-                                        {"role": "user", "content": raw_text[:3000]}
-                                    ],
-                                    "max_tokens": 80,
-                                    "temperature": 0.0
-                                }
-                            )
-                            if r.status_code == 200:
-                                parsed = json.loads(r.json()["choices"][0]["message"]["content"])
-                                logger.info("Groq (Primary) party extraction successful")
-                        except Exception as e:
-                            logger.warning(f"Groq party extraction failed: {e}")
+                # Primary: Local Ollama (Exclusive)
+                content = await self._call_ollama(
+                    system="Extract claimant and respondent names from this DIFC case text. Return ONLY JSON: {\"claimant\": \"name\", \"respondent\": \"name\"}. Look for 'X v Y' patterns or 'Claimant:' labels.",
+                    user=raw_text[:3000],
+                    token_limit=80
+                )
+                if content:
+                    parsed_text = _cleanse_text(content)
+                    if parsed_text.startswith('{') and parsed_text.endswith('}'):
+                        parsed = json.loads(parsed_text)
+                        logger.info("Local Ollama party extraction successful")
+            except Exception as e:
+                logger.warning(f"Local party extraction failed: {e}")
 
-                    if parsed:
-                        payload["claimant"] = parsed.get("claimant")
-                        payload["respondent"] = parsed.get("respondent")
-            except Exception:
-                pass
+            if parsed:
+                payload["claimant"] = parsed.get("claimant")
+                payload["respondent"] = parsed.get("respondent")
         summary = (
             payload.get("facts_summary") or 
             payload.get("summary") or 
@@ -607,48 +621,37 @@ class SimilarityService:
             f"{detail.text}"
         )
         
-        # Primary: Groq
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            try:
-                if settings.groq_api_key1:
-                    resp = await client.post(
-                        "https://api.groq.com/openai/v1/chat/completions",
-                        headers={
-                            "Authorization": f"Bearer {settings.groq_api_key1}",
-                            "Content-Type": "application/json"
-                        },
-                        json={
-                            "model": settings.groq_model,
-                            "messages": [
-                                {"role": "system", "content": (
-                                    f"You are a DIFC legal analyst. Answer questions about the case: {detail.title}.\n"
-                                    f"{lang_instruction}\n"
-                                    "Rules:\n"
-                                    "- Answer ONLY based on the case text provided.\n"
-                                    "- Format your answer as clear numbered points.\n"
-                                    "- Each point = one key finding or fact. Max 5 points.\n"
-                                    "- Keep each point to 1-2 sentences.\n"
-                                    "- End with a one-line 'Summary:' conclusion.\n"
-                                    "- If the answer is not in the text, say: 'This information is not available in the case transcript.'\n\n"
-                                    f"CASE TEXT:\n{detail.text[:4000]}"
-                                )},
-                                {"role": "user", "content": request.message}
-                            ],
-                            "max_tokens": 600,
-                            "temperature": 0.0,
-                        }
-                    )
-                    if resp.status_code == 200:
-                        answer = resp.json()["choices"][0]["message"]["content"]
-                        logger.info(f"Precedent chat via Groq successful")
-                        return PrecedentChatResponse(response=answer)
-                    else:
-                        logger.warning(f"Groq failed with {resp.status_code}: {resp.text}")
-                
-                raise HTTPException(status_code=502, detail="Groq AI service failed")
-            except Exception as e:
-                logger.error(f"Precedent chat failed: {e}")
-                raise HTTPException(status_code=502, detail=f"AI service failed: {str(e)}")
+        # Exclusive: Local Intelligence (Ollama)
+        try:
+            logger.info(f"Precedent chat via Local Ollama ({settings.ollama_model_fallback})")
+            
+            system_instruction = (
+                f"You are a DIFC legal analyst. Answer questions about the case: {detail.title}.\n"
+                f"{lang_instruction}\n"
+                "Rules:\n"
+                "- Answer ONLY based on the case text provided.\n"
+                "- Format your answer as clear numbered points.\n"
+                "- Each point = one key finding or fact. Max 5 points.\n"
+                "- Keep each point to 1-2 sentences.\n"
+                "- End with a one-line 'Summary:' conclusion.\n"
+                "- If the answer is not in the text, say: 'This information is not available in the case transcript.'\n\n"
+                f"CASE TEXT:\n{detail.text[:4000]}"
+            )
+            
+            answer = await self._call_ollama(
+                system=system_instruction,
+                user=request.message,
+                token_limit=600
+            )
+            
+            if answer:
+                logger.info(f"Precedent chat via Local Ollama successful")
+                return PrecedentChatResponse(response=answer)
+            
+            raise HTTPException(status_code=502, detail="Local AI service failed to generate response")
+        except Exception as e:
+            logger.error(f"Precedent chat failed: {e}")
+            raise HTTPException(status_code=502, detail=f"Local AI service error: {str(e)}")
 
 def _cleanse_text(text: Any) -> str:
     """Helper to remove common artifacts from AI generated text."""

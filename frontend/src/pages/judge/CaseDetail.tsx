@@ -224,12 +224,12 @@ const CaseDetail = () => {
         {/* Global Notifications Section */}
         {localMessage && (
           <div className={cn(
-            "mx-6 mt-6 p-4 rounded-xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-4 shadow-sm",
-            messageType === 'error' ? "bg-error-container text-on-error-container border-error/20" : "bg-primary/10 border-primary/20 text-primary"
+            "mx-6 mt-6 p-4 rounded-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-4 shadow-sm",
+            messageType === 'error' ? "bg-terracotta-100 text-terracotta-800 border-terracotta-200" : "bg-emerald-50 border-emerald-100 text-emerald-800"
           )}>
             {messageType === 'error' ? <AlertCircle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
-            <span className="font-semibold text-sm">{localMessage}</span>
-            <Button variant="ghost" size="icon" className="ml-auto h-8 w-8" onClick={() => setLocalMessage('')}>
+            <span className="font-bold text-sm">{localMessage}</span>
+            <Button variant="ghost" size="icon" className="ml-auto h-8 w-8 hover:bg-black/5" onClick={() => setLocalMessage('')}>
                <Plus className="w-4 h-4 rotate-45" />
             </Button>
           </div>
@@ -259,20 +259,20 @@ const CaseDetail = () => {
           <div className="col-span-12 xl:col-span-8 space-y-8">
 
             {/* CASE SUMMARY */}
-            <Card className="bg-surface-container-lowest dark:bg-surface-container overflow-hidden rounded-xl editorial-shadow border border-outline-variant/30">
-              <CardHeader className="p-5 border-b border-outline-variant/20 bg-surface-container-low/40">
-                <CardTitle className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <Card className="bg-white overflow-hidden rounded-2xl shadow-sm border border-slate-200">
+              <CardHeader className="p-6 border-b border-slate-50 bg-slate-50/50">
+                <CardTitle className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-primary">
+                  <Sparkles className="w-4 h-4 text-primary" />
                   {t('judge.workspace.caseSummary')}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-5">
+              <CardContent className="p-6">
                 {analysis?.summary ? (
-                  <p className="text-sm text-on-surface leading-relaxed">
+                  <p className="text-sm text-secondary leading-relaxed font-medium">
                     {analysis.summary}
                   </p>
                 ) : (
-                  <p className="text-sm text-on-surface-variant leading-relaxed italic">
+                  <p className="text-sm text-slate-400 leading-relaxed italic font-medium">
                     {t('judge.workspace.activateIntelligenceDesc')}
                   </p>
                 )}
@@ -282,12 +282,12 @@ const CaseDetail = () => {
             {/* SIMILAR PRECEDENTS */}
             {(isReady || precedents.length > 0) && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-on-surface">
+                <div className="flex items-center justify-between mt-2">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-secondary">
                     <Scale className="w-4 h-4 text-primary" />
                     {t('judge.workspace.precedentAnalysis')}
                   </h3>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                     {precedents.length} {t('judge.workspace.total')}
                   </span>
                 </div>
@@ -306,43 +306,43 @@ const CaseDetail = () => {
                           key={item.caseId}
                           to={`/judge/precedents/${item.caseId}`}
                           state={{ fromCaseId: id }}
-                          className="group bg-surface-container-low p-5 rounded-xl border border-outline-variant/30 hover:border-primary/40 hover:shadow-md transition-all duration-200 block"
+                          className="group bg-white p-6 rounded-2xl border border-slate-200 hover:border-primary/50 hover:shadow-md transition-all duration-300 block"
                         >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0 space-y-2">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                          <div className="flex items-start justify-between gap-6">
+                            <div className="flex-1 min-w-0 space-y-3">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
                                   {t('judge.workspace.rulingId')}: {item.caseId}
                                 </span>
                                 {isHighMatch && (
-                                  <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-bold uppercase px-1.5 h-4">
+                                  <Badge className="bg-emerald-50 text-emerald-700 border-none text-[9px] font-heavy tracking-tighter uppercase px-2 h-5 rounded-md">
                                     {t('judge.workspace.strongMatch')}
                                   </Badge>
                                 )}
                               </div>
-                              <h5 className="text-sm font-semibold text-on-surface leading-snug">{item.title}</h5>
-                              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                              <h5 className="text-lg font-headline font-bold text-secondary leading-snug group-hover:text-primary transition-colors">{item.title}</h5>
+                              <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-medium">
                                 {item.summary?.substring(0, 110) || t('judge.workspace.legalAlignmentFound')}
                               </p>
                             </div>
-                            <div className="shrink-0 text-right space-y-1.5">
-                              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                            <div className="shrink-0 text-right space-y-2">
+                              <div className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
                                 {t('judge.workspace.similarity')}
                               </div>
-                              <div className="text-2xl font-black text-emerald-600">{pct}%</div>
-                              <div className="w-16 h-1.5 bg-outline-variant/20 rounded-full overflow-hidden ml-auto">
+                              <div className="text-3xl font-black text-emerald-600">{pct}%</div>
+                              <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden ml-auto">
                                 <div
-                                  className="h-full bg-emerald-500 transition-all duration-300"
+                                  className="h-full bg-emerald-500 transition-all duration-500 ease-out"
                                   style={{ width: `${pct}%` }}
                                 />
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-outline-variant/20">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">
+                          <div className="flex items-center gap-1.5 mt-5 pt-4 border-t border-slate-50">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors">
                               {t('judge.workspace.detailView')}
                             </span>
-                            <ChevronRight className="w-3 h-3 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                            <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                           </div>
                         </Link>
                       )
@@ -362,35 +362,35 @@ const CaseDetail = () => {
             {/* LAW ARTICLES */}
             {(isReady || lawArticles.length > 0) && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-on-surface">
+                <div className="flex items-center justify-between mt-4">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-secondary">
                     <BookOpen className="w-4 h-4 text-primary" />
                     {t('judge.workspace.legalFramework')}
                   </h3>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                     {lawArticles.length} {t('judge.workspace.total')}
                   </span>
                 </div>
 
                 {lawArticles.length > 0 ? (
-                  <Card className="bg-surface-container-low border border-outline-variant/30 rounded-xl overflow-hidden">
+                  <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                     <CardContent className="p-0">
-                      <div className="divide-y divide-outline-variant/20">
+                      <div className="divide-y divide-slate-50">
                         {lawArticles.map((art: any, idx: number) => {
                           const title = typeof art === 'string' ? art : (art.title || art.article_number || `Article ${idx + 1}`)
                           const content = typeof art === 'object' ? (art.content || '') : ''
                           return (
-                            <div key={idx} className="px-6 py-5">
-                              <div className="flex items-center gap-4">
-                                <div className="shrink-0 w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                                  <FileText className="w-4 h-4 text-emerald-600" />
+                            <div key={idx} className="px-6 py-6 hover:bg-slate-50/50 transition-colors">
+                              <div className="flex items-center gap-5">
+                                <div className="shrink-0 w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                                  <FileText className="w-5 h-5 text-primary" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <span className="text-xs font-bold uppercase tracking-widest text-emerald-700">
+                                  <span className="text-sm font-bold text-secondary block mb-1">
                                     {title}
                                   </span>
                                   {content && (
-                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{content}</p>
+                                    <p className="text-xs text-slate-500 font-medium leading-relaxed">{content}</p>
                                   )}
                                 </div>
                               </div>
@@ -417,13 +417,13 @@ const CaseDetail = () => {
 
         {/* JUDGMENT DRAFTING WORKSPACE (EXPANDED FOOTER SECTION) */}
         {isReady && (
-          <div id="judgment-editor-workspace" className="px-6 mt-8 space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
-             <div className="flex flex-col gap-2 border-l-2 border-primary pl-4">
-                <div className="flex items-center gap-2">
-                   <Gavel className="w-5 h-5 text-primary" />
-                   <h3 className="text-lg font-semibold text-on-surface">{t('judge.workspace.finalJudgmentOrchestrator')}</h3>
+          <div id="judgment-editor-workspace" className="px-6 mt-10 space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 pb-20">
+             <div className="flex flex-col gap-2 border-l-4 border-primary pl-6 py-1">
+                <div className="flex items-center gap-3">
+                   <Gavel className="w-6 h-6 text-primary" />
+                   <h3 className="text-3xl font-headline font-bold text-secondary">{t('judge.workspace.finalJudgmentOrchestrator')}</h3>
                 </div>
-                <p className="text-sm text-muted-foreground">{t('judge.workspace.finalJudgmentOrchestratorDesc')}</p>
+                <p className="text-sm text-slate-500 font-medium">{t('judge.workspace.finalJudgmentOrchestratorDesc')}</p>
              </div>
              
              <JudgmentEditor
@@ -450,21 +450,21 @@ const CaseDetail = () => {
         
         {/* State Placeholder for Initial View */}
         {!isActivelyLoading && !isReady && (
-          <div className="mt-8 mx-6 p-6 text-center bg-surface-container-low dark:bg-surface-container-high rounded-3xl border border-dashed border-outline-variant/30 animate-in fade-in duration-500">
-             <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mx-auto mb-6 relative">
-                <Sparkles className="w-8 h-8 text-primary/40 animate-pulse" />
-                <div className="absolute inset-0 rounded-full border border-primary/20 animate-ping" />
+          <div className="mt-10 mx-6 p-12 text-center bg-white rounded-[2rem] border border-slate-200 shadow-sm animate-in fade-in duration-700">
+             <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-8 relative">
+                <Sparkles className="w-10 h-10 text-primary animate-pulse" />
+                <div className="absolute inset-0 rounded-full border-2 border-primary/20 animate-ping" />
              </div>
-             <h2 className="text-lg font-semibold text-primary">{t('judge.workspace.activateIntelligence')}</h2>
-             <p className="mt-4 text-sm text-muted-foreground max-w-lg mx-auto">
+             <h2 className="text-3xl font-headline font-bold text-secondary">{t('judge.workspace.activateIntelligence')}</h2>
+             <p className="mt-4 text-sm text-slate-500 max-w-lg mx-auto font-medium leading-relaxed">
                {t('judge.workspace.activateIntelligenceDesc')}
              </p>
              <Button
                size="lg"
-               className="mt-6 h-10 px-6 rounded-lg bg-primary text-on-primary font-semibold transition-all duration-200 gap-2"
+               className="mt-8 h-12 px-10 rounded-xl bg-primary hover:bg-emerald-700 text-white font-extrabold tracking-widest uppercase transition-all duration-300 gap-3 shadow-xl shadow-emerald-900/20"
                onClick={() => runAnalysisMutation.mutate()}
              >
-                <Sparkles className="w-4 h-4" />
+                <Sparkles className="w-5 h-5" />
                 {t('judge.workspace.launchWorkbench')}
              </Button>
           </div>

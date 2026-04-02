@@ -122,8 +122,35 @@ class LegalStructureParser:
     )
 
     def __init__(self, timeout: float = 120.0):
-        self.url = "https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions"
         self.timeout = timeout
+
+    async def _call_ollama(self, system: str, user: str, token_limit: int = 512, response_format: str = "json") -> str:
+        """Generic Ollama /api/generate caller for parsing tasks."""
+        payload = {
+            "model": settings.ollama_model_fallback,
+            "prompt": f"System: {system}\n\nUser Context: {user}\n\nAssistant Response:",
+            "stream": False,
+            "options": {
+                "num_ctx": 4096,
+                "temperature": 0.1,
+                "num_predict": token_limit
+            },
+        }
+        if response_format == "json":
+            payload["format"] = "json"
+            
+        async with httpx.AsyncClient(timeout=settings.ollama_timeout_seconds) as client:
+            try:
+                resp = await client.post(f"{settings.ollama_url}/api/generate", json=payload)
+                if resp.status_code != 200:
+                    logger.error(f"Ollama API Error {resp.status_code}: {resp.text}")
+                    return ""
+                
+                data = resp.json()
+                return str(data.get("response", "")).strip()
+            except Exception as e:
+                logger.error(f"Ollama call failed: {e}")
+                return ""
 
     async def parse(self, text: str) -> Dict[str, Any]:
         """
@@ -142,43 +169,17 @@ class LegalStructureParser:
         }
 
         try:
-            input_text = text[:8000]
-
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                headers = {
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {settings.groq_api_key1}"
-                }
-                response = await client.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers=headers,
-                    json={
-                        "model": "llama-3.3-70b-versatile",
-                        "response_format": {"type": "json_object"},
-                        "messages": [
-                            {"role": "system", "content": self.SYSTEM_PROMPT},
-                            {
-                                "role": "user",
-                                "content": f"Parse the following legal text:\n\n{input_text}"
-                            }
-                        ],
-                        "temperature": 0.0
-                    }
-                )
-                response.raise_for_status()
-                data = response.json()
-
-            content = data["choices"][0]["message"]["content"]
-
-            # Clean markdown fences if present
-            content = re.sub(r"```json\s*", "", content)
-            content = re.sub(r"\s*```", "", content)
-
-            # Extract JSON object even if there's surrounding text
-            json_match = re.search(r'\{[\s\S]*\}', content)
-            if json_match:
-                content = json_match.group(0)
-
+            content = await self._call_ollama(
+                system=self.SYSTEM_PROMPT,
+                user=f"Parse the following legal text:\n\n{text[:8000]}",
+                token_limit=2000,
+                response_format="json"
+            )
+            
+            if not content:
+                raise ValueError("Local Ollama service returned empty content")
+                
+            logger.info("Local Ollama legal parser successful")
             structured_data = json.loads(content.strip())
 
             # Ensure all keys exist
