@@ -75,7 +75,7 @@ export default function JudgeDashboard() {
       <div className="space-y-10">
           
         {/* 1. Top Metrics */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {[
             { label: 'activeCases', value: Math.max(stats.pending, 24), icon: TrendingUp, footer: 'fromLastWeek', accent: 'text-text-accent' },
             { label: 'pendingJudgments', value: String(stats.ready).padStart(2, '0'), icon: AlertTriangle, footer: 'urgentReview', count: stats.urgent, accent: 'text-text-accent' },
@@ -84,20 +84,20 @@ export default function JudgeDashboard() {
           ].map((m, i) => (
             <motion.div 
               key={m.label}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 * i }}
-              className="bg-white/5 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-2xl border border-white/5 hover:border-text-accent/30 transition-all duration-700 group relative overflow-hidden"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * i, duration: 0.8 }}
+              className="bg-white/[0.02] backdrop-blur-3xl p-10 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] border border-white/5 hover:border-text-accent/30 transition-all duration-700 group relative overflow-hidden"
             >
               <div className="absolute inset-0 bg-text-accent opacity-0 group-hover:opacity-[0.03] transition-opacity duration-1000 blur-3xl pointer-events-none" />
               <div className="relative z-10 h-full flex flex-col justify-between">
                 <div>
-                  <p className="text-[10px] font-black text-text-accent/60 uppercase tracking-[0.4em] mb-4 group-hover:text-text-accent transition-colors">{t(`judge.dashboard.${m.label}`)}</p>
+                  <p className="text-[10px] font-black text-text-accent/40 uppercase tracking-[0.5em] mb-6 group-hover:text-text-accent/80 transition-colors italic">{t(`judge.dashboard.${m.label}`)}</p>
                   <h3 className={cn("font-headline text-5xl font-bold tracking-tighter text-text-heading", m.accent)}>
                     {casesQuery.isLoading ? '...' : m.value}
                   </h3>
                 </div>
-                <div className="flex items-center mt-8 text-[11px] font-black text-white/30 uppercase tracking-widest group-hover:text-white/60 transition-colors">
+                <div className="flex items-center mt-10 text-[10px] font-black text-white/20 uppercase tracking-[0.3em] group-hover:text-white/40 transition-colors">
                   <m.icon className={cn("w-4 h-4 mr-3", m.pulse ? "animate-pulse " + m.accent : "")} />
                   <span>{m.footer === 'urgentReview' ? t('judge.dashboard.urgentReview', { count: m.count }) : t(`judge.dashboard.${m.footer}`)}</span>
                 </div>
@@ -113,10 +113,11 @@ export default function JudgeDashboard() {
           <div className="col-span-12 lg:col-span-7 space-y-10">
             
             {/* 2. Priority Case Queue */}
-            <div className="space-y-6">
-              <div className="flex items-baseline justify-between mb-4">
+            <div className="space-y-10">
+              <div className="flex items-center justify-between mb-10">
                 <h4 className="font-headline text-3xl text-text-heading font-bold tracking-tight italic">{t('judge.dashboard.priorityQueue')}</h4>
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-text-accent opacity-50 mb-1">AI Priority Index</span>
+                <div className="h-[1px] flex-1 mx-10 bg-gradient-to-r from-text-accent/20 to-transparent" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-text-accent opacity-50">{t('judge.dashboard.sortingBy')}</span>
               </div>
               
               <div className="space-y-6">
@@ -131,18 +132,18 @@ export default function JudgeDashboard() {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.1 * i }}
                         key={c.id} 
-                        className="bg-bg-surface p-10 rounded-[3rem] shadow-sm border border-white/5 hover:border-text-accent/40 hover:shadow-xl transition-all duration-500 group relative overflow-hidden"
+                        className="bg-white/[0.03] backdrop-blur-3xl p-12 rounded-[2.5rem] border border-white/5 hover:border-text-accent/40 hover:shadow-2xl transition-all duration-700 group relative overflow-hidden"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-br from-text-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                        <div className="absolute inset-0 bg-text-accent opacity-0 group-hover:opacity-[0.02] transition-opacity duration-1000 blur-3xl" />
                         
-                        <div className="flex justify-between items-start mb-6 relative z-10">
+                        <div className="flex justify-between items-start mb-10 relative z-10">
                           <div>
-                            <span className="text-[11px] font-black text-text-accent tracking-[0.4em] uppercase mb-3 block opacity-70">
+                            <span className="text-[10px] font-black text-text-accent tracking-[0.6em] uppercase mb-4 block opacity-50 italic">
                               {t('judge.dashboard.caseIdLabel', { id: c.case_number || c.id.substring(0,8).toUpperCase() })}
                             </span>
-                            <h5 className="font-headline text-3xl text-text-heading font-bold tracking-tight mb-2">{c.title || t('judge.dashboard.untitledAction')}</h5>
+                            <h5 className="font-headline text-2xl text-text-heading font-bold tracking-tight leading-snug max-w-2xl">{c.title || t('judge.dashboard.untitledAction')}</h5>
                           </div>
-                          <span className={`px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-full shadow-sm border backdrop-blur-md ${
+                          <span className={`px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-full shadow-2xl border backdrop-blur-2xl ${
                             isUrgent ? 'bg-danger/20 text-white border-danger/30' : 'bg-success/20 text-white border-success/30'
                           }`}>
                             {isUrgent ? t('judge.dashboard.urgent') : t(`status.${c.status}`)}
@@ -168,13 +169,13 @@ export default function JudgeDashboard() {
                           </div>
                         </div>
                         
-                        <div className="flex items-center space-x-6 pt-8 border-t border-white/5 relative z-10">
+                        <div className="flex items-center space-x-6 pt-10 border-t border-white/5 relative z-10">
                           <button 
-                            className="text-[11px] font-black uppercase tracking-[0.4em] text-white py-4 px-10 btn-royal-shine rounded-2xl transition-all flex items-center gap-3 active:scale-95"
+                            className="text-[10px] font-black uppercase tracking-[0.6em] text-white py-5 px-14 btn-royal-shine rounded-2xl transition-all flex items-center gap-4 active:scale-95 shadow-2xl"
                             onClick={() => navigate(`/judge/cases/${c.id}`)}
                           >
                             {t('judge.dashboard.openCaseLabel')}
-                            <ArrowRight className="w-4 h-4" />
+                            <ArrowRight className="w-5 h-5" />
                           </button>
                         </div>
                       </motion.div>
@@ -188,13 +189,13 @@ export default function JudgeDashboard() {
           </div>
 
           {/* Right Column (Intelligence Sidebar — 4/12 Split) */}
-          <div className="col-span-12 lg:col-span-4 space-y-10">
+          <div className="col-span-12 lg:col-span-4 space-y-12">
             
             {/* System Intelligence Module */}
              <motion.section 
                initial={{ opacity: 0, x: 20 }}
                animate={{ opacity: 1, x: 0 }}
-               className="bg-white/5 backdrop-blur-3xl p-10 rounded-[2.5rem] border border-white/10 relative overflow-hidden group shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5)]"
+               className="bg-white/[0.03] backdrop-blur-3xl p-12 rounded-[2.5rem] border border-white/5 relative overflow-hidden group shadow-[0_40px_100px_-20px_rgba(0,0,0,0.6)]"
              >
                <div className="flex items-center justify-between mb-10 relative z-10">
                   <h4 className="font-headline text-2xl font-bold flex items-center text-text-heading tracking-tight italic">

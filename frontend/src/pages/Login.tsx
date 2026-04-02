@@ -73,9 +73,7 @@ const Login = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
         
         {/* Left Side - Branding & Architecture Preview */}
-        <section className="relative hidden lg:flex flex-col justify-center px-20 xl:px-32 border-r border-white-[0.03] bg-gradient-to-br from-[#062c1d] to-[#01140d] overflow-hidden">
-          <div className="portal-divider-glow" />
-          
+        <section className="relative hidden lg:flex flex-col justify-center px-20 xl:px-32 bg-gradient-to-br from-[#062c1d] to-[#01140d] overflow-hidden">
           <BackgroundPreview />
 
           {/* Background Islamic Geometric Pattern (reduced opacity for arch preview) */}
@@ -113,6 +111,9 @@ const Login = () => {
               </div>
             </div>
           </div>
+          
+          {/* Soft Radiant Wash Divider */}
+          <div className="portal-divider-glow" />
         </section>
 
         {/* Right Section: Login Form */}
@@ -255,8 +256,8 @@ const Login = () => {
       <ArchitectureModal isOpen={isArchOpen} onClose={() => setIsArchOpen(false)} />
     
       {/* Footer */}
-      <footer className="fixed bottom-0 left-0 w-full z-50 flex flex-col md:flex-row justify-center items-center px-8 py-5 backdrop-blur-md bg-white/[0.02] border-t border-white-[0.05]">
-        <p className="text-text-accent font-inter text-[10px] uppercase tracking-[0.2em] font-black">© 2026 Motivity Labs.</p>
+      <footer className="fixed bottom-0 left-0 w-full z-50 flex flex-col md:flex-row justify-center items-center px-8 py-8 backdrop-blur-3xl bg-black/20 border-t border-white/5">
+        <p className="text-text-accent font-headline text-[10px] uppercase tracking-[0.6em] font-black drop-shadow-2xl italic">© 2026 Motivity Labs.</p>
       </footer>
     </div>
   )
