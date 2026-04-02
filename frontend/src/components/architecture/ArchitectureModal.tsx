@@ -83,7 +83,7 @@ const ArchitectureModal = ({ isOpen, onClose }: ArchitectureModalProps) => {
                 <section className="relative">
                   <div className="flex items-center gap-6 mb-12 group">
                     <div className="w-1.5 h-10 bg-success rounded-full transition-all group-hover:h-12 shadow-[0_0_15px_rgba(16,185,129,0.6)]" />
-                    <h3 className="font-headline text-3xl font-bold text-white tracking-tight italic">Tier 02: Neural Processing Graph</h3>
+                    <h3 className="font-headline text-3xl font-bold !text-white tracking-tight italic">Tier 02: Neural Processing Graph</h3>
                   </div>
                   <div className="bg-white/5 border border-white/5 p-12 rounded-[3.5rem] shadow-2xl overflow-hidden group">
                     <PipelineFlow />
