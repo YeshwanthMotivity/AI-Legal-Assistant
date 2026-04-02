@@ -48,7 +48,7 @@ const Login = () => {
     <div className="bg-bg-base font-body text-text-primary selection:bg-emerald-500/20 min-h-screen">
       {/* Top Navigation Bar */}
       <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-8 py-8 bg-transparent">
-        <div className="text-3xl font-headline italic font-bold text-primary tracking-tight">{t('landing.lexAi')}</div>
+        <div className="text-3xl font-headline italic font-bold text-gradient-gold tracking-tight">{t('landing.lexAi')}</div>
         <div className="flex items-center gap-6">
           <button 
             onClick={toggleLanguage}
@@ -94,7 +94,7 @@ const Login = () => {
             <div className="inline-flex items-center px-3 py-1 rounded-full border border-accent/20 bg-accent/10 text-accent text-[10px] uppercase tracking-[0.2em] font-bold">
               {t('landing.suite')}
             </div>
-            <h1 className="text-6xl lg:text-8xl font-headline italic text-white leading-tight font-bold">
+            <h1 className="text-6xl lg:text-8xl font-headline italic text-gradient-gold leading-tight font-bold">
               {t('landing.lexAi')}
             </h1>
             <p 
@@ -118,27 +118,32 @@ const Login = () => {
         <section className="flex flex-col items-center justify-center p-6 md:p-12 lg:p-24 bg-bg-base relative z-10 w-full">
           <div className="w-full max-w-md space-y-10">
             <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={error ? { 
+                x: [0, -10, 10, -10, 10, 0],
+                transition: { duration: 0.4 }
+              } : { opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="bg-bg-surface p-12 rounded-[2.5rem] space-y-12 border border-border-subtle shadow-lg"
+              className="bg-bg-surface/40 backdrop-blur-xl p-14 rounded-[3rem] space-y-14 border border-white/10 shadow-2xl relative overflow-hidden"
             >
-              <div className="space-y-3 text-center lg:text-left">
-                <h2 className="text-5xl font-headline font-bold text-primary">{t('auth.loginButton')}</h2>
-                <p className="text-text-accent font-bold uppercase tracking-[0.2em] text-[10px]">{t('auth.legalIntelligence')}</p>
+              <div className="absolute inset-0 bg-gradient-to-br from-text-accent/5 to-transparent pointer-events-none" />
+              
+              <div className="space-y-4 text-center lg:text-left relative z-10">
+                <h2 className="text-6xl font-headline font-bold text-text-heading tracking-tight">{t('auth.loginButton')}</h2>
+                <p className="text-text-accent font-black uppercase tracking-[0.4em] text-[10px] opacity-80">{t('auth.legalIntelligence')}</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-4">
                   {/* Email Input */}
                   <div className="group">
-                    <label className="block text-[10px] uppercase tracking-[0.3em] text-text-secondary font-bold mb-3" htmlFor="email">
+                    <label className="block text-[10px] uppercase tracking-[0.3em] text-text-secondary font-black mb-3" htmlFor="email">
                       {t('auth.institutionalEmail')}
                     </label>
-                    <div className="relative">
-                      <User className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/30 w-5 h-5 group-focus-within:text-primary transition-colors" />
+                    <div className="relative group-focus-within:scale-[1.01] transition-transform duration-300">
+                      <User className="absolute left-6 top-1/2 -translate-y-1/2 text-primary/40 w-4 h-4 group-focus-within:text-text-accent transition-colors" />
                       <input
-                        className="w-full bg-bg-base/50 border border-border-color focus:border-primary/50 focus:ring-4 focus:ring-primary/5 rounded-2xl text-text-primary py-4 pl-14 pr-5 transition-all duration-300 outline-none placeholder:text-text-muted font-medium"
+                        className="w-full bg-bg-surface border border-border-color focus:border-text-accent/50 focus:ring-8 focus:ring-text-accent/5 rounded-2xl text-text-primary py-5 pl-14 pr-6 transition-all duration-300 outline-none placeholder:text-text-muted/50 font-medium text-sm"
                         id="email"
                         placeholder="justice.smith@firm.ae"
                         type="text"
@@ -152,17 +157,17 @@ const Login = () => {
                   {/* Password Input */}
                   <div className="group">
                     <div className="flex justify-between items-center mb-3">
-                      <label className="block text-[10px] uppercase tracking-[0.3em] text-text-secondary font-bold" htmlFor="password">
+                      <label className="block text-[10px] uppercase tracking-[0.3em] text-text-secondary font-black" htmlFor="password">
                         {t('auth.accessKey')}
                       </label>
                       <a className="text-[10px] uppercase tracking-[0.2em] text-text-accent hover:opacity-80 transition-opacity font-bold" href="#">
                         {t('auth.forgot')}
                       </a>
                     </div>
-                    <div className="relative">
-                      <User className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/30 w-5 h-5 group-focus-within:text-primary transition-colors" />
+                    <div className="relative group-focus-within:scale-[1.01] transition-transform duration-300">
+                      <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-primary/40 w-4 h-4 group-focus-within:text-text-accent transition-colors" />
                       <input
-                        className="w-full bg-bg-base/50 border border-border-color focus:border-primary/50 focus:ring-4 focus:ring-primary/5 rounded-2xl text-text-primary py-4 pl-14 pr-14 transition-all duration-300 outline-none placeholder:text-text-muted font-medium"
+                        className="w-full bg-bg-surface border border-border-color focus:border-text-accent/50 focus:ring-8 focus:ring-text-accent/5 rounded-2xl text-text-primary py-5 pl-14 pr-14 transition-all duration-300 outline-none placeholder:text-text-muted/50 font-medium text-sm"
                         id="password"
                         placeholder="••••••••••••"
                         type={showPassword ? "text" : "password"}
@@ -171,7 +176,7 @@ const Login = () => {
                         required
                       />
                       <button 
-                         className="absolute right-5 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors" 
+                         className="absolute right-6 top-1/2 -translate-y-1/2 text-text-muted/50 hover:text-text-accent transition-colors" 
                          type="button"
                          onClick={() => setShowPassword(!showPassword)}
                       >
@@ -193,7 +198,7 @@ const Login = () => {
 
                 {/* Login Button */}
                 <button 
-                  className="w-full py-5 btn-royal-shine text-white font-extrabold text-sm uppercase tracking-[0.3em] rounded-2xl active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center gap-3" 
+                  className="w-full py-5 btn-royal-shine text-white font-black text-sm uppercase tracking-[0.4em] rounded-2xl disabled:opacity-70 flex items-center justify-center gap-3 mt-4" 
                   type="submit"
                   disabled={isLoading}
                 >

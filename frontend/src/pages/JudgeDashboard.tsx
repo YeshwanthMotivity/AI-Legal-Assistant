@@ -17,7 +17,9 @@ import {
   Plus,
   Verified,
   Brain,
+  ArrowRight,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import CaseWorkflowStepper from '../components/layout/CaseWorkflowStepper';
 
 export default function JudgeDashboard() {
@@ -73,55 +75,75 @@ export default function JudgeDashboard() {
           
         {/* 1. Top Metrics */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-bg-surface p-7 rounded-[2rem] shadow-sm flex flex-col justify-between border border-border-subtle hover:border-text-accent hover:shadow-lg transition-all duration-500">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="glass-goated p-8 rounded-[3rem] shadow-sm flex flex-col justify-between border border-white/5 hover:border-text-accent/40 transition-all duration-500 group"
+          >
             <div>
-              <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">{t('judge.dashboard.activeCases')}</p>
-              <h3 className="font-headline text-5xl font-bold text-text-primary">
+              <p className="text-[10px] font-black text-text-accent uppercase tracking-[0.3em] mb-4 opacity-70 group-hover:opacity-100 transition-opacity">{t('judge.dashboard.activeCases')}</p>
+              <h3 className="font-headline text-5xl font-bold text-text-heading tracking-tight">
                 {casesQuery.isLoading ? '...' : Math.max(stats.pending, 24)}
               </h3>
             </div>
-            <div className="flex items-center mt-6 text-[11px] font-extrabold text-text-accent">
-              <TrendingUp className="w-4 h-4 mr-1.5" />
-              <span className="uppercase tracking-widest">{t('judge.dashboard.fromLastWeek')}</span>
+            <div className="flex items-center mt-8 text-[11px] font-black text-text-accent uppercase tracking-widest">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              <span>{t('judge.dashboard.fromLastWeek')}</span>
             </div>
-          </div>
+          </motion.div>
           
-          <div className="bg-bg-surface p-7 rounded-[2rem] shadow-sm flex flex-col justify-between border border-border-subtle hover:border-text-accent hover:shadow-lg transition-all duration-500">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="glass-goated p-8 rounded-[3rem] shadow-sm flex flex-col justify-between border border-white/5 hover:border-text-accent/40 transition-all duration-500 group"
+          >
             <div>
-              <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">{t('judge.dashboard.pendingJudgments')}</p>
-              <h3 className="font-headline text-5xl font-bold text-text-primary">
+              <p className="text-[10px] font-black text-text-accent uppercase tracking-[0.3em] mb-4 opacity-70 group-hover:opacity-100 transition-opacity">{t('judge.dashboard.pendingJudgments')}</p>
+              <h3 className="font-headline text-5xl font-bold text-text-heading tracking-tight">
                 {casesQuery.isLoading ? '...' : String(stats.ready).padStart(2, '0')}
               </h3>
             </div>
-            <div className="flex items-center mt-6 text-[11px] font-extrabold text-text-accent">
-              <AlertTriangle className="w-4 h-4 mr-1.5" />
-              <span className="uppercase tracking-widest">{t('judge.dashboard.urgentReview', { count: stats.urgent })}</span>
+            <div className="flex items-center mt-8 text-[11px] font-black text-text-accent uppercase tracking-widest">
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              <span>{t('judge.dashboard.urgentReview', { count: stats.urgent })}</span>
             </div>
-          </div>
+          </motion.div>
           
-          <div className="bg-bg-surface p-7 rounded-[2rem] shadow-sm flex flex-col justify-between border border-border-subtle hover:border-text-accent hover:shadow-lg transition-all duration-500">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="glass-goated p-8 rounded-[3rem] shadow-sm flex flex-col justify-between border border-white/5 hover:border-text-accent/40 transition-all duration-500 group"
+          >
             <div>
-              <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">{t('judge.dashboard.urgentHearings')}</p>
-              <h3 className="font-headline text-5xl font-bold text-text-primary">
+              <p className="text-[10px] font-black text-text-accent uppercase tracking-[0.3em] mb-4 opacity-70 group-hover:opacity-100 transition-opacity">{t('judge.dashboard.urgentHearings')}</p>
+              <h3 className="font-headline text-5xl font-bold text-text-heading tracking-tight">
                 {casesQuery.isLoading ? '...' : String(stats.urgent).padStart(2, '0')}
               </h3>
             </div>
-            <div className="flex items-center mt-6 text-[11px] font-extrabold text-text-muted">
-              <Clock className="w-4 h-4 mr-1.5" />
-              <span className="uppercase tracking-widest">{t('judge.dashboard.nextIn')}</span>
+            <div className="flex items-center mt-8 text-[11px] font-black text-text-muted uppercase tracking-widest leading-none">
+              <Clock className="w-4 h-4 mr-2" />
+              <span>{t('judge.dashboard.nextIn')}</span>
             </div>
-          </div>
+          </motion.div>
           
-          <div className="bg-bg-surface p-7 rounded-[2rem] shadow-sm flex flex-col justify-between border border-border-subtle hover:border-text-accent hover:shadow-lg transition-all duration-500">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="glass-goated p-8 rounded-[3rem] shadow-sm flex flex-col justify-between border border-white/5 hover:border-text-accent/40 transition-all duration-500 group"
+          >
             <div>
-              <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">{t('judge.dashboard.aiAssistance')}</p>
-              <h3 className="font-headline text-5xl font-bold text-text-accent">92%</h3>
+              <p className="text-[10px] font-black text-text-accent uppercase tracking-[0.3em] mb-4 opacity-70 group-hover:opacity-100 transition-opacity">{t('judge.dashboard.aiAssistance')}</p>
+              <h3 className="font-headline text-5xl font-bold text-text-accent tracking-tighter">92%</h3>
             </div>
-            <div className="flex items-center mt-6 text-[11px] font-extrabold text-text-accent">
-              <Sparkles className="w-4 h-4 mr-1.5 animate-pulse" />
-              <span className="uppercase tracking-widest">{t('judge.dashboard.efficiencyOpt')}</span>
+            <div className="flex items-center mt-8 text-[11px] font-black text-text-accent uppercase tracking-widest">
+              <Sparkles className="w-4 h-4 mr-2 animate-pulse" />
+              <span>{t('judge.dashboard.efficiencyOpt')}</span>
             </div>
-          </div>
+          </motion.div>
         </section>
 
         {/* Main Layout Grid */}
@@ -131,208 +153,232 @@ export default function JudgeDashboard() {
           <div className="col-span-12 lg:col-span-7 space-y-10">
             
             {/* 2. Priority Case Queue */}
-            <div className="space-y-6">
-              <div className="flex items-baseline justify-between">
-                <h4 className="font-headline text-3xl text-primary font-bold tracking-tight">{t('judge.dashboard.priorityQueue')}</h4>
-                <span className="text-[10px] font-black uppercase tracking-widest text-text-muted opacity-60">{t('judge.dashboard.sortingBy')}</span>
+            <div className="space-y-8">
+              <div className="flex items-baseline justify-between mb-4">
+                <h4 className="font-headline text-4xl text-text-heading font-bold tracking-tight">{t('judge.dashboard.priorityQueue')}</h4>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-text-accent opacity-60 mb-1">{t('judge.dashboard.sortingBy')} AI Priority Index</span>
               </div>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {casesQuery.isLoading ? (
-                  <div className="p-10 text-center animate-pulse text-text-muted">{t('judge.dashboard.loadingQueue')}</div>
+                  <div className="p-10 text-center animate-pulse text-text-muted font-bold uppercase tracking-widest">{t('judge.dashboard.loadingQueue')}</div>
                 ) : recentCases.length > 0 ? (
-                  recentCases.map((c) => {
+                  recentCases.map((c, i) => {
                     const isUrgent = c.hearing_date && new Date(c.hearing_date) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
                     return (
-                      <div key={c.id} className="bg-bg-surface p-7 rounded-[2rem] shadow-sm border border-border-subtle hover:border-text-accent/30 hover:shadow-xl transition-all duration-500 group">
-                        <div className="flex justify-between items-start mb-3">
+                      <motion.div 
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 * i }}
+                        key={c.id} 
+                        className="bg-bg-surface p-10 rounded-[3rem] shadow-sm border border-white/5 hover:border-text-accent/40 hover:shadow-xl transition-all duration-500 group relative overflow-hidden"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-text-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                        
+                        <div className="flex justify-between items-start mb-6 relative z-10">
                           <div>
-                            <span className="text-[10px] font-bold text-text-muted tracking-widest uppercase mb-1 block">
+                            <span className="text-[11px] font-black text-text-accent tracking-[0.4em] uppercase mb-3 block opacity-70">
                               {t('judge.dashboard.caseIdLabel', { id: c.case_number || c.id.substring(0,8).toUpperCase() })}
                             </span>
-                            <h5 className="font-headline text-xl text-text-primary font-bold">{c.title || t('judge.dashboard.untitledAction')}</h5>
+                            <h5 className="font-headline text-3xl text-text-heading font-bold tracking-tight mb-2">{c.title || t('judge.dashboard.untitledAction')}</h5>
                           </div>
-                          <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-tight rounded-lg ${
-                            isUrgent ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'
+                          <span className={`px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-full shadow-sm border backdrop-blur-md ${
+                            isUrgent ? 'bg-danger/20 text-white border-danger/30' : 'bg-success/20 text-white border-success/30'
                           }`}>
                             {isUrgent ? t('judge.dashboard.urgent') : t(`status.${c.status}`)}
                           </span>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-4 mb-4">
-                          <div className="space-y-1">
-                            <p className="text-[11px] text-text-secondary font-medium flex items-center">
-                              <FileText className="w-3 h-3 mr-1 text-primary-royal" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-8 relative z-10">
+                          <div className="space-y-3">
+                            <p className="text-[12px] text-text-secondary font-black flex items-center tracking-wide uppercase opacity-80">
+                              <FileText className="w-4 h-4 mr-3 text-text-accent" />
                               {t('judge.dashboard.aiInsight', { type: c.case_type ? c.case_type.replace('_', ' ') : t('judge.dashboard.generalDispute') })}
                             </p>
-                            <p className="text-[11px] text-text-secondary font-medium flex items-center">
-                              <History className="w-3 h-3 mr-1 text-primary-royal" />
+                            <p className="text-[12px] text-text-secondary font-black flex items-center tracking-wide uppercase opacity-80">
+                              <History className="w-4 h-4 mr-3 text-text-accent" />
                               {c.status === 'AIAnalysisReady' ? t('judge.dashboard.precedentsMatched') : t('judge.dashboard.awaitingCompletion')}
                             </p>
                           </div>
-                          <div className="text-right">
-                            <p className="text-[11px] text-text-secondary font-medium uppercase tracking-wider">{t('judge.dashboard.hearingDate')}</p>
-                            <p className="text-sm font-bold text-primary-royal">
+                          <div className="md:text-right border-l md:border-l-0 md:border-r border-white/5 pr-8">
+                            <p className="text-[10px] text-text-accent font-black uppercase tracking-[0.3em] mb-2 opacity-60 font-sans">{t('judge.dashboard.hearingDate')}</p>
+                            <p className="text-2xl font-headline font-bold text-text-heading">
                               {c.hearing_date ? new Date(c.hearing_date).toLocaleDateString() : t('judge.dashboard.unscheduled')}
                             </p>
                           </div>
                         </div>
                         
-                        <div className="flex items-center space-x-3 pt-4 border-t border-border-subtle">
+                        <div className="flex items-center space-x-6 pt-8 border-t border-white/5 relative z-10">
                           <button 
-                            className="text-[11px] font-bold uppercase tracking-widest text-white py-2 px-6 btn-royal-shine rounded-xl transition-all flex items-center"
+                            className="text-[11px] font-black uppercase tracking-[0.4em] text-white py-4 px-10 btn-royal-shine rounded-2xl transition-all flex items-center gap-3 active:scale-95"
                             onClick={() => navigate(`/judge/cases/${c.id}`)}
                           >
                             {t('judge.dashboard.openCaseLabel')}
+                            <ArrowRight className="w-4 h-4" />
                           </button>
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })
                 ) : (
-                  <div className="p-10 text-center italic text-on-surface-variant">{t('judge.dashboard.emptyQueue')}</div>
+                  <div className="p-10 text-center italic text-text-secondary font-bold tracking-widest glass-goated rounded-[2rem]">{t('judge.dashboard.emptyQueue')}</div>
                 )}
               </div>
             </div>
-
-            {/* 5. Precedent Matching */}
-            <div className="flex flex-col space-y-4">
-              <h4 className="font-headline text-xl text-secondary font-bold">{t('judge.dashboard.precedentMatching')}</h4>
-              <div className="flex-1 flex flex-col space-y-4">
-                <div className="bg-white p-4 rounded-2xl shadow-sm flex items-center justify-between border-l-4 border-emerald-600 border border-slate-200">
-                  <div>
-                    <p className="text-sm font-bold text-secondary">{t('judge.dashboard.stateVsZenith')}</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{t('judge.dashboard.contractBreach')}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-headline font-bold text-emerald-600">94%</p>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight">{t('judge.dashboard.similarity')}</p>
-                  </div>
-                </div>
-                <div className="bg-white p-4 rounded-2xl shadow-sm flex items-center justify-between border-l-4 border-gold border border-slate-200">
-                  <div>
-                    <p className="text-sm font-bold text-secondary">{t('judge.dashboard.alWaslVsEst')}</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{t('judge.dashboard.financialNonDisclosure')}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-headline font-bold text-gold">78%</p>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight">{t('judge.dashboard.similarity')}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 6. Hearing Schedule */}
-            <div className="flex flex-col space-y-4">
-              <h4 className="font-headline text-xl text-secondary font-bold">{t('judge.dashboard.hearingSchedule')}</h4>
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col border border-slate-200">
-                <div className="p-4 bg-navy-50 border-b border-slate-100">
-                  <p className="text-[10px] font-bold text-primary uppercase tracking-widest">{t('judge.dashboard.todayPrefix')} {(new Date()).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-                </div>
-                <div className="divide-y divide-slate-50 flex-1 flex flex-col">
-                  {schedule.length > 0 ? schedule.map((c, i) => (
-                    <div key={c.id} className={`p-4 flex items-center space-x-4 ${i === 0 ? 'bg-emerald-50/30' : ''} hover:bg-slate-50 transition-colors cursor-pointer`}>
-                      <span className={`text-xs font-bold w-12 text-center ${i === 0 ? 'text-primary' : 'text-slate-400'}`}>
-                        {new Date(c.hearing_date!).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                      <div className="flex-1">
-                        <p className="text-xs font-bold text-secondary truncate w-40">{c.title || c.case_number}</p>
-                        <p className={`text-[10px] font-bold uppercase ${i===0 ? 'text-accent' : 'text-slate-400'}`}>
-                          {i===0 ? t('judge.dashboard.highPriorityHearing') : t('judge.dashboard.chamberReview')}
-                        </p>
-                      </div>
-                      <span className={`w-2 h-2 rounded-full ${i===0 ? 'bg-accent' : i===2 ? 'bg-gold' : 'bg-slate-200'}`}></span>
-                    </div>
-                  )) : (
-                    <div className="p-4 flex-1 flex items-center justify-center text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('judge.dashboard.noUpcomingHearings')}</div>
-                  )}
-                </div>
-              </div>
-            </div>
-
           </div>
-          
-          {/* Right Column (40%) */}
-          <div className="col-span-12 lg:col-span-5 space-y-10">
+
+          {/* Right Column (Intelligence Sidebar — 4/12 Split) */}
+          <div className="col-span-12 lg:col-span-4 space-y-10">
             
-             <section className="bg-gradient-to-br from-primary-royal to-bg-color p-8 rounded-[2rem] shadow-xl border border-border-subtle relative overflow-hidden group mb-6">
-               <div className="flex items-center justify-between mb-4 relative z-10">
-                  <h4 className="font-headline text-2xl font-bold flex items-center text-text-primary">
-                    <Sparkles className="w-6 h-6 mr-3 text-text-accent animate-pulse" /> {t('judge.dashboard.recentActivityLog')}
+            {/* System Health Module (Goated) */}
+             <motion.section 
+               initial={{ opacity: 0, x: 20 }}
+               animate={{ opacity: 1, x: 0 }}
+               className="glass-goated p-10 rounded-[3rem] border border-white/10 relative overflow-hidden group shadow-2xl"
+             >
+               <div className="flex items-center justify-between mb-8 relative z-10">
+                  <h4 className="font-headline text-2xl font-bold flex items-center text-text-heading tracking-tight">
+                    <Sparkles className="w-6 h-6 mr-4 text-text-accent animate-pulse" /> {t('common.ai_engine')}
                   </h4>
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full bg-success animate-ping" />
+                    <span className="text-[11px] font-black text-success uppercase tracking-widest">Sovereign</span>
+                  </div>
                </div>
-               <p className="text-sm text-text-primary/70 italic relative z-10 font-bold leading-relaxed">
-                 {focusCase ? t('judge.dashboard.systemSynchronized', { id: focusCase.case_number || focusCase.id.substring(0,8) }) : t('judge.dashboard.noActivity')}
-               </p>
-               <div className="absolute inset-0 bg-text-accent opacity-0 group-hover:opacity-[0.05] transition-opacity duration-1000 blur-3xl" />
-            </section>
+               
+               <div className="space-y-8 relative z-10">
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                      <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">Latency</p>
+                      <p className="text-3xl font-headline font-bold text-text-accent tracking-tighter">142ms</p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                      <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">Accuracy</p>
+                      <p className="text-3xl font-headline font-bold text-text-heading tracking-tighter">98.4%</p>
+                    </div>
+                 </div>
+                 
+                 <div className="space-y-3">
+                   <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-text-secondary opacity-60">
+                     <span>Resource Load</span>
+                     <span>92%</span>
+                   </div>
+                   <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                     <motion.div 
+                       initial={{ width: 0 }}
+                       animate={{ width: '92%' }}
+                       transition={{ duration: 1, ease: "easeOut" }}
+                       className="h-full bg-text-accent"
+                     />
+                   </div>
+                 </div>
 
-            {/* 4. Judgment Workflow Tracker */}
-            <section className="space-y-4">
-              <h4 className="font-headline text-xl text-text-primary font-bold">{t('judge.dashboard.judgmentWorkflow')}</h4>
-              <div className="bg-bg-surface p-6 rounded-2xl shadow-sm border border-border-subtle">
-                <div className="mb-10 mt-2">
-                  <CaseWorkflowStepper status={focusCase?.status} role="judge" />
+                 <p className="text-[12px] text-text-secondary font-medium italic leading-relaxed opacity-80 border-l-2 border-text-accent/30 pl-4 py-1 font-serif">
+                   {t('judge.judgment.aiReasoningDesc')}
+                 </p>
+               </div>
+               <div className="absolute inset-0 bg-text-accent opacity-0 group-hover:opacity-[0.05] transition-opacity duration-1000 blur-3xl pointer-events-none" />
+            </motion.section>
+
+            {/* Precedent Intelligence */}
+            <motion.section 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="bg-bg-surface p-10 rounded-[3rem] border border-border-subtle shadow-lg space-y-8"
+            >
+              <div className="flex items-center gap-5 border-b border-white/5 pb-8">
+                <div className="p-4 rounded-2xl bg-text-accent/10 border border-text-accent/20">
+                  <Brain className="w-8 h-8 text-text-accent" />
                 </div>
+                <div>
+                  <h4 className="font-headline text-2xl font-bold text-text-heading tracking-tight">{t('judge.workspace.aiReasoningNode')}</h4>
+                  <p className="text-[10px] font-black text-text-accent uppercase tracking-[0.4em] opacity-60 italic">Contextual Map</p>
+                </div>
+              </div>
+
+              <div className="space-y-8">
+                <p className="text-[13px] text-text-secondary font-black uppercase tracking-widest leading-relaxed opacity-70">
+                  {focusCase ? t('judge.dashboard.systemSynchronized', { id: focusCase.case_number || focusCase.id.substring(0,8) }) : t('judge.dashboard.noActivity')}
+                </p>
                 
-                <div className="bg-primary/5 p-5 rounded-2xl border border-border-subtle flex flex-col gap-2">
-                  <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-1">{t('judge.dashboard.currentTask')}</p>
-                  <p className="text-sm font-bold text-text-primary">
-                    {focusCase ? t('judge.dashboard.workingOn', { title: focusCase.title || focusCase.case_number }) : t('judge.dashboard.awaitingAssignment')}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Brain className="w-3.5 h-3.5 text-primary" />
-                    <p className="text-[11px] text-text-muted font-medium italic">{t('judge.dashboard.aiSuggestion')}</p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* 7. Judicial Performance */}
-            <div className="flex flex-col space-y-4">
-              <h4 className="font-headline text-xl text-secondary font-bold">{t('judge.dashboard.judicialPerformance')}</h4>
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex-1 flex flex-col justify-between">
                 <div className="space-y-6">
-                  <div>
-                    <div className="flex justify-between items-end mb-2">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('judge.dashboard.casesResolved')}</p>
-                      <p className="text-sm font-bold text-secondary">{performance.resolved} / {performance.total}</p>
+                  {[
+                    { title: t('judge.dashboard.stateVsZenith'), match: '94%', tags: [t('judge.dashboard.contractBreach')] },
+                    { title: t('judge.dashboard.alWaslVsEst'), match: '78%', tags: [t('judge.dashboard.financialNonDisclosure')] }
+                  ].map((pre, i) => (
+                    <div key={i} className="p-6 rounded-[2rem] bg-bg-base/40 border border-white/5 space-y-4 group cursor-pointer hover:border-text-accent/50 hover:-translate-y-1 transition-all duration-300">
+                      <div className="flex justify-between items-center text-[11px] font-black uppercase tracking-[0.2em] text-text-accent">
+                        <span>Precedent Match</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-text-accent animate-pulse" />
+                          {pre.match}
+                        </div>
+                      </div>
+                      <p className="text-sm font-bold text-text-heading leading-snug group-hover:text-text-accent transition-colors font-serif italic">
+                        {pre.title}
+                      </p>
+                      <div className="flex gap-2">
+                        {pre.tags.map(tag => (
+                          <span key={tag} className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-white/5 border border-white/10 text-text-muted">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${Math.max(5, (performance.resolved / performance.total) * 100)}%` }}></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between items-end mb-2">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('judge.dashboard.avgDecisionTime')}</p>
-                      <p className="text-sm font-bold text-secondary">{t('judge.dashboard.days')}</p>
-                    </div>
-                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-gold w-[75%]"></div>
-                    </div>
-                  </div>
-                  <div className="pt-6 border-t border-slate-100 animate-pulse flex items-center justify-between">
-                    <div className="flex items-center">
-                      <Verified className="text-primary w-4 h-4 mr-2" />
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">{t('judge.dashboard.aiAlignment')}</span>
-                    </div>
-                    <span className="text-sm font-bold text-primary">{t('judge.dashboard.highP')}</span>
-                  </div>
+                  ))}
                 </div>
               </div>
-            </div>
+            </motion.section>
+
+            {/* Hearing Schedule updated to Goated style */}
+            <motion.section 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="bg-bg-surface rounded-[3rem] border border-border-subtle shadow-xl overflow-hidden"
+            >
+              <div className="p-8 bg-text-accent/5 border-b border-white/5">
+                <h4 className="text-[11px] font-black text-text-accent uppercase tracking-[0.4em] mb-2">{t('judge.dashboard.hearingSchedule')}</h4>
+                <p className="text-xl font-headline font-bold text-text-heading italic">
+                 {(new Date()).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                </p>
+              </div>
+              <div className="divide-y divide-white/5">
+                {schedule.length > 0 ? schedule.map((c, i) => (
+                  <div key={c.id} className={`p-8 flex items-center gap-6 ${i === 0 ? 'bg-text-accent/[0.03]' : ''} hover:bg-white/[0.02] transition-colors cursor-pointer group`}>
+                    <div className="flex flex-col items-center">
+                      <span className={`text-sm font-black tracking-widest ${i === 0 ? 'text-text-accent' : 'text-text-muted'}`}>
+                        {new Date(c.hearing_date!).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[13px] font-bold text-text-heading truncate group-hover:text-text-accent transition-colors tracking-tight">{c.title || c.case_number}</p>
+                      <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${i===0 ? 'text-text-accent' : 'text-text-muted'} opacity-60`}>
+                        {i===0 ? t('judge.dashboard.highPriorityHearing') : t('judge.dashboard.chamberReview')}
+                      </p>
+                    </div>
+                    <div className={`w-3 h-3 rounded-full ${i===0 ? 'bg-text-accent animate-pulse shadow-[0_0_10px_rgba(212,175,55,0.5)]' : 'bg-white/10'}`} />
+                  </div>
+                )) : (
+                  <div className="p-10 text-center text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-serif italic">{t('judge.dashboard.noUpcomingHearings')}</div>
+                )}
+              </div>
+            </motion.section>
 
           </div>
         </div>
       </div>
 
-      {/* Contextual Floating Action Button (FAB) */}
-      <button 
-        className="fixed bottom-8 right-8 w-16 h-16 btn-royal-shine text-white rounded-full flex items-center justify-center z-50 hover:scale-110"
+      {/* Floating Action Button (FAB - Goated Gold) */}
+      <motion.button 
+        whileHover={{ scale: 1.1, translateY: -5 }}
+        whileTap={{ scale: 0.9 }}
+        className="fixed bottom-12 right-12 w-20 h-20 btn-royal-shine text-white rounded-full flex items-center justify-center z-50 shadow-[0_0_30px_rgba(212,175,55,0.3)] hover:shadow-[0_0_50px_rgba(212,175,55,0.5)] transition-all duration-500"
         onClick={() => navigate('/judge/cases/new')}
       >
-        <Plus className="w-8 h-8" />
-      </button>
+        <Plus className="w-10 h-10" />
+      </motion.button>
     </PortalLayout>
   );
 }
