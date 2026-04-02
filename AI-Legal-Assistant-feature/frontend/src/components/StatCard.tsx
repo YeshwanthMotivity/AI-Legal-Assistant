@@ -1,0 +1,50 @@
+import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
+
+interface StatCardProps {
+  label: string;
+  value: string | number;
+  icon: React.ElementType;
+  trend?: {
+    value: number;
+    isPositive: boolean;
+  };
+  className?: string;
+}
+
+const StatCard = ({ label, value, icon: Icon, trend, className }: StatCardProps) => {
+  return (
+    <motion.div
+      whileHover={{ y: -5 }}
+      transition={{ duration: 0.2 }}
+    >
+      <Card className={cn("overflow-hidden border-border/50 shadow-md hover:shadow-xl hover:border-primary/30 transition-all duration-300 group", className)}>
+        <CardContent className="p-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-500 shadow-inner">
+              <Icon className="w-7 h-7" />
+            </div>
+            {trend && (
+              <div className={cn(
+                "text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest",
+                trend.isPositive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+              )}>
+                {trend.isPositive ? '↑' : '↓'} {trend.value}%
+              </div>
+            )}
+          </div>
+          <div>
+            <div className="text-4xl font-black tracking-tighter mb-1.5 text-foreground">{value}</div>
+            <div className="text-[11px] text-muted-foreground font-black uppercase tracking-[0.2em] opacity-70">
+              {label}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
+
+export default StatCard;

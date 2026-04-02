@@ -1,0 +1,125 @@
+services:
+
+  # ── Vector Database ───────────────────────────────────────────────────────
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: judicial_qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - /home/administrator/data/qdrant:/qdrant/storage
+    mem_limit: 1g
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:6333/readyz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Embedding Service ─────────────────────────────────────────────────────
+  bge_m3:
+    build:
+      context: ./docker/bge_m3
+      dockerfile: Dockerfile
+    container_name: judicial_bge_m3
+    ports:
+      - "8001:8001"
+    volumes:
+      - /home/administrator/data/hf_cache/bge_m3:/root/.cache/huggingface
+    mem_limit: 3g
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 300s
+    restart: unless-stopped
+
+  # ── Reranker Service ──────────────────────────────────────────────────────
+  bge_reranker:
+    build:
+      context: ./docker/bge_reranker
+      dockerfile: Dockerfile
+    container_name: judicial_bge_reranker
+    ports:
+      - "8002:8002"
+    volumes:
+      - /home/administrator/data/hf_cache/bge_reranker:/root/.cache/huggingface
+    mem_limit: 2g
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 300s
+    restart: unless-stopped
+
+  # ── Backend API ───────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: judicial_backend
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      qdrant:
+        condition: service_started
+      bge_m3:
+        condition: service_healthy
+      bge_reranker:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Frontend ──────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: judicial_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Object Storage ────────────────────────────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: judicial_minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    volumes:
+      - /home/administrator/data/minio:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+# ── Native on VM (outside Docker) ────────────────────────────────────────────
+# PostgreSQL: sudo apt install postgresql
+# Ollama:     curl -fsSL https://ollama.com/install.sh | sh
+#             ollama pull jwnder/jais-adaptive:7b
+#             ollama pull qwen2.5:1.5b-instruct
