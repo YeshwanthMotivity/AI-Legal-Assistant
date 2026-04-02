@@ -59,8 +59,8 @@ const ArchitectureModal = ({ isOpen, onClose }: ArchitectureModalProps) => {
                   ))}
                 </div>
                 <div>
-                  <h2 className="text-5xl lg:text-7xl font-headline text-white font-bold tracking-tighter leading-none mb-6">System Blueprint</h2>
-                  <p className="text-emerald-100/50 font-serif italic text-2xl max-w-2xl leading-relaxed">Sovereign UAE Intelligence — System Schematic v4.0</p>
+                  <h2 className="text-6xl lg:text-8xl font-headline text-white font-bold tracking-tighter leading-none mb-4 drop-shadow-2xl">System Blueprint</h2>
+                  <p className="text-[#D4AF37] font-serif italic text-3xl max-w-3xl leading-relaxed opacity-90">Sovereign UAE Intelligence — System Schematic v4.0</p>
                 </div>
               </header>
 
@@ -104,20 +104,20 @@ const ArchitectureModal = ({ isOpen, onClose }: ArchitectureModalProps) => {
                     <h3 className="font-headline text-3xl font-bold text-white tracking-tight italic">Tier 03: Encrypted Persistence</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="p-8 rounded-[2.5rem] bg-white/5 border border-[#336791]/30 hover:border-[#336791] transition-all space-y-4">
-                      <div className="w-12 h-12 bg-[#336791]/20 rounded-2xl flex items-center justify-center text-[#336791]"><Database /></div>
-                      <p className="font-headline font-bold text-lg text-white">PostgreSQL</p>
-                      <p className="text-[11px] text-emerald-100/40 uppercase tracking-[0.1em] font-black">Relation State</p>
+                    <div className="p-8 rounded-[2.5rem] bg-white/[0.03] border border-[#336791]/30 hover:border-[#336791] transition-all space-y-4 group">
+                      <div className="w-12 h-12 bg-[#336791]/20 rounded-2xl flex items-center justify-center text-[#336791] group-hover:bg-[#336791]/40 transition-colors"><Database /></div>
+                      <p className="font-headline font-bold text-xl text-white">PostgreSQL</p>
+                      <p className="text-[11px] text-emerald-100/60 uppercase tracking-[0.2em] font-black">Relation State</p>
                     </div>
-                    <div className="p-8 rounded-[2.5rem] bg-white/5 border border-[#fc2f4c]/30 hover:border-[#fc2f4c] transition-all space-y-4">
-                      <div className="w-12 h-12 bg-[#fc2f4c]/20 rounded-2xl flex items-center justify-center text-[#fc2f4c]"><Network /></div>
-                      <p className="font-headline font-bold text-lg text-white">Qdrant Vector DB</p>
-                      <p className="text-[11px] text-emerald-100/40 uppercase tracking-[0.1em] font-black">High-D Inferences</p>
+                    <div className="p-8 rounded-[2.5rem] bg-white/[0.03] border border-[#fc2f4c]/30 hover:border-[#fc2f4c] transition-all space-y-4 group">
+                      <div className="w-12 h-12 bg-[#fc2f4c]/20 rounded-2xl flex items-center justify-center text-[#fc2f4c] group-hover:bg-[#fc2f4c]/40 transition-colors"><Network /></div>
+                      <p className="font-headline font-bold text-xl text-white">Qdrant Vector DB</p>
+                      <p className="text-[11px] text-emerald-100/60 uppercase tracking-[0.2em] font-black">High-D Inferences</p>
                     </div>
-                    <div className="p-8 rounded-[2.5rem] bg-white/5 border border-[#C72E49]/30 hover:border-[#C72E49] transition-all space-y-4">
-                      <div className="w-12 h-12 bg-[#C72E49]/20 rounded-2xl flex items-center justify-center text-[#C72E49]"><HardDrive /></div>
-                      <p className="font-headline font-bold text-lg text-white">Object Storage</p>
-                      <p className="text-[11px] text-emerald-100/40 uppercase tracking-[0.1em] font-black">Encrypted Dossiers</p>
+                    <div className="p-8 rounded-[2.5rem] bg-white/[0.03] border border-[#C72E49]/30 hover:border-[#C72E49] transition-all space-y-4 group">
+                      <div className="w-12 h-12 bg-[#C72E49]/20 rounded-2xl flex items-center justify-center text-[#C72E49] group-hover:bg-[#C72E49]/40 transition-colors"><HardDrive /></div>
+                      <p className="font-headline font-bold text-xl text-white">Object Storage</p>
+                      <p className="text-[11px] text-emerald-100/60 uppercase tracking-[0.2em] font-black">Encrypted Dossiers</p>
                     </div>
                   </div>
                 </section>

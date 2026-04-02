@@ -20,14 +20,14 @@ const ModuleCard = ({ title, icon, items, className = '' }: ModuleCardProps) => 
           <div className="w-12 h-12 rounded-xl bg-primary/5 border border-border-subtle flex items-center justify-center text-primary-royal group-hover:text-text-accent group-hover:bg-text-accent/5 transition-all duration-300">
             {icon}
           </div>
-          <h3 className="font-headline font-bold text-text-primary text-xl tracking-tight">{title}</h3>
+          <h3 className="font-headline font-bold text-white text-xl tracking-tight">{title}</h3>
         </div>
         
         {items && items.length > 0 && (
           <ul className="space-y-3 mt-4">
             {items.map((item, index) => (
-              <li key={index} className="flex items-start gap-3 text-sm text-text-secondary font-medium leading-relaxed">
-                <span className="mt-2 w-1.5 h-1.5 rounded-full bg-text-accent/40 flex-shrink-0" />
+              <li key={index} className="flex items-start gap-3 text-sm text-emerald-100/70 font-medium leading-relaxed">
+                <span className="mt-2 w-1.5 h-1.5 rounded-full bg-[#D4AF37]/50 flex-shrink-0" />
                 {item}
               </li>
             ))}

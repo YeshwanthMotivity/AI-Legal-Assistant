@@ -45,7 +45,7 @@ const Login = () => {
   }
 
   return (
-    <div className="bg-bg-base font-body text-text-primary selection:bg-emerald-500/20 min-h-screen">
+    <div className="bg-[#F9F8F2] font-body selection:bg-emerald-800/10 min-h-screen">
       {/* Top Navigation Bar */}
       <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-8 py-8 bg-transparent">
         <div className="text-3xl font-headline italic font-bold text-gradient-gold tracking-tight">{t('landing.lexAi')}</div>
@@ -133,8 +133,8 @@ const Login = () => {
               <div className="absolute inset-0 bg-gradient-to-br from-text-accent/5 to-transparent pointer-events-none" />
               
               <div className="space-y-4 text-center lg:text-left relative z-10">
-                <h2 className="text-6xl font-headline font-bold text-text-heading tracking-tight">{t('auth.loginButton')}</h2>
-                <p className="text-text-accent font-black uppercase tracking-[0.4em] text-[10px] opacity-80">{t('auth.legalIntelligence')}</p>
+                <h2 className="text-6xl font-headline font-bold text-[#003426] tracking-tight">{t('auth.loginButton')}</h2>
+                <p className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[10px] opacity-80">{t('auth.legalIntelligence')}</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -255,9 +255,9 @@ const Login = () => {
       {/* Architecture Explorer Modal */}
       <ArchitectureModal isOpen={isArchOpen} onClose={() => setIsArchOpen(false)} />
     
-      {/* Footer */}
-      <footer className="fixed bottom-0 left-0 w-full z-50 flex flex-col md:flex-row justify-center items-center px-8 py-8 backdrop-blur-3xl bg-black/20 border-t border-white/5">
-        <p className="text-text-accent font-headline text-[10px] uppercase tracking-[0.6em] font-black drop-shadow-2xl italic">© 2026 Motivity Labs.</p>
+      {/* Footer (Always Ivory-themed gold) */}
+      <footer className="fixed bottom-0 left-0 w-full z-50 flex flex-col md:flex-row justify-center items-center px-8 py-10 bg-transparent">
+        <p className="text-[#D4AF37] font-headline text-[10px] uppercase tracking-[0.8em] font-bold italic drop-shadow-sm">© 2026 Motivity Labs.</p>
       </footer>
     </div>
   )

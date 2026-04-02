@@ -259,14 +259,14 @@ h1, h2, h3, .judicial-title {
 .portal-divider-glow {
   position: absolute;
   top: 0;
-  right: -150px;
-  width: 300px;
+  right: -250px;
+  width: 500px;
   height: 100%;
-  background: radial-gradient(ellipse at center, rgba(212, 175, 55, 0.12), transparent 75%);
-  filter: blur(60px);
+  background: radial-gradient(ellipse at center, rgba(212, 175, 55, 0.05), transparent 85%);
+  filter: blur(100px);
   z-index: 20;
   pointer-events: none;
-  opacity: 0.8;
+  opacity: 0.6;
 }
 
 .text-gradient-gold {
