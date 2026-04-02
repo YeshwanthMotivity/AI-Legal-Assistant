@@ -249,24 +249,36 @@ h1, h2, h3, .judicial-title {
 }
 
 .glass-goated {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(25px) saturate(200%);
-  -webkit-backdrop-filter: blur(25px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(30px) saturate(210%);
+  -webkit-backdrop-filter: blur(30px) saturate(210%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 40px 120px -25px rgba(0, 0, 0, 0.6);
 }
 
 .portal-divider-glow {
   position: absolute;
   top: 0;
-  right: -250px;
-  width: 500px;
+  right: -300px;
+  width: 600px;
   height: 100%;
-  background: radial-gradient(ellipse at center, rgba(212, 175, 55, 0.05), transparent 85%);
-  filter: blur(100px);
+  background: radial-gradient(ellipse at center, rgba(212, 175, 55, 0.1), transparent 85%);
+  filter: blur(120px);
   z-index: 20;
   pointer-events: none;
   opacity: 0.6;
+}
+
+.portal-divider-curve {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 15vw;
+  height: 100%;
+  background: linear-gradient(to right, #062c1d, transparent);
+  clip-path: ellipse(15% 100% at 0% 50%);
+  z-index: 10;
+  pointer-events: none;
 }
 
 .text-gradient-gold {

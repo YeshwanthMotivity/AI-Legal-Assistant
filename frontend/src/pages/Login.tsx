@@ -112,7 +112,8 @@ const Login = () => {
             </div>
           </div>
           
-          {/* Soft Radiant Wash Divider */}
+          {/* Organic 'Imperial Curve' Divider */}
+          <div className="portal-divider-curve" />
           <div className="portal-divider-glow" />
         </section>
 

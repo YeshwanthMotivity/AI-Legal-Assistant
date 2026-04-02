@@ -59,8 +59,8 @@ const ArchitectureModal = ({ isOpen, onClose }: ArchitectureModalProps) => {
                   ))}
                 </div>
                 <div>
-                  <h2 className="text-6xl lg:text-8xl font-headline text-white font-bold tracking-tighter leading-none mb-4 drop-shadow-2xl">System Blueprint</h2>
-                  <p className="text-[#D4AF37] font-serif italic text-3xl max-w-3xl leading-relaxed opacity-90">Sovereign UAE Intelligence — System Schematic v4.0</p>
+                  <h2 className="text-6xl lg:text-8xl font-headline !text-white font-bold tracking-tighter leading-none mb-4 drop-shadow-2xl">System Blueprint</h2>
+                  <p className="!text-[#D4AF37] font-serif italic text-3xl max-w-3xl leading-relaxed opacity-100">Sovereign UAE Intelligence — System Schematic v4.0</p>
                 </div>
               </header>
 
@@ -68,8 +68,8 @@ const ArchitectureModal = ({ isOpen, onClose }: ArchitectureModalProps) => {
                 {/* TIER 1: INTERFACE LAYER */}
                 <section>
                   <div className="flex items-center gap-6 mb-12 group">
-                    <div className="w-1.5 h-10 bg-text-accent rounded-full transition-all group-hover:h-12 shadow-[0_0_15px_rgba(212,175,55,0.6)]" />
-                    <h3 className="font-headline text-3xl font-bold text-white tracking-tight italic">Tier 01: Sovereign Experience Layer</h3>
+                    <div className="w-1.5 h-10 bg-[#D4AF37] rounded-full transition-all group-hover:h-12 shadow-[0_0_20px_rgba(212,175,55,0.8)]" />
+                    <h3 className="font-headline text-3xl font-bold !text-white tracking-tight italic">Tier 01: Sovereign Experience Layer</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 lg:pr-24">
                     <ModuleCard title="Admin Portal" icon={<ShieldCheck className="w-8 h-8" />} items={['Sovereign Dashboard', 'Identity Control (IAM)', 'Audit-Sec Ledger']} />
@@ -100,8 +100,8 @@ const ArchitectureModal = ({ isOpen, onClose }: ArchitectureModalProps) => {
                 {/* TIER 3: DATA LAYER */}
                 <section>
                   <div className="flex items-center gap-6 mb-12 group">
-                    <div className="w-1.5 h-10 bg-indigo-500 rounded-full transition-all group-hover:h-12 shadow-[0_0_15px_rgba(99,102,241,0.6)]" />
-                    <h3 className="font-headline text-3xl font-bold text-white tracking-tight italic">Tier 03: Encrypted Persistence</h3>
+                    <div className="w-1.5 h-10 bg-indigo-500 rounded-full transition-all group-hover:h-12 shadow-[0_0_20px_rgba(99,102,241,0.8)]" />
+                    <h3 className="font-headline text-3xl font-bold !text-white tracking-tight italic">Tier 03: Encrypted Persistence</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="p-8 rounded-[2.5rem] bg-white/[0.03] border border-[#336791]/30 hover:border-[#336791] transition-all space-y-4 group">
