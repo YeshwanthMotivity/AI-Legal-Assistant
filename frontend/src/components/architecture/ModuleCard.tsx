@@ -10,10 +10,10 @@ interface ModuleCardProps {
 const ModuleCard = ({ title, icon, items, className = '' }: ModuleCardProps) => {
   return (
     <div 
-      className={`group relative overflow-hidden rounded-2xl bg-bg-surface border border-border-subtle p-6 transition-all duration-500 hover:border-text-accent/40 hover:-translate-y-1.5 shadow-sm hover:shadow-xl ${className}`}
+      className={`group relative overflow-hidden rounded-[2rem] bg-white/[0.03] backdrop-blur-md border border-white/5 p-8 transition-all duration-700 hover:border-text-accent/30 hover:-translate-y-2 shadow-2xl ${className}`}
     >
-      {/* Subtle Gold Hover Glow */}
-      <div className="absolute inset-0 bg-text-accent opacity-0 group-hover:opacity-[0.03] transition-opacity duration-700 blur-2xl pointer-events-none" />
+      {/* Dynamic Gold Glow */}
+      <div className="absolute inset-0 bg-text-accent opacity-0 group-hover:opacity-[0.05] transition-opacity duration-1000 blur-3xl pointer-events-none" />
       
       <div className="relative z-10">
         <div className="flex items-center gap-4 mb-5">

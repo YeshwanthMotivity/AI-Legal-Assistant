@@ -20,6 +20,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 import CaseWorkflowStepper from '../components/layout/CaseWorkflowStepper';
 
 export default function JudgeDashboard() {
@@ -75,75 +76,34 @@ export default function JudgeDashboard() {
           
         {/* 1. Top Metrics */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="glass-goated p-8 rounded-[3rem] shadow-sm flex flex-col justify-between border border-white/5 hover:border-text-accent/40 transition-all duration-500 group"
-          >
-            <div>
-              <p className="text-[10px] font-black text-text-accent uppercase tracking-[0.3em] mb-4 opacity-70 group-hover:opacity-100 transition-opacity">{t('judge.dashboard.activeCases')}</p>
-              <h3 className="font-headline text-5xl font-bold text-text-heading tracking-tight">
-                {casesQuery.isLoading ? '...' : Math.max(stats.pending, 24)}
-              </h3>
-            </div>
-            <div className="flex items-center mt-8 text-[11px] font-black text-text-accent uppercase tracking-widest">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              <span>{t('judge.dashboard.fromLastWeek')}</span>
-            </div>
-          </motion.div>
-          
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="glass-goated p-8 rounded-[3rem] shadow-sm flex flex-col justify-between border border-white/5 hover:border-text-accent/40 transition-all duration-500 group"
-          >
-            <div>
-              <p className="text-[10px] font-black text-text-accent uppercase tracking-[0.3em] mb-4 opacity-70 group-hover:opacity-100 transition-opacity">{t('judge.dashboard.pendingJudgments')}</p>
-              <h3 className="font-headline text-5xl font-bold text-text-heading tracking-tight">
-                {casesQuery.isLoading ? '...' : String(stats.ready).padStart(2, '0')}
-              </h3>
-            </div>
-            <div className="flex items-center mt-8 text-[11px] font-black text-text-accent uppercase tracking-widest">
-              <AlertTriangle className="w-4 h-4 mr-2" />
-              <span>{t('judge.dashboard.urgentReview', { count: stats.urgent })}</span>
-            </div>
-          </motion.div>
-          
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="glass-goated p-8 rounded-[3rem] shadow-sm flex flex-col justify-between border border-white/5 hover:border-text-accent/40 transition-all duration-500 group"
-          >
-            <div>
-              <p className="text-[10px] font-black text-text-accent uppercase tracking-[0.3em] mb-4 opacity-70 group-hover:opacity-100 transition-opacity">{t('judge.dashboard.urgentHearings')}</p>
-              <h3 className="font-headline text-5xl font-bold text-text-heading tracking-tight">
-                {casesQuery.isLoading ? '...' : String(stats.urgent).padStart(2, '0')}
-              </h3>
-            </div>
-            <div className="flex items-center mt-8 text-[11px] font-black text-text-muted uppercase tracking-widest leading-none">
-              <Clock className="w-4 h-4 mr-2" />
-              <span>{t('judge.dashboard.nextIn')}</span>
-            </div>
-          </motion.div>
-          
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="glass-goated p-8 rounded-[3rem] shadow-sm flex flex-col justify-between border border-white/5 hover:border-text-accent/40 transition-all duration-500 group"
-          >
-            <div>
-              <p className="text-[10px] font-black text-text-accent uppercase tracking-[0.3em] mb-4 opacity-70 group-hover:opacity-100 transition-opacity">{t('judge.dashboard.aiAssistance')}</p>
-              <h3 className="font-headline text-5xl font-bold text-text-accent tracking-tighter">92%</h3>
-            </div>
-            <div className="flex items-center mt-8 text-[11px] font-black text-text-accent uppercase tracking-widest">
-              <Sparkles className="w-4 h-4 mr-2 animate-pulse" />
-              <span>{t('judge.dashboard.efficiencyOpt')}</span>
-            </div>
-          </motion.div>
+          {[
+            { label: 'activeCases', value: Math.max(stats.pending, 24), icon: TrendingUp, footer: 'fromLastWeek', accent: 'text-text-accent' },
+            { label: 'pendingJudgments', value: String(stats.ready).padStart(2, '0'), icon: AlertTriangle, footer: 'urgentReview', count: stats.urgent, accent: 'text-text-accent' },
+            { label: 'urgentHearings', value: String(stats.urgent).padStart(2, '0'), icon: Clock, footer: 'nextIn', accent: 'text-text-muted' },
+            { label: 'aiAssistance', value: '92%', icon: Sparkles, footer: 'efficiencyOpt', accent: 'text-success', pulse: true }
+          ].map((m, i) => (
+            <motion.div 
+              key={m.label}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 * i }}
+              className="bg-white/5 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-2xl border border-white/5 hover:border-text-accent/30 transition-all duration-700 group relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-text-accent opacity-0 group-hover:opacity-[0.03] transition-opacity duration-1000 blur-3xl pointer-events-none" />
+              <div className="relative z-10 h-full flex flex-col justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-text-accent/60 uppercase tracking-[0.4em] mb-4 group-hover:text-text-accent transition-colors">{t(`judge.dashboard.${m.label}`)}</p>
+                  <h3 className={cn("font-headline text-5xl font-bold tracking-tighter text-text-heading", m.accent)}>
+                    {casesQuery.isLoading ? '...' : m.value}
+                  </h3>
+                </div>
+                <div className="flex items-center mt-8 text-[11px] font-black text-white/30 uppercase tracking-widest group-hover:text-white/60 transition-colors">
+                  <m.icon className={cn("w-4 h-4 mr-3", m.pulse ? "animate-pulse " + m.accent : "")} />
+                  <span>{m.footer === 'urgentReview' ? t('judge.dashboard.urgentReview', { count: m.count }) : t(`judge.dashboard.${m.footer}`)}</span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </section>
 
         {/* Main Layout Grid */}
@@ -153,10 +113,10 @@ export default function JudgeDashboard() {
           <div className="col-span-12 lg:col-span-7 space-y-10">
             
             {/* 2. Priority Case Queue */}
-            <div className="space-y-8">
+            <div className="space-y-6">
               <div className="flex items-baseline justify-between mb-4">
-                <h4 className="font-headline text-4xl text-text-heading font-bold tracking-tight">{t('judge.dashboard.priorityQueue')}</h4>
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-text-accent opacity-60 mb-1">{t('judge.dashboard.sortingBy')} AI Priority Index</span>
+                <h4 className="font-headline text-3xl text-text-heading font-bold tracking-tight italic">{t('judge.dashboard.priorityQueue')}</h4>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-text-accent opacity-50 mb-1">AI Priority Index</span>
               </div>
               
               <div className="space-y-6">
@@ -230,15 +190,15 @@ export default function JudgeDashboard() {
           {/* Right Column (Intelligence Sidebar — 4/12 Split) */}
           <div className="col-span-12 lg:col-span-4 space-y-10">
             
-            {/* System Health Module (Goated) */}
+            {/* System Intelligence Module */}
              <motion.section 
                initial={{ opacity: 0, x: 20 }}
                animate={{ opacity: 1, x: 0 }}
-               className="glass-goated p-10 rounded-[3rem] border border-white/10 relative overflow-hidden group shadow-2xl"
+               className="bg-white/5 backdrop-blur-3xl p-10 rounded-[2.5rem] border border-white/10 relative overflow-hidden group shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5)]"
              >
-               <div className="flex items-center justify-between mb-8 relative z-10">
-                  <h4 className="font-headline text-2xl font-bold flex items-center text-text-heading tracking-tight">
-                    <Sparkles className="w-6 h-6 mr-4 text-text-accent animate-pulse" /> {t('common.ai_engine')}
+               <div className="flex items-center justify-between mb-10 relative z-10">
+                  <h4 className="font-headline text-2xl font-bold flex items-center text-text-heading tracking-tight italic">
+                    <Sparkles className="w-6 h-6 mr-4 text-text-accent animate-pulse" /> {t('common.aiEngine')}
                   </h4>
                   <div className="flex items-center gap-3">
                     <div className="w-3 h-3 rounded-full bg-success animate-ping" />

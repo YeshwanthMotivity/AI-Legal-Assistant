@@ -11,6 +11,7 @@
     "welcome": "Welcome",
     "appName": "AI Judicial Assistant",
     "loading": "Loading...",
+    "aiEngine": "AI Engine",
     "error": "An error occurred",
     "save": "Save",
     "cancel": "Cancel",

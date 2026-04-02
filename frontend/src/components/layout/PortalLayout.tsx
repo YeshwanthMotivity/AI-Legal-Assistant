@@ -127,9 +127,9 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
             <Scale className="w-7 h-7" />
           </motion.div>
           {!isCollapsed && (
-            <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+            <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
               <span className="font-headline text-2xl font-black tracking-tighter text-text-heading block leading-none">LexAI</span>
-              <span className="text-[10px] font-black text-text-accent uppercase tracking-[0.4em] block mt-1">Sovereign OS</span>
+              <span className="text-[10px] font-black text-text-accent/60 uppercase tracking-[0.4em] block mt-1">Sovereign OS</span>
             </motion.div>
           )}
         </div>
@@ -252,7 +252,7 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
             <div className="flex items-center gap-10">
               <div className="hidden xl:flex items-center gap-6 px-10 border-x border-white/10 h-12">
                  <div className="flex flex-col text-right">
-                    <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">{t('common.ai_engine')}</span>
+                    <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">{t('common.aiEngine')}</span>
                     <span className="text-sm font-bold text-success italic leading-none mt-1">Sovereign v4</span>
                  </div>
                  <div className="w-10 h-10 rounded-[1.2rem] bg-success/5 border border-success/20 flex items-center justify-center text-success">

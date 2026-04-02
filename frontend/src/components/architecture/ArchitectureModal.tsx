@@ -10,7 +10,6 @@ interface ArchitectureModalProps {
 }
 
 const ArchitectureModal = ({ isOpen, onClose }: ArchitectureModalProps) => {
-  // Prevent scrolling on background when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -26,127 +25,103 @@ const ArchitectureModal = ({ isOpen, onClose }: ArchitectureModalProps) => {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-primary/20 backdrop-blur-md z-[100]"
+            className="fixed inset-0 bg-emerald-950/40 backdrop-blur-3xl z-[100]"
           />
 
-          {/* Slide-over Panel */}
           <motion.div
             initial={{ x: '100%', opacity: 0.5 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 30, stiffness: 200 }}
-            className="fixed top-0 right-0 h-full w-full md:w-[600px] lg:w-[850px] bg-bg-base border-l border-primary/10 z-[101] overflow-y-auto custom-scrollbar shadow-2xl"
+            transition={{ type: 'spring', damping: 40, stiffness: 300 }}
+            className="fixed top-0 right-0 h-full w-full lg:w-[950px] bg-[#0A1F16] border-l border-white/5 z-[101] overflow-y-auto scrollbar-hide shadow-[0_0_100px_rgba(0,0,0,1)]"
           >
-            <div className="relative min-h-full p-8 md:p-12 pb-24">
-              
-              {/* Close Button */}
+            <div className="relative min-h-full p-12 lg:p-20 pb-32">
+              <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+
               <button 
                 onClick={onClose}
-                className="absolute top-8 right-8 p-3 rounded-full bg-bg-surface hover:bg-primary-royal hover:text-white text-primary-royal transition-all duration-300 shadow-sm border border-border-subtle"
-                aria-label="Close architecture view"
+                className="absolute top-12 right-12 p-5 rounded-3xl bg-white/5 border border-white/10 text-white hover:bg-text-accent hover:text-bg-base transition-all duration-500 shadow-2xl group active:scale-95"
               >
-                <X className="w-6 h-6" />
+                <X className="w-8 h-8 group-hover:rotate-90 transition-transform duration-500" />
               </button>
 
-              {/* HEADER SECTION */}
-              <div className="mb-14 mt-4 space-y-6">
-                <div className="flex flex-wrap items-center gap-3 mb-8">
-                  {['On-Premise', 'Air-Gapped', 'Arabic + English', 'Multi-Agent AI'].map(tag => (
-                    <span key={tag} className="px-4 py-1.5 text-[10px] uppercase tracking-widest bg-text-accent/10 text-text-accent border border-text-accent/20 rounded-full font-black shadow-sm">
+              <header className="mb-24 space-y-8 relative z-10">
+                <div className="flex flex-wrap items-center gap-4">
+                  {['On-Premise', 'Air-Gapped', 'Sovereign Nodes', 'Neural-Sync'].map(tag => (
+                    <span key={tag} className="px-6 py-2 text-[10px] font-black uppercase tracking-[0.4em] bg-text-accent/10 text-text-accent border border-text-accent/20 rounded-full shadow-2xl">
                       {tag}
                     </span>
                   ))}
                 </div>
-                <h2 className="text-4xl md:text-6xl font-headline text-text-primary font-bold tracking-tight">AI Judicial Assistant Architecture</h2>
-                <p className="text-text-secondary font-medium text-xl italic max-w-2xl leading-relaxed">Enterprise-grade AI system for sovereign UAE legal intelligence</p>
-              </div>
+                <div>
+                  <h2 className="text-5xl lg:text-7xl font-headline text-white font-bold tracking-tighter leading-none mb-6">System Blueprint</h2>
+                  <p className="text-emerald-100/50 font-serif italic text-2xl max-w-2xl leading-relaxed">Sovereign UAE Intelligence — System Schematic v4.0</p>
+                </div>
+              </header>
 
-              {/* SECTION 1: USER ACCESS LAYER */}
-              <section className="mb-16">
-                <div className="flex items-center gap-3 mb-8 border-b border-primary/10 pb-5">
-                  <Users className="w-5 h-5 text-accent" />
-                  <h3 className="font-black tracking-[0.3em] uppercase text-primary text-[11px] opacity-80">User Access Layer</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <ModuleCard 
-                    title="Admin Portal" icon={<ShieldCheck />} 
-                    items={['Dashboard', 'User Management', 'Audit Logs']} 
-                  />
-                  <ModuleCard 
-                    title="Judge Portal" icon={<LayoutDashboard />} 
-                    items={['Workspace', 'Judgments Drafting', 'Analysis']} 
-                  />
-                  <ModuleCard 
-                    title="Clerk Portal" icon={<Layers />} 
-                    items={['Case Intake', 'Document OCR', 'Bulk Upload']} 
-                  />
-                  <ModuleCard 
-                    title="Auth & RBAC" icon={<Key />} 
-                    items={['JWT Tokens', 'Role Hierarchy', 'Session Replay']} 
-                  />
-                </div>
-              </section>
+              <div className="space-y-24 relative z-20">
+                {/* TIER 1: INTERFACE LAYER */}
+                <section>
+                  <div className="flex items-center gap-6 mb-12 group">
+                    <div className="w-1.5 h-10 bg-text-accent rounded-full transition-all group-hover:h-12 shadow-[0_0_15px_rgba(212,175,55,0.6)]" />
+                    <h3 className="font-headline text-3xl font-bold text-white tracking-tight italic">Tier 01: Sovereign Experience Layer</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 lg:pr-24">
+                    <ModuleCard title="Admin Portal" icon={<ShieldCheck className="w-8 h-8" />} items={['Sovereign Dashboard', 'Identity Control (IAM)', 'Audit-Sec Ledger']} />
+                    <ModuleCard title="Judge Portal" icon={<LayoutDashboard className="w-8 h-8" />} items={['Decision Workspace', 'Neural Drafting', 'Explainability Grid']} />
+                    <ModuleCard title="Clerk Portal" icon={<Layers className="w-8 h-8" />} items={['Intake Queue', 'Direct OCR Pipeline', 'System Synced']} />
+                    <ModuleCard title="Auth & RBAC" icon={<Key className="w-8 h-8" />} items={['Military Grade (AES)', 'Role Graph', 'Session Enclave']} />
+                  </div>
+                </section>
 
-              {/* SECTION 2: BACKEND DOMAIN MODULES */}
-              <section className="mb-16">
-                <div className="flex items-center gap-3 mb-8 border-b border-primary/10 pb-5">
-                  <Server className="w-5 h-5 text-accent" />
-                  <h3 className="font-black tracking-[0.3em] uppercase text-primary text-[11px] opacity-80">Backend Domain Modules</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <ModuleCard title="Case Core" icon={<ShieldCheck />} />
-                  <ModuleCard title="Document Processor" icon={<FileText />} />
-                  <ModuleCard title="Ingestion Engine" icon={<Activity />} />
-                  <ModuleCard title="User IAM" icon={<Key />} />
-                  <ModuleCard title="Audit & Eval" icon={<Eye />} />
-                </div>
-              </section>
-
-              {/* SECTION 3: AI ORCHESTRATION PIPELINE */}
-              <section className="mb-16">
-                <div className="flex items-center gap-3 mb-8 border-b border-primary/10 pb-5">
-                  <Network className="w-5 h-5 text-accent" />
-                  <h3 className="font-black tracking-[0.3em] uppercase text-primary text-[11px] opacity-80">AI Orchestration Graph</h3>
-                </div>
-                <div className="bg-white rounded-2xl p-8 border border-primary/10 shadow-lg">
-                  <PipelineFlow />
-                </div>
-              </section>
-
-              {/* SECTION 4: AI MICROSERVICES */}
-              <section className="mb-16">
-                <div className="flex items-center gap-3 mb-8 border-b border-primary/10 pb-5">
-                  <Cpu className="w-5 h-5 text-accent" />
-                  <h3 className="font-black tracking-[0.3em] uppercase text-primary text-[11px] opacity-80">AI Microservices</h3>
-                </div>
-                <div className="flex flex-wrap gap-4">
-                  {['BGE-M3 (Embeddings)', 'BGE Reranker', 'Qwen 2.5 (1.5B)', 'JAIS Arabic LLM'].map(service => (
-                    <div key={service} className="px-6 py-3.5 rounded-xl bg-white border border-primary/10 font-mono text-xs text-primary hover:border-accent hover:text-accent font-bold transition-all shadow-sm">
-                      {service}
+                {/* TIER 2: PROCESSING LAYER */}
+                <section className="relative">
+                  <div className="flex items-center gap-6 mb-12 group">
+                    <div className="w-1.5 h-10 bg-success rounded-full transition-all group-hover:h-12 shadow-[0_0_15px_rgba(16,185,129,0.6)]" />
+                    <h3 className="font-headline text-3xl font-bold text-white tracking-tight italic">Tier 02: Neural Processing Graph</h3>
+                  </div>
+                  <div className="bg-white/5 border border-white/5 p-12 rounded-[3.5rem] shadow-2xl overflow-hidden group">
+                    <PipelineFlow />
+                    <div className="mt-12 flex flex-wrap gap-4 pt-10 border-t border-white/5">
+                      {['JAIS-1.5B (Arabic LLM)', 'Qwen-2.5-Coder', 'BGE-M3 Embed'].map(s => (
+                        <div key={s} className="px-5 py-2.5 rounded-xl bg-white/5 font-mono text-[10px] text-text-accent uppercase tracking-[0.2em] font-bold border border-white/10 group-hover:border-text-accent/30 transition-all">
+                          {s}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </section>
+                  </div>
+                </section>
 
-              {/* SECTION 5: DATA LAYER */}
-              <section className="mb-10">
-                <div className="flex items-center gap-3 mb-8 border-b border-border-subtle pb-5">
-                  <Database className="w-5 h-5 text-text-accent" />
-                  <h3 className="font-black tracking-[0.3em] uppercase text-text-primary text-[11px] opacity-80">Data Layer</h3>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <ModuleCard title="PostgreSQL" icon={<Database />} items={['Relational App State']} className="bg-[#336791]/10 border-[#336791]/30" />
-                  <ModuleCard title="MinIO" icon={<HardDrive />} items={['S3 Object Storage']} className="bg-[#C72E49]/10 border-[#C72E49]/30" />
-                  <ModuleCard title="Qdrant" icon={<Database />} items={['High-Dimensional Vectors']} className="bg-[#fc2f4c]/10 border-[#fc2f4c]/30" />
-                </div>
-              </section>
-
+                {/* TIER 3: DATA LAYER */}
+                <section>
+                  <div className="flex items-center gap-6 mb-12 group">
+                    <div className="w-1.5 h-10 bg-indigo-500 rounded-full transition-all group-hover:h-12 shadow-[0_0_15px_rgba(99,102,241,0.6)]" />
+                    <h3 className="font-headline text-3xl font-bold text-white tracking-tight italic">Tier 03: Encrypted Persistence</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="p-8 rounded-[2.5rem] bg-white/5 border border-[#336791]/30 hover:border-[#336791] transition-all space-y-4">
+                      <div className="w-12 h-12 bg-[#336791]/20 rounded-2xl flex items-center justify-center text-[#336791]"><Database /></div>
+                      <p className="font-headline font-bold text-lg text-white">PostgreSQL</p>
+                      <p className="text-[11px] text-emerald-100/40 uppercase tracking-[0.1em] font-black">Relation State</p>
+                    </div>
+                    <div className="p-8 rounded-[2.5rem] bg-white/5 border border-[#fc2f4c]/30 hover:border-[#fc2f4c] transition-all space-y-4">
+                      <div className="w-12 h-12 bg-[#fc2f4c]/20 rounded-2xl flex items-center justify-center text-[#fc2f4c]"><Network /></div>
+                      <p className="font-headline font-bold text-lg text-white">Qdrant Vector DB</p>
+                      <p className="text-[11px] text-emerald-100/40 uppercase tracking-[0.1em] font-black">High-D Inferences</p>
+                    </div>
+                    <div className="p-8 rounded-[2.5rem] bg-white/5 border border-[#C72E49]/30 hover:border-[#C72E49] transition-all space-y-4">
+                      <div className="w-12 h-12 bg-[#C72E49]/20 rounded-2xl flex items-center justify-center text-[#C72E49]"><HardDrive /></div>
+                      <p className="font-headline font-bold text-lg text-white">Object Storage</p>
+                      <p className="text-[11px] text-emerald-100/40 uppercase tracking-[0.1em] font-black">Encrypted Dossiers</p>
+                    </div>
+                  </div>
+                </section>
+              </div>
             </div>
           </motion.div>
         </>
