@@ -5,12 +5,12 @@
   --font-sans: 'Inter', 'Cairo', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Lexis Emerald Precision Palette */
+  /* Royal Emerald Precision Palette */
   --color-emerald-50: #F0FDF4;
   --color-emerald-100: #DCFCE7;
   --color-emerald-200: #BBF7D0;
-  --color-emerald-600: #16A34A;
-  --color-emerald-800: #065F46;
+  --color-emerald-600: #00573F;
+  --color-emerald-800: #003D2C;
 
   --color-navy-50: #F8FAFC;
   --color-navy-100: #F1F5F9;
@@ -18,13 +18,14 @@
   --color-navy-800: #1F2937;
   --color-navy-900: #0F172A;
 
-  --color-terracotta-100: #FEE2E2;
-  --color-terracotta-200: #FECACA;
-  --color-terracotta-800: #823F3A;
+  --color-gold-50: #FCF9EE;
+  --color-gold-100: #F7E7CE;
+  --color-gold-500: #D4AF37;
+  --color-gold-600: #B8860B;
 
   --color-primary: var(--primary);
   --color-secondary: var(--secondary);
-  --color-accent: var(--accent-red);
+  --color-accent: var(--accent-gold);
   --color-background: var(--bg-base);
   --color-card: var(--bg-card);
   --color-border: var(--border-color);
@@ -117,42 +118,47 @@
 }
 
 :root {
-  /* Lexis Emerald Theme — Light (Primary for Legal Professionals) */
-  --primary: #065F46;
+  /* Royal Adaptive Theme — Light (Ivory & Emerald) */
+  --bg-color: #F9F8F2;
+  --surface-color: #FFFFFF;
+  --text-main: #003426;
+  --primary-royal: #00573F;
+  --accent-gold: #B8860B;
+  --border-subtle: rgba(0, 87, 63, 0.1);
+
+  --primary: var(--primary-royal);
   --primary-foreground: #ffffff;
-  --primary-hover: #044b37;
+  --primary-hover: #004532;
   --primary-light: #BBF7D0;
   
   --secondary: #1F2937;
   --secondary-foreground: #ffffff;
-  --accent-red: #823F3A;
 
   --success: #16A34A;
   --warning: #C9A03D;
   --danger: #823F3A;
-  --info: #1F2937;
+  --info: #00573F;
 
   /* Layout Base */
-  --bg-base: #F8FAFC;
-  --bg-surface: #ffffff;
-  --bg-card: #ffffff;
+  --bg-base: var(--bg-color);
+  --bg-surface: var(--surface-color);
+  --bg-card: var(--surface-color);
   --bg-card-hover: #F1F5F9;
-  --bg-sidebar: #1F2937; 
-  --sidebar-active: #065F46;
-  --sidebar-text: #F1F5F9;
+  --bg-sidebar: var(--primary-royal); 
+  --sidebar-active: #004532;
+  --sidebar-text: #F9F8F2;
   
   --border-color: #E2E8F0;
-  --border-subtle: rgba(6, 95, 70, 0.1);
   --border-light: #F1F5F9;
   
-  --text-primary: #1F2937;
-  --text-secondary: #475569;
-  --text-muted: #94A3B8;
-  --text-accent: #C9A03D;
+  --text-primary: var(--text-main);
+  --text-secondary: #3d5245;
+  --text-muted: #6f8577;
+  --text-accent: var(--accent-gold);
   
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 26, 19, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 26, 19, 0.1);
+  --shadow-lg: 0 10px 30px rgba(0, 26, 19, 0.2);
   
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -164,23 +170,37 @@
 }
 
 [data-theme='dark'] {
-  --bg-base: #0f172a;
-  --bg-surface: #1e293b;
-  --bg-card: #1e293b;
-  --bg-card-hover: #334155;
-  --bg-sidebar: #0f172a;
-  
-  --primary: #2563eb;
+  /* Royal Adaptive Theme — Dark (Midnight & Gold) */
+  --bg-color: #001A13;
+  --surface-color: #002C1F;
+  --text-main: #E9DCC0;
+  --primary-royal: #008B65;
+  --accent-gold: #D4AF37;
+  --border-subtle: rgba(212, 175, 55, 0.2);
+
+  --primary: var(--primary-royal);
   --primary-foreground: #ffffff;
+  --primary-hover: #00A679;
   
-  --border-color: #414944;
-  --border-subtle: rgba(37, 99, 235, 0.15);
-  --border-light: #313540;
+  --bg-base: var(--bg-color);
+  --bg-surface: var(--surface-color);
+  --bg-card: var(--surface-color);
+  --bg-card-hover: #003626;
+  --bg-sidebar: #001A13;
+  --sidebar-active: #002C1F;
+  --sidebar-text: #E9DCC0;
+
+  --text-primary: var(--text-main);
+  --text-secondary: #A8B5A9;
+  --text-muted: #6d7c6e;
+  --text-accent: var(--accent-gold);
+
+  --border-color: #003626;
+  --border-light: #004632;
   
-  --text-primary: #dfe2f1;
-  --text-secondary: #c0c8c3;
-  --text-muted: #8a938d;
-  --text-accent: #e9c349;
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 10px 20px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
 /* Base Styles */
@@ -215,18 +235,34 @@ h1, h2, h3, .judicial-title {
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--bg-surface);
   backdrop-filter: blur(20px) saturate(190%);
   -webkit-backdrop-filter: blur(20px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-lg);
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, var(--primary), #ffe088);
+  background: linear-gradient(135deg, var(--primary), var(--text-accent));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.btn-royal-shine {
+  background: linear-gradient(145deg, var(--accent-gold), #AA8A2E);
+  box-shadow: 0 4px 15px rgba(184, 134, 11, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-royal-shine:hover {
+  background: linear-gradient(145deg, #AA8A2E, var(--accent-gold));
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(184, 134, 11, 0.4);
+}
+
+.shadow-royal {
+  box-shadow: 0 10px 30px rgba(0, 26, 19, 0.2);
 }
 
 /* Unified Buttons */

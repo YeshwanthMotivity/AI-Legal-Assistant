@@ -73,53 +73,53 @@ export default function JudgeDashboard() {
           
         {/* 1. Top Metrics */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white p-6 rounded-2xl shadow-sm flex flex-col justify-between border border-slate-200">
+          <div className="bg-bg-surface p-7 rounded-[2rem] shadow-sm flex flex-col justify-between border border-border-subtle hover:border-text-accent hover:shadow-lg transition-all duration-500">
             <div>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{t('judge.dashboard.activeCases')}</p>
-              <h3 className="font-headline text-4xl font-bold text-secondary">
+              <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">{t('judge.dashboard.activeCases')}</p>
+              <h3 className="font-headline text-5xl font-bold text-text-primary">
                 {casesQuery.isLoading ? '...' : Math.max(stats.pending, 24)}
               </h3>
             </div>
-            <div className="flex items-center mt-4 text-[11px] font-bold text-primary">
-              <TrendingUp className="w-4 h-4 mr-1 text-primary" />
-              <span>{t('judge.dashboard.fromLastWeek')}</span>
+            <div className="flex items-center mt-6 text-[11px] font-extrabold text-text-accent">
+              <TrendingUp className="w-4 h-4 mr-1.5" />
+              <span className="uppercase tracking-widest">{t('judge.dashboard.fromLastWeek')}</span>
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-2xl shadow-sm flex flex-col justify-between border border-slate-200">
+          <div className="bg-bg-surface p-7 rounded-[2rem] shadow-sm flex flex-col justify-between border border-border-subtle hover:border-text-accent hover:shadow-lg transition-all duration-500">
             <div>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{t('judge.dashboard.pendingJudgments')}</p>
-              <h3 className="font-headline text-4xl font-bold text-secondary">
+              <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">{t('judge.dashboard.pendingJudgments')}</p>
+              <h3 className="font-headline text-5xl font-bold text-text-primary">
                 {casesQuery.isLoading ? '...' : String(stats.ready).padStart(2, '0')}
               </h3>
             </div>
-            <div className="flex items-center mt-4 text-[11px] font-bold text-accent">
-              <AlertTriangle className="w-4 h-4 mr-1 text-accent" />
-              <span>{t('judge.dashboard.urgentReview', { count: stats.urgent })}</span>
+            <div className="flex items-center mt-6 text-[11px] font-extrabold text-text-accent">
+              <AlertTriangle className="w-4 h-4 mr-1.5" />
+              <span className="uppercase tracking-widest">{t('judge.dashboard.urgentReview', { count: stats.urgent })}</span>
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-2xl shadow-sm flex flex-col justify-between border border-slate-200">
+          <div className="bg-bg-surface p-7 rounded-[2rem] shadow-sm flex flex-col justify-between border border-border-subtle hover:border-text-accent hover:shadow-lg transition-all duration-500">
             <div>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{t('judge.dashboard.urgentHearings')}</p>
-              <h3 className="font-headline text-4xl font-bold text-secondary">
+              <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">{t('judge.dashboard.urgentHearings')}</p>
+              <h3 className="font-headline text-5xl font-bold text-text-primary">
                 {casesQuery.isLoading ? '...' : String(stats.urgent).padStart(2, '0')}
               </h3>
             </div>
-            <div className="flex items-center mt-4 text-[11px] font-bold text-slate-500">
-              <Clock className="w-4 h-4 mr-1 text-slate-400" />
-              <span>{t('judge.dashboard.nextIn')}</span>
+            <div className="flex items-center mt-6 text-[11px] font-extrabold text-text-muted">
+              <Clock className="w-4 h-4 mr-1.5" />
+              <span className="uppercase tracking-widest">{t('judge.dashboard.nextIn')}</span>
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-2xl shadow-sm flex flex-col justify-between border border-slate-200">
+          <div className="bg-bg-surface p-7 rounded-[2rem] shadow-sm flex flex-col justify-between border border-border-subtle hover:border-text-accent hover:shadow-lg transition-all duration-500">
             <div>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{t('judge.dashboard.aiAssistance')}</p>
-              <h3 className="font-headline text-4xl font-bold text-primary">92%</h3>
+              <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">{t('judge.dashboard.aiAssistance')}</p>
+              <h3 className="font-headline text-5xl font-bold text-text-accent">92%</h3>
             </div>
-            <div className="flex items-center mt-4 text-[11px] font-bold text-primary">
-              <Sparkles className="w-4 h-4 mr-1 text-primary" />
-              <span>{t('judge.dashboard.efficiencyOpt')}</span>
+            <div className="flex items-center mt-6 text-[11px] font-extrabold text-text-accent">
+              <Sparkles className="w-4 h-4 mr-1.5 animate-pulse" />
+              <span className="uppercase tracking-widest">{t('judge.dashboard.efficiencyOpt')}</span>
             </div>
           </div>
         </section>
@@ -133,27 +133,27 @@ export default function JudgeDashboard() {
             {/* 2. Priority Case Queue */}
             <div className="space-y-6">
               <div className="flex items-baseline justify-between">
-                <h4 className="font-headline text-2xl text-primary font-medium">{t('judge.dashboard.priorityQueue')}</h4>
-                <span className="text-xs font-medium text-on-surface-variant">{t('judge.dashboard.sortingBy')}</span>
+                <h4 className="font-headline text-3xl text-primary font-bold tracking-tight">{t('judge.dashboard.priorityQueue')}</h4>
+                <span className="text-[10px] font-black uppercase tracking-widest text-text-muted opacity-60">{t('judge.dashboard.sortingBy')}</span>
               </div>
               
               <div className="space-y-4">
                 {casesQuery.isLoading ? (
-                  <div className="p-10 text-center animate-pulse text-on-surface-variant">{t('judge.dashboard.loadingQueue')}</div>
+                  <div className="p-10 text-center animate-pulse text-text-muted">{t('judge.dashboard.loadingQueue')}</div>
                 ) : recentCases.length > 0 ? (
                   recentCases.map((c) => {
                     const isUrgent = c.hearing_date && new Date(c.hearing_date) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
                     return (
-                      <div key={c.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:border-primary-light hover:shadow-md transition-all duration-300">
+                      <div key={c.id} className="bg-bg-surface p-7 rounded-[2rem] shadow-sm border border-border-subtle hover:border-text-accent/30 hover:shadow-xl transition-all duration-500 group">
                         <div className="flex justify-between items-start mb-3">
                           <div>
-                            <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mb-1 block">
+                            <span className="text-[10px] font-bold text-text-muted tracking-widest uppercase mb-1 block">
                               {t('judge.dashboard.caseIdLabel', { id: c.case_number || c.id.substring(0,8).toUpperCase() })}
                             </span>
-                            <h5 className="font-headline text-xl text-secondary font-bold">{c.title || t('judge.dashboard.untitledAction')}</h5>
+                            <h5 className="font-headline text-xl text-text-primary font-bold">{c.title || t('judge.dashboard.untitledAction')}</h5>
                           </div>
                           <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-tight rounded-lg ${
-                            isUrgent ? 'bg-terracotta-100 text-terracotta-800' : 'bg-emerald-50 text-emerald-800'
+                            isUrgent ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'
                           }`}>
                             {isUrgent ? t('judge.dashboard.urgent') : t(`status.${c.status}`)}
                           </span>
@@ -161,26 +161,26 @@ export default function JudgeDashboard() {
                         
                         <div className="grid grid-cols-2 gap-4 mb-4">
                           <div className="space-y-1">
-                            <p className="text-[11px] text-on-surface-variant font-medium flex items-center">
-                              <FileText className="w-3 h-3 mr-1 text-primary" />
+                            <p className="text-[11px] text-text-secondary font-medium flex items-center">
+                              <FileText className="w-3 h-3 mr-1 text-primary-royal" />
                               {t('judge.dashboard.aiInsight', { type: c.case_type ? c.case_type.replace('_', ' ') : t('judge.dashboard.generalDispute') })}
                             </p>
-                            <p className="text-[11px] text-on-surface-variant font-medium flex items-center">
-                              <History className="w-3 h-3 mr-1 text-primary" />
+                            <p className="text-[11px] text-text-secondary font-medium flex items-center">
+                              <History className="w-3 h-3 mr-1 text-primary-royal" />
                               {c.status === 'AIAnalysisReady' ? t('judge.dashboard.precedentsMatched') : t('judge.dashboard.awaitingCompletion')}
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="text-[11px] text-on-surface-variant font-medium uppercase tracking-wider">{t('judge.dashboard.hearingDate')}</p>
-                            <p className="text-sm font-bold text-primary">
+                            <p className="text-[11px] text-text-secondary font-medium uppercase tracking-wider">{t('judge.dashboard.hearingDate')}</p>
+                            <p className="text-sm font-bold text-primary-royal">
                               {c.hearing_date ? new Date(c.hearing_date).toLocaleDateString() : t('judge.dashboard.unscheduled')}
                             </p>
                           </div>
                         </div>
                         
-                        <div className="flex items-center space-x-3 pt-4 border-t border-slate-100">
+                        <div className="flex items-center space-x-3 pt-4 border-t border-border-subtle">
                           <button 
-                            className="text-[11px] font-bold uppercase tracking-widest text-white py-2 px-6 bg-primary hover:bg-emerald-700 rounded-xl transition-colors flex items-center shadow-lg shadow-emerald-900/10"
+                            className="text-[11px] font-bold uppercase tracking-widest text-white py-2 px-6 btn-royal-shine rounded-xl transition-all flex items-center"
                             onClick={() => navigate(`/judge/cases/${c.id}`)}
                           >
                             {t('judge.dashboard.openCaseLabel')}
@@ -255,34 +255,34 @@ export default function JudgeDashboard() {
           {/* Right Column (40%) */}
           <div className="col-span-12 lg:col-span-5 space-y-10">
             
-             <section className="bg-navy-900 p-6 rounded-2xl shadow-xl border border-white/5 relative overflow-hidden group mb-6">
+             <section className="bg-gradient-to-br from-primary-royal to-bg-color p-8 rounded-[2rem] shadow-xl border border-border-subtle relative overflow-hidden group mb-6">
                <div className="flex items-center justify-between mb-4 relative z-10">
-                  <h4 className="font-headline text-xl font-bold flex items-center text-primary-light">
-                    <Sparkles className="w-5 h-5 mr-2 text-primary-light animate-pulse" /> {t('judge.dashboard.recentActivityLog')}
+                  <h4 className="font-headline text-2xl font-bold flex items-center text-text-primary">
+                    <Sparkles className="w-6 h-6 mr-3 text-text-accent animate-pulse" /> {t('judge.dashboard.recentActivityLog')}
                   </h4>
                </div>
-               <p className="text-sm text-slate-400 italic relative z-10 font-medium">
+               <p className="text-sm text-text-primary/70 italic relative z-10 font-bold leading-relaxed">
                  {focusCase ? t('judge.dashboard.systemSynchronized', { id: focusCase.case_number || focusCase.id.substring(0,8) }) : t('judge.dashboard.noActivity')}
                </p>
-               <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+               <div className="absolute inset-0 bg-text-accent opacity-0 group-hover:opacity-[0.05] transition-opacity duration-1000 blur-3xl" />
             </section>
 
             {/* 4. Judgment Workflow Tracker */}
             <section className="space-y-4">
-              <h4 className="font-headline text-xl text-secondary font-bold">{t('judge.dashboard.judgmentWorkflow')}</h4>
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+              <h4 className="font-headline text-xl text-text-primary font-bold">{t('judge.dashboard.judgmentWorkflow')}</h4>
+              <div className="bg-bg-surface p-6 rounded-2xl shadow-sm border border-border-subtle">
                 <div className="mb-10 mt-2">
                   <CaseWorkflowStepper status={focusCase?.status} role="judge" />
                 </div>
                 
-                <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100/50 flex flex-col gap-2">
+                <div className="bg-primary/5 p-5 rounded-2xl border border-border-subtle flex flex-col gap-2">
                   <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-1">{t('judge.dashboard.currentTask')}</p>
-                  <p className="text-sm font-bold text-secondary">
+                  <p className="text-sm font-bold text-text-primary">
                     {focusCase ? t('judge.dashboard.workingOn', { title: focusCase.title || focusCase.case_number }) : t('judge.dashboard.awaitingAssignment')}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
                     <Brain className="w-3.5 h-3.5 text-primary" />
-                    <p className="text-[11px] text-slate-500 font-medium italic">{t('judge.dashboard.aiSuggestion')}</p>
+                    <p className="text-[11px] text-text-muted font-medium italic">{t('judge.dashboard.aiSuggestion')}</p>
                   </div>
                 </div>
               </div>
@@ -328,10 +328,10 @@ export default function JudgeDashboard() {
 
       {/* Contextual Floating Action Button (FAB) */}
       <button 
-        className="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform duration-300 z-50"
+        className="fixed bottom-8 right-8 w-16 h-16 btn-royal-shine text-white rounded-full flex items-center justify-center z-50 hover:scale-110"
         onClick={() => navigate('/judge/cases/new')}
       >
-        <Plus className="w-6 h-6" />
+        <Plus className="w-8 h-8" />
       </button>
     </PortalLayout>
   );

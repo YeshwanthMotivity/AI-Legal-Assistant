@@ -32,7 +32,7 @@ const ArchitectureModal = ({ isOpen, onClose }: ArchitectureModalProps) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100]"
+            className="fixed inset-0 bg-primary/20 backdrop-blur-md z-[100]"
           />
 
           {/* Slide-over Panel */}
@@ -40,38 +40,38 @@ const ArchitectureModal = ({ isOpen, onClose }: ArchitectureModalProps) => {
             initial={{ x: '100%', opacity: 0.5 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 h-full w-full md:w-[600px] lg:w-[800px] bg-surface-container-low border-l border-white/10 z-[101] overflow-y-auto custom-scrollbar shadow-2xl"
+            transition={{ type: 'spring', damping: 30, stiffness: 200 }}
+            className="fixed top-0 right-0 h-full w-full md:w-[600px] lg:w-[850px] bg-bg-base border-l border-primary/10 z-[101] overflow-y-auto custom-scrollbar shadow-2xl"
           >
             <div className="relative min-h-full p-8 md:p-12 pb-24">
               
               {/* Close Button */}
               <button 
                 onClick={onClose}
-                className="absolute top-6 right-6 p-2 rounded-full hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors"
+                className="absolute top-8 right-8 p-3 rounded-full bg-bg-surface hover:bg-primary-royal hover:text-white text-primary-royal transition-all duration-300 shadow-sm border border-border-subtle"
                 aria-label="Close architecture view"
               >
                 <X className="w-6 h-6" />
               </button>
 
               {/* HEADER SECTION */}
-              <div className="mb-12 mt-4 space-y-4">
-                <div className="flex flex-wrap items-center gap-3 mb-6">
+              <div className="mb-14 mt-4 space-y-6">
+                <div className="flex flex-wrap items-center gap-3 mb-8">
                   {['On-Premise', 'Air-Gapped', 'Arabic + English', 'Multi-Agent AI'].map(tag => (
-                    <span key={tag} className="px-3 py-1 text-[10px] uppercase tracking-widest bg-primary/10 text-primary border border-primary/20 rounded-full font-bold">
+                    <span key={tag} className="px-4 py-1.5 text-[10px] uppercase tracking-widest bg-text-accent/10 text-text-accent border border-text-accent/20 rounded-full font-black shadow-sm">
                       {tag}
                     </span>
                   ))}
                 </div>
-                <h2 className="text-3xl md:text-5xl font-headline text-emerald-50">AI Judicial Assistant Architecture</h2>
-                <p className="text-on-surface-variant font-light text-lg">Enterprise-grade AI system for UAE legal intelligence</p>
+                <h2 className="text-4xl md:text-6xl font-headline text-text-primary font-bold tracking-tight">AI Judicial Assistant Architecture</h2>
+                <p className="text-text-secondary font-medium text-xl italic max-w-2xl leading-relaxed">Enterprise-grade AI system for sovereign UAE legal intelligence</p>
               </div>
 
               {/* SECTION 1: USER ACCESS LAYER */}
-              <section className="mb-14">
-                <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                  <Users className="w-5 h-5 text-tertiary" />
-                  <h3 className="text-lg font-bold tracking-widest uppercase text-on-surface-variant text-[11px]">User Access Layer</h3>
+              <section className="mb-16">
+                <div className="flex items-center gap-3 mb-8 border-b border-primary/10 pb-5">
+                  <Users className="w-5 h-5 text-accent" />
+                  <h3 className="font-black tracking-[0.3em] uppercase text-primary text-[11px] opacity-80">User Access Layer</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <ModuleCard 
@@ -94,10 +94,10 @@ const ArchitectureModal = ({ isOpen, onClose }: ArchitectureModalProps) => {
               </section>
 
               {/* SECTION 2: BACKEND DOMAIN MODULES */}
-              <section className="mb-14">
-                <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                  <Server className="w-5 h-5 text-tertiary" />
-                  <h3 className="text-lg font-bold tracking-widest uppercase text-on-surface-variant text-[11px]">Backend Domain Modules</h3>
+              <section className="mb-16">
+                <div className="flex items-center gap-3 mb-8 border-b border-primary/10 pb-5">
+                  <Server className="w-5 h-5 text-accent" />
+                  <h3 className="font-black tracking-[0.3em] uppercase text-primary text-[11px] opacity-80">Backend Domain Modules</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <ModuleCard title="Case Core" icon={<ShieldCheck />} />
@@ -109,25 +109,25 @@ const ArchitectureModal = ({ isOpen, onClose }: ArchitectureModalProps) => {
               </section>
 
               {/* SECTION 3: AI ORCHESTRATION PIPELINE */}
-              <section className="mb-14">
-                <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                  <Network className="w-5 h-5 text-tertiary" />
-                  <h3 className="text-lg font-bold tracking-widest uppercase text-on-surface-variant text-[11px]">AI Orchestration Graph</h3>
+              <section className="mb-16">
+                <div className="flex items-center gap-3 mb-8 border-b border-primary/10 pb-5">
+                  <Network className="w-5 h-5 text-accent" />
+                  <h3 className="font-black tracking-[0.3em] uppercase text-primary text-[11px] opacity-80">AI Orchestration Graph</h3>
                 </div>
-                <div className="bg-surface-container/50 rounded-xl p-6 border border-white/5 shadow-inner">
+                <div className="bg-white rounded-2xl p-8 border border-primary/10 shadow-lg">
                   <PipelineFlow />
                 </div>
               </section>
 
               {/* SECTION 4: AI MICROSERVICES */}
-              <section className="mb-14">
-                <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                  <Cpu className="w-5 h-5 text-tertiary" />
-                  <h3 className="text-lg font-bold tracking-widest uppercase text-on-surface-variant text-[11px]">AI Microservices</h3>
+              <section className="mb-16">
+                <div className="flex items-center gap-3 mb-8 border-b border-primary/10 pb-5">
+                  <Cpu className="w-5 h-5 text-accent" />
+                  <h3 className="font-black tracking-[0.3em] uppercase text-primary text-[11px] opacity-80">AI Microservices</h3>
                 </div>
                 <div className="flex flex-wrap gap-4">
                   {['BGE-M3 (Embeddings)', 'BGE Reranker', 'Qwen 2.5 (1.5B)', 'JAIS Arabic LLM'].map(service => (
-                    <div key={service} className="px-5 py-3 rounded-lg bg-surface border border-white/5 font-mono text-xs text-on-surface hover:border-tertiary/50 transition-colors">
+                    <div key={service} className="px-6 py-3.5 rounded-xl bg-white border border-primary/10 font-mono text-xs text-primary hover:border-accent hover:text-accent font-bold transition-all shadow-sm">
                       {service}
                     </div>
                   ))}
@@ -135,10 +135,10 @@ const ArchitectureModal = ({ isOpen, onClose }: ArchitectureModalProps) => {
               </section>
 
               {/* SECTION 5: DATA LAYER */}
-              <section className="mb-6">
-                <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                  <Database className="w-5 h-5 text-tertiary" />
-                  <h3 className="text-lg font-bold tracking-widest uppercase text-on-surface-variant text-[11px]">Data Layer</h3>
+              <section className="mb-10">
+                <div className="flex items-center gap-3 mb-8 border-b border-border-subtle pb-5">
+                  <Database className="w-5 h-5 text-text-accent" />
+                  <h3 className="font-black tracking-[0.3em] uppercase text-text-primary text-[11px] opacity-80">Data Layer</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <ModuleCard title="PostgreSQL" icon={<Database />} items={['Relational App State']} className="bg-[#336791]/10 border-[#336791]/30" />

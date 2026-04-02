@@ -47,18 +47,18 @@ const SidebarItem = ({ icon: Icon, label, href, active, collapsed, onClick }: Si
     to={href}
     onClick={onClick}
     className={cn(
-      "relative flex items-center gap-3 py-2.5 text-sm font-semibold transition-all rounded-xl mb-1 group overflow-hidden px-4",
+      "relative flex items-center gap-3 py-3 text-sm font-bold transition-all rounded-xl mb-1 group overflow-hidden px-4",
       collapsed ? "justify-center px-0" : "",
       active 
-        ? "bg-primary text-primary-foreground shadow-lg border border-primary/20 scale-[1.02]" 
-        : "text-sidebar-text/70 hover:bg-white/5 hover:text-sidebar-text border border-transparent"
+        ? "bg-white/10 text-white shadow-sm border border-white/10 scale-[1.02]" 
+        : "text-white/60 hover:bg-white/5 hover:text-white border border-transparent"
     )}
     title={collapsed ? label : undefined}
   >
     {active && (
-      <div className="absolute left-0 top-0 bottom-0 w-1 bg-white/30 rounded-r-md transition-all duration-300" />
+      <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent rounded-r-md transition-all duration-300 shadow-[0_0_8px_rgba(212,175,55,0.5)]" />
     )}
-    <Icon className={cn("shrink-0", collapsed ? "w-6 h-6" : "w-5 h-5", active ? "text-white" : "group-hover:scale-105 transition-transform text-sidebar-text/50 group-hover:text-primary-light")} />
+    <Icon className={cn("shrink-0", collapsed ? "w-6 h-6" : "w-5 h-5", active ? "text-accent" : "group-hover:scale-105 transition-transform text-white/40 group-hover:text-accent/80")} />
     {!collapsed && <span className="truncate">{label}</span>}
   </NavLink>
 );
@@ -113,17 +113,17 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
   }
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground selection:bg-primary/20">
+    <div className="flex min-h-screen bg-bg-base text-text-primary selection:bg-primary/20">
       {/* Static Sidebar */}
       <aside 
         className={cn(
-          "bg-sidebar flex flex-col fixed h-full z-40 transition-all duration-300 border-r-0 border-l-0 shadow-[4px_0_24px_rgba(0,0,0,0.15)]",
+          "bg-bg-sidebar flex flex-col fixed h-full z-40 transition-all duration-300 border-r-0 border-l-0 shadow-royal",
           isCollapsed ? "w-[80px]" : "w-[280px]",
           isRTL ? "right-0 border-l" : "left-0 border-r"
         )}
       >
         <div className={cn("p-6 flex items-center mb-2", isCollapsed ? "justify-center" : "gap-3")}>
-          <div className="w-10 h-10 shrink-0 bg-primary rounded-2xl flex items-center justify-center text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95">
+          <div className="w-10 h-10 shrink-0 bg-primary-royal rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform hover:scale-105 active:scale-95">
             <Scale className="w-6 h-6" />
           </div>
           {!isCollapsed && <span className="font-black text-xl tracking-tighter text-gradient truncate">{t('common.appName')}</span>}
@@ -150,12 +150,12 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
 
         {/* AI Engine Info Card (Static) */}
         {!isCollapsed && (
-          <div className="px-6 py-5 mx-4 mb-6 rounded-3xl bg-black/20 border border-white/5">
-            <div className="flex items-center gap-2.5 mb-2.5">
-               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-               <span className="text-[10px] font-black uppercase tracking-widest text-primary-light truncate">{t('judge.judgment.aiReasoningNode')}</span>
+          <div className="px-6 py-5 mx-4 mb-8 rounded-2xl bg-bg-base/5 border border-border-subtle shadow-inner">
+            <div className="flex items-center gap-2.5 mb-3">
+               <div className="w-2 h-2 rounded-full bg-text-accent animate-pulse shadow-[0_0_8px_var(--accent-gold)]" />
+               <span className="text-[9px] font-black uppercase tracking-widest text-text-accent truncate">{t('judge.judgment.aiReasoningNode')}</span>
             </div>
-            <p className="text-[10px] text-white/40 leading-relaxed font-medium">
+            <p className="text-[10px] text-sidebar-text opacity-50 leading-relaxed font-bold italic">
                {t('judge.judgment.aiReasoningDesc')}
             </p>
           </div>
@@ -165,12 +165,12 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
           {!isCollapsed ? (
             <>
               <div className="flex items-center gap-4 mb-6 px-2">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center text-primary font-black shadow-inner shrink-0 text-lg">
+                <div className="w-12 h-12 rounded-2xl bg-bg-base/10 border border-border-subtle flex items-center justify-center text-text-accent font-black shadow-inner shrink-0 text-lg">
                   {user?.username?.[0].toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-black truncate leading-tight">{user?.username}</div>
-                  <div className="text-[10px] font-black text-primary/70 truncate uppercase tracking-tight">{t(`roles.${user?.role}`)}</div>
+                  <div className="text-sm font-black truncate leading-tight text-sidebar-text">{user?.username}</div>
+                  <div className="text-[10px] font-black text-text-accent/70 truncate uppercase tracking-tight">{t(`roles.${user?.role}`)}</div>
                 </div>
               </div>
               <Button 
@@ -204,7 +204,7 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
       >
         {/* Header Enhancement */}
         {!hideHeaderContent && (
-          <header className="sticky top-0 z-30 w-full glass-strong border-b px-10 py-5 flex justify-between items-center h-[88px]">
+          <header className="sticky top-0 z-30 w-full glass-strong border-b border-border-subtle px-10 py-5 flex justify-between items-center h-[88px]">
             <div className="flex items-center gap-6 animate-in fade-in slide-in-from-top-2 duration-500">
               <Button
                 variant="ghost"
