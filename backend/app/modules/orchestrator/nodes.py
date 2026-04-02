@@ -386,11 +386,12 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
                                 "response_format": {"type": "json_object"},
                                 "messages": [
                                     {"role": "system", "content": (
-                                        "You are a DIFC legal case parser. Extract from the court text and return ONLY valid JSON — no markdown, no explanation.\n"
-                                        "Schema: {\"case_name\": \"X v Y or null\", \"claimant\": \"name or null\", "
-                                        "\"respondent\": \"name or null\", \"year\": \"4-digit string or null\", "
-                                        "\"outcome\": \"Awarded|Dismissed|Partial|Settled|null\", "
-                                        "\"summary\": \"1-2 sentence factual summary\"}\n"
+                                        f"You are a DIFC legal case parser. Extract from the court text and return ONLY valid JSON — no markdown, no explanation.\n"
+                                        f"Schema: {{\"case_name\": \"X v Y or null\", \"claimant\": \"name or null\", "
+                                        f"\"respondent\": \"name or null\", \"year\": \"4-digit string or null\", "
+                                        f"\"outcome\": \"Awarded|Dismissed|Partial|Settled|null\", "
+                                        f"\"summary\": \"1-2 sentence factual summary\"}}\n"
+                                        f"{'CRITICAL: Translate the summary and outcome into Arabic.' if state.get('ui_language') == 'ar' else ''}"
                                     )},
                                     {"role": "user", "content": _smart_slice(item["text"], 3000)}
                                 ],
@@ -416,11 +417,12 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
                                 "response_format": {"type": "json_object"},
                                 "messages": [
                                     {"role": "system", "content": (
-                                        "You are a DIFC legal case parser. Extract from the court text and return ONLY valid JSON.\n"
-                                        "Schema: {\"case_name\": \"X v Y or null\", \"claimant\": \"name or null\", "
-                                        "\"respondent\": \"name or null\", \"year\": \"4-digit string or null\", "
-                                        "\"outcome\": \"Awarded|Dismissed|Partial|Settled|null\", "
-                                        "\"summary\": \"1-2 sentence factual summary\"}\n"
+                                        f"You are a DIFC legal case parser. Extract from the court text and return ONLY valid JSON.\n"
+                                        f"Schema: {{\"case_name\": \"X v Y or null\", \"claimant\": \"name or null\", "
+                                        f"\"respondent\": \"name or null\", \"year\": \"4-digit string or null\", "
+                                        f"\"outcome\": \"Awarded|Dismissed|Partial|Settled|null\", "
+                                        f"\"summary\": \"1-2 sentence factual summary\"}}\n"
+                                        f"{'CRITICAL: Translate the summary and outcome into Arabic.' if state.get('ui_language') == 'ar' else ''}"
                                     )},
                                     {"role": "user", "content": _smart_slice(item["text"], 3000)}
                                 ],
@@ -581,9 +583,10 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
                                 "response_format": {"type": "json_object"},
                                 "messages": [
                                     {"role": "system", "content": (
-                                        "You are a DIFC legal article parser. Return ONLY valid JSON — no markdown, no explanation.\n"
-                                        "Schema: {\"article_number\": \"e.g. Article 19(2) or null\", \"article_title\": \"short title or null\", "
-                                        "\"law_name\": \"full law name\", \"summary\": \"1-2 sentence plain English explanation\"}"
+                                        f"You are a DIFC legal article parser. Return ONLY valid JSON — no markdown, no explanation.\n"
+                                        f"Schema: {{\"article_number\": \"e.g. Article 19(2) or null\", \"article_title\": \"short title or null\", "
+                                        f"\"law_name\": \"full law name\", \"summary\": \"1-2 sentence plain English explanation\"}}\n"
+                                        f"{'CRITICAL: Translate the summary, article title and law name into Arabic.' if state.get('ui_language') == 'ar' else ''}"
                                     )},
                                     {"role": "user", "content": item["content"][:1500]}
                                 ],
@@ -611,9 +614,10 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
                                 "response_format": {"type": "json_object"},
                                 "messages": [
                                     {"role": "system", "content": (
-                                        "You are a DIFC legal article parser. Return ONLY valid JSON.\n"
-                                        "Schema: {\"article_number\": \"e.g. Article 19(2) or null\", \"article_title\": \"short title or null\", "
-                                        "\"law_name\": \"full law name\", \"summary\": \"1-2 sentence plain English explanation\"}"
+                                        f"You are a DIFC legal article parser. Return ONLY valid JSON.\n"
+                                        f"Schema: {{\"article_number\": \"e.g. Article 19(2) or null\", \"article_title\": \"short title or null\", "
+                                        f"\"law_name\": \"full law name\", \"summary\": \"1-2 sentence plain English explanation\"}}\n"
+                                        f"{'CRITICAL: Translate the summary, article title and law name into Arabic.' if state.get('ui_language') == 'ar' else ''}"
                                     )},
                                     {"role": "user", "content": item["content"][:1500]}
                                 ],
@@ -923,7 +927,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
     # ── 2. Prompts ───────────────────────────────────────────────────────────
     system_prompt = (
         "You are a Chief Legal Officer for DIFC UAE Labor Law. Provide a precise, professional legal analysis in JSON format.\n"
-        f"Language: {state.get('query_language', 'en')}.\n\n"
+        f"Language: {state.get('ui_language', 'en')}.\n\n"
         "RESPONSE SCHEMA (STRICT):\n"
         "{\n"
         "  \"outcome\": \"Approved\" | \"Rejected\" | \"Partial\",\n"
@@ -934,23 +938,23 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         "  \"cited_cases\": [\"Case References or Precedents\"],\n"
         "  \"confidence\": 0.0 to 1.0,\n"
         "  \"draft_judgment\": \"Write a COURT RULING document using the case facts. NEVER copy law metadata. Use this format EXACTLY:\\n"
-        f"{'محاكم مركز دبي المالي العالمي - المحكمة' if state.get('query_language') == 'ar' else 'DIFC COURTS - TRIBUNAL'}\\n"
-        f"{'المرجع:' if state.get('query_language') == 'ar' else 'CASE REFERENCE:'} [case_id]\\n"
-        f"{'المدعي:' if state.get('query_language') == 'ar' else 'CLAIMANT:'} [claimant name]\\n"
-        f"{'المدعى عليه:' if state.get('query_language') == 'ar' else 'RESPONDENT:'} [respondent name]\\n\\n"
-        f"{'🧾 ملخص الحكم' if state.get('query_language') == 'ar' else '🧾 JUDGMENT SUMMARY'}\\n"
-        f"{'نظرت هذه المحكمة في دعوى [المدعي] ضد [المدعى عليه] بشأن [نوع القضية].' if state.get('query_language') == 'ar' else 'This Tribunal has considered the claim of [claimant] against [respondent] regarding [case type].'}\\n\\n"
-        f"{'🔹 النتائج الواقعية' if state.get('query_language') == 'ar' else '🔹 FINDINGS OF FACT'}\\n"
+        f"{'محاكم مركز دبي المالي العالمي - المحكمة' if state.get('ui_language') == 'ar' else 'DIFC COURTS - TRIBUNAL'}\\n"
+        f"{'المرجع:' if state.get('ui_language') == 'ar' else 'CASE REFERENCE:'} [case_id]\\n"
+        f"{'المدعي:' if state.get('ui_language') == 'ar' else 'CLAIMANT:'} [claimant name]\\n"
+        f"{'المدعى عليه:' if state.get('ui_language') == 'ar' else 'RESPONDENT:'} [respondent name]\\n\\n"
+        f"{'🧾 ملخص الحكم' if state.get('ui_language') == 'ar' else '🧾 JUDGMENT SUMMARY'}\\n"
+        f"{'نظرت هذه المحكمة في دعوى [المدعي] ضد [المدعى عليه] بشأن [نوع القضية].' if state.get('ui_language') == 'ar' else 'This Tribunal has considered the claim of [claimant] against [respondent] regarding [case type].'}\\n\\n"
+        f"{'🔹 النتائج الواقعية' if state.get('ui_language') == 'ar' else '🔹 FINDINGS OF FACT'}\\n"
         "1. [Finding from case evidence]\\n"
         "2. [Finding from case evidence]\\n\\n"
-        f"{'🔹 التحليل القانوني' if state.get('query_language') == 'ar' else '🔹 LEGAL ANALYSIS'}\\n"
+        f"{'🔹 التحليل القانوني' if state.get('ui_language') == 'ar' else '🔹 LEGAL ANALYSIS'}\\n"
         "[How the cited articles apply to the specific facts]\\n\\n"
-        f"{'🔹 القرار والأوامر' if state.get('query_language') == 'ar' else '🔹 DECISION & ORDERS'}\\n"
+        f"{'🔹 القرار والأوامر' if state.get('ui_language') == 'ar' else '🔹 DECISION & ORDERS'}\\n"
         "The Tribunal ORDERS: [specific remedy or dismissal with amounts if applicable]\\n\\n"
-        f"{'🔹 السند القانوني' if state.get('query_language') == 'ar' else '🔹 LEGAL BASIS'}\\n"
+        f"{'🔹 السند القانوني' if state.get('ui_language') == 'ar' else '🔹 LEGAL BASIS'}\\n"
         "[Exact article citations that ground this decision]\"\n"
         "}\n\n"
-        f"{'CRITICAL: draft_judgment must be a COURT RULING about the specific parties and facts. YOU MUST WRITE THE DRAFT IN ARABIC. NEVER return [object Object].' if state.get('query_language') == 'ar' else 'CRITICAL: draft_judgment must be a COURT RULING about the specific parties and facts — NEVER a copy of law text or metadata. NEVER return [object Object].'}"
+        f"{'CRITICAL: draft_judgment must be a COURT RULING about the specific parties and facts. YOU MUST WRITE THE DRAFT IN ARABIC AND TRANSLATE ALL CONTENT TO ARABIC. NEVER return [object Object].' if state.get('ui_language') == 'ar' else 'CRITICAL: draft_judgment must be a COURT RULING about the specific parties and facts — NEVER a copy of law text or metadata. NEVER return [object Object].'}"
     )
     ctx = state.get("context", {})
     meta = ctx.get("case_metadata", {})
@@ -1258,7 +1262,7 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
         "[The exact articles that ground this decision]\n\n"
         "Signed: DIFC Small Claims Tribunal\n"
         "--- END OF JUDGMENT ---\n\n"
-        f"{'CRITICAL INSTRUCTION: You MUST write the ENTIRE judgment in ARABIC. Do NOT output any English text. Translate all headings, names, and content.' if state.get('query_language') == 'ar' else 'Write the judgment in English.'}"
+        f"{'CRITICAL INSTRUCTION: You MUST write the ENTIRE judgment in ARABIC. Do NOT output any English text. Translate all headings, names, and content.' if state.get('ui_language') == 'ar' else 'Write the judgment in English.'}"
     )
 
     user_prompt = (
@@ -1288,8 +1292,8 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
     final_draft = (
         f"<div style='font-family: inherit; color: #1a1a1a;'>"
         f"<div style='text-align: center; border-bottom: 2px dashed #cecece; margin-bottom: 24px; padding-bottom: 16px;'>"
-        f"<h2 style='margin: 0; font-size: 18px; font-weight: 900; letter-spacing: 0.5px;'>{'محاكم مركز دبي المالي العالمي - المحكمة' if state.get('query_language') == 'ar' else 'DIFC COURTS - TRIBUNAL'}</h2>"
-        f"<p style='margin: 5px 0; font-size: 12px; color: #666;'>{'المرجع:' if state.get('query_language') == 'ar' else 'CASE REFERENCE:'} {state['case_id']}</p>"
+        f"<h2 style='margin: 0; font-size: 18px; font-weight: 900; letter-spacing: 0.5px;'>{'محاكم مركز دبي المالي العالمي - المحكمة' if state.get('ui_language') == 'ar' else 'DIFC COURTS - TRIBUNAL'}</h2>"
+        f"<p style='margin: 5px 0; font-size: 12px; color: #666;'>{'المرجع:' if state.get('ui_language') == 'ar' else 'CASE REFERENCE:'} {state['case_id']}</p>"
         f"</div>"
         
         f"<div style='line-height: 1.7; white-space: pre-wrap; font-size: 15px;'>"

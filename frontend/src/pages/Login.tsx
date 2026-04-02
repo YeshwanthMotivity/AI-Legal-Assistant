@@ -200,11 +200,11 @@ const Login = () => {
                   {isLoading ? (
                     <div className="flex items-center gap-3">
                       <div className="w-4 h-4 border-2 border-on-tertiary-fixed/30 border-t-on-tertiary-fixed rounded-full animate-spin" />
-                      <span>Authenticating...</span>
+                      <span>{t('auth.authenticating')}</span>
                     </div>
                   ) : (
                     <>
-                      <span>Login</span>
+                      <span>{t('auth.login')}</span>
                       <ArrowRight className="w-5 h-5" />
                     </>
                   )}
@@ -214,7 +214,7 @@ const Login = () => {
               {/* Demo Credentials Section (from original logic) */}
               <div className="pt-8 mt-8 border-t border-outline-variant/20">
                 <span className="block text-[9px] uppercase tracking-[0.3em] text-on-surface-variant mb-4 text-center">
-                  Environment Access Credentials
+                  {t('auth.envAccessCredentials')}
                 </span>
                 <div className="grid grid-cols-1 gap-2.5">
                   {[
@@ -248,7 +248,7 @@ const Login = () => {
     
       {/* Footer */}
       <footer className="fixed bottom-0 left-0 w-full z-50 flex flex-col md:flex-row justify-center items-center px-8 py-4 backdrop-blur-md bg-[#0a0f1a]/90 border-t border-white/5">
-        <p className="text-on-surface-variant/50 font-inter text-[10px] uppercase tracking-[0.1em]">© 2026 Motivity Labs. High-End Legal Intelligence.</p>
+        <p className="text-on-surface-variant/50 font-inter text-[10px] uppercase tracking-[0.1em]">© 2026 Motivity Labs.</p>
       </footer>
     </div>
   )

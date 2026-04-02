@@ -19,4 +19,5 @@ class AnalysisState(TypedDict):
     query_text: str
     query_embedding: list[float]
     complexity_score: float | None
+    ui_language: str
     db: Any

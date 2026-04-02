@@ -170,7 +170,7 @@ const DocumentUpload = () => {
                 </div>
                 <div>
                    <p className="font-bold text-sm">{t('clerk.forms.dragDropHelp')}</p>
-                   <p className="text-[11px] text-muted-foreground italic mt-1 font-medium">PDF, DOCX, Images (MAX 50MB)</p>
+                   <p className="text-[11px] text-muted-foreground italic mt-1 font-medium">{t('clerk.forms.fileFormatsSize')}</p>
                 </div>
                 
                 <Button 
@@ -201,7 +201,7 @@ const DocumentUpload = () => {
                 <div className="p-6 bg-card space-y-4">
                   <div className="flex items-center justify-between mb-4">
                      <div>
-                        <h4 className="text-[11px] font-black uppercase text-muted-foreground tracking-widest">Queue ({jobs.length})</h4>
+                        <h4 className="text-[11px] font-black uppercase text-muted-foreground tracking-widest">{t('clerk.forms.queue', { count: jobs.length })}</h4>
                         {!selectedCaseId && (
                            <p className="text-[9px] text-destructive font-bold flex items-center gap-1 mt-1 animate-pulse">
                               <AlertCircle className="w-2.5 h-2.5" />
@@ -216,7 +216,7 @@ const DocumentUpload = () => {
                         onClick={runUploads}
                      >
                         <Zap className="w-4 h-4" />
-                        {uploadMutation.isPending ? "Processing..." : "Commit Ingestion"}
+                        {uploadMutation.isPending ? t('clerk.forms.processing') : t('clerk.forms.commitIngestion')}
                      </Button>
                   </div>
                   <ul className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">
@@ -268,11 +268,11 @@ const DocumentUpload = () => {
                 </div>
                 <div>
                    <CardTitle className="text-lg">{t('clerk.tables.caseDocuments')}</CardTitle>
-                   <CardDescription className="text-xs font-medium italic">Registry of verified judicial materials</CardDescription>
+                   <CardDescription className="text-xs font-medium italic">{t('clerk.forms.registryDocumentDesc')}</CardDescription>
                 </div>
               </div>
               <Badge className="bg-primary/5 text-primary border-primary/20 hover:bg-primary/5 font-black uppercase tracking-tighter text-[10px]">
-                 Total Documents: {documentsQuery.data?.items?.length ?? 0}
+                 {t('clerk.forms.totalDocuments', { count: documentsQuery.data?.items?.length ?? 0 })}
               </Badge>
             </CardHeader>
             <CardContent className="p-0 flex-1 overflow-y-auto">
@@ -282,8 +282,8 @@ const DocumentUpload = () => {
                       <Search className="w-10 h-10" />
                    </div>
                    <div className="space-y-1">
-                      <h5 className="font-bold text-foreground">Awaiting Context Selection</h5>
-                      <p className="text-xs text-muted-foreground italic px-8">Please choose a judicial case folder from the left sidebar to access verified evidence and filings.</p>
+                      <h5 className="font-bold text-foreground">{t('clerk.forms.awaitingContextSelection')}</h5>
+                      <p className="text-xs text-muted-foreground italic px-8">{t('clerk.forms.awaitingContextDesc')}</p>
                    </div>
                 </div>
               ) : documentsQuery.data?.items?.length === 0 ? (
@@ -292,8 +292,8 @@ const DocumentUpload = () => {
                       <Upload className="w-10 h-10" />
                    </div>
                    <div className="space-y-1">
-                      <h5 className="font-bold text-emerald-600">Secure Vault Empty</h5>
-                      <p className="text-xs text-muted-foreground italic px-8">No documents have been committed to this case yet. Use the ingestion zone to add digital materials.</p>
+                      <h5 className="font-bold text-emerald-600">{t('clerk.forms.secureVaultEmpty')}</h5>
+                      <p className="text-xs text-muted-foreground italic px-8">{t('clerk.forms.secureVaultEmptyDesc')}</p>
                    </div>
                 </div>
               ) : (
@@ -350,12 +350,12 @@ const DocumentUpload = () => {
                    <ShieldCheck className="w-6 h-6" />
                 </div>
                 <div>
-                   <h5 className="text-sm font-black uppercase tracking-tight text-primary">Registry Compliance</h5>
-                   <p className="text-[10px] text-muted-foreground font-medium italic leading-none mt-1">All materials are cryptographically signed and stored in DIFC secure vaults.</p>
+                   <h5 className="text-sm font-black uppercase tracking-tight text-primary">{t('clerk.forms.registryCompliance')}</h5>
+                   <p className="text-[10px] text-muted-foreground font-medium italic leading-none mt-1">{t('clerk.forms.registryComplianceDesc')}</p>
                 </div>
              </div>
              <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group">
-                System Diagnostics
+                {t('clerk.forms.systemDiagnostics')}
                 <ChevronRight className="w-3 h-3 ml-2 group-hover:translate-x-1 transition-transform" />
              </Button>
           </div>

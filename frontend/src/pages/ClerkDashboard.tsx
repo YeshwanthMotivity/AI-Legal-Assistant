@@ -2,6 +2,8 @@ import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { clerkGetCases } from '../api/clerk';
 import { 
   FileText, 
   Upload, 
@@ -12,6 +14,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import PortalLayout from '../components/layout/PortalLayout';
+import CaseWorkflowStepper from '../components/layout/CaseWorkflowStepper';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import StatCard from '@/components/StatCard';
 import { Button } from '@/components/ui/button';
@@ -20,80 +23,56 @@ export default function ClerkDashboard(): ReactNode {
   const { user } = useAuth();
   const { t } = useTranslation();
 
+  const casesQuery = useQuery({
+    queryKey: ['clerk-cases-dash'],
+    queryFn: () => clerkGetCases({ limit: 200 }),
+  });
+
+  const cases = casesQuery.data?.items || [];
+  const pendingUploads = cases.filter(c => c.status === 'Created').length;
+  const activeCases = cases.filter(c => !['Finalized'].includes(c.status)).length;
+  const completedTasks = cases.filter(c => c.status === 'Finalized').length;
+
   return (
     <PortalLayout title={t('clerk.dashboard.title')} subtitle={`${t('common.welcome')}, ${user?.email || 'Legal Assistant'}`}>
       
       {/* Quick Stats Banner */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <StatCard label={t('clerk.dashboard.pendingUploads')} value="12" icon={Upload} className="border-l-4 border-l-amber-500" />
-        <StatCard label={t('clerk.dashboard.activeCases')} value="48" icon={Briefcase} className="border-l-4 border-l-primary" />
-        <StatCard label={t('clerk.dashboard.completedTasks')} value="124" icon={CheckCircle2} className="border-l-4 border-l-emerald-500" />
+        <StatCard label={t('clerk.dashboard.pendingUploads')} value={casesQuery.isLoading ? '...' : String(pendingUploads)} icon={Upload} className="border-l-4 border-l-amber-500" />
+        <StatCard label={t('clerk.dashboard.activeCases')} value={casesQuery.isLoading ? '...' : String(activeCases)} icon={Briefcase} className="border-l-4 border-l-primary" />
+        <StatCard label={t('clerk.dashboard.completedTasks')} value={casesQuery.isLoading ? '...' : String(completedTasks)} icon={CheckCircle2} className="border-l-4 border-l-emerald-500" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Case Management Card */}
-        <Card className="shadow-sm border-border/50 hover:shadow-md transition-shadow group">
-           <CardHeader className="bg-muted/10 border-b py-6 px-8">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
-                     <FileText className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl">{t('clerk.dashboard.caseManagement')}</CardTitle>
-                    <CardDescription className="text-xs font-medium uppercase tracking-wider mt-1 opacity-70">{t('clerk.dashboard.docControlCenter')}</CardDescription>
-                  </div>
-                </div>
-                <Link to="/clerk/cases">
-                   <Button variant="ghost" size="icon" className="group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
-                      <ArrowRight className="w-5 h-5 rtl:rotate-180" />
-                   </Button>
-                </Link>
-              </div>
-           </CardHeader>
-           <CardContent className="p-8">
-              <p className="text-muted-foreground text-sm leading-relaxed mb-6 italic">
-                 {t('clerk.dashboard.caseMgmtDesc')}
-              </p>
-              <Link to="/clerk/cases">
-                <Button className="w-full h-11 shadow-lg shadow-primary/20 gap-2 font-bold">
-                   {t('clerk.dashboard.openWorkspace')}
-                </Button>
-              </Link>
-           </CardContent>
-        </Card>
-
-        {/* Document Upload Card */}
-        <Card className="shadow-sm border-border/50 hover:shadow-md transition-shadow group">
-           <CardHeader className="bg-muted/10 border-b py-6 px-8">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-600">
-                     <Upload className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl">{t('clerk.dashboard.directIngestion')}</CardTitle>
-                    <CardDescription className="text-xs font-medium uppercase tracking-wider mt-1 opacity-70">{t('clerk.dashboard.bulkEvidence')}</CardDescription>
-                  </div>
-                </div>
-                <Link to="/clerk/documents">
-                   <Button variant="ghost" size="icon" className="group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
-                      <ArrowRight className="w-5 h-5 rtl:rotate-180" />
-                   </Button>
-                </Link>
-              </div>
-           </CardHeader>
-           <CardContent className="p-8">
-              <p className="text-muted-foreground text-sm leading-relaxed mb-6 italic">
-                 {t('clerk.dashboard.ingestionDesc')}
-              </p>
-              <Link to="/clerk/documents">
-                <Button variant="secondary" className="w-full h-11 border-emerald-500/20 text-emerald-700 dark:text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10 gap-2 font-bold">
-                   {t('clerk.dashboard.startBulkUpload')}
-                </Button>
-              </Link>
-           </CardContent>
-        </Card>
+      <div className="space-y-6">
+        <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow border border-outline-variant/30">
+          <h3 className="font-headline text-2xl font-medium mb-8 text-on-surface tracking-tight">Case Lifecycle Pipeline</h3>
+          
+          {/* Static reference stepper */}
+          <div className="px-4">
+            <CaseWorkflowStepper role="clerk" />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-16 pt-10 border-t border-outline-variant/20">
+            <div className="space-y-5 bg-card/40 p-6 rounded-xl border border-outline-variant/10 hover:border-primary/30 transition-colors">
+               <h4 className="font-bold flex items-center gap-3 text-lg"><div className="p-2 rounded-lg bg-primary/10"><FileText className="w-5 h-5 text-primary" /></div> Stage 1: Case Registration</h4>
+               <p className="text-sm text-muted-foreground italic leading-relaxed">{t('clerk.dashboard.caseMgmtDesc', 'Monitor incoming cases, open workspaces, and control new docket entries awaiting documentation.')}</p>
+               <Link to="/clerk/cases" className="block mt-4">
+                 <Button className="w-full h-12 shadow-lg shadow-primary/20 gap-2 font-bold text-sm rounded-xl">
+                    {t('clerk.dashboard.openWorkspace')} <ArrowRight className="w-4 h-4 ml-2" />
+                 </Button>
+               </Link>
+            </div>
+            <div className="space-y-5 bg-card/40 p-6 rounded-xl border border-outline-variant/10 hover:border-emerald-500/30 transition-colors">
+               <h4 className="font-bold flex items-center gap-3 text-lg"><div className="p-2 rounded-lg bg-emerald-500/10"><Upload className="w-5 h-5 text-emerald-500" /></div> Stage 2: Direct Ingestion</h4>
+               <p className="text-sm text-muted-foreground italic leading-relaxed">{t('clerk.dashboard.ingestionDesc', 'Prepare case dossiers and securely upload evidentiary documents, sending them directly into the AI analysis queue.')}</p>
+               <Link to="/clerk/documents" className="block mt-4">
+                 <Button variant="secondary" className="w-full h-12 border-emerald-500/20 text-emerald-700 dark:text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10 gap-2 font-bold text-sm rounded-xl">
+                    {t('clerk.dashboard.startBulkUpload')} <ArrowRight className="w-4 h-4 ml-2" />
+                 </Button>
+               </Link>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* System Status Banner */}

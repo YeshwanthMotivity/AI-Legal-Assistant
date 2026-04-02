@@ -43,6 +43,7 @@ class OrchestratorService:
             "error": None,
             "model_used": None,
             "query_language": language,
+            "ui_language": language or "en",
             "db": self.db,
         }
         import logging

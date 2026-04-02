@@ -56,7 +56,7 @@ const SidebarItem = ({ icon: Icon, label, href, active, collapsed, onClick }: Si
     title={collapsed ? label : undefined}
   >
     {active && (
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 bg-primary rounded-r-md transition-all duration-300 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 bg-primary rounded-r-md transition-all duration-300 shadow-[0_0_8px_rgba(37,99,235,0.5)]" />
     )}
     <Icon className={cn("shrink-0", collapsed ? "w-6 h-6" : "w-5 h-5", active ? "text-primary" : "group-hover:scale-105 transition-transform text-muted-foreground/70 group-hover:text-primary/70")} />
     {!collapsed && <span className="truncate">{label}</span>}
@@ -152,7 +152,7 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
         {!isCollapsed && (
           <div className="px-6 py-5 mx-4 mb-6 rounded-3xl bg-primary/5 border border-primary/10 glass-strong">
             <div className="flex items-center gap-2.5 mb-2.5">
-               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+               <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(37,99,235,0.5)]" />
                <span className="text-[10px] font-black uppercase tracking-widest text-primary truncate">{t('judge.judgment.aiReasoningNode')}</span>
             </div>
             <p className="text-[10px] text-muted-foreground/80 leading-relaxed font-medium">

@@ -10,9 +10,13 @@ import {
   Gavel,
   History,
   FileText,
+  LayoutGrid,
+  List,
+  Activity,
 } from 'lucide-react'
 import PortalLayout from '../../components/layout/PortalLayout'
 import CreateCaseModal from '../../components/judge/CreateCaseModal'
+import CaseWorkflowStepper from '../../components/layout/CaseWorkflowStepper'
 import { createCase, getJudgeCases } from '../../api/judge'
 import type { CaseResponse, CreateCaseRequest } from '../../types/judge'
 import { cn } from '@/lib/utils'
@@ -34,6 +38,7 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
   const [isModalOpen, setIsModalOpen] = useState(openCreateOnLoad)
   const [banner, setBanner] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
 
   const casesQuery = useQuery({
     queryKey: ['judge-cases'],
@@ -178,6 +183,22 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+            <div className="flex bg-surface-container-low dark:bg-surface-container-high p-1.5 rounded border border-outline-variant/20 w-full sm:w-auto">
+              <button
+                onClick={() => setViewMode('list')}
+                className={cn("p-1.5 rounded transition-colors flex-1 sm:flex-none flex justify-center", viewMode === 'list' ? "bg-surface-container-lowest dark:bg-surface-container text-primary shadow-sm border border-outline-variant/20" : "text-on-surface-variant hover:text-on-surface")}
+                title="List View"
+              >
+                <List className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={cn("p-1.5 rounded transition-colors flex-1 sm:flex-none flex justify-center", viewMode === 'grid' ? "bg-surface-container-lowest dark:bg-surface-container text-primary shadow-sm border border-outline-variant/20" : "text-on-surface-variant hover:text-on-surface")}
+                title="Grid View"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+            </div>
             <div className="relative w-full sm:w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
               <input
@@ -221,7 +242,10 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
               {t('judge.caseList.docketClear')}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className={cn(
+              "animate-in fade-in duration-500", 
+              viewMode === 'grid' ? "grid grid-cols-1 xl:grid-cols-2 gap-6" : "flex flex-col space-y-4"
+            )}>
               {visibleCases.map((c) => {
                 const isUrgent = c.hearing_date && new Date(c.hearing_date) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
 
@@ -240,21 +264,28 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
                         {isUrgent ? t('judge.caseList.urgent') : c.status === 'DraftGenerated' ? t('judge.caseList.draftReady') : t('judge.caseList.processing')}
                       </span>
                     </div>
+                    
+                    <CaseWorkflowStepper status={c.status} role="judge" compact={true} />
 
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div className="space-y-1">
-                        <p className="text-[11px] text-on-surface-variant font-medium flex items-center">
-                          <FileText className="w-3 h-3 mr-1 text-primary" />
-                          {t('judge.caseList.aiInsightLabel')}: {c.case_type ? t(`judge.caseTypes.${c.case_type}`) : t('judge.caseList.generalDispute')} {t('judge.caseList.alignment')}
-                        </p>
-                        <p className="text-[11px] text-on-surface-variant font-medium flex items-center">
-                          <History className="w-3 h-3 mr-1 text-primary" />
-                          {c.status === 'AIAnalysisReady' ? t('judge.caseList.precedentsMatched') : c.status === 'DraftGenerated' ? t('judge.caseList.draftReady') : t('judge.caseList.processingPending')}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[11px] text-on-surface-variant font-medium uppercase tracking-wider">{t('judge.caseList.hearingDate')}</p>
-                        <p className="text-sm font-bold text-primary">
+                    <div className="bg-primary/5 border border-primary/10 p-3 rounded-lg mt-2 mb-4 flex items-start gap-2 shadow-inner">
+                       <Activity className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                       <div className="space-y-1">
+                          <p className="text-[10px] font-black text-primary uppercase tracking-widest">{t('judge.caseList.aiActivityLog', 'System Activity Log')}</p>
+                          <p className="text-[11px] text-on-surface-variant font-medium leading-relaxed">
+                            {c.status === 'Created' || c.status === 'DocumentsUploaded' ? t('judge.caseList.logWaiting', 'Awaiting case documents and AI framework trigger. System standing by.') :
+                             c.status === 'AIAnalysisPending' ? t('judge.caseList.logProcessing', 'Crunching data: Synthesizing precedents and predicting entitlement breakdowns...') :
+                             c.status === 'AIAnalysisReady' ? t('judge.caseList.logInsightsReady', `Execution complete. Precedents matched successfully based on ${c.case_type ? c.case_type.replace('_', ' ') : 'General'} alignment.`) :
+                             c.status === 'DraftGenerated' ? t('judge.caseList.logDraftReady', 'Auto-draft generated. Awaiting final judicial review and signature.') :
+                             t('judge.caseList.logFinalized', 'Case judgment finalized and permanently encrypted.')}
+                          </p>
+                       </div>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-4 mb-4 pt-2 border-t border-outline-variant/20">
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">{t('judge.caseList.hearingDate')}</p>
+                        <p className="text-sm font-bold text-on-surface flex items-center">
+                          <Clock className="w-3.5 h-3.5 mr-1.5 text-primary" />
                           {c.hearing_date ? new Date(c.hearing_date).toLocaleDateString() : t('judge.caseList.unscheduled')}
                         </p>
                       </div>

@@ -18,6 +18,7 @@ import PortalLayout from '../../components/layout/PortalLayout'
 import JudgmentEditor from '../../components/judge/JudgmentEditor'
 import CaseContextBar from '../../components/judge/workspace/CaseContextBar'
 import DocumentsPanel from '../../components/judge/workspace/DocumentsPanel'
+import CaseWorkflowStepper from '../../components/layout/CaseWorkflowStepper'
 import { CATEGORY_DISPLAY_NAMES } from '../../constants/legal'
 import {
   getCase,
@@ -205,6 +206,20 @@ const CaseDetail = () => {
           }}
           onDelete={() => deleteMutation.mutate()}
         />
+
+        <div className="px-6 mt-6">
+          <CaseWorkflowStepper 
+            status={caseQuery.data?.status} 
+            role="judge" 
+            onStepClick={(step) => {
+              if (step === 2) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              } else if (step === 4 || step === 5) {
+                document.getElementById('judgment-editor-workspace')?.scrollIntoView({ behavior: 'smooth' });
+              }
+            }} 
+          />
+        </div>
 
         {/* Global Notifications Section */}
         {localMessage && (

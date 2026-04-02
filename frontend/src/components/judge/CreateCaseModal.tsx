@@ -71,7 +71,7 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
         <div className="flex items-center justify-between px-10 py-8 bg-surface-container-lowest dark:bg-surface-container relative">
           <div>
             <span className="text-[10px] font-bold text-tertiary uppercase tracking-wider mb-1.5 block opacity-80">
-              LexAI Command Center
+              LexAI
             </span>
             <h2 className="text-3xl font-headline font-semibold text-primary dark:text-emerald-400 tracking-tight">
               {t('judge.form.createNewCase')}
@@ -97,7 +97,7 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
               <div className="space-y-6">
                 <h3 className="text-sm font-semibold text-on-surface flex items-center gap-2 border-b border-outline-variant/20 pb-2">
                   <Briefcase className="w-4 h-4 text-primary opacity-80" />
-                  Case Core Details
+                  {t('judge.form.caseCoreDetails')}
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
@@ -111,7 +111,7 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
                       className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-3 text-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none"
                       value={title} 
                       onChange={(event) => setTitle(event.target.value)} 
-                      placeholder="e.g. Landmark Construction vs. City Planning"
+                      placeholder={t('judge.form.titlePlaceholder')}
                       required 
                     />
                   </div>
@@ -153,7 +153,7 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
               <div className="space-y-6">
                 <h3 className="text-sm font-semibold text-on-surface flex items-center gap-2 border-b border-outline-variant/20 pb-2">
                   <UserSquare2 className="w-4 h-4 text-primary opacity-80" />
-                  Involved Parties
+                  {t('judge.form.involvedParties')}
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
@@ -165,7 +165,7 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
                       className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-3 text-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none"
                       value={claimant} 
                       onChange={(event) => setClaimant(event.target.value)} 
-                      placeholder="Claimant legal entity..."
+                      placeholder={t('judge.form.claimantPlaceholder')}
                       required 
                     />
                   </div>
@@ -178,7 +178,7 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
                       className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-3 text-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none"
                       value={respondent} 
                       onChange={(event) => setRespondent(event.target.value)} 
-                      placeholder="Respondent legal entity..."
+                      placeholder={t('judge.form.respondentPlaceholder')}
                       required 
                     />
                   </div>
@@ -189,7 +189,7 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
               <div className="space-y-6">
                 <h3 className="text-sm font-semibold text-on-surface flex items-center gap-2 border-b border-outline-variant/20 pb-2">
                   <FileText className="w-4 h-4 text-primary opacity-80" />
-                  Preliminary Intelligence
+                  {t('judge.form.preliminaryIntelligence')}
                 </h3>
                 
                 <div className="space-y-2">
@@ -202,7 +202,7 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
                       className="w-full bg-transparent border-0 outline-none resize-none px-4 py-4 text-sm text-on-surface min-h-[140px] placeholder:italic placeholder:text-on-surface-variant/50"
                       value={notes} 
                       onChange={(event) => setNotes(event.target.value)} 
-                      placeholder="Enter preliminary case briefing, initial AI prompts, or contextual legal framework notes here..."
+                      placeholder={t('judge.form.notesPlaceholder')}
                       required
                     />
                   </div>
@@ -229,12 +229,12 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
               {isSubmitting ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />
-                  Processing Target
+                  {t('judge.form.processingTarget')}
                 </div>
               ) : (
                 <>
                   <Plus className="w-4 h-4" />
-                  Initialize Record
+                  {t('judge.form.initializeRecord')}
                 </>
               )}
             </button>
