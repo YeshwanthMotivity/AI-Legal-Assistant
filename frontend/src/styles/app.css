@@ -154,7 +154,7 @@
   --bg-surface: var(--surface-color);
   --bg-card: var(--surface-color);
   --bg-card-hover: #F1F5F9;
-  --bg-sidebar: var(--primary-royal); 
+  --bg-sidebar: #00573F;
   --sidebar-active: #004532;
   --sidebar-text: #F9F8F2;
 
@@ -183,13 +183,13 @@
 
 [data-theme='dark'] {
   /* Royal Perfection — Balanced Obsidian Heritage */
-  --bg-color: #04120D;      /* Deep Obsidian Green */
-  --surface-color: #09281C;  /* Forest Cards */
-  --text-main: #E9DCC0;      /* Champagne */
-  --text-heading: #F9F8F2;   /* Ivory Headings */
-  --primary-royal: #0F6146;  /* Deep Emerald (No Neon) */
+  --bg-color: #001A13;
+  --surface-color: #002C1F;
+  --text-main: #E9DCC0;
+  --text-heading: #E9DCC0;
+  --primary-royal: #008B65;
   --accent-gold: #D4AF37;
-  --border-subtle: rgba(212, 175, 55, 0.25); /* Lifted Gold */
+  --border-subtle: rgba(212, 175, 55, 0.3);
 
   --primary: var(--primary-royal);
   --primary-foreground: #ffffff;
@@ -198,9 +198,9 @@
   --bg-base: var(--bg-color);
   --bg-surface: var(--surface-color);
   --bg-card: var(--surface-color);
-  --bg-card-hover: #0B3625;
-  --bg-sidebar: #001A13; /* Midnight Green for layer separation */
-  --sidebar-active: #09281C;
+  --bg-card-hover: #003D2C;
+  --bg-sidebar: #001A13;
+  --sidebar-active: #002C1F;
   --sidebar-text: #E9DCC0;
 
   --text-primary: var(--text-main);
@@ -208,7 +208,7 @@
   --text-muted: #8F8C7F;
   --text-accent: var(--accent-gold);
 
-  --border-color: rgba(212, 175, 55, 0.35); /* Visible Gold Metallic Border */
+  --border-color: rgba(212, 175, 55, 0.35);
   --border-light: rgba(212, 175, 55, 0.15);
   
   --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5);

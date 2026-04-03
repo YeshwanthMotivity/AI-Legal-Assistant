@@ -108,7 +108,7 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
       <aside 
         className={cn(
           "bg-sidebar text-sidebar-text flex flex-col fixed h-full z-40 w-[280px] border-r-0 border-l-0 shadow-2xl",
-          isRTL ? "right-0 border-l border-white/10" : "left-0 border-r border-white/10"
+          isRTL ? "right-0 border-l border-[var(--border-color)]" : "left-0 border-r border-[var(--border-color)]"
         )}
       >
         <div className="p-8 flex items-center gap-3">
@@ -144,7 +144,7 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
           </p>
         </div>
 
-        <div className="p-6 bg-black/20 border-t border-white/10 mt-auto">
+        <div className="p-6 bg-black/10 border-t border-[var(--border-color)] mt-auto">
           <div className="flex items-center gap-4 mb-6 px-2">
             <div className="w-12 h-12 rounded-2xl bg-white/10 border-2 border-white/20 flex items-center justify-center text-text-accent font-black shadow-inner shrink-0 text-lg">
               {user?.username?.[0].toUpperCase()}
