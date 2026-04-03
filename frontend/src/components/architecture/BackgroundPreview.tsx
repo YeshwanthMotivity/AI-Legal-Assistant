@@ -2,8 +2,7 @@ import { motion } from 'framer-motion'
 
 const BackgroundPreview = () => {
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-20" style={{ contain: 'strict', isolation: 'isolate' }}>
-      {/* Dynamic blurred nodes mimicking system components */}
+    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-20">
       <motion.div 
         animate={{ 
           y: [0, -20, 0], 
@@ -21,8 +20,6 @@ const BackgroundPreview = () => {
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
         className="absolute bottom-1/4 left-[20%] w-[500px] h-[400px] bg-tertiary/10 blur-[150px] rounded-full" 
       />
-
-
     </div>
   )
 }
