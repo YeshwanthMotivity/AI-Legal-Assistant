@@ -81,7 +81,7 @@ const Login = () => {
           
           
           {/* Abstract Neural Network Decoration */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] opacity-10 pointer-events-none">
+          <div className="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
             <img 
               alt="abstract visualization of interconnected neural nodes and digital patterns" 
               className="w-full h-full object-cover mix-blend-overlay" 
