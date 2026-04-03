@@ -47,14 +47,14 @@ const SidebarItem = ({ icon: Icon, label, href, active, collapsed }: SidebarItem
     className={cn(
       "relative flex items-center gap-3 px-3 py-2 text-sm font-semibold transition-all rounded-xl mb-1 group overflow-hidden",
       active 
-        ? "bg-primary/5 text-primary shadow-sm border border-primary/10 scale-[1.01]" 
-        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground border border-transparent"
+        ? "bg-white/10 text-sidebar-text shadow-xl border border-white/10 scale-[1.01]" 
+        : "text-white/50 hover:bg-white/5 hover:text-sidebar-text border border-transparent"
     )}
   >
     {active && (
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 bg-primary rounded-r-md transition-all duration-300 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 bg-text-accent rounded-r-md transition-all duration-300 shadow-[0_0_8px_rgba(212,175,55,0.5)]" />
     )}
-    <Icon className={cn("w-5 h-5 shrink-0", active ? "text-primary" : "group-hover:scale-105 transition-transform text-muted-foreground/70 group-hover:text-primary/70")} />
+    <Icon className={cn("w-5 h-5 shrink-0 transition-transform", active ? "text-sidebar-text" : "group-hover:scale-105 text-white/50 group-hover:text-sidebar-text/80")} />
     {!collapsed && <span className="truncate">{label}</span>}
   </NavLink>
 );
@@ -107,19 +107,19 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
       {/* Static Sidebar */}
       <aside 
         className={cn(
-          "glass-strong flex flex-col fixed h-full z-40 w-[280px] border-r-0 border-l-0 shadow-2xl",
-          isRTL ? "right-0 border-l" : "left-0 border-r"
+          "bg-sidebar text-sidebar-text flex flex-col fixed h-full z-40 w-[280px] border-r-0 border-l-0 shadow-2xl",
+          isRTL ? "right-0 border-l border-white/10" : "left-0 border-r border-white/10"
         )}
       >
         <div className="p-8 flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95">
+          <div className="w-10 h-10 bg-white/10 rounded-2xl flex items-center justify-center text-sidebar-text shadow-lg transition-transform hover:scale-105 active:scale-95">
             <Scale className="w-6 h-6" />
           </div>
-          <span className="font-black text-xl tracking-tighter text-gradient">{t('common.appName')}</span>
+          <span className="font-black text-xl tracking-tighter text-sidebar-text">{t('common.appName')}</span>
         </div>
 
         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto scrollbar-hide">
-          <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.25em] mb-6 px-4 opacity-50">
+          <div className="text-[10px] font-black text-white/40 uppercase tracking-[0.25em] mb-6 px-4">
             {t('common.main_menu')}
           </div>
           {menuItems.map((item) => (
@@ -134,29 +134,29 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
         </nav>
 
         {/* AI Engine Info Card (Static) */}
-        <div className="px-6 py-5 mx-4 mb-6 rounded-3xl bg-primary/5 border border-primary/10 glass-strong">
+        <div className="px-6 py-5 mx-4 mb-6 rounded-3xl bg-white/5 border border-white/5 relative group">
           <div className="flex items-center gap-2.5 mb-2.5">
-             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-             <span className="text-[10px] font-black uppercase tracking-widest text-primary">{t('judge.judgment.aiReasoningNode')}</span>
+             <div className="w-2 h-2 rounded-full bg-text-accent animate-pulse shadow-[0_0_10px_#D4AF37]" />
+             <span className="text-[10px] font-black uppercase tracking-widest text-text-accent">{t('judge.judgment.aiReasoningNode')}</span>
           </div>
-          <p className="text-[10px] text-muted-foreground/80 leading-relaxed font-medium">
+          <p className="text-[10px] text-white/50 leading-relaxed font-bold italic font-serif">
              {t('judge.judgment.aiReasoningDesc')}
           </p>
         </div>
 
-        <div className="p-6 bg-muted/20 border-t border-border/40 mt-auto">
+        <div className="p-6 bg-black/20 border-t border-white/10 mt-auto">
           <div className="flex items-center gap-4 mb-6 px-2">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center text-primary font-black shadow-inner shrink-0 text-lg">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 border-2 border-white/20 flex items-center justify-center text-text-accent font-black shadow-inner shrink-0 text-lg">
               {user?.username?.[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-black truncate leading-tight">{user?.username}</div>
-              <div className="text-[10px] font-black text-primary/70 truncate uppercase tracking-tight">{t(`roles.${user?.role}`)}</div>
+              <div className="text-sm font-black truncate leading-tight text-white">{user?.username}</div>
+              <div className="text-[10px] font-black text-text-accent/80 truncate uppercase tracking-tight">{t(`roles.${user?.role}`)}</div>
             </div>
           </div>
           <Button 
             variant="ghost" 
-            className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 rounded-2xl h-12 transition-all group px-4"
+            className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10 rounded-2xl h-12 transition-all group px-4"
             onClick={logout}
           >
             <LogOut className={cn("w-5 h-5 transition-transform group-hover:-translate-x-1", isRTL ? "ml-3" : "mr-3")} />

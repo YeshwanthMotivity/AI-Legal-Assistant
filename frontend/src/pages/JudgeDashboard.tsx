@@ -5,6 +5,8 @@ import { useAuth } from '../auth/useAuth';
 import { getJudgeCases } from '../api/judge';
 import { useNavigate } from 'react-router-dom';
 import PortalLayout from '../components/layout/PortalLayout';
+import ThemeToggle from '../components/layout/ThemeToggle';
+import LanguageToggle from '../components/LanguageToggle';
 import { 
   AlertTriangle, 
   Sparkles, 
@@ -106,6 +108,10 @@ export default function JudgeDashboard() {
             </div>
             
             <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 border-r border-border/40 pr-4">
+                <ThemeToggle />
+                <LanguageToggle />
+              </div>
               <button 
                 className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all border ${isAiPanelOpen ? 'bg-primary/10 border-primary text-primary shadow-[0_0_15px_rgba(var(--primary),0.1)]' : 'bg-muted border-transparent hover:border-border'}`}
                 onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
