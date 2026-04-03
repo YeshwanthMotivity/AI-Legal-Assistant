@@ -74,12 +74,12 @@ export default function JudgeDashboard() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Finalized':
-        return <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Completed</span>;
+        return <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-primary/10 text-primary border border-primary/20">Completed</span>;
       case 'AIAnalysisReady':
       case 'DraftGenerated':
-        return <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">In Progress</span>;
+        return <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">In Progress</span>;
       default:
-        return <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Pending</span>;
+        return <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-text-accent/10 text-text-accent border border-text-accent/20">Pending</span>;
     }
   };
 
@@ -133,31 +133,31 @@ export default function JudgeDashboard() {
             {(stats.urgent > 0 || stats.ready > 0) && (
               <div className="space-y-4">
                 {stats.urgent > 0 && (
-                  <div className="p-4 rounded-2xl bg-red-50 border border-red-100 dark:bg-red-900/10 dark:border-red-900/20 flex items-center justify-between group animate-in zoom-in-95 duration-300">
+                  <div className="p-4 rounded-2xl bg-error/5 border border-error/20 flex items-center justify-between group animate-in zoom-in-95 duration-300">
                     <div className="flex items-center gap-4">
-                      <div className="p-2.5 bg-red-100 text-red-600 dark:bg-red-900/40 rounded-xl">
+                      <div className="p-2.5 bg-error/10 text-error rounded-xl">
                         <AlertTriangle className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-red-700 dark:text-red-400 italic">Deadline Warning</p>
-                        <p className="text-xs text-red-600/80 font-medium">{stats.urgent} cases detected with hearings in less than 7 days.</p>
+                        <p className="text-sm font-bold text-error italic">Deadline Warning</p>
+                        <p className="text-xs text-error/80 font-medium">{stats.urgent} cases detected with hearings in less than 7 days.</p>
                       </div>
                     </div>
-                    <button className="px-4 py-2 text-xs font-black bg-red-600 text-white rounded-xl shadow-sm hover:bg-red-700 transition-colors">REVIEW URGENT</button>
+                    <button className="px-4 py-2 text-xs font-black bg-error/90 text-white rounded-xl shadow-sm hover:bg-error transition-colors">REVIEW URGENT</button>
                   </div>
                 )}
                 {stats.ready > 0 && (
-                  <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/20 flex items-center justify-between group animate-in zoom-in-95 duration-300 delay-75">
+                  <div className="p-4 rounded-2xl bg-text-accent/5 border border-text-accent/20 flex items-center justify-between group animate-in zoom-in-95 duration-300 delay-75">
                     <div className="flex items-center gap-4">
-                      <div className="p-2.5 bg-amber-100 text-amber-600 dark:bg-amber-900/40 rounded-xl">
+                      <div className="p-2.5 bg-text-accent/10 text-text-accent rounded-xl">
                         <Zap className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-amber-700 dark:text-amber-400 italic">AI Readiness</p>
-                        <p className="text-xs text-amber-600/80 font-medium">{stats.ready} case drafts are ready for judicial finalization.</p>
+                        <p className="text-sm font-bold text-text-accent italic">AI Readiness</p>
+                        <p className="text-xs text-text-accent/80 font-medium">{stats.ready} case drafts are ready for judicial finalization.</p>
                       </div>
                     </div>
-                    <button className="px-4 py-2 text-xs font-black bg-amber-600 text-white rounded-xl shadow-sm hover:bg-amber-700 transition-colors">GO TO DRAFTS</button>
+                    <button className="px-4 py-2 text-xs font-black bg-text-accent/90 text-white rounded-xl shadow-sm hover:bg-text-accent transition-colors">GO TO DRAFTS</button>
                   </div>
                 )}
               </div>

@@ -74,13 +74,13 @@
   --color-primary: var(--primary);
   --color-inverse-surface: var(--bg-base);
   --color-on-error: #ffffff;
-  --color-surface-container-lowest: var(--bg-sidebar);
+  --color-surface-container-lowest: var(--bg-card);
   --color-primary-fixed-dim: var(--primary-light);
   --color-on-surface: var(--text-primary);
   --color-on-secondary-container: var(--secondary-foreground);
   --color-secondary-container: var(--secondary);
   --color-surface-container-highest: var(--bg-card-hover);
-  --color-surface-container-low: var(--bg-sidebar);
+  --color-surface-container-low: var(--bg-card);
   --color-surface: var(--bg-base);
   --color-on-secondary-fixed-variant: var(--secondary-foreground);
   
