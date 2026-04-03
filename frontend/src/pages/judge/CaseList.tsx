@@ -10,13 +10,9 @@ import {
   Gavel,
   History,
   FileText,
-  LayoutGrid,
-  List,
-  Activity,
 } from 'lucide-react'
 import PortalLayout from '../../components/layout/PortalLayout'
 import CreateCaseModal from '../../components/judge/CreateCaseModal'
-import CaseWorkflowStepper from '../../components/layout/CaseWorkflowStepper'
 import { createCase, getJudgeCases } from '../../api/judge'
 import type { CaseResponse, CreateCaseRequest } from '../../types/judge'
 import { cn } from '@/lib/utils'
@@ -38,7 +34,6 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
   const [isModalOpen, setIsModalOpen] = useState(openCreateOnLoad)
   const [banner, setBanner] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
 
   const casesQuery = useQuery({
     queryKey: ['judge-cases'],
@@ -100,54 +95,54 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
 
       {/* 1. Top Metrics */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <div className="bg-white p-6 rounded-2xl shadow-sm flex flex-col justify-between border border-slate-200">
+        <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
           <div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{t('judge.caseList.activePortfolio')}</p>
-            <h3 className="font-headline text-4xl font-bold text-secondary">
+            <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">{t('judge.caseList.activePortfolio')}</p>
+            <h3 className="font-headline text-3xl font-medium text-primary">
               {casesQuery.isLoading ? '...' : String(stats.active).padStart(2, '0')}
             </h3>
           </div>
-          <div className="flex items-center mt-4 text-[11px] font-bold text-primary">
+          <div className="flex items-center mt-4 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
             <Gavel className="w-4 h-4 mr-1" />
             <span>{t('judge.caseList.currentlyAssigned')}</span>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm flex flex-col justify-between border border-slate-200">
+        <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
           <div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{t('judge.caseList.aiScoredReady')}</p>
-            <h3 className="font-headline text-4xl font-bold text-secondary">
+            <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">{t('judge.caseList.aiScoredReady')}</p>
+            <h3 className="font-headline text-3xl font-medium text-primary">
               {casesQuery.isLoading ? '...' : String(stats.ready).padStart(2, '0')}
             </h3>
           </div>
-          <div className="flex items-center mt-4 text-[11px] font-bold text-emerald-600">
+          <div className="flex items-center mt-4 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="w-4 h-4 mr-1" />
             <span>{t('judge.dashboard.readyForReview')}</span>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm flex flex-col justify-between border border-slate-200">
+        <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
           <div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{t('judge.caseList.criticalHearings')}</p>
-            <h3 className="font-headline text-4xl font-bold text-secondary">
+            <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">{t('judge.caseList.criticalHearings')}</p>
+            <h3 className="font-headline text-3xl font-medium text-primary">
               {casesQuery.isLoading ? '...' : String(stats.urgent).padStart(2, '0')}
             </h3>
           </div>
-          <div className="flex items-center mt-4 text-[11px] font-bold text-accent">
-            <Clock className="w-4 h-4 mr-1 text-accent" />
+          <div className="flex items-center mt-4 text-[11px] font-medium text-error">
+            <Clock className="w-4 h-4 mr-1 text-error" />
             <span>{t('judge.caseList.requireUrgentAttention')}</span>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm flex flex-col justify-between border border-slate-200">
+        <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
           <div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{t('judge.caseList.decisionsIssued')}</p>
-            <h3 className="font-headline text-4xl font-bold text-secondary">
+            <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">{t('judge.caseList.decisionsIssued')}</p>
+            <h3 className="font-headline text-3xl font-medium text-primary">
               {casesQuery.isLoading ? '...' : String(stats.finalized).padStart(2, '0')}
             </h3>
           </div>
-          <div className="flex items-center mt-4 text-[11px] font-bold text-slate-500">
-            <History className="w-4 h-4 mr-1 text-slate-400" />
+          <div className="flex items-center mt-4 text-[11px] font-medium text-on-surface-variant">
+            <History className="w-4 h-4 mr-1 text-on-surface-variant" />
             <span>{t('judge.caseList.archivedCases')}</span>
           </div>
         </div>
@@ -155,16 +150,16 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
 
       <div className="flex flex-col gap-8">
         {/* Filtering & Actions Ribbon */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-surface-container-lowest dark:bg-surface-container p-4 rounded-lg editorial-shadow border border-outline-variant/30">
 
-          <div className="flex bg-slate-50 p-1.5 rounded-xl border border-slate-100 w-full lg:w-auto">
+          <div className="flex bg-surface-container-low dark:bg-surface-container-high p-1.5 rounded border border-outline-variant/20 w-full lg:w-auto">
             <button
               onClick={() => setActiveTab('assigned')}
               className={cn(
-                "px-6 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all",
+                "px-6 py-2 rounded text-[11px] font-bold uppercase tracking-wider transition-all",
                 activeTab === 'assigned'
-                  ? "bg-white text-primary shadow-sm border border-slate-200"
-                  : "text-slate-400 hover:text-slate-600"
+                  ? "bg-surface-container-lowest dark:bg-surface-container text-primary shadow-sm border border-outline-variant/20"
+                  : "text-on-surface-variant hover:text-on-surface"
               )}
             >
               {t('judge.caseList.activeDocket')}
@@ -172,10 +167,10 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
             <button
               onClick={() => setActiveTab('previous')}
               className={cn(
-                "px-6 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all",
+                "px-6 py-2 rounded text-[11px] font-bold uppercase tracking-wider transition-all",
                 activeTab === 'previous'
-                  ? "bg-white text-primary shadow-sm border border-slate-200"
-                  : "text-slate-400 hover:text-slate-600"
+                  ? "bg-surface-container-lowest dark:bg-surface-container text-primary shadow-sm border border-outline-variant/20"
+                  : "text-on-surface-variant hover:text-on-surface"
               )}
             >
               {t('judge.caseList.archive')}
@@ -183,36 +178,20 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
-            <div className="flex bg-slate-50 p-1.5 rounded-xl border border-slate-100 w-full sm:w-auto">
-              <button
-                onClick={() => setViewMode('list')}
-                className={cn("p-1.5 rounded-lg transition-colors flex-1 sm:flex-none flex justify-center", viewMode === 'list' ? "bg-white text-primary shadow-sm border border-slate-200" : "text-slate-400 hover:text-slate-600")}
-                title="List View"
-              >
-                <List className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={cn("p-1.5 rounded-lg transition-colors flex-1 sm:flex-none flex justify-center", viewMode === 'grid' ? "bg-white text-primary shadow-sm border border-slate-200" : "text-slate-400 hover:text-slate-600")}
-                title="Grid View"
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-            </div>
             <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
               <input
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-emerald-50 transition-all font-medium text-secondary"
+                className="w-full bg-surface-container-low dark:bg-surface-container border border-outline-variant/30 rounded py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary/20 transition-all font-medium text-on-surface"
                 placeholder={t('judge.caseList.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <button
-              className="text-[11px] font-extrabold uppercase tracking-widest text-white py-2.5 px-8 bg-primary hover:bg-emerald-700 rounded-xl transition-all flex items-center shadow-lg shadow-emerald-900/10 w-full sm:w-auto justify-center"
+              className="text-[11px] font-bold uppercase tracking-wider text-on-primary py-2.5 px-6 bg-primary hover:opacity-90 rounded transition-colors flex items-center shadow-lg shadow-primary/20 w-full sm:w-auto justify-center"
               onClick={() => setIsModalOpen(true)}
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-3.5 h-3.5 mr-2" />
               {t('judge.caseList.fileNewAction')}
             </button>
           </div>
@@ -242,58 +221,48 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
               {t('judge.caseList.docketClear')}
             </div>
           ) : (
-            <div className={cn(
-              "animate-in fade-in duration-500", 
-              viewMode === 'grid' ? "grid grid-cols-1 xl:grid-cols-2 gap-6" : "flex flex-col space-y-4"
-            )}>
+            <div className="space-y-4">
               {visibleCases.map((c) => {
                 const isUrgent = c.hearing_date && new Date(c.hearing_date) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
 
                 return (
-                  <div key={c.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-primary-light hover:shadow-md transition-all duration-300">
-                    <div className="flex justify-between items-start mb-4">
+                  <div key={c.id} className="bg-surface-container-lowest dark:bg-surface-container p-5 rounded-lg editorial-shadow border border-outline-variant/30 hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-all duration-300">
+                    <div className="flex justify-between items-start mb-3">
                       <div>
-                        <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mb-1 block">
+                        <span className="text-[10px] font-bold text-tertiary tracking-widest uppercase mb-1 block">
                           {t('judge.caseList.caseIdLabel')}: {c.case_number || c.id.substring(0, 8).toUpperCase()}
                         </span>
-                        <h5 className="font-headline text-2xl text-secondary font-bold">{c.title || t('judge.caseList.untitledAction')}</h5>
+                        <h5 className="font-headline text-xl text-on-surface font-semibold">{c.title || t('judge.caseList.untitledAction')}</h5>
                       </div>
-                      <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-tight rounded-lg ${
-                        isUrgent ? 'bg-terracotta-100 text-terracotta-800' : 'bg-emerald-50 text-emerald-800'
+                      <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-tighter rounded ${
+                        isUrgent ? 'bg-error-container text-on-error-container' : 'bg-secondary-container text-on-secondary-container'
                       }`}>
                         {isUrgent ? t('judge.caseList.urgent') : c.status === 'DraftGenerated' ? t('judge.caseList.draftReady') : t('judge.caseList.processing')}
                       </span>
                     </div>
-                    
-                    <CaseWorkflowStepper status={c.status} role="judge" compact={true} />
 
-                    <div className="bg-emerald-50/30 border border-emerald-100/50 p-4 rounded-xl mt-3 mb-5 flex items-start gap-3 shadow-inner">
-                       <Activity className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                       <div className="space-y-1">
-                          <p className="text-[10px] font-bold text-primary uppercase tracking-widest">{t('judge.caseList.aiActivityLog', 'System Activity Log')}</p>
-                          <p className="text-[11px] text-slate-500 font-medium leading-relaxed italic">
-                            {c.status === 'Created' || c.status === 'DocumentsUploaded' ? t('judge.caseList.logWaiting', 'Awaiting case documents and AI framework trigger. System standing by.') :
-                             c.status === 'AIAnalysisPending' ? t('judge.caseList.logProcessing', 'Crunching data: Synthesizing precedents and predicting entitlement breakdowns...') :
-                             c.status === 'AIAnalysisReady' ? t('judge.caseList.logInsightsReady', `Execution complete. Precedents matched successfully based on ${c.case_type ? c.case_type.replace('_', ' ') : 'General'} alignment.`) :
-                             c.status === 'DraftGenerated' ? t('judge.caseList.logDraftReady', 'Auto-draft generated. Awaiting final judicial review and signature.') :
-                             t('judge.caseList.logFinalized', 'Case judgment finalized and permanently encrypted.')}
-                          </p>
-                       </div>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-4 mb-5 pt-3 border-t border-slate-100">
-                      <div className="space-y-0.5">
-                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider text-left">{t('judge.caseList.hearingDate')}</p>
-                        <p className="text-sm font-bold text-secondary flex items-center">
-                          <Clock className="w-3.5 h-3.5 mr-1.5 text-primary" />
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="space-y-1">
+                        <p className="text-[11px] text-on-surface-variant font-medium flex items-center">
+                          <FileText className="w-3 h-3 mr-1 text-primary" />
+                          {t('judge.caseList.aiInsightLabel')}: {c.case_type ? t(`judge.caseTypes.${c.case_type}`) : t('judge.caseList.generalDispute')} {t('judge.caseList.alignment')}
+                        </p>
+                        <p className="text-[11px] text-on-surface-variant font-medium flex items-center">
+                          <History className="w-3 h-3 mr-1 text-primary" />
+                          {c.status === 'AIAnalysisReady' ? t('judge.caseList.precedentsMatched') : c.status === 'DraftGenerated' ? t('judge.caseList.draftReady') : t('judge.caseList.processingPending')}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[11px] text-on-surface-variant font-medium uppercase tracking-wider">{t('judge.caseList.hearingDate')}</p>
+                        <p className="text-sm font-bold text-primary">
                           {c.hearing_date ? new Date(c.hearing_date).toLocaleDateString() : t('judge.caseList.unscheduled')}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-3 pt-4 border-t border-slate-100">
+                    <div className="flex items-center space-x-3 pt-4 border-t border-outline-variant/30">
                       <button
-                        className="text-[11px] font-bold uppercase tracking-widest text-white py-2 px-6 bg-primary hover:bg-emerald-700 rounded-xl transition-colors flex items-center shadow-lg shadow-emerald-900/10"
+                        className="text-[11px] font-bold uppercase tracking-wider text-on-primary py-2 px-4 bg-primary hover:opacity-90 rounded transition-colors flex items-center"
                         onClick={() => navigate(`/judge/cases/${c.id}`)}
                       >
                         {t('judge.caseList.openCase')}

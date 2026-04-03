@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Sparkles, Gavel, Trash2, AlertTriangle } from 'lucide-react'
+import { Sparkles, Gavel, Trash2, AlertTriangle, ChevronRight, PlayCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 interface CaseContextBarProps {
@@ -19,6 +20,8 @@ interface CaseContextBarProps {
 const CaseContextBar = ({
   caseNumber,
   title,
+  status,
+  confidence,
   isActivelyLoading,
   isDeleting = false,
   onRunAnalysis,
@@ -37,91 +40,94 @@ const CaseContextBar = ({
 
   return (
     <>
-      <div className="sticky top-0 z-40 w-full border-b border-outline-variant/20 bg-surface-container-lowest/90 dark:bg-surface-container/90 backdrop-blur-xl shadow-sm">
-        <div className="px-6 py-4 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-
-          {/* LEFT: Case Identity */}
-          <div className="space-y-0.5">
-            <span className="text-[10px] font-black uppercase tracking-widest text-primary/70 block">
-              {t('judge.workspace.caseLabel')} · {caseNumber}
-            </span>
-            <h1 className="text-base font-bold text-on-surface truncate max-w-lg leading-snug">
-              {title}
+      <header className="px-10 py-6 border-b border-border flex justify-between items-center bg-white/40 backdrop-blur-md sticky top-0 z-40">
+        <div className="flex-1 min-w-0">
+          <nav className="flex items-center gap-2 text-[10px] font-black text-muted-foreground mb-2 uppercase tracking-[0.2em]">
+            <span>Judicial</span>
+            <ChevronRight className="w-3 h-3 opacity-30" />
+            <span>Case Portfolio</span>
+            <ChevronRight className="w-3 h-3 opacity-30" />
+            <span className="text-emerald-600 truncate">{caseNumber}</span>
+          </nav>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-black tracking-tight text-foreground truncate max-w-2xl leading-none">
+              {title || 'Initializing Case...'}
             </h1>
+            <Badge variant="outline" className="text-[10px] uppercase font-black border-emerald-500/30 text-emerald-600 bg-emerald-500/5 px-2 h-6">
+               <PlayCircle className="w-3 h-3 mr-1.5" /> LIVE SESSION
+            </Badge>
           </div>
-
-          {/* RIGHT: Actions */}
-          <div className="flex items-center gap-3 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 h-9 px-4 border-outline-variant/30 hover:bg-primary/5 text-primary text-xs font-bold uppercase tracking-wider transition-all duration-200 rounded-lg"
-              disabled={isActivelyLoading}
-              onClick={onRunAnalysis}
-            >
-              <Sparkles className={cn('w-3.5 h-3.5', isActivelyLoading && 'animate-spin')} />
-              {isActivelyLoading ? t('judge.workspace.synthesizing') : t('judge.workspace.runAnalysisShort')}
-            </Button>
-            <Button
-              size="sm"
-              className="gap-2 h-9 px-4 bg-primary text-on-primary text-xs font-bold uppercase tracking-wider shadow-sm hover:shadow-md transition-all duration-200 rounded-lg"
-              onClick={onFinalize}
-            >
-              <Gavel className="w-3.5 h-3.5" />
-              {t('judge.workspace.finalizeJudgment')}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-2 h-9 px-3 text-on-surface-variant hover:text-red-500 hover:bg-red-500/10 text-[10px] font-bold uppercase tracking-widest transition-all duration-200 rounded-lg"
-              disabled={isDeleting}
-              onClick={handleDeleteClick}
-            >
-              {isDeleting ? (
-                <div className="w-3 h-3 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
-              ) : (
-                <Trash2 className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100" />
-              )}
-              {t('judge.workspace.deleteCase')}
-            </Button>
-          </div>
-
         </div>
-      </div>
 
-      {/* Confirmation Dialog */}
+        <div className="flex items-center gap-4 shrink-0">
+          <div className="flex flex-col items-end mr-4 border-r border-border pr-6">
+             <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-40">AI Grounding</span>
+             <span className="text-xs font-black text-emerald-600">{confidence ? `${Math.round(confidence)}% Precision` : 'Analyzing...'}</span>
+          </div>
+
+          <Button
+            variant="outline"
+            className="gap-2 h-11 px-5 border-border bg-white shadow-sm hover:bg-muted font-black text-[11px] uppercase tracking-widest transition-all rounded-xl"
+            disabled={isActivelyLoading}
+            onClick={onRunAnalysis}
+          >
+            <Sparkles className={cn('w-4 h-4 text-emerald-600', isActivelyLoading && 'animate-spin')} />
+            {isActivelyLoading ? 'Synthesizing...' : 'Run Synthesis'}
+          </Button>
+
+          <Button
+            className="gap-2 h-11 px-6 bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 hover:scale-[1.02] active:scale-[0.98] font-black text-[11px] uppercase tracking-widest transition-all rounded-xl"
+            onClick={onFinalize}
+          >
+            <Gavel className="w-4 h-4" />
+            Finalize Outcome
+          </Button>
+
+          <Button
+            variant="outline"
+            className="w-11 h-11 p-0 text-muted-foreground hover:text-red-600 hover:bg-red-50 border-border rounded-xl transition-all"
+            disabled={isDeleting}
+            onClick={handleDeleteClick}
+          >
+            {isDeleting ? (
+              <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4" />
+            )}
+          </Button>
+        </div>
+      </header>
+
+      {/* Confirmation Dialog (matching dashboard style) */}
       {showConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 animate-in zoom-in-95 duration-200">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-5 h-5 text-red-500" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white border border-border rounded-[2.5rem] shadow-2xl p-10 max-w-md w-full mx-4 animate-in zoom-in-95 duration-300">
+            <div className="flex flex-col items-center text-center gap-6">
+              <div className="w-20 h-20 rounded-[2rem] bg-red-50 border border-red-100 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-10 h-10 text-red-600" />
               </div>
-              <div className="space-y-1">
-                <h3 className="text-sm font-bold text-on-surface uppercase tracking-wide">
-                  {t('judge.workspace.deleteCaseTitle')}
+              <div className="space-y-2">
+                <h3 className="text-xl font-black text-foreground uppercase tracking-tight">
+                  Tear Down Workspace?
                 </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {t('judge.workspace.deleteCaseDesc')}
+                <p className="text-sm font-medium text-muted-foreground leading-relaxed italic">
+                  This will permanently redact all digital footprints and evidence associated with this proceeding.
                 </p>
               </div>
             </div>
-            <div className="flex gap-3 mt-6 justify-end">
+            <div className="grid grid-cols-2 gap-4 mt-10">
               <Button
                 variant="outline"
-                size="sm"
-                className="h-9 px-4 border-outline-variant/30 text-xs font-bold uppercase tracking-wider rounded-lg"
+                className="h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] border-border"
                 onClick={handleCancel}
               >
-                {t('common.cancel')}
+                Abort
               </Button>
               <Button
-                size="sm"
-                className="h-9 px-4 bg-red-500 hover:bg-red-600 text-white text-xs font-bold uppercase tracking-wider rounded-lg gap-2"
+                className="h-14 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-xl shadow-red-500/20"
                 onClick={handleConfirm}
               >
-                <Trash2 className="w-3.5 h-3.5" />
-                {t('judge.workspace.confirmDelete')}
+                Confirm Redaction
               </Button>
             </div>
           </div>

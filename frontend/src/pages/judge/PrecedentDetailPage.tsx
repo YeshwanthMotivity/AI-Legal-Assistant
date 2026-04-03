@@ -190,7 +190,8 @@ const PrecedentDetailPage: React.FC = () => {
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([])
   const chatEndRef = useRef<HTMLDivElement>(null)
 
-  const [chatError, setChatError] = useState<string | null>(null)
+  const [aiSummary, setAiSummary] = useState<string>('')
+  const [summaryLoading, setSummaryLoading] = useState(false)
   const { data: precedent, isLoading, error } = useQuery({
     queryKey: ['precedent', id, i18n.language],
     queryFn: () => getPrecedent(id || '', i18n.language),
@@ -213,14 +214,35 @@ const PrecedentDetailPage: React.FC = () => {
     mutationFn: (message: string) => chatWithPrecedent(id || '', message, i18n.language),
     onSuccess: (data) => {
       setMessages((prev) => [...prev, { role: 'ai', content: data.response }])
-      setChatError(null)
     },
-    onError: (err: any) => {
-      console.error('Chat failed:', err)
-      setChatError(t('judge.workspace.analysisError'))
-    }
   })
 
+  // Dynamic x.ai Summary Generation
+  useEffect(() => {
+    if (!precedent?.text || aiSummary || summaryLoading) return
+    setSummaryLoading(true)
+    
+    fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        messages: [{
+          role: 'user',
+          content: `In 2-3 sentences max, summarize this DIFC court case — who sued whom, what the dispute was about, and the outcome. Be concise and factual.\n\n${precedent.text.slice(0, 3000)}`
+        }],
+        temperature: 0,
+        max_tokens: 150
+      })
+    })
+    .then(r => r.json())
+    .then(d => setAiSummary(d.choices?.[0]?.message?.content || ''))
+    .catch(err => console.error('Groq summary fetch failed:', err))
+    .finally(() => setSummaryLoading(false))
+  }, [precedent?.text, aiSummary])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -237,7 +259,6 @@ const PrecedentDetailPage: React.FC = () => {
     const userMsg = chatMessage.trim()
     setMessages((prev) => [...prev, { role: 'user', content: userMsg }])
     setChatMessage('')
-    setChatError(null)
     chatMutation.mutate(userMsg)
   }
 
@@ -273,7 +294,7 @@ const PrecedentDetailPage: React.FC = () => {
   return (
     <PortalLayout 
       title={precedent.title} 
-      subtitle={`${precedent.year || t('common.notApplicable')} | ${precedent.category || t('judge.workspace.difcJudicialPrecedent')}`}
+      subtitle={`${precedent.year || 'N/A'} | ${precedent.category || 'DIFC Judicial Precedent'}`}
     >
       <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-12rem)] min-h-[600px]">
         {/* Main Content - Case Text */}
@@ -308,8 +329,8 @@ const PrecedentDetailPage: React.FC = () => {
                 <div className="flex items-center gap-4 py-4 px-6 bg-primary/5 rounded-2xl border border-primary/10">
                   <Scale className="w-8 h-8 text-primary/40 shrink-0" />
                   <div>
-                    <h4 className="text-sm font-black uppercase tracking-wider text-primary">{t('judge.workspace.judicialRecordTitle')}</h4>
-                    <p className="text-[11px] text-muted-foreground italic">{t('judge.workspace.judicialRecordSubtitle')}</p>
+                    <h4 className="text-sm font-black uppercase tracking-wider text-primary">Judicial Record</h4>
+                    <p className="text-[11px] text-muted-foreground italic">Official transcript from the DIFC Court of First Instance</p>
                   </div>
                 </div>
 
@@ -317,7 +338,7 @@ const PrecedentDetailPage: React.FC = () => {
                 <div className="border border-border/40 rounded-2xl overflow-hidden">
                   <div className="bg-muted/20 px-6 py-3 border-b border-border/30 flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-primary" />
-                    <h5 className="text-[11px] font-black uppercase tracking-widest text-primary">{t('judge.workspace.caseDetails')}</h5>
+                    <h5 className="text-[11px] font-black uppercase tracking-widest text-primary">Case Details</h5>
                   </div>
                   <div className="divide-y divide-border/20">
                     {(() => {
@@ -333,19 +354,19 @@ const PrecedentDetailPage: React.FC = () => {
 
                       type RowType = { label: string; value: unknown; type: 'text' | 'outcome' | 'summary' }
                       const rows: RowType[] = [
-                        { label: t('judge.workspace.court'),       value: t('judge.workspace.difcCourts'),                                    type: 'text' },
-                        { label: t('judge.workspace.reference'),   value: id,                                                type: 'text' },
-                        ...(year ? [{ label: t('judge.workspace.year'), value: year, type: 'text' as const }] : []),
-                        { label: t('judge.workspace.caseTypeField'),   value: precedent.category || t('judge.workspace.difcJudicialPrecedent'),  type: 'text' },
-                        ...(parties.claimant ? [{ label: t('judge.form.claimant'), value: parties.claimant,  type: 'text' as const }] : []),
-                        ...(parties.respondent ? [{ label: t('judge.form.respondent'), value: parties.respondent,  type: 'text' as const }] : []),
-                        ...(outcomeStyle ? [{ label: t('judge.workspace.outcome'), value: outcomeStyle, type: 'outcome' as const }] : []),
-                        { 
-                          label: t('judge.workspace.summary'), 
-                          value: cleanSummary,
-                          type: 'summary' as const 
-                        },
-                        { label: t('judge.workspace.source'),      value: precedent.title,                                   type: 'text' },
+                        { label: 'Court',       value: 'DIFC Courts',                                    type: 'text' },
+                        { label: 'Reference',   value: id,                                                type: 'text' },
+                        ...(year ? [{ label: 'Year', value: year, type: 'text' as const }] : []),
+                        { label: 'Case Type',   value: precedent.category || 'DIFC Judicial Precedent',  type: 'text' },
+                        ...(parties.claimant ? [{ label: 'Claimant', value: parties.claimant,  type: 'text' as const }] : []),
+                        ...(parties.respondent ? [{ label: 'Respondent', value: parties.respondent,  type: 'text' as const }] : []),
+                        ...(outcomeStyle ? [{ label: 'Outcome', value: outcomeStyle, type: 'outcome' as const }] : []),
+                        ...(aiSummary || summaryLoading ? [{
+                          label: 'Summary',
+                          value: summaryLoading ? 'Generating AI summary...' : aiSummary,
+                          type: 'summary' as const
+                        }] : []),
+                        { label: 'Source',      value: precedent.title,                                   type: 'text' },
                       ]
 
                       return rows.map((row, i) => (
@@ -371,7 +392,7 @@ const PrecedentDetailPage: React.FC = () => {
                     {(precedent.cited_laws?.length ?? 0) > 0 && (
                       <div className="grid grid-cols-[140px_1fr] gap-4 px-6 py-3.5 hover:bg-muted/10 transition-colors">
                         <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-0.5">
-                          {t('judge.workspace.lawsCited')}
+                          Laws Cited
                         </span>
                         <div className="flex flex-wrap gap-1.5">
                           {(precedent.cited_laws || []).slice(0, 5).map((law: string, i: number) => (
@@ -389,7 +410,7 @@ const PrecedentDetailPage: React.FC = () => {
                 <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/10 rounded-xl">
                   <MessageSquare className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    <span className="font-black text-primary">{t('judge.workspace.deeperAnalysis')}</span> {t('judge.workspace.deeperAnalysisDesc')}
+                    <span className="font-black text-primary">Want a deeper analysis?</span> Use the AI Assistant on the right to ask questions about this case — key rulings, legal reasoning, how it compares to your current case, and more.
                   </p>
                 </div>
 
@@ -399,7 +420,7 @@ const PrecedentDetailPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <BookOpen className="w-4 h-4 text-muted-foreground" />
                       <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
-                        {t('judge.workspace.fullTranscript')}
+                        Full Transcript
                       </span>
                     </div>
                     <ChevronRight className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-90" />
@@ -450,7 +471,7 @@ const PrecedentDetailPage: React.FC = () => {
         </main>
 
         {/* Sidebar - AI Chat & Comparison Tabs */}
-        <aside className="w-full lg:w-[560px] xl:w-[640px] flex flex-col shrink-0">
+        <aside className="w-full lg:w-[480px] flex flex-col shrink-0">
           <Card className="h-full shadow-xl border-primary/20 overflow-hidden flex flex-col bg-card/50 backdrop-blur-sm">
             {/* Tab Header */}
             <div className="flex border-b bg-muted/30">
@@ -516,9 +537,9 @@ const PrecedentDetailPage: React.FC = () => {
                   </div>
                   <div className="flex flex-wrap justify-center gap-2 pt-4">
                      {[
-                       { label: t('judge.workspace.chatSummaryBtn'), query: t('judge.workspace.chatSummaryPrompt') },
-                       { label: t('judge.workspace.chatImpactBtn'), query: t('judge.workspace.chatImpactPrompt') },
-                       { label: t('judge.workspace.chatKeyFindingsBtn'), query: t('judge.workspace.chatKeyFindingsPrompt') }
+                       { label: 'Summary', query: 'Can you provide a concise summary of the legal reasoning in this case?' },
+                       { label: 'Impact', query: 'What was the legal impact and precedent set by this ruling?' },
+                       { label: 'Key Ruling', query: 'What are the key judicial findings or specific findings in this case?' }
                      ].map(item => (
                        <button 
                          key={item.label} 
@@ -578,16 +599,18 @@ const PrecedentDetailPage: React.FC = () => {
                           facts: sourceCase.description || 'See case analysis for details.',
                           issues: sourceCaseAnalysis.analysis.lawArticles?.map((a: any) => {
                             const raw = typeof a === 'object' ? (a.title || '') : String(a);
-                            if (raw.length > 60) return t('judge.workspace.difcEmploymentLaw');
+                            if (raw.length > 60) return 'DIFC Employment Law';
                             return raw.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
                           }) || [],
                           outcome: sourceCaseAnalysis.analysis.outcome || 'Pending',
-                          compensation: sourceCaseAnalysis.analysis.entitlementBreakdown?.find((e: any) => e.label.includes('Gratuity') || e.label.includes('Total'))?.value || t('judge.workspace.pendingCalculation')
+                          compensation: sourceCaseAnalysis.analysis.entitlementBreakdown?.find((e: any) => e.label.includes('Gratuity') || e.label.includes('Total'))?.value || 'Pending calculation'
                         }}
                         precedentCase={{
                           title: precedent.title,
-                          type: precedent.category || t('judge.workspace.difcJudicialPrecedent'),
+                          type: precedent.category || 'DIFC Judicial Precedent',
                           facts: (() => {
+                            if (summaryLoading) return 'Generating AI summary...'
+                            if (aiSummary) return aiSummary
                             if (precedent.summary && precedent.summary.length < 500 && !precedent.summary.startsWith('with any')) return precedent.summary
                             const cleanText = (precedent.text || '')
                               .replace(/https?:\/\/\S+/g, '')
@@ -598,7 +621,7 @@ const PrecedentDetailPage: React.FC = () => {
                               .replace(/\n{3,}/g, '\n\n')
                               .trim()
                             if (cleanText.length > 50) return cleanText.slice(0, 300) + '...'
-                            return t('judge.workspace.seeFullTranscript')
+                            return 'See full transcript for case details.'
                           })(),
                           issues: precedent.cited_laws || [],
                           outcome: precedent.outcome || 'Finalized',

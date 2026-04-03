@@ -42,6 +42,7 @@ export interface CaseResponse {
   judgment_date?: string | null
   court_number?: string | null
   notes?: string | null
+  judgment_text?: string | null
   created_at: string
   updated_at: string
 }

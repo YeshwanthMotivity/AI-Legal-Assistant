@@ -83,7 +83,7 @@
   --color-surface: #0f131d;
   --color-on-secondary-fixed-variant: #3c475a;
 
-  --font-headline: 'Source Serif Pro', serif;
+  --font-headline: 'Newsreader', serif;
   --font-body: 'Inter', sans-serif;
   --font-label: 'Inter', sans-serif;
   
@@ -171,7 +171,7 @@
   --radius-xl: 18px;
 
   --font-body: 'Inter', sans-serif;
-  --font-heading: 'Source Serif Pro', serif;
+  --font-heading: 'Newsreader', serif;
 }
 
 [data-theme='dark'] {
