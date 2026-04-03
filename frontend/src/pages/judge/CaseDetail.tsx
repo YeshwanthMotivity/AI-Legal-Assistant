@@ -406,7 +406,7 @@ const handleUpload = () => {
   </div>
   )}
 
-    <div className="px-4 py-1.5 w-full space-y-2 flex flex-col flex-1">
+    <div className="px-4 pt-1.5 pb-0 w-full space-y-2 flex flex-col flex-1">
   
    {/* STAGE 1: CASE CREATION DETAILS */}
    {viewedIdx === 0 && (
@@ -424,12 +424,12 @@ const handleUpload = () => {
     <div className="grid grid-cols-3 gap-3 pt-1">
    {/* Primary Metadata Cards */}
     <div className="bg-white p-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[85px] relative overflow-hidden group">
-    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-40 transition-opacity">
-    <FileText className="w-5 h-5 text-[var(--primary)]"/>
-    </div>
     <div className="flex flex-col gap-1 pb-0">
-    <label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground opacity-60">Case Title</label>
-    <p className="text-sm font-bold text-foreground leading-tight tracking-tight normal-case group-hover:text-[var(--primary)] transition-colors line-clamp-2">{caseData?.title}</p>
+      <div className="flex items-center gap-1.5">
+        <FileText className="w-3.5 h-3.5 text-[var(--primary)] opacity-40 shrink-0"/>
+        <label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground opacity-60">Case Title</label>
+      </div>
+      <p className="text-sm font-bold text-foreground leading-tight tracking-tight normal-case group-hover:text-[var(--primary)] transition-colors">{caseData?.title}</p>
     </div>
     </div>
 
