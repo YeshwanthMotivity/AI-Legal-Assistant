@@ -410,7 +410,7 @@ const handleUpload = () => {
   
    {/* STAGE 1: CASE CREATION DETAILS */}
    {viewedIdx === 0 && (
-   <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700 font-sans">
+   <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700 font-sans flex flex-col flex-1">
     <header className="flex items-center gap-4 pb-2 border-b border-border/10">
     <div className="w-8 h-8 bg-white border border-border/40 shadow-sm rounded-lg flex items-center justify-center text-[var(--primary)] shrink-0">
     <Scale className="w-4 h-4"/>
@@ -458,7 +458,7 @@ const handleUpload = () => {
     </div>
    </div>
 
-      <div className="grid grid-cols-12 gap-4 items-stretch mt-1.5 min-h-0 flex-1">
+      <div className="grid grid-cols-12 gap-4 items-start mt-1.5 flex-1 min-h-full">
         <div className="col-span-8 space-y-3">
           <section className="bg-white p-4 rounded-2xl border border-border/80 shadow-sm space-y-2 flex flex-col flex-1 min-h-[160px]">
             <label className="text-[9px] font-black uppercase tracking-widest text-[var(--primary)] flex items-center gap-2">
