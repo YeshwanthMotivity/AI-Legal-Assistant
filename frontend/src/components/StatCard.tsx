@@ -21,27 +21,27 @@ const StatCard = ({ label, value, icon: Icon, trend, className }: StatCardProps)
  transition={{ duration: 0.2 }}
  >
  <Card className={cn("overflow-hidden border-border/50 shadow-md hover:shadow-xl hover:border-primary/30 transition-all duration-300 group", className)}>
- <CardContent className="p-5">
- <div className="flex items-center justify-between mb-4">
- <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-500 shadow-inner">
- <Icon className="w-7 h-7"/>
- </div>
- {trend && (
- <div className={cn(
-"text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest",
- trend.isPositive ?"bg-[var(--primary)]/10 text-[var(--primary)]":"bg-rose-500/10 text-rose-600"
- )}>
- {trend.isPositive ? '↑' : '↓'} {trend.value}%
- </div>
- )}
- </div>
- <div>
- <div className="text-3xl font-black tracking-tighter mb-1.5 text-foreground">{value}</div>
- <div className="text-[11px] text-muted-foreground font-black uppercase tracking-[0.2em] opacity-70">
- {label}
- </div>
- </div>
- </CardContent>
+  <CardContent className="p-8">
+  <div className="flex items-center justify-between mb-6">
+  <div className="w-14 h-14 rounded-2xl bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] group-hover:scale-110 transition-transform duration-500 shadow-inner border border-[var(--primary)]/10">
+  <Icon className="w-6 h-6"/>
+  </div>
+  {trend && (
+  <div className={cn(
+  "text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-sm",
+  trend.isPositive ?"bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20":"bg-rose-500/10 text-rose-600 border border-rose-500/20"
+  )}>
+  {trend.isPositive ? '↑' : '↓'} {trend.value}%
+  </div>
+  )}
+  </div>
+  <div className="space-y-1">
+  <div className="text-4xl font-black tracking-tighter text-foreground leading-none">{value}</div>
+  <div className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.25em] opacity-60">
+  {label}
+  </div>
+  </div>
+  </CardContent>
  </Card>
  </motion.div>
  );

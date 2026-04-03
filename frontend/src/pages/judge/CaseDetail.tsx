@@ -365,7 +365,7 @@ const CaseDetail = () => {
 
  return (
   <PortalLayout title="Case Orchestrator" hideHeaderContent>
-  <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[var(--bg-surface)]">
+  <div className="flex h-[calc(100vh-72px)] overflow-hidden bg-[var(--bg-surface)]">
  
  {/* MAIN WORKSPACE CONTENT */}
  <div className="flex-1 flex flex-col overflow-hidden relative">
@@ -382,7 +382,7 @@ const CaseDetail = () => {
  isDeleting={deleteMutation.isPending}
  />
 
- <div className="flex-1 overflow-y-auto scrollbar-hide">
+  <div className="flex-1 overflow-y-auto scrollbar-hide space-y-0">
  <CaseWorkflow 
  viewedIdx={viewedIdx} 
  currentIdx={currentIdx} 
@@ -400,55 +400,55 @@ const CaseDetail = () => {
  </div>
  )}
 
-  <div className="px-8 py-6 max-w-7xl mx-auto w-full">
+   <div className="px-12 py-12 max-w-[1640px] mx-auto w-full space-y-12">
   
-  {/* STAGE 1: CASE CREATION DETAILS */}
-  {viewedIdx === 0 && (
-  <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-  <header className="flex items-center gap-4 pb-4">
-  <div className="w-12 h-12 bg-[var(--bg-card)] border border-border shadow-sm rounded-xl flex items-center justify-center text-[var(--primary)] shrink-0">
-  <Scale className="w-6 h-6"/>
-  </div>
-  <div>
-  <h2 className="text-xl font-black text-foreground tracking-tight uppercase leading-none">Case Overview</h2>
-  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.25em] mt-2 opacity-50">Legal Dossier Information</p>
-  </div>
-  </header>
+   {/* STAGE 1: CASE CREATION DETAILS */}
+   {viewedIdx === 0 && (
+   <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+   <header className="flex items-center gap-6 pb-6 border-b border-border/40">
+   <div className="w-14 h-14 bg-[var(--bg-card)] border border-border shadow-sm rounded-2xl flex items-center justify-center text-[var(--primary)] shrink-0">
+   <Scale className="w-7 h-7"/>
+   </div>
+   <div>
+   <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase leading-none">Case Overview</h2>
+   <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mt-3 opacity-60">High-Precision Legal Dossier</p>
+   </div>
+   </header>
 
-  <div className="grid grid-cols-3 gap-6">
-  {/* Primary Metadata Cards */}
-  <div className="bg-[var(--bg-card)] p-8 rounded-2xl border border-border shadow-sm flex flex-col gap-6">
-  <div className="flex items-center gap-3">
-  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-  <FileText className="w-5 h-5 text-[var(--primary)]"/>
-  </div>
-  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">Case Title</label>
-  </div>
-  <p className="text-lg font-black text-foreground leading-tight tracking-tight uppercase">{caseQuery.data?.title}</p>
-  </div>
+   <div className="grid grid-cols-3 gap-8">
+   {/* Primary Metadata Cards */}
+   <div className="bg-[var(--bg-card)] p-8 rounded-2xl border border-border shadow-sm flex flex-col gap-8 relative overflow-hidden group">
+   <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-40 transition-opacity">
+   <FileText className="w-8 h-8 text-[var(--primary)]"/>
+   </div>
+   <div className="flex flex-col gap-2">
+   <label className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground opacity-60">Case Title</label>
+   <p className="text-xl font-black text-foreground leading-tight tracking-tight uppercase group-hover:text-[var(--primary)] transition-colors">{caseQuery.data?.title}</p>
+   </div>
+   </div>
 
-  <div className="bg-[var(--bg-card)] p-8 rounded-2xl border border-border shadow-sm flex flex-col gap-6">
-  <div className="flex items-center gap-3">
-  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-  <Terminal className="w-5 h-5 text-[var(--primary)]"/>
-  </div>
-  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">Reference ID</label>
-  </div>
-  <p className="text-lg font-bold font-mono tracking-tighter text-foreground uppercase">{caseQuery.data?.case_number}</p>
-  </div>
+   <div className="bg-[var(--bg-card)] p-8 rounded-2xl border border-border shadow-sm flex flex-col gap-8 relative overflow-hidden group">
+   <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-40 transition-opacity">
+   <Terminal className="w-8 h-8 text-[var(--primary)]"/>
+   </div>
+   <div className="flex flex-col gap-2">
+   <label className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground opacity-60">Reference ID</label>
+   <p className="text-xl font-bold font-mono tracking-tighter text-foreground uppercase group-hover:text-[var(--primary)] transition-colors">{caseQuery.data?.case_number}</p>
+   </div>
+   </div>
 
-  <div className="bg-[var(--bg-card)] p-8 rounded-2xl border border-border shadow-sm flex flex-col gap-6">
-  <div className="flex items-center gap-3">
-  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-  <Scale className="w-5 h-5 text-[var(--primary)]"/>
-  </div>
-  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">Claim Value</label>
-  </div>
-  <p className="text-lg font-black text-foreground leading-tight tracking-tight uppercase">{caseQuery.data?.claim_amount || 'AED 0,00'}</p>
-  </div>
-  </div>
+   <div className="bg-[var(--bg-card)] p-8 rounded-2xl border border-border shadow-sm flex flex-col gap-8 relative overflow-hidden group">
+   <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-40 transition-opacity">
+   <Scale className="w-8 h-8 text-[var(--primary)]"/>
+   </div>
+   <div className="flex flex-col gap-2">
+   <label className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground opacity-60">Claim Value</label>
+   <p className="text-xl font-black text-foreground leading-tight tracking-tight uppercase group-hover:text-[var(--primary)] transition-colors">{caseQuery.data?.claim_amount || 'AED 0,00'}</p>
+   </div>
+   </div>
+   </div>
 
-  <div className="grid grid-cols-12 gap-6 items-start">
+    <div className="grid grid-cols-12 gap-8 items-start">
   <div className="col-span-8 space-y-8">
   <section className="space-y-6">
   <label className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)] flex items-center gap-3">

@@ -197,9 +197,9 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
           mainMargin
         )}
       >
-        {/* Header — reduced height */}
+        {/* Header — expanded height for breathing room */}
         {!hideHeaderContent && (
-          <header className="sticky top-0 z-30 w-full glass-strong border-b px-8 py-3 flex justify-between items-center h-[64px]">
+          <header className="sticky top-0 z-30 w-full glass-strong border-b px-12 py-4 flex justify-between items-center h-[72px]">
             <div className="animate-in fade-in slide-in-from-top-2 duration-500">
               <h1 className="text-2xl font-black tracking-tighter text-gradient leading-none">
                 {title}
@@ -219,8 +219,8 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
           </header>
         )}
 
-        {/* Page Content Container - perfectly aligned with header px-8 */}
-        <div className="px-8 py-6 max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {/* Page Content Container - perfectly aligned with header px-12 */}
+        <div className="px-12 py-10 max-w-[1640px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
           {children}
         </div>
       </main>

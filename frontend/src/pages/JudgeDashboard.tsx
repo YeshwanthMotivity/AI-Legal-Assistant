@@ -85,12 +85,12 @@ export default function JudgeDashboard() {
 
  return (
   <PortalLayout title="" hideHeaderContent>
-  <div className="flex h-[calc(100vh-64px)] -mx-6 -mt-6 overflow-hidden bg-[var(--bg-base)]">
+  <div className="flex h-[calc(100vh-72px)] overflow-hidden bg-[var(--bg-base)]">
  
  {/* MAIN WORKSPACE - EXPANDED */}
  <main className="flex-1 flex flex-col overflow-hidden bg-background">
-  {/* Header - Unified with consistent padding */}
-  <header className="px-8 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--bg-surface)] sticky top-0 z-10 h-[64px] shrink-0">
+  {/* Header - Aligned with px-12 system padding */}
+  <header className="px-12 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--bg-surface)] sticky top-0 z-10 h-[72px] shrink-0">
   <div className="flex-1">
   <nav className="flex items-center gap-2 text-[10px] font-black text-muted-foreground mb-1 uppercase tracking-[0.2em]">
   <span>Judge</span>
@@ -100,36 +100,36 @@ export default function JudgeDashboard() {
   <span className="text-[var(--primary)]">Overview</span>
   </nav>
   <div className="flex items-center gap-4">
-  <h1 className="text-2xl font-black tracking-tight flex items-center gap-3 leading-none">
+  <h1 className="text-3xl font-black tracking-tight flex items-center gap-3 leading-none uppercase">
   Dashboard
   </h1>
-  <Badge variant="outline" className="text-[10px] uppercase font-black border-[var(--primary)]/30 text-[var(--primary)] bg-[var(--primary)]/5 px-2 h-6">
-  <PlayCircle className="w-3.5 h-3.5 mr-1.5"/> ACTIVE SESSION
+  <Badge variant="outline" className="text-[10px] uppercase font-black border-[var(--primary)]/30 text-[var(--primary)] bg-[var(--primary)]/5 px-2.5 h-6">
+  <PlayCircle className="w-4 h-4 mr-2"/> ACTIVE SESSION
   </Badge>
   </div>
   </div>
- 
+
   <div className="flex items-center gap-4 shrink-0">
-  <div className="flex items-center gap-2 border-r border-border/40 pr-6 mr-2">
+  <div className="flex items-center gap-2 border-r border-border/40 pr-8 mr-2">
   <LanguageToggle />
   </div>
   <button 
-  className={`flex items-center gap-2 h-11 px-5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all border ${isAiPanelOpen ? 'bg-[var(--primary)]/10 border-[var(--primary)] text-[var(--primary)] shadow-sm' : 'bg-muted border-transparent hover:border-border text-muted-foreground/60'}`}
+  className={`flex items-center gap-2 h-12 px-6 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all border ${isAiPanelOpen ? 'bg-[var(--primary)]/10 border-[var(--primary)] text-[var(--primary)] shadow-sm' : 'bg-muted border-transparent hover:border-border text-muted-foreground/60'}`}
   onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
   >
   <Sparkles className="w-4 h-4" />
   {isAiPanelOpen ? 'Hide Assistant' : 'Show Assistant'}
   </button>
   <button 
-  className="flex items-center gap-2 h-11 px-6 text-[11px] font-black bg-[var(--primary)] text-white rounded-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest"
+  className="flex items-center gap-2 h-12 px-8 text-[11px] font-black bg-[var(--primary)] text-white rounded-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest"
   onClick={() => navigate('/judge/cases/new')}
   >
-  <Plus className="w-4 h-4"/> CREATE CASE
+  <Plus className="w-5 h-5"/> CREATE CASE
   </button>
   </div>
- </header>
+  </header>
 
-  <div className="flex-1 overflow-y-auto p-10 scrollbar-hide space-y-10">
+   <div className="flex-1 overflow-y-auto p-12 scrollbar-hide space-y-12">
   {/* Alerts Section - Cleaned up spacing */}
   {(stats.urgent > 0 || stats.ready > 0) && (
   <div className="flex flex-col gap-4">
@@ -164,59 +164,61 @@ export default function JudgeDashboard() {
   </div>
   )}
   {/* MODULE CARDS - Unified spacing and size */}
-  <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+  <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
   {modules.map((mod, i) => (
   <div 
   key={i} 
-  className="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border-color)] hover:shadow-2xl hover:shadow-primary/10 hover:scale-[1.02] transition-all duration-500 group cursor-pointer relative overflow-hidden"
+  className="bg-[var(--bg-card)] p-8 rounded-2xl border border-[var(--border-color)] hover:shadow-2xl hover:shadow-primary/10 hover:scale-[1.02] transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[180px]"
   >
-  <div className="absolute top-0 right-0 p-6">
-  <ArrowUpRight className="w-4 h-4 text-muted-foreground opacity-30 group-hover:opacity-100 group-hover:text-[var(--primary)] group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-500"/>
+  <div className="absolute top-0 right-0 p-8">
+  <ArrowUpRight className="w-5 h-5 text-muted-foreground opacity-30 group-hover:opacity-100 group-hover:text-[var(--primary)] group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-500"/>
   </div>
   
-  <div className="flex flex-col gap-4">
-  <div className={`w-12 h-12 rounded-xl bg-muted/30 group-hover:bg-[var(--primary)]/10 flex items-center justify-center transition-all duration-500`}>
-  <mod.icon className={`w-5 h-5 ${mod.color}`} />
+  <div className="flex flex-col gap-6">
+  <div className={`w-14 h-14 rounded-2xl bg-muted/30 group-hover:bg-[var(--primary)]/10 flex items-center justify-center transition-all duration-500`}>
+  <mod.icon className={`w-6 h-6 ${mod.color}`} />
   </div>
   
-  <div className="mb-2">
-  <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.25em] mb-2">{mod.title}</h3>
+  <div className="space-y-1">
+  <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.25em]">{mod.title}</h3>
   <div className="flex items-baseline gap-2">
   <p className="text-4xl font-black tracking-tighter text-foreground leading-none">
   {mod.count !== undefined ? mod.count : `${mod.progress}%`}
   </p>
   {mod.count !== undefined && <span className="text-[11px] font-black text-[var(--primary)]/60 uppercase tracking-widest">Active</span>}
   </div>
-  <p className="text-[11px] font-medium text-muted-foreground/60 mt-4 italic leading-relaxed">{mod.desc}</p>
   </div>
   </div>
+  
+  <p className="text-[11px] font-medium text-muted-foreground/60 italic leading-relaxed pt-4 border-t border-border/40">{mod.desc}</p>
   </div>
   ))}
   </section>
 
-  {/* MAIN TABLE (CASE LIST) - Refined Search and Table baseline */}
-  <section className="space-y-8 pt-4">
-  <div className="flex items-center justify-between px-2">
-  <div className="flex items-center gap-4">
-  <h2 className="text-2xl font-black tracking-tight uppercase">My Cases</h2>
-  <div className="px-3 py-1 bg-[var(--primary)]/10 text-[var(--primary)] text-[10px] font-black rounded-lg uppercase tracking-widest border border-[var(--primary)]/20">
-  {recentCases.length} ACTIVE
-  </div>
-  </div>
-  <div className="flex items-center gap-4">
-  <div className="relative group">
-  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 group-focus-within:text-[var(--primary)] transition-colors"/>
-  <input 
-  type="text"
-  placeholder="Filter by title or ID..."
-  className="bg-[var(--bg-surface)] border border-border/80 focus:border-[var(--primary)]/50 focus:bg-background h-12 pl-12 pr-6 rounded-2xl text-[11px] font-black uppercase tracking-widest w-72 transition-all outline-none shadow-sm placeholder:opacity-50"
-  />
-  </div>
-  <button className="h-12 w-12 flex items-center justify-center bg-[var(--bg-surface)] hover:bg-muted border border-border rounded-2xl transition-all shadow-sm">
-  <Filter className="w-4 h-4 text-muted-foreground"/>
-  </button>
-  </div>
-  </div>
+   {/* MAIN TABLE (CASE LIST) - Corrected horizontal baseline alignment */}
+   <section className="space-y-10 pt-8">
+   <div className="flex items-center justify-between">
+   <div className="flex items-center gap-6">
+   <h2 className="text-3xl font-black tracking-tighter uppercase leading-none">My Cases</h2>
+   <div className="h-2 w-2 rounded-full bg-[var(--primary)]/40 shadow-[0_0_8px_rgba(5,150,105,0.5)]"/>
+   <div className="px-3.5 py-1.5 bg-[var(--primary)]/10 text-[var(--primary)] text-[10px] font-black rounded-lg uppercase tracking-[0.2em] border border-[var(--primary)]/20 shadow-sm shadow-primary/5">
+   {recentCases.length} ACTIVE
+   </div>
+   </div>
+   <div className="flex items-center gap-4">
+   <div className="relative group">
+   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground/40 group-focus-within:text-[var(--primary)] transition-colors"/>
+   <input 
+   type="text"
+   placeholder="Filter by title or ID..."
+   className="bg-[var(--bg-surface)] border border-border/80 focus:border-[var(--primary)]/50 focus:bg-background h-12 pl-12 pr-6 rounded-xl text-[11px] font-black uppercase tracking-widest w-80 transition-all outline-none shadow-sm placeholder:opacity-40"
+   />
+   </div>
+   <button className="h-12 w-12 flex items-center justify-center bg-[var(--bg-surface)] hover:bg-muted border border-border rounded-xl transition-all shadow-sm">
+   <Filter className="w-4.5 h-4.5 text-muted-foreground/70"/>
+   </button>
+   </div>
+   </div>
 
   <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] shadow-sm overflow-hidden">
   <table className="w-full border-collapse text-left">

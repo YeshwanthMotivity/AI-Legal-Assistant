@@ -42,7 +42,7 @@ const CaseContextBar = ({
 
  return (
  <>
-  <header className="px-8 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--bg-surface)] sticky top-0 z-40 shrink-0 h-[64px]">
+  <header className="px-12 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--bg-surface)] sticky top-0 z-40 shrink-0 h-[72px]">
   <div className="flex-1 min-w-0">
   <nav className="flex items-center gap-2 text-[10px] font-black text-muted-foreground mb-1 uppercase tracking-[0.2em]">
   <span>Judicial</span>
@@ -52,36 +52,36 @@ const CaseContextBar = ({
   <span className="text-[var(--primary)] truncate">{caseNumber}</span>
   </nav>
   <div className="flex items-center gap-4">
-  <h1 className="text-2xl font-black tracking-tight text-foreground truncate max-w-2xl leading-none">
+  <h1 className="text-3xl font-black tracking-tight text-foreground truncate max-w-2xl leading-none uppercase">
   {title || 'Initializing Case...'}
   </h1>
-  <Badge variant="outline" className="text-[10px] uppercase font-black border-[var(--primary)]/30 text-[var(--primary)] bg-[var(--primary)]/5 px-2 h-6">
-  <PlayCircle className="w-3.5 h-3.5 mr-1.5"/> LIVE SESSION
+  <Badge variant="outline" className="text-[10px] uppercase font-black border-[var(--primary)]/30 text-[var(--primary)] bg-[var(--primary)]/5 px-2.5 h-6">
+  <PlayCircle className="w-4 h-4 mr-2"/> LIVE SESSION
   </Badge>
   </div>
   </div>
 
   <div className="flex items-center gap-4 shrink-0">
-  <div className="flex items-center gap-2 border-r border-border/40 pr-6 mr-2">
+  <div className="flex items-center gap-2 border-r border-border/40 pr-8 mr-2">
   <LanguageToggle />
   </div>
-  <div className="flex flex-col items-end mr-4 border-r border-border pr-6">
+  <div className="flex flex-col items-end mr-4 border-r border-border pr-8">
   <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.25em] opacity-40">AI GROUNDING</span>
   <span className="text-xs font-black text-[var(--primary)] uppercase tracking-wider">{confidence ? `${Math.round(confidence)}% PRECISION` : 'ANALYZING...'}</span>
   </div>
 
   <Button
   variant="outline"
-  className="gap-2 h-10 px-4 border-border bg-[var(--bg-surface)] shadow-sm hover:bg-muted font-black text-[10px] uppercase tracking-widest transition-all rounded-xl"
+  className="gap-2 h-12 px-6 border-border bg-[var(--bg-surface)] shadow-sm hover:bg-muted font-black text-[11px] uppercase tracking-widest transition-all rounded-xl"
   disabled={isActivelyLoading}
   onClick={onRunAnalysis}
   >
   <Sparkles className={cn('w-4 h-4 text-[var(--primary)]', isActivelyLoading && 'animate-spin')} />
-  {isActivelyLoading ? 'Synthesizing...' : 'Run Synthesis'}
+  {isActivelyLoading ? 'Synthesizing...' : 'Run Analysis'}
   </Button>
 
   <Button
-  className="gap-2 h-10 px-5 bg-[var(--primary)] text-white shadow-lg hover:bg-[var(--primary-hover)] hover:scale-[1.02] active:scale-[0.98] font-black text-[10px] uppercase tracking-widest transition-all rounded-xl"
+  className="gap-2 h-12 px-8 bg-[var(--primary)] text-white shadow-lg hover:bg-[var(--primary-hover)] hover:scale-[1.02] active:scale-[0.98] font-black text-[11px] uppercase tracking-widest transition-all rounded-xl"
   onClick={onFinalize}
   >
   <Gavel className="w-4 h-4"/>
@@ -90,14 +90,14 @@ const CaseContextBar = ({
 
   <Button
   variant="outline"
-  className="w-10 h-10 p-0 text-muted-foreground hover:text-red-600 hover:bg-red-50 border-border rounded-xl transition-all"
+  className="w-12 h-12 p-0 text-muted-foreground hover:text-red-600 hover:bg-red-50 border-border rounded-xl transition-all"
   disabled={isDeleting}
   onClick={handleDeleteClick}
   >
   {isDeleting ? (
   <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin"/>
   ) : (
-  <Trash2 className="w-4 h-4"/>
+  <Trash2 className="w-5 h-5"/>
   )}
   </Button>
   </div>
