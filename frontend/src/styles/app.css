@@ -83,6 +83,12 @@
   --color-surface-container-low: var(--bg-sidebar);
   --color-surface: var(--bg-base);
   --color-on-secondary-fixed-variant: var(--secondary-foreground);
+  
+  --color-sidebar: var(--bg-sidebar);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-text: var(--sidebar-text);
+  --color-text-accent: var(--text-accent);
+  --color-text-main: var(--text-main);
 
   --font-headline: 'Newsreader', serif;
   --font-body: 'Inter', sans-serif;
