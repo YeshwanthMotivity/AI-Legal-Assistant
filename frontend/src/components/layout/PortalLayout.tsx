@@ -219,8 +219,8 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
           </header>
         )}
 
-        {/* Page Content Container — tighter padding */}
-        <div className="p-6 max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {/* Page Content Container - perfectly aligned with header px-8 */}
+        <div className="px-8 py-6 max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
           {children}
         </div>
       </main>

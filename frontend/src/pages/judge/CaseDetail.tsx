@@ -52,10 +52,10 @@ import { cn } from '@/lib/utils'
 
 const CaseWorkflow = ({ viewedIdx, currentIdx, stages, onStageClick }: { viewedIdx: number, currentIdx: number, stages: any[], onStageClick: (idx: number) => void }) => {
  return (
- <div className="w-full px-12 py-10 bg-[var(--bg-card)] border-b border-border shadow-[0_4px_30px_rgba(0,0,0,0.01)] relative z-10">
- <div className="max-w-7xl mx-auto flex items-start justify-between relative pl-6">
- {/* Continuous background line */}
- <div className="absolute top-5 left-10 right-10 h-[2px] bg-muted/40 z-0"/>
+  <div className="w-full px-8 py-5 bg-[var(--bg-card)] border-b border-border shadow-sm relative z-10">
+  <div className="max-w-7xl mx-auto flex items-start justify-between relative pl-6">
+  {/* Continuous background line */}
+  <div className="absolute top-5 left-10 right-10 h-[1px] bg-border z-0"/>
  
  {stages.map((stage, i) => {
  const isReached = i <= currentIdx;
@@ -364,8 +364,8 @@ const CaseDetail = () => {
  }
 
  return (
- <PortalLayout title="Case Orchestrator"hideHeaderContent>
- <div className="flex h-[calc(100vh-64px)] -m-6 overflow-hidden bg-[var(--bg-surface)]">
+  <PortalLayout title="Case Orchestrator" hideHeaderContent>
+  <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[var(--bg-surface)]">
  
  {/* MAIN WORKSPACE CONTENT */}
  <div className="flex-1 flex flex-col overflow-hidden relative">
@@ -400,117 +400,125 @@ const CaseDetail = () => {
  </div>
  )}
 
- <div className="px-10 py-10">
- 
- {/* STAGE 1: CASE CREATION DETAILS */}
- {viewedIdx === 0 && (
- <div className="max-w-6xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
- <header className="flex items-center gap-6 pb-2">
- <div className="w-16 h-16 bg-[var(--bg-card)] border border-border shadow-2xl rounded-[1.75rem] flex items-center justify-center text-[var(--primary)]">
- <Scale className="w-8 h-8"/>
- </div>
- <div>
- <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase leading-none">Case Details</h2>
- <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mt-3 bg-muted/40 w-fit px-3 py-1 rounded-full border border-border/40">Case Information</p>
- </div>
- </header>
+  <div className="px-8 py-6 max-w-7xl mx-auto w-full">
+  
+  {/* STAGE 1: CASE CREATION DETAILS */}
+  {viewedIdx === 0 && (
+  <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+  <header className="flex items-center gap-4 pb-4">
+  <div className="w-12 h-12 bg-[var(--bg-card)] border border-border shadow-sm rounded-xl flex items-center justify-center text-[var(--primary)] shrink-0">
+  <Scale className="w-6 h-6"/>
+  </div>
+  <div>
+  <h2 className="text-xl font-black text-foreground tracking-tight uppercase leading-none">Case Overview</h2>
+  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.25em] mt-2 opacity-50">Legal Dossier Information</p>
+  </div>
+  </header>
 
- <div className="grid grid-cols-12 gap-10">
- <div className="col-span-8 bg-[var(--bg-card)] p-12 rounded-[3.5rem] shadow-[0_4px_30px_rgba(0,0,0,0.02)] border border-border/80 space-y-12">
- <section className="grid grid-cols-2 gap-14">
- <div className="space-y-4">
- <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Case Title</label>
- <p className="text-xl font-black text-foreground leading-tight tracking-tight uppercase underline decoration-emerald-600/20 underline-offset-8 decoration-2">{caseQuery.data?.title}</p>
- </div>
- <div className="space-y-4">
- <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Case ID</label>
- <div className="flex items-center gap-3">
- <Terminal className="w-4 h-4 text-[var(--primary)]"/>
- <p className="text-xl font-bold font-mono tracking-tighter text-foreground">{caseQuery.data?.case_number}</p>
- </div>
- </div>
- </section>
- 
- <div className="h-px bg-muted/60"/>
+  <div className="grid grid-cols-3 gap-6">
+  {/* Primary Metadata Cards */}
+  <div className="bg-[var(--bg-card)] p-8 rounded-2xl border border-border shadow-sm flex flex-col gap-6">
+  <div className="flex items-center gap-3">
+  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+  <FileText className="w-5 h-5 text-[var(--primary)]"/>
+  </div>
+  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">Case Title</label>
+  </div>
+  <p className="text-lg font-black text-foreground leading-tight tracking-tight uppercase">{caseQuery.data?.title}</p>
+  </div>
 
- <section className="space-y-6">
- <label className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)] flex items-center gap-3">
- <HistoryIcon className="w-4 h-4"/> Case Background
- </label>
- <div className="p-10 bg-[var(--bg-surface)] rounded-[2.5rem] border border-[var(--border-color)] relative overflow-hidden group">
- <div className="absolute top-0 left-0 w-1 h-full bg-[var(--primary)] opacity-20"/>
- <p className="text-sm font-semibold leading-relaxed text-foreground/80 italic">
- {caseQuery.data?.description || 'Synchronizing procedural background... No legacy data detected.'}
- </p>
- </div>
- </section>
+  <div className="bg-[var(--bg-card)] p-8 rounded-2xl border border-border shadow-sm flex flex-col gap-6">
+  <div className="flex items-center gap-3">
+  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+  <Terminal className="w-5 h-5 text-[var(--primary)]"/>
+  </div>
+  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">Reference ID</label>
+  </div>
+  <p className="text-lg font-bold font-mono tracking-tighter text-foreground uppercase">{caseQuery.data?.case_number}</p>
+  </div>
 
- <section className="grid grid-cols-3 gap-8 pt-4">
- {[
- { label: 'Court Ref', val: caseQuery.data?.court_number || 'DIFC-MAIN', icon: LayoutDashboard },
- { label: 'Filing Date', val: caseQuery.data?.filing_date ? new Date(caseQuery.data.filing_date).toDateString() : 'N/A', icon: HistoryIcon },
- { label: 'Case Type', val: caseQuery.data?.case_type?.replace(/_/g, ' ') || 'OTHER', icon: Gavel }
- ].map((item, i) => (
- <div key={i} className="p-6 bg-muted/10 rounded-3xl border border-border/20 flex flex-col gap-3 group hover:border-[var(--primary)]/20 transition-all duration-300">
- <item.icon className="w-4 h-4 text-[var(--primary)]/40 group-hover:text-[var(--primary)] transition-colors"/>
- <div>
- <p className="text-[9px] font-black uppercase text-muted-foreground opacity-40 mb-1 tracking-widest">{item.label}</p>
- <p className="text-xs font-black text-foreground uppercase tracking-tight truncate">{item.val}</p>
- </div>
- </div>
- ))}
- </section>
- </div>
+  <div className="bg-[var(--bg-card)] p-8 rounded-2xl border border-border shadow-sm flex flex-col gap-6">
+  <div className="flex items-center gap-3">
+  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+  <Scale className="w-5 h-5 text-[var(--primary)]"/>
+  </div>
+  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">Claim Value</label>
+  </div>
+  <p className="text-lg font-black text-foreground leading-tight tracking-tight uppercase">{caseQuery.data?.claim_amount || 'AED 0,00'}</p>
+  </div>
+  </div>
 
- <div className="col-span-4 space-y-8">
- <div className="bg-[var(--bg-card)] p-12 rounded-[3.5rem] shadow-[0_4px_30px_rgba(0,0,0,0.02)] border border-border/80 relative overflow-hidden group">
- <div className="absolute bottom-[-10%] right-[-10%] w-40 h-40 bg-[var(--primary)]/5 rounded-full blur-3xl pointer-events-none group-hover:bg-[var(--primary)]/10 transition-colors duration-700"/>
- <h3 className="text-[10px] font-black uppercase tracking-[.25em] text-[var(--primary)] mb-10 flex items-center gap-3">
- <User className="w-4 h-4"/> Parties
- </h3>
- <div className="space-y-10 relative z-10">
- <div className="space-y-3">
- <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40">Claimant</p>
- <p className="text-xl font-black tracking-tighter text-foreground uppercase">{caseQuery.data?.claimant_name}</p>
- </div>
- <div className="w-full flex items-center gap-4">
- <div className="h-px bg-muted/60 flex-1"/>
- <span className="text-[8px] font-black uppercase tracking-[.4em] opacity-30">VS</span>
- <div className="h-px bg-muted/60 flex-1"/>
- </div>
- <div className="space-y-3">
- <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40">Respondent</p>
- <p className="text-xl font-black tracking-tighter text-foreground uppercase">{caseQuery.data?.respondent_name}</p>
- </div>
- </div>
- </div>
+  <div className="grid grid-cols-12 gap-6 items-start">
+  <div className="col-span-8 space-y-8">
+  <section className="space-y-6">
+  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)] flex items-center gap-3">
+  <HistoryIcon className="w-4 h-4"/> Case Background
+  </label>
+  <div className="p-8 bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-color)] relative overflow-hidden group">
+  <div className="absolute top-0 left-0 w-1 h-full bg-[var(--primary)] opacity-20"/>
+  <p className="text-sm font-semibold leading-relaxed text-foreground/80 italic">
+  {caseQuery.data?.description || 'Synchronizing procedural background... No legacy data detected.'}
+  </p>
+  </div>
+  </section>
 
- <div className="bg-[var(--bg-card)] p-10 rounded-[3rem] border border-border/80 shadow-[0_4px_30px_rgba(0,0,0,0.02)] hover:border-[var(--primary)]/30 transition-all duration-300">
- <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-40 block mb-6">Claim Amount</label>
- <p className="text-4xl font-black text-foreground tracking-tighter tabular-nums">{caseQuery.data?.claim_amount || 'AED 0,00'}</p>
- <div className="mt-6 flex items-center gap-3 text-[var(--primary)] py-2 px-4 bg-[var(--primary)]/10 w-fit rounded-full border border-[var(--primary)]/20">
- <TrendingUp className="w-4 h-4 shrink-0"/>
- <span className="text-[9px] font-black uppercase tracking-[0.2em] whitespace-nowrap">Claim Priority: HIGH</span>
- </div>
- </div>
- </div>
- </div>
- </div>
- )}
+  <section className="grid grid-cols-3 gap-6">
+  {[
+  { label: 'Court Ref', val: caseQuery.data?.court_number || 'DIFC-MAIN', icon: LayoutDashboard },
+  { label: 'Filing Date', val: caseQuery.data?.filing_date ? new Date(caseQuery.data.filing_date).toDateString() : 'N/A', icon: HistoryIcon },
+  { label: 'Case Type', val: caseQuery.data?.case_type?.replace(/_/g, ' ') || 'OTHER', icon: Gavel }
+  ].map((item, i) => (
+  <div key={i} className="p-5 bg-muted/10 rounded-2xl border border-border/20 flex flex-col gap-3 group hover:border-[var(--primary)]/20 transition-all duration-300">
+  <item.icon className="w-4 h-4 text-[var(--primary)]/40 group-hover:text-[var(--primary)] transition-colors"/>
+  <div>
+  <p className="text-[9px] font-black uppercase text-muted-foreground opacity-40 mb-1 tracking-widest">{item.label}</p>
+  <p className="text-[11px] font-black text-foreground uppercase tracking-tight truncate">{item.val}</p>
+  </div>
+  </div>
+  ))}
+  </section>
+  </div>
+
+  <div className="col-span-4 space-y-6">
+  <div className="bg-[var(--bg-card)] p-8 rounded-2xl border border-border shadow-sm flex flex-col gap-8 relative overflow-hidden group h-fit">
+  <div className="absolute top-0 right-0 p-8">
+  <User className="w-5 h-5 text-muted-foreground opacity-20 group-hover:opacity-100 group-hover:text-[var(--primary)] transition-all"/>
+  </div>
+  <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/60">Litigation Parties</h3>
+  <div className="flex flex-col gap-6 relative z-10">
+  <div className="space-y-2">
+  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--primary)] opacity-60">Claimant</p>
+  <p className="text-lg font-black tracking-tight text-foreground uppercase leading-tight">{caseQuery.data?.claimant_name}</p>
+  </div>
+  <div className="flex items-center gap-4">
+  <div className="h-px bg-border flex-1 opacity-50"/>
+  <span className="text-[8px] font-black uppercase tracking-[0.5em] opacity-20">VERSUS</span>
+  <div className="h-px bg-border flex-1 opacity-50"/>
+  </div>
+  <div className="space-y-2">
+  <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Respondent</p>
+  <p className="text-lg font-black tracking-tight text-foreground uppercase leading-tight">{caseQuery.data?.respondent_name}</p>
+  </div>
+  </div>
+  </div>
+  </div>
+  </div>
+  </div>
+  )}
 
  {/* STAGE 2: EVIDENCE UPLOAD */}
  {viewedIdx === 1 && (
- <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
- <header className="flex items-center gap-6 mb-12">
- <div className="w-16 h-16 bg-[var(--bg-card)] border border-border shadow-2xl rounded-[1.75rem] flex items-center justify-center text-[var(--primary)]">
- <Upload className="w-8 h-8"/>
- </div>
- <div>
- <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase leading-none">Upload Documents</h2>
- <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mt-3 bg-muted/40 w-fit px-3 py-1 rounded-full border border-border/40">Case File Storage</p>
- </div>
- </header>
- <div className="bg-[var(--bg-card)] p-12 rounded-[4rem] shadow-sm border border-border/80">
+  <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+  <header className="flex items-center gap-4 mb-8">
+  <div className="w-12 h-12 bg-[var(--bg-card)] border border-border shadow-sm rounded-xl flex items-center justify-center text-[var(--primary)]">
+  <Upload className="w-6 h-6"/>
+  </div>
+  <div>
+  <h2 className="text-xl font-black text-foreground tracking-tight uppercase leading-none">Upload Documents</h2>
+  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.25em] mt-2 opacity-50">Case File Storage Repository</p>
+  </div>
+  </header>
+  <div className="bg-[var(--bg-card)] p-8 rounded-2xl shadow-sm border border-border/80">
  <DocumentsPanel
  documents={documentsQuery.data?.items ?? []}
  isActivelyLoading={isActivelyLoading}

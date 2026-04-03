@@ -84,147 +84,152 @@ export default function JudgeDashboard() {
  };
 
  return (
- <PortalLayout title=""hideHeaderContent>
- <div className="flex h-[calc(100vh-64px)] -m-6 overflow-hidden bg-background">
+  <PortalLayout title="" hideHeaderContent>
+  <div className="flex h-[calc(100vh-64px)] -mx-6 -mt-6 overflow-hidden bg-[var(--bg-base)]">
  
  {/* MAIN WORKSPACE - EXPANDED */}
  <main className="flex-1 flex flex-col overflow-hidden bg-background">
- {/* Header */}
- <header className="px-8 py-4 border-b border-border flex justify-between items-center bg-background/5 backdrop-blur-md sticky top-0 z-10">
- <div>
- <nav className="flex items-center gap-2 text-xs font-bold text-muted-foreground mb-1 uppercase tracking-widest">
- <span>Judge</span>
- <ChevronRight className="w-3 h-3"/>
- <span>Dashboard</span>
- <ChevronRight className="w-3 h-3"/>
- <span className="text-primary">Overview</span>
- </nav>
- <h1 className="text-2xl font-black tracking-tight flex items-center gap-3">
- Dashboard
- <Badge variant="outline"className="text-[10px] uppercase tracking-tighter border-[var(--primary)]/30 text-[var(--primary)] bg-[var(--primary)]/5 px-2">
- <PlayCircle className="w-3 h-3 mr-1"/> Active Session
- </Badge>
- </h1>
- </div>
+  {/* Header - Unified with consistent padding */}
+  <header className="px-8 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--bg-surface)] sticky top-0 z-10 h-[64px] shrink-0">
+  <div className="flex-1">
+  <nav className="flex items-center gap-2 text-[10px] font-black text-muted-foreground mb-1 uppercase tracking-[0.2em]">
+  <span>Judge</span>
+  <ChevronRight className="w-3 h-3 opacity-30"/>
+  <span>Dashboard</span>
+  <ChevronRight className="w-3 h-3 opacity-30"/>
+  <span className="text-[var(--primary)]">Overview</span>
+  </nav>
+  <div className="flex items-center gap-4">
+  <h1 className="text-2xl font-black tracking-tight flex items-center gap-3 leading-none">
+  Dashboard
+  </h1>
+  <Badge variant="outline" className="text-[10px] uppercase font-black border-[var(--primary)]/30 text-[var(--primary)] bg-[var(--primary)]/5 px-2 h-6">
+  <PlayCircle className="w-3.5 h-3.5 mr-1.5"/> ACTIVE SESSION
+  </Badge>
+  </div>
+  </div>
  
- <div className="flex items-center gap-4">
- <div className="flex items-center gap-2 border-r border-border/40 pr-4">
- <LanguageToggle />
- </div>
- <button 
- className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all border ${isAiPanelOpen ? 'bg-primary/10 border-primary text-primary shadow-[0_0_15px_rgba(var(--primary),0.1)]' : 'bg-muted border-transparent hover:border-border'}`}
- onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
- >
- <Sparkles className={`w-4 h-4 ${isAiPanelOpen ? 'text-primary' : ''}`} />
- {isAiPanelOpen ? 'Hide AI Assistant' : 'Show AI Assistant'}
- </button>
- <button 
- className="flex items-center gap-2 px-5 py-2.5 text-xs font-black bg-primary text-on-primary rounded-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
- onClick={() => navigate('/judge/cases/new')}
- >
- <Plus className="w-4 h-4"/> CREATE CASE
- </button>
- </div>
+  <div className="flex items-center gap-4 shrink-0">
+  <div className="flex items-center gap-2 border-r border-border/40 pr-6 mr-2">
+  <LanguageToggle />
+  </div>
+  <button 
+  className={`flex items-center gap-2 h-11 px-5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all border ${isAiPanelOpen ? 'bg-[var(--primary)]/10 border-[var(--primary)] text-[var(--primary)] shadow-sm' : 'bg-muted border-transparent hover:border-border text-muted-foreground/60'}`}
+  onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
+  >
+  <Sparkles className="w-4 h-4" />
+  {isAiPanelOpen ? 'Hide Assistant' : 'Show Assistant'}
+  </button>
+  <button 
+  className="flex items-center gap-2 h-11 px-6 text-[11px] font-black bg-[var(--primary)] text-white rounded-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest"
+  onClick={() => navigate('/judge/cases/new')}
+  >
+  <Plus className="w-4 h-4"/> CREATE CASE
+  </button>
+  </div>
  </header>
 
- <div className="flex-1 overflow-y-auto p-6 scrollbar-hide space-y-6">
- {/* Alerts Section */}
- {(stats.urgent > 0 || stats.ready > 0) && (
- <div className="space-y-4">
- {stats.urgent > 0 && (
- <div className="p-4 rounded-2xl bg-error/5 border border-error/20 flex items-center justify-between group animate-in zoom-in-95 duration-300">
- <div className="flex items-center gap-4">
- <div className="p-2.5 bg-error/10 text-error rounded-xl">
- <AlertTriangle className="w-5 h-5"/>
- </div>
- <div>
- <p className="text-sm font-bold text-error italic">Deadline Warning</p>
- <p className="text-xs text-error/80 font-medium">{stats.urgent} cases detected with hearings in less than 7 days.</p>
- </div>
- </div>
- <button className="px-4 py-2 text-xs font-black bg-error/90 text-white rounded-xl shadow-sm hover:bg-error transition-colors">REVIEW URGENT</button>
- </div>
- )}
- {stats.ready > 0 && (
- <div className="p-4 rounded-2xl bg-text-accent/5 border border-text-accent/20 flex items-center justify-between group animate-in zoom-in-95 duration-300 delay-75">
- <div className="flex items-center gap-4">
- <div className="p-2.5 bg-text-accent/10 text-text-accent rounded-xl">
- <Zap className="w-5 h-5"/>
- </div>
- <div>
- <p className="text-sm font-bold text-text-accent italic">AI Readiness</p>
- <p className="text-xs text-text-accent/80 font-medium">{stats.ready} case drafts are ready for judicial finalization.</p>
- </div>
- </div>
- <button className="px-4 py-2 text-xs font-black bg-text-accent/90 text-white rounded-xl shadow-sm hover:bg-text-accent transition-colors">GO TO DRAFTS</button>
- </div>
- )}
- </div>
- )}
+  <div className="flex-1 overflow-y-auto p-10 scrollbar-hide space-y-10">
+  {/* Alerts Section - Cleaned up spacing */}
+  {(stats.urgent > 0 || stats.ready > 0) && (
+  <div className="flex flex-col gap-4">
+  {stats.urgent > 0 && (
+  <div className="p-4 pr-6 rounded-2xl bg-error/5 border border-error/10 flex items-center justify-between group animate-in slide-in-from-top-4 duration-500 min-h-[64px]">
+  <div className="flex items-center gap-4">
+  <div className="w-10 h-10 bg-error/10 text-error rounded-xl flex items-center justify-center shrink-0">
+  <AlertTriangle className="w-5 h-5"/>
+  </div>
+  <div>
+  <p className="text-[10px] font-black text-error uppercase tracking-[0.2em] mb-0.5">Deadline Warning</p>
+  <p className="text-xs font-medium text-foreground/80 leading-snug">{stats.urgent} cases detected with hearings in less than 7 days.</p>
+  </div>
+  </div>
+  <button className="h-9 px-4 text-[9px] font-black bg-error text-white rounded-lg shadow-lg shadow-error/20 hover:scale-[1.02] transition-all uppercase tracking-widest">Review Urgent</button>
+  </div>
+  )}
+  {stats.ready > 0 && (
+  <div className="p-4 pr-6 rounded-2xl bg-[var(--primary)]/5 border border-[var(--primary)]/10 flex items-center justify-between group animate-in slide-in-from-top-4 duration-500 delay-75 min-h-[64px]">
+  <div className="flex items-center gap-4">
+  <div className="w-10 h-10 bg-[var(--primary)]/10 text-[var(--primary)] rounded-xl flex items-center justify-center shrink-0">
+  <Zap className="w-5 h-5"/>
+  </div>
+  <div>
+  <p className="text-[10px] font-black text-[var(--primary)] uppercase tracking-[0.2em] mb-0.5">AI Readiness</p>
+  <p className="text-xs font-medium text-foreground/80 leading-snug">{stats.ready} case drafts are ready for judicial finalization.</p>
+  </div>
+  </div>
+  <button className="h-9 px-4 text-[9px] font-black bg-[var(--primary)] text-white rounded-lg shadow-lg shadow-[var(--primary)]/20 hover:scale-[1.02] transition-all uppercase tracking-widest">Go to Drafts</button>
+  </div>
+  )}
+  </div>
+  )}
+  {/* MODULE CARDS - Unified spacing and size */}
+  <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+  {modules.map((mod, i) => (
+  <div 
+  key={i} 
+  className="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border-color)] hover:shadow-2xl hover:shadow-primary/10 hover:scale-[1.02] transition-all duration-500 group cursor-pointer relative overflow-hidden"
+  >
+  <div className="absolute top-0 right-0 p-6">
+  <ArrowUpRight className="w-4 h-4 text-muted-foreground opacity-30 group-hover:opacity-100 group-hover:text-[var(--primary)] group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-500"/>
+  </div>
+  
+  <div className="flex flex-col gap-4">
+  <div className={`w-12 h-12 rounded-xl bg-muted/30 group-hover:bg-[var(--primary)]/10 flex items-center justify-center transition-all duration-500`}>
+  <mod.icon className={`w-5 h-5 ${mod.color}`} />
+  </div>
+  
+  <div className="mb-2">
+  <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.25em] mb-2">{mod.title}</h3>
+  <div className="flex items-baseline gap-2">
+  <p className="text-4xl font-black tracking-tighter text-foreground leading-none">
+  {mod.count !== undefined ? mod.count : `${mod.progress}%`}
+  </p>
+  {mod.count !== undefined && <span className="text-[11px] font-black text-[var(--primary)]/60 uppercase tracking-widest">Active</span>}
+  </div>
+  <p className="text-[11px] font-medium text-muted-foreground/60 mt-4 italic leading-relaxed">{mod.desc}</p>
+  </div>
+  </div>
+  </div>
+  ))}
+  </section>
 
- {/* MODULE CARDS */}
- <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
- {modules.map((mod, i) => (
- <div 
- key={i} 
- className="bg-[var(--bg-card)] p-6 rounded-[2rem] border border-outline-variant/30 hover:shadow-2xl hover:shadow-primary/5 hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
- >
- <div className="flex justify-between items-start mb-6">
- <div className={`p-3 rounded-2xl bg-muted/50 group-hover:bg-primary/10 transition-colors overflow-hidden`}>
- <mod.icon className={`w-6 h-6 ${mod.color}`} />
- </div>
- <ArrowUpRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all"/>
- </div>
- <div>
- <h3 className="text-sm font-black text-muted-foreground uppercase tracking-widest mb-1">{mod.title}</h3>
- <div className="flex items-baseline gap-2">
- <p className="text-3xl font-black tracking-tighter text-foreground">
- {mod.count !== undefined ? mod.count : `${mod.progress}%`}
- </p>
- {mod.count !== undefined && <span className="text-xs font-bold text-muted-foreground/60 uppercase">Active</span>}
- </div>
- <p className="text-[11px] font-medium text-muted-foreground/80 mt-2 italic leading-tight">{mod.desc}</p>
- </div>
- </div>
- ))}
- </section>
+  {/* MAIN TABLE (CASE LIST) - Refined Search and Table baseline */}
+  <section className="space-y-8 pt-4">
+  <div className="flex items-center justify-between px-2">
+  <div className="flex items-center gap-4">
+  <h2 className="text-2xl font-black tracking-tight uppercase">My Cases</h2>
+  <div className="px-3 py-1 bg-[var(--primary)]/10 text-[var(--primary)] text-[10px] font-black rounded-lg uppercase tracking-widest border border-[var(--primary)]/20">
+  {recentCases.length} ACTIVE
+  </div>
+  </div>
+  <div className="flex items-center gap-4">
+  <div className="relative group">
+  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 group-focus-within:text-[var(--primary)] transition-colors"/>
+  <input 
+  type="text"
+  placeholder="Filter by title or ID..."
+  className="bg-[var(--bg-surface)] border border-border/80 focus:border-[var(--primary)]/50 focus:bg-background h-12 pl-12 pr-6 rounded-2xl text-[11px] font-black uppercase tracking-widest w-72 transition-all outline-none shadow-sm placeholder:opacity-50"
+  />
+  </div>
+  <button className="h-12 w-12 flex items-center justify-center bg-[var(--bg-surface)] hover:bg-muted border border-border rounded-2xl transition-all shadow-sm">
+  <Filter className="w-4 h-4 text-muted-foreground"/>
+  </button>
+  </div>
+  </div>
 
- {/* MAIN TABLE (CASE LIST) */}
- <section className="space-y-6">
- <div className="flex items-center justify-between">
- <div className="flex items-center gap-3">
- <h2 className="text-xl font-black tracking-tight">My Cases</h2>
- <div className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-black rounded-lg uppercase tracking-widest border border-primary/20">
- {recentCases.length} Cases
- </div>
- </div>
- <div className="flex items-center gap-3">
- <div className="relative group">
- <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors"/>
- <input 
- type="text"
- placeholder="Search workflow..."
- className="bg-muted/50 border border-transparent focus:border-primary/30 focus:bg-background h-10 pl-10 pr-4 rounded-xl text-xs font-medium w-64 transition-all outline-none"
- />
- </div>
- <button className="p-2.5 bg-muted/50 hover:bg-muted border border-transparent hover:border-border rounded-xl transition-all">
- <Filter className="w-4 h-4 text-muted-foreground"/>
- </button>
- </div>
- </div>
-
- <div className="bg-[var(--bg-card)] rounded-[2rem] border border-outline-variant/20 shadow-sm overflow-hidden">
- <table className="w-full border-collapse text-left">
- <thead>
- <tr className="border-b border-outline-variant/30 bg-muted/20">
- <th className="px-6 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] w-[40%] text-left">Information</th>
- <th className="px-6 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] text-left">Status</th>
- <th className="px-6 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] text-left">AI Confidence</th>
- <th className="px-6 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] text-left">Hearing</th>
- <th className="px-6 py-5 text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Action</th>
- </tr>
- </thead>
- <tbody className="divide-y divide-outline-variant/30">
+  <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] shadow-sm overflow-hidden">
+  <table className="w-full border-collapse text-left">
+  <thead>
+  <tr className="border-b border-border bg-muted/10">
+  <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] w-[40%]">Case Information</th>
+  <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Status</th>
+  <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">AI Precision</th>
+  <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Hearing</th>
+  <th className="px-8 py-6 text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Action</th>
+  </tr>
+  </thead>
+  <tbody className="divide-y divide-border">
  {casesQuery.isLoading ? (
  <tr>
  <td colSpan={5} className="px-6 py-20 text-center">
@@ -241,38 +246,38 @@ export default function JudgeDashboard() {
  className="hover:bg-primary/[0.02] transition-colors group cursor-pointer"
  onClick={() => navigate(`/judge/cases/${c.id}`)}
  >
- <td className="px-6 py-5">
- <div className="flex flex-col gap-1">
- <span className="text-[10px] font-black text-primary/60 uppercase tracking-widest">Case ID: {c.case_number || c.id.substring(0,8).toUpperCase()}</span>
- <span className="text-sm font-black text-foreground group-hover:text-primary transition-colors">{c.title || 'Untitled Action'}</span>
- <span className="text-[10px] font-bold text-muted-foreground italic tracking-tight">{c.case_type ? c.case_type.replace('_', ' ') : 'General Proceeding'}</span>
- </div>
- </td>
- <td className="px-6 py-5">
- {getStatusBadge(c.status)}
- </td>
- <td className="px-6 py-5">
- <div className="flex items-center gap-3">
- <div className="flex-1 h-1.5 w-24 bg-muted rounded-full overflow-hidden">
- <div className={`h-full rounded-full ${c.status === 'AIAnalysisReady' ? 'bg-[var(--primary)] shadow-[0_0_8px_rgba(16,185,129,0.3)]' : 'bg-primary/40'}`} style={{ width: c.status === 'AIAnalysisReady' ? '94%' : '40%' }} />
- </div>
- <span className="text-xs font-bold text-foreground/80">{c.status === 'AIAnalysisReady' ? '94%' : '--'}</span>
- </div>
- </td>
- <td className="px-6 py-5">
- <div className="flex flex-col gap-0.5">
- <span className="text-xs font-black text-foreground flex items-center gap-1.5">
- <Calendar className="w-3.5 h-3.5 text-muted-foreground"/>
- {c.hearing_date ? new Date(c.hearing_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unscheduled'}
- </span>
- <span className="text-[10px] font-bold text-muted-foreground ml-5">{c.hearing_date ? new Date(c.hearing_date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : ''}</span>
- </div>
- </td>
- <td className="px-6 py-5 text-right">
- <button className="p-2.5 border-none bg-muted/50 group-hover:bg-primary group-hover:text-on-primary rounded-xl transition-all shadow-sm">
- <PlayCircle className="w-4 h-4"/>
- </button>
- </td>
+  <td className="px-8 py-6">
+  <div className="flex flex-col gap-1.5">
+  <span className="text-[10px] font-black text-[var(--primary)]/60 uppercase tracking-widest">Case ID: {c.case_number || c.id.substring(0,8).toUpperCase()}</span>
+  <span className="text-sm font-black text-foreground group-hover:text-[var(--primary)] transition-colors leading-tight">{c.title || 'Untitled Action'}</span>
+  <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-wider">{c.case_type ? c.case_type.replace('_', ' ') : 'General Proceeding'}</span>
+  </div>
+  </td>
+  <td className="px-8 py-6">
+  {getStatusBadge(c.status)}
+  </td>
+  <td className="px-8 py-6">
+  <div className="flex items-center gap-4">
+  <div className="flex-1 h-2 w-24 bg-muted rounded-full overflow-hidden">
+  <div className={`h-full rounded-full transition-all duration-1000 ${c.status === 'AIAnalysisReady' ? 'bg-[var(--primary)] shadow-[0_0_10px_rgba(var(--primary),0.3)]' : 'bg-primary/40'}`} style={{ width: c.status === 'AIAnalysisReady' ? '94%' : '40%' }} />
+  </div>
+  <span className="text-xs font-black text-foreground">{c.status === 'AIAnalysisReady' ? '94%' : '--'}</span>
+  </div>
+  </td>
+  <td className="px-8 py-6">
+  <div className="flex flex-col gap-1">
+  <span className="text-xs font-black text-foreground flex items-center gap-2">
+  <Calendar className="w-4 h-4 text-muted-foreground/40"/>
+  {c.hearing_date ? new Date(c.hearing_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unscheduled'}
+  </span>
+  <span className="text-[10px] font-black text-muted-foreground/60 ml-6 uppercase tracking-wider">{c.hearing_date ? new Date(c.hearing_date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+  </div>
+  </td>
+  <td className="px-8 py-6 text-right">
+  <button className="h-10 w-10 flex items-center justify-center border-none bg-muted hover:bg-[var(--primary)] hover:text-white rounded-xl transition-all shadow-sm">
+  <ChevronRight className="w-5 h-5"/>
+  </button>
+  </td>
  </tr>
  ))
  ) : (
