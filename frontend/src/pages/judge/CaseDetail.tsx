@@ -212,15 +212,17 @@ const CaseDetail = () => {
  enabled: Boolean(id),
  })
 
+ const caseData = caseQuery.data;
+
  useEffect(() => {
  setViewedIdx(0)
  }, [id])
 
  const currentIdx = useMemo(() => {
- const status = caseQuery.data?.status || 'Created';
+ const status = caseData?.status || 'Created';
  const idx = stages.findIndex(s => s.statuses.includes(status));
  return idx === -1 ? (status === 'Finalized' ? 4 : 0) : idx;
- }, [caseQuery.data?.status, stages]);
+ }, [caseData?.status]);
 
  const documentsQuery = useQuery({
  queryKey: ['case-documents', id],
@@ -228,7 +230,7 @@ const CaseDetail = () => {
  enabled: Boolean(id),
  })
 
- const shouldPoll = analysisRequested || caseQuery.data?.status === 'AIAnalysisPending';
+ const shouldPoll = analysisRequested || caseData?.status === 'AIAnalysisPending';
  const analysisQuery = useCaseAnalysisPolling(id, shouldPoll)
 
  const deleteMutation = useMutation({
@@ -294,68 +296,67 @@ const CaseDetail = () => {
  const file = event.target.files?.[0]
  if (file) setSelectedFile(file)
  }
-
- const handleUpload = () => {
+const handleUpload = () => {
  if (selectedFile && id) uploadMutation.mutate({ file: selectedFile, documentType: selectedDocType })
  }
 
- const handleFinalize = async (payload: any) => {
- await finalizeMutation.mutateAsync({
- judgment_text: payload.judgmentText,
- decision: payload.decision,
- compensation_amount: payload.compensationAmount,
- reasoning: payload.reasoning,
- legal_precedents: precedents.map(p => p.caseId),
- articles_cited: lawArticles.map((a: any) => typeof a === 'string' ? a : a.title),
- })
- }
+  const getAssistantContent = () => {
+    switch (viewedIdx) {
+      case 0:
+        return {
+          title: "Case Overview",
+          insight: "Detecting party mapping. Claimant indicates possible labor breach under Federal Law.",
+          actions: ["Verify Claimant ID", "Check Respondent License", "Scan for conflict of interest"]
+        };
+      case 1:
+        return {
+          title: "Upload Documents",
+          insight: "Missing Notice Period notification. Recommend scanning for email correspondence exhibits.",
+          actions: ["Scan PDF OCR", "Cross-link Exhibits", "Check Signature Validity", "Identify Labor Contract"]
+        };
+      case 2:
+        return {
+          title: "AI Analysis",
+          insight: "94% alignment with DIFC-2022-04. Statutory interest calculation initialized.",
+          actions: ["Export Precedents", "Verify Entitlements", "Launch Research Node", "Simulate Outcome"]
+        };
+      case 3:
+        return {
+          title: "Judgment Review",
+          insight: "Judgment logic consistent with Article 144. Suggest adding Article 146 citation.",
+          actions: ["Critique Reasoning", "Check Consistency", "Inject Law Article", "Review Quantum"]
+        };
+      case 4:
+        return {
+          title: "Feedback",
+          insight: "Your feedback will refine Node 4.0.2 grounding for wrongful termination cases.",
+          actions: ["Analyze Feedback", "Export Learning", "Finalize Audit", "Recalibrate AI Node"]
+        };
+      default:
+        return {
+          title: "Cylix Assistant",
+          insight: "Awaiting workspace context. Reasoning node active in background.",
+          actions: ["Search case history", "Common precedents"]
+        };
+    }
+  };
 
- const getAssistantContent = () => {
- switch (viewedIdx) {
- case 0:
- return {
- title:"Case Overview",
- insight:"Detecting party mapping. Claimant indicates possible labor breach under Federal Law.",
- actions: ["Verify Claimant ID","Check Respondent License","Scan for conflict of interest"]
- };
- case 1:
- return {
- title:"Upload Documents",
- insight:"Missing Notice Period notification. Recommend scanning for email correspondence exhibits.",
- actions: ["Scan PDF OCR","Cross-link Exhibits","Check Signature Validity","Identify Labor Contract"]
- };
- case 2:
- return {
- title:"AI Analysis",
- insight:"94% alignment with DIFC-2022-04. Statutory interest calculation initialized.",
- actions: ["Export Precedents","Verify Entitlements","Launch Research Node","Simulate Outcome"]
- };
- case 3:
- return {
- title:"Judgment Review",
- insight:"Judgment logic consistent with Article 144. Suggest adding Article 146 citation.",
- actions: ["Critique Reasoning","Check Consistency","Inject Law Article","Review Quantum"]
- };
- case 4:
- return {
- title:"Feedback",
- insight:"Your feedback will refine Node 4.0.2 grounding for wrongful termination cases.",
- actions: ["Analyze Feedback","Export Learning","Finalize Audit","Recalibrate AI Node"]
- };
- default:
- return {
- title:"Cylix Assistant",
- insight:"Awaiting workspace context. Reasoning node active in background.",
- actions: ["Search case history","Common precedents"]
- };
- }
- };
+  const assistant = getAssistantContent() as { title: string; insight: string; actions: string[] };
 
- const assistant = getAssistantContent();
+  const handleFinalize = async (payload: any) => {
+    await finalizeMutation.mutateAsync({
+      judgment_text: payload.judgmentText,
+      decision: payload.decision,
+      compensation_amount: payload.compensationAmount,
+      reasoning: payload.reasoning,
+      legal_precedents: precedents.map(p => p.caseId),
+      articles_cited: lawArticles.map((a: any) => typeof a === 'string' ? a : a.title),
+    })
+  };
 
- if (caseQuery.isLoading) {
+  if (caseQuery.isLoading) {
  return (
- <PortalLayout title="Case Orchestrator"hideHeaderContent>
+ <PortalLayout title="Case Orchestrator" hideHeaderContent>
  <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
  <div className="w-16 h-16 border-4 border-[var(--primary)]/20 border-t-[var(--primary)] rounded-full animate-spin"/>
  <p className="text-xs font-black uppercase tracking-[.3em] text-[var(--primary)]/60">Initializing Judicial Node...</p>
@@ -365,17 +366,17 @@ const CaseDetail = () => {
  }
 
  return (
-  <PortalLayout title="Case Orchestrator" hideHeaderContent>
-  <div className="flex h-screen overflow-hidden bg-[var(--bg-card)]">
+ <PortalLayout title="Case Orchestrator" hideHeaderContent>
+ <div className="flex h-screen overflow-hidden bg-[#F8F8F5]">
  
  {/* MAIN WORKSPACE CONTENT */}
   <div className="flex-1 flex flex-col overflow-hidden relative w-full">
  
   {/* TOP SESSION RIBBON - Breadcrumbs + Actions (Moved to ContextBar for row sync) */}
   <CaseContextBar
-  caseNumber={caseQuery.data?.case_number ?? '...'}
-  title={caseQuery.data?.title ?? ''}
-  status={caseQuery.data?.status}
+  caseNumber={caseData?.case_number ?? '...'}
+  title={caseData?.title ?? ''}
+  status={caseData?.status}
   confidence={analysis?.confidence}
   isActivelyLoading={runAnalysisMutation.isPending}
   isDeleting={deleteMutation.isPending}
@@ -428,7 +429,7 @@ const CaseDetail = () => {
     </div>
     <div className="flex flex-col gap-1.5 pb-0">
     <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground opacity-60">Case Title</label>
-    <p className="text-base font-bold text-foreground leading-tight tracking-tight normal-case group-hover:text-[var(--primary)] transition-colors line-clamp-2">{caseQuery.data?.title}</p>
+    <p className="text-base font-bold text-foreground leading-tight tracking-tight normal-case group-hover:text-[var(--primary)] transition-colors line-clamp-2">{caseData?.title}</p>
     </div>
     </div>
 
@@ -438,7 +439,7 @@ const CaseDetail = () => {
     </div>
     <div className="flex flex-col gap-1.5 pb-0">
     <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground opacity-60">Reference ID</label>
-    <p className="text-base font-bold font-mono tracking-tighter text-foreground uppercase group-hover:text-[var(--primary)] transition-colors">{caseQuery.data?.case_number}</p>
+    <p className="text-base font-bold font-mono tracking-tighter text-foreground uppercase group-hover:text-[var(--primary)] transition-colors">{caseData?.case_number}</p>
     </div>
     </div>
 
@@ -449,8 +450,8 @@ const CaseDetail = () => {
     <div className="flex flex-col gap-1.5 pb-0">
     <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground opacity-60">Claim Value</label>
     <p className="text-base font-bold text-foreground leading-tight tracking-tight uppercase group-hover:text-[var(--primary)] transition-colors">
-      {caseQuery.data?.claim_amount ? 
-        `AED ${Number(caseQuery.data.claim_amount).toLocaleString('en-AE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 
+      {caseData?.claim_amount ? 
+        `AED ${Number(caseData.claim_amount).toLocaleString('en-AE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 
         'AED 0.00'}
     </p>
     </div>
@@ -466,7 +467,7 @@ const CaseDetail = () => {
      <div className="p-5 bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-color)] relative overflow-hidden group flex-1 flex flex-col justify-center">
    <div className="absolute top-0 left-0 w-1 h-full bg-[var(--primary)] opacity-20"/>
    <p className="text-sm font-semibold leading-relaxed text-foreground/80 italic">
-   {caseQuery.data?.description || 'No background information has been added to this case yet.'}
+   {caseData?.description || 'No background information has been added to this case yet.'}
    </p>
    </div>
    <div className="flex items-center gap-6 pt-2">
@@ -487,9 +488,9 @@ const CaseDetail = () => {
 
   <section className="grid grid-cols-3 gap-6">
   {[
-  { label: 'Court Ref', val: caseQuery.data?.court_number || 'DIFC-MAIN', icon: LayoutDashboard },
-  { label: 'Filing Date', val: caseQuery.data?.filing_date ? new Date(caseQuery.data.filing_date).toDateString() : 'N/A', icon: HistoryIcon },
-  { label: 'Case Type', val: caseQuery.data?.case_type?.replace(/_/g, ' ') || 'OTHER', icon: Gavel }
+  { label: 'Court Ref', val: caseData?.court_number || 'DIFC-MAIN', icon: LayoutDashboard },
+  { label: 'Filing Date', val: caseData?.filing_date ? new Date(caseData.filing_date).toDateString() : 'N/A', icon: HistoryIcon },
+  { label: 'Case Type', val: caseData?.case_type?.replace(/_/g, ' ') || 'OTHER', icon: Gavel }
   ].map((item, i) => (
   <div key={i} className="p-5 bg-muted/10 rounded-2xl border border-border/20 flex flex-col gap-3 group hover:border-[var(--primary)]/20 transition-all duration-300">
   <item.icon className="w-4 h-4 text-[var(--primary)]/40 group-hover:text-[var(--primary)] transition-colors"/>
@@ -509,22 +510,21 @@ const CaseDetail = () => {
    </div>
    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/60">Litigation Parties</h3>
    <div className="flex flex-col gap-4 relative z-10">
-   <div className="space-y-1">
-   <p className="text-[9px] font-black uppercase tracking-widest text-[var(--primary)] opacity-60">Claimant</p>
-   <p className="text-base font-bold tracking-tight text-foreground normal-case leading-tight">{caseQuery.data?.claimant_name}</p>
-   </div>
-   <div className="flex items-center gap-4 py-2">
-   <div className="h-px bg-border flex-1 opacity-50"/>
-   <span className="text-[8px] font-black uppercase tracking-[0.5em] opacity-20">VERSUS</span>
-   <div className="h-px bg-border flex-1 opacity-50"/>
-   </div>
-   <div className="space-y-1">
-   <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Respondent</p>
-   <div className="overflow-visible pr-4">
-     <p className="text-base font-bold tracking-tight text-foreground normal-case leading-tight whitespace-normal">{caseQuery.data?.respondent_name}</p>
-   </div>
-   </div>
-   </div>
+    <div className="space-y-1">
+    <p className="text-[9px] font-black uppercase tracking-widest text-[var(--primary)] opacity-60">Claimant</p>
+    <p className="text-base font-bold tracking-tight text-foreground normal-case leading-tight">{caseData?.claimant_name}</p>
+    </div>
+    <div className="flex items-center gap-4 py-2">
+    <div className="h-px bg-border flex-1 opacity-50"/>
+    <span className="text-[8px] font-black uppercase tracking-[0.5em] opacity-20">VERSUS</span>
+    <div className="h-px bg-border flex-1 opacity-50"/>
+    </div>
+    <div className="space-y-1">
+    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Respondent</p>
+    <div className="overflow-visible pr-4">
+      <p className="text-base font-bold tracking-tight text-foreground normal-case leading-tight whitespace-normal">{caseData?.respondent_name}</p>
+    </div>
+    </div></div>
    </div></div>
   </div>
   </div>
@@ -601,13 +601,13 @@ const CaseDetail = () => {
  </header>
  <div className="bg-[var(--bg-card)] p-12 rounded-[4rem] shadow-sm border border-border/80 overflow-hidden">
  <JudgmentEditor
- draftText={analysis?.draftText ?? caseQuery.data?.judgment_text ?? ''}
+ draftText={analysis?.draftText ?? caseData?.judgment_text ?? ''}
  confidence={analysis?.confidence ?? 0}
  isSubmitting={finalizeMutation.isPending}
- caseNumber={caseQuery.data?.case_number}
- claimantName={caseQuery.data?.claimant_name ?? ''}
- respondentName={caseQuery.data?.respondent_name ?? ''}
- filingDate={caseQuery.data?.filing_date ?? ''}
+ caseNumber={caseData?.case_number}
+ claimantName={caseData?.claimant_name ?? ''}
+ respondentName={caseData?.respondent_name ?? ''}
+ filingDate={caseData?.filing_date ?? ''}
  lawArticles={analysis?.lawArticles?.map((a: any) => typeof a === 'object' ? a.title : String(a))}
  precedents={precedents.map(p => p.title)}
  outcome={analysis?.outcome}
