@@ -458,8 +458,8 @@ const handleUpload = () => {
     </div>
    </div>
 
-      <div className="grid grid-cols-12 gap-4 items-stretch mt-3 flex-1 min-h-0">
-        <div className="col-span-8 space-y-6">
+      <div className="grid grid-cols-12 gap-4 items-stretch mt-2 flex-1 min-h-0">
+        <div className="col-span-8 space-y-4">
           <section className="bg-white p-5 rounded-2xl border border-border/80 shadow-sm space-y-4">
             <label className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)] flex items-center gap-2">
               <HistoryIcon className="w-3.5 h-3.5"/> Case Background
@@ -487,7 +487,7 @@ const handleUpload = () => {
             </button>
           </div>
 
-          <section className="grid grid-cols-3 gap-6">
+          <section className="grid grid-cols-3 gap-6 pt-1">
             {[
               { label: 'Court Ref', val: caseData?.court_number || 'DIFC-MAIN', icon: LayoutDashboard },
               { label: 'Filing Date', val: caseData?.filing_date ? new Date(caseData.filing_date).toDateString() : 'N/A', icon: HistoryIcon },
