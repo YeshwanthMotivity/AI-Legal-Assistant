@@ -53,7 +53,7 @@ import { cn } from '@/lib/utils'
 
 const CaseWorkflow = ({ viewedIdx, currentIdx, stages, onStageClick }: { viewedIdx: number, currentIdx: number, stages: any[], onStageClick: (idx: number) => void }) => {
  return (
-   <div className="w-full px-6 py-3 bg-[var(--bg-card)] border-b border-border shadow-sm relative z-10">
+   <div className="w-full px-6 py-3 bg-[var(--bg-card)] border-b border-border shadow-sm relative z-50 sticky top-0">
     <div className="w-full flex items-start justify-between relative px-2">
    {/* Continuous background line */}
    <div className="absolute top-5 left-6 right-6 h-[1px] bg-border z-0"/>
@@ -386,7 +386,7 @@ const handleUpload = () => {
   />
  
   {/* WORKSPACE AREA - Full bleed width */}
-  <div className="flex-1 overflow-y-auto scrollbar-hide w-full flex flex-col">
+  <div className="flex-1 overflow-y-auto w-full flex flex-col">
  <CaseWorkflow 
  viewedIdx={viewedIdx} 
  currentIdx={currentIdx} 
@@ -410,8 +410,8 @@ const handleUpload = () => {
   
    {/* STAGE 1: CASE CREATION DETAILS */}
    {viewedIdx === 0 && (
-   <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700 font-sans flex flex-col flex-1">
-    <header className="flex items-center gap-4 pb-2 border-b border-border/10">
+    <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700 font-sans flex flex-col h-full">
+    <header className="flex items-center gap-4 pb-2 border-b border-border/10 sticky top-0 bg-[#F8F8F5] z-10 py-2">
     <div className="w-8 h-8 bg-white border border-border/40 shadow-sm rounded-lg flex items-center justify-center text-[var(--primary)] shrink-0">
     <Scale className="w-4 h-4"/>
     </div>
@@ -421,9 +421,9 @@ const handleUpload = () => {
     </div>
     </header>
 
-    <div className="grid grid-cols-3 gap-3 pt-1">
+    <div className="grid grid-cols-3 gap-3 pt-1 shrink-0">
    {/* Primary Metadata Cards */}
-    <div className="bg-white p-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[85px] relative overflow-hidden group">
+    <div className="bg-white p-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between h-[90px] relative overflow-hidden group">
     <div className="flex flex-col gap-1 pb-0">
       <div className="flex items-center gap-1.5">
         <FileText className="w-3.5 h-3.5 text-[var(--primary)] opacity-40 shrink-0"/>
@@ -433,7 +433,7 @@ const handleUpload = () => {
     </div>
     </div>
 
-    <div className="bg-white p-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[85px] relative overflow-hidden group">
+    <div className="bg-white p-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-start h-[90px] relative overflow-hidden group">
     <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-40 transition-opacity">
     <Terminal className="w-5 h-5 text-[var(--primary)]"/>
     </div>
@@ -443,7 +443,7 @@ const handleUpload = () => {
     </div>
     </div>
 
-    <div className="bg-white p-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[85px] relative overflow-hidden group">
+    <div className="bg-white p-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-start h-[90px] relative overflow-hidden group">
     <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-40 transition-opacity">
     <Scale className="w-5 h-5 text-[var(--primary)]"/>
     </div>
@@ -458,9 +458,9 @@ const handleUpload = () => {
     </div>
    </div>
 
-      <div className="grid grid-cols-12 gap-4 items-start mt-1.5 flex-1 min-h-full">
-        <div className="col-span-8 space-y-3">
-          <section className="bg-white p-4 rounded-2xl border border-border/80 shadow-sm space-y-2 flex flex-col flex-1 min-h-[160px]">
+      <div className="grid grid-cols-12 gap-4 items-stretch mt-1.5 flex-1 min-h-full">
+        <div className="col-span-8 space-y-3 flex flex-col h-full">
+          <section className="bg-white p-4 rounded-2xl border border-border/80 shadow-sm space-y-2 flex flex-col flex-1">
             <label className="text-[9px] font-black uppercase tracking-widest text-[var(--primary)] flex items-center gap-2">
               <HistoryIcon className="w-3 h-3"/> Case Background
             </label>
