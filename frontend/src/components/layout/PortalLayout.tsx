@@ -21,7 +21,6 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import LanguageToggle from '../LanguageToggle'
-import ThemeToggle from './ThemeToggle'
 import { useAuth } from '../../auth/useAuth'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
@@ -188,7 +187,6 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
             
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-4 border-border/40 h-10">
-                <ThemeToggle />
                 <LanguageToggle />
               </div>
             </div>

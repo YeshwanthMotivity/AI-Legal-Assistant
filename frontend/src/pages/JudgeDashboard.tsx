@@ -5,7 +5,7 @@ import { useAuth } from '../auth/useAuth';
 import { getJudgeCases } from '../api/judge';
 import { useNavigate } from 'react-router-dom';
 import PortalLayout from '../components/layout/PortalLayout';
-import ThemeToggle from '../components/layout/ThemeToggle';
+
 import LanguageToggle from '../components/LanguageToggle';
 import { 
  AlertTriangle, 
@@ -109,7 +109,6 @@ export default function JudgeDashboard() {
  
  <div className="flex items-center gap-4">
  <div className="flex items-center gap-2 border-r border-border/40 pr-4">
- <ThemeToggle />
  <LanguageToggle />
  </div>
  <button 

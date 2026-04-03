@@ -181,40 +181,6 @@
   --font-heading: 'Newsreader', serif;
 }
 
-[data-theme='dark'] {
-  /* Royal Perfection — Balanced Obsidian Heritage */
-  --bg-color: #001A13;
-  --surface-color: #002C1F;
-  --text-main: #E9DCC0;
-  --text-heading: #E9DCC0;
-  --primary-royal: #008B65;
-  --accent-gold: #D4AF37;
-  --border-subtle: rgba(212, 175, 55, 0.3);
-
-  --primary: var(--primary-royal);
-  --primary-foreground: #ffffff;
-  --primary-hover: #13825D;
-  
-  --bg-base: var(--bg-color);
-  --bg-surface: var(--surface-color);
-  --bg-card: var(--surface-color);
-  --bg-card-hover: #003D2C;
-  --bg-sidebar: #001A13;
-  --sidebar-active: #002C1F;
-  --sidebar-text: #E9DCC0;
-
-  --text-primary: var(--text-main);
-  --text-secondary: #C8B99B;
-  --text-muted: #8F8C7F;
-  --text-accent: var(--accent-gold);
-
-  --border-color: rgba(212, 175, 55, 0.35);
-  --border-light: rgba(212, 175, 55, 0.15);
-  
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 10px 25px -1px rgba(0, 0, 0, 0.7);
-  --shadow-lg: 0 25px 50px rgba(0, 0, 0, 0.8);
-}
 
 /* Base Styles */
 * {

@@ -4,7 +4,7 @@ import { Sparkles, Gavel, Trash2, AlertTriangle, ChevronRight, PlayCircle } from
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import ThemeToggle from '../../layout/ThemeToggle'
+
 import LanguageToggle from '../../LanguageToggle'
 
 interface CaseContextBarProps {
@@ -63,7 +63,6 @@ const CaseContextBar = ({
 
  <div className="flex items-center gap-4 shrink-0">
  <div className="flex items-center gap-2 border-r border-border/40 pr-4 mr-2">
- <ThemeToggle />
  <LanguageToggle />
  </div>
  <div className="flex flex-col items-end mr-4 border-r border-border pr-6">
