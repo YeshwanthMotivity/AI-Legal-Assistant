@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 
 const BackgroundPreview = () => {
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-20 dark:opacity-30">
+    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-20">
       {/* Dynamic blurred nodes mimicking system components */}
       <motion.div 
         animate={{ 
