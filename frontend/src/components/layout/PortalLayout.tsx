@@ -229,7 +229,10 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent, headerActi
         )}
 
         {/* Page Content Container - Unified Compact Baseline */}
-        <div className="px-8 pt-0 pb-5 max-w-[1640px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className={cn(
+          "animate-in fade-in slide-in-from-bottom-4 duration-700",
+          hideHeaderContent ? "p-0" : "px-8 pt-0 pb-5 max-w-[1640px] mx-auto"
+        )}>
           {children}
         </div>
       </main>

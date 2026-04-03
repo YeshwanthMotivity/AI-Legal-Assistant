@@ -405,7 +405,7 @@ const CaseDetail = () => {
   </div>
   )}
 
-    <div className="px-4 py-4 w-full space-y-3 flex-1 flex flex-col">
+    <div className="px-4 py-3 w-full space-y-3 flex-1 flex flex-col">
   
    {/* STAGE 1: CASE CREATION DETAILS */}
    {viewedIdx === 0 && (
@@ -420,7 +420,7 @@ const CaseDetail = () => {
     </div>
     </header>
 
-   <div className="grid grid-cols-3 gap-8">
+    <div className="grid grid-cols-3 gap-4">
    {/* Primary Metadata Cards */}
     <div className="bg-[var(--bg-card)] p-4 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[100px] relative overflow-hidden group">
     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-40 transition-opacity">
@@ -457,13 +457,13 @@ const CaseDetail = () => {
     </div>
    </div>
 
-     <div className="grid grid-cols-12 gap-8 items-stretch mt-3 flex-1 min-h-0">
+      <div className="grid grid-cols-12 gap-4 items-stretch mt-3 flex-1 min-h-0">
   <div className="col-span-8 space-y-6">
    <section className="space-y-4">
    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)] flex items-center gap-2">
    <HistoryIcon className="w-3.5 h-3.5"/> Case Background
    </label>
-    <div className="p-8 bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-color)] relative overflow-hidden group flex-1 flex flex-col justify-center">
+     <div className="p-5 bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-color)] relative overflow-hidden group flex-1 flex flex-col justify-center">
    <div className="absolute top-0 left-0 w-1 h-full bg-[var(--primary)] opacity-20"/>
    <p className="text-sm font-semibold leading-relaxed text-foreground/80 italic">
    {caseQuery.data?.description || 'No background information has been added to this case yet.'}
