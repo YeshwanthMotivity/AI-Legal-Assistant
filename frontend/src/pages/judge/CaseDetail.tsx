@@ -386,7 +386,7 @@ const handleUpload = () => {
   />
  
   {/* WORKSPACE AREA - Full bleed width */}
-  <div className="flex-1 overflow-y-auto scrollbar-hide w-full">
+  <div className="flex-1 overflow-y-auto scrollbar-hide w-full flex flex-col">
  <CaseWorkflow 
  viewedIdx={viewedIdx} 
  currentIdx={currentIdx} 
@@ -406,7 +406,7 @@ const handleUpload = () => {
   </div>
   )}
 
-    <div className="px-4 py-1.5 w-full space-y-2 flex-1 flex flex-col">
+    <div className="px-4 py-1.5 w-full space-y-2 flex flex-col flex-1">
   
    {/* STAGE 1: CASE CREATION DETAILS */}
    {viewedIdx === 0 && (
@@ -423,33 +423,33 @@ const handleUpload = () => {
 
     <div className="grid grid-cols-3 gap-3 pt-1">
    {/* Primary Metadata Cards */}
-    <div className="bg-white p-4 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[100px] relative overflow-hidden group">
-    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-40 transition-opacity">
-    <FileText className="w-6 h-6 text-[var(--primary)]"/>
+    <div className="bg-white p-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[85px] relative overflow-hidden group">
+    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-40 transition-opacity">
+    <FileText className="w-5 h-5 text-[var(--primary)]"/>
     </div>
-    <div className="flex flex-col gap-1.5 pb-0">
-    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground opacity-60">Case Title</label>
-    <p className="text-base font-bold text-foreground leading-tight tracking-tight normal-case group-hover:text-[var(--primary)] transition-colors line-clamp-2">{caseData?.title}</p>
-    </div>
-    </div>
-
-    <div className="bg-white p-4 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[100px] relative overflow-hidden group">
-    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-40 transition-opacity">
-    <Terminal className="w-6 h-6 text-[var(--primary)]"/>
-    </div>
-    <div className="flex flex-col gap-1.5 pb-0">
-    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground opacity-60">Reference ID</label>
-    <p className="text-base font-bold font-mono tracking-tighter text-foreground uppercase group-hover:text-[var(--primary)] transition-colors">{caseData?.case_number}</p>
+    <div className="flex flex-col gap-1 pb-0">
+    <label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground opacity-60">Case Title</label>
+    <p className="text-sm font-bold text-foreground leading-tight tracking-tight normal-case group-hover:text-[var(--primary)] transition-colors line-clamp-2">{caseData?.title}</p>
     </div>
     </div>
 
-    <div className="bg-white p-4 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[100px] relative overflow-hidden group">
-    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-40 transition-opacity">
-    <Scale className="w-6 h-6 text-[var(--primary)]"/>
+    <div className="bg-white p-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[85px] relative overflow-hidden group">
+    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-40 transition-opacity">
+    <Terminal className="w-5 h-5 text-[var(--primary)]"/>
     </div>
-    <div className="flex flex-col gap-1.5 pb-0">
-    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground opacity-60">Claim Value</label>
-    <p className="text-base font-bold text-foreground leading-tight tracking-tight uppercase group-hover:text-[var(--primary)] transition-colors">
+    <div className="flex flex-col gap-1 pb-0">
+    <label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground opacity-60">Reference ID</label>
+    <p className="text-sm font-bold font-mono tracking-tighter text-foreground uppercase group-hover:text-[var(--primary)] transition-colors">{caseData?.case_number}</p>
+    </div>
+    </div>
+
+    <div className="bg-white p-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[85px] relative overflow-hidden group">
+    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-40 transition-opacity">
+    <Scale className="w-5 h-5 text-[var(--primary)]"/>
+    </div>
+    <div className="flex flex-col gap-1 pb-0">
+    <label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground opacity-60">Claim Value</label>
+    <p className="text-sm font-bold text-foreground leading-tight tracking-tight uppercase group-hover:text-[var(--primary)] transition-colors">
       {caseData?.claim_amount ? 
         `AED ${Number(caseData.claim_amount).toLocaleString('en-AE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 
         'AED 0.00'}
@@ -458,32 +458,32 @@ const handleUpload = () => {
     </div>
    </div>
 
-      <div className="grid grid-cols-12 gap-4 items-start mt-1.5 min-h-0">
+      <div className="grid grid-cols-12 gap-4 items-stretch mt-1.5 min-h-0 flex-1">
         <div className="col-span-8 space-y-3">
-          <section className="bg-white p-5 rounded-2xl border border-border/80 shadow-sm space-y-3">
-            <label className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)] flex items-center gap-2">
-              <HistoryIcon className="w-3.5 h-3.5"/> Case Background
+          <section className="bg-white p-4 rounded-2xl border border-border/80 shadow-sm space-y-2 flex flex-col flex-1 min-h-[160px]">
+            <label className="text-[9px] font-black uppercase tracking-widest text-[var(--primary)] flex items-center gap-2">
+              <HistoryIcon className="w-3 h-3"/> Case Background
             </label>
-            <div className="p-5 bg-muted/5 rounded-xl border border-dashed border-border/60 relative overflow-hidden group flex-1 flex flex-col justify-center">
+            <div className="p-4 bg-muted/5 rounded-xl border border-dashed border-border/60 relative overflow-hidden group flex-1 flex flex-col justify-center">
               <div className="absolute top-0 left-0 w-1 h-full bg-[var(--primary)] opacity-20"/>
-              <p className="text-sm font-semibold leading-relaxed text-foreground/80 italic">
+              <p className="text-xs font-semibold leading-relaxed text-foreground/80 italic">
                 {caseData?.description || 'No background information has been added to this case yet.'}
               </p>
             </div>
           </section>
 
 
-          <section className="grid grid-cols-3 gap-6 pt-1 mb-0">
+          <section className="grid grid-cols-3 gap-3 pt-1 mb-0">
             {[
               { label: 'Court Ref', val: caseData?.court_number || 'DIFC-MAIN', icon: LayoutDashboard },
               { label: 'Filing Date', val: caseData?.filing_date ? new Date(caseData.filing_date).toDateString() : 'N/A', icon: HistoryIcon },
               { label: 'Case Type', val: caseData?.case_type?.replace(/_/g, ' ') || 'OTHER', icon: Gavel }
             ].map((item, i) => (
-              <div key={i} className="p-5 bg-white rounded-2xl border border-border shadow-sm flex flex-col gap-3 group hover:border-[var(--primary)]/20 transition-all duration-300">
-                <item.icon className="w-4 h-4 text-[var(--primary)]/40 group-hover:text-[var(--primary)] transition-colors"/>
+              <div key={i} className="p-4 bg-white rounded-2xl border border-border shadow-sm flex flex-col gap-2 group hover:border-[var(--primary)]/20 transition-all duration-300">
+                <item.icon className="w-3.5 h-3.5 text-[var(--primary)]/40 group-hover:text-[var(--primary)] transition-colors"/>
                 <div>
-                  <p className="text-[9px] font-black uppercase text-muted-foreground opacity-40 mb-1 tracking-widest">{item.label}</p>
-                  <p className="text-[11px] font-black text-foreground uppercase tracking-tight truncate">{item.val}</p>
+                  <p className="text-[8px] font-black uppercase text-muted-foreground opacity-40 mb-0.5 tracking-widest">{item.label}</p>
+                  <p className="text-[10px] font-black text-foreground uppercase tracking-tight truncate">{item.val}</p>
                 </div>
               </div>
             ))}
@@ -491,25 +491,25 @@ const handleUpload = () => {
         </div>
 
         <div className="col-span-4 flex flex-col h-full">
-          <div className="bg-white p-6 rounded-2xl border border-border shadow-sm flex flex-col gap-6 relative overflow-visible group flex-1">
-            <div className="absolute top-0 right-0 p-8">
-              <User className="w-5 h-5 text-muted-foreground opacity-20 group-hover:opacity-100 group-hover:text-[var(--primary)] transition-all"/>
+          <div className="bg-white p-4 rounded-xl border border-border shadow-sm flex flex-col gap-4 relative overflow-visible group flex-1">
+            <div className="absolute top-0 right-0 p-4">
+              <User className="w-4 h-4 text-muted-foreground opacity-20 group-hover:opacity-100 group-hover:text-[var(--primary)] transition-all"/>
             </div>
-            <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/60">Litigation Parties</h3>
-            <div className="flex flex-col gap-4 relative z-10">
-              <div className="space-y-1">
-                <p className="text-[9px] font-black uppercase tracking-widest text-[var(--primary)] opacity-60">Claimant</p>
-                <p className="text-base font-bold tracking-tight text-foreground normal-case leading-tight">{caseData?.claimant_name}</p>
+            <h3 className="text-[9px] font-black uppercase tracking-[0.25em] text-muted-foreground/60 leading-none">Litigation Parties</h3>
+            <div className="flex flex-col gap-3 relative z-10 mt-2">
+              <div className="space-y-0.5">
+                <p className="text-[8px] font-black uppercase tracking-widest text-[var(--primary)] opacity-60">Claimant</p>
+                <p className="text-sm font-bold tracking-tight text-foreground normal-case leading-tight">{caseData?.claimant_name}</p>
               </div>
-              <div className="flex items-center gap-4 py-2">
+              <div className="flex items-center gap-3 py-1">
                 <div className="h-px bg-border flex-1 opacity-50"/>
-                <span className="text-[8px] font-black uppercase tracking-[0.5em] opacity-20">VERSUS</span>
+                <span className="text-[7px] font-black uppercase tracking-[0.5em] opacity-20">VERSUS</span>
                 <div className="h-px bg-border flex-1 opacity-50"/>
               </div>
-              <div className="space-y-1">
-                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Respondent</p>
-                <div className="overflow-visible pr-4">
-                  <p className="text-base font-bold tracking-tight text-foreground normal-case leading-tight whitespace-normal">{caseData?.respondent_name}</p>
+              <div className="space-y-0.5">
+                <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Respondent</p>
+                <div className="overflow-visible pr-2">
+                  <p className="text-sm font-bold tracking-tight text-foreground normal-case leading-tight whitespace-normal">{caseData?.respondent_name}</p>
                 </div>
               </div>
             </div>
@@ -621,30 +621,30 @@ const handleUpload = () => {
 
  {/* PERSISTENT FOOTER - Static, neat, clean */}
  <div className="border-t border-border bg-[var(--bg-card)] shrink-0">
- <div className="w-full flex items-center justify-between h-20 px-6">
+ <div className="w-full flex items-center justify-between h-16 px-6">
  
  {/* Back */}
  <Button
  variant="outline"
- className="h-11 px-7 rounded-xl gap-2 font-black uppercase tracking-widest disabled:opacity-20 transition-all border-border hover:border-[var(--primary)]/30 hover:bg-[var(--primary)]/10 hover:text-[var(--primary)] text-[11px]"
+ className="h-10 px-6 rounded-xl gap-2 font-black uppercase tracking-widest disabled:opacity-20 transition-all border-border hover:border-[var(--primary)]/30 hover:bg-[var(--primary)]/10 hover:text-[var(--primary)] text-[10px]"
  disabled={viewedIdx === 0}
  onClick={() => setViewedIdx(prev => Math.max(0, prev - 1))}
  >
- <ArrowLeft className="w-4 h-4"/>
+ <ArrowLeft className="w-3.5 h-3.5"/>
  {stages[viewedIdx - 1]?.label || 'Back'}
  </Button>
 
  {/* Center: Stage dots + AI toggle */}
  <div className="flex items-center gap-6">
- <div className="flex gap-2 items-center">
+ <div className="flex gap-1.5 items-center">
  {stages.map((_, i) => (
  <button
  key={i}
  className={cn(
 "h-1.5 rounded-full transition-all duration-500 ease-out",
- i === viewedIdx ?"bg-[var(--primary)] w-8":
- i < currentIdx ?"bg-emerald-400 w-5":
-"bg-muted w-5"
+ i === viewedIdx ?"bg-[var(--primary)] w-7":
+ i < currentIdx ?"bg-emerald-400 w-4":
+"bg-muted w-4"
  )}
  onClick={() => i <= currentIdx && setViewedIdx(i)}
  />
@@ -653,14 +653,14 @@ const handleUpload = () => {
   <button
   title="AI Analysis"
   className={cn(
- "w-11 h-11 rounded-xl transition-all duration-300 border flex items-center justify-center group relative",
+ "w-10 h-10 rounded-xl transition-all duration-300 border flex items-center justify-center group relative",
   isAiPanelOpen
   ?"bg-[var(--primary)] text-white border-[var(--primary)] shadow-md shadow-emerald-500/20"
   :"bg-[var(--bg-card)] border-border text-muted-foreground hover:border-[var(--primary)]/30 hover:text-[var(--primary)]"
   )}
   onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
   >
-  {isAiPanelOpen ? <PanelRightClose className="w-5 h-5"/> : <Sparkles className="w-5 h-5"/>}
+  {isAiPanelOpen ? <PanelRightClose className="w-4 h-4"/> : <Sparkles className="w-4 h-4"/>}
   <span className="absolute -top-10 left-1/2 -translate-x-1/2 text-[10px] font-bold bg-foreground text-background px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl border border-border/20 z-[60]">
     AI Analysis
   </span>
@@ -670,10 +670,10 @@ const handleUpload = () => {
  {/* Next */}
  <Button
  disabled={viewedIdx === 4 || viewedIdx > currentIdx}
- className="h-11 px-8 rounded-xl gap-2 bg-[var(--primary)] text-white font-black uppercase tracking-widest shadow-md shadow-emerald-500/20 hover:bg-[var(--primary-hover)] hover:scale-105 active:scale-95 transition-all text-[11px]"
+ className="h-10 px-7 rounded-xl gap-2 bg-[var(--primary)] text-white font-black uppercase tracking-widest shadow-md shadow-emerald-500/20 hover:bg-[var(--primary-hover)] hover:scale-105 active:scale-95 transition-all text-[10px]"
  onClick={() => setViewedIdx(prev => Math.min(4, prev + 1))}
  >
- {stages[viewedIdx + 1]?.label || 'Complete'} <ArrowRight className="w-4 h-4"/>
+ {stages[viewedIdx + 1]?.label || 'Complete'} <ArrowRight className="w-3.5 h-3.5"/>
  </Button>
  </div>
  </div>
