@@ -21,8 +21,8 @@ const StatCard = ({ label, value, icon: Icon, trend, className }: StatCardProps)
  transition={{ duration: 0.2 }}
  >
  <Card className={cn("overflow-hidden border-border/50 shadow-md hover:shadow-xl hover:border-primary/30 transition-all duration-300 group", className)}>
- <CardContent className="p-8">
- <div className="flex items-center justify-between mb-6">
+ <CardContent className="p-5">
+ <div className="flex items-center justify-between mb-4">
  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-500 shadow-inner">
  <Icon className="w-7 h-7"/>
  </div>
@@ -36,7 +36,7 @@ const StatCard = ({ label, value, icon: Icon, trend, className }: StatCardProps)
  )}
  </div>
  <div>
- <div className="text-4xl font-black tracking-tighter mb-1.5 text-foreground">{value}</div>
+ <div className="text-3xl font-black tracking-tighter mb-1.5 text-foreground">{value}</div>
  <div className="text-[11px] text-muted-foreground font-black uppercase tracking-[0.2em] opacity-70">
  {label}
  </div>

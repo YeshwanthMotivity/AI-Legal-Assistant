@@ -73,7 +73,7 @@ const Login = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
         
         {/* Left Side - Branding & Architecture Preview */}
-        <section className="relative hidden lg:flex flex-col justify-center px-20 xl:px-32 bg-gradient-to-br from-[#062c1d] to-[#01140d] overflow-hidden">
+        <section className="relative hidden lg:flex flex-col justify-center px-20 xl:px-32 bg-gradient-to-br from-[#062c1d] to-[#01140d] overflow-hidden border-0 outline-0">
           <BackgroundPreview />
 
           {/* Background Islamic Geometric Pattern (reduced opacity for arch preview) */}
@@ -118,7 +118,7 @@ const Login = () => {
         </section>
 
         {/* Right Section: Login Form */}
-        <section className="flex flex-col items-center justify-center p-6 md:p-12 lg:p-24 bg-[#F9F8F2] relative z-10 w-full overflow-hidden">
+        <section className="flex flex-col items-center justify-center p-6 md:p-12 lg:p-24 bg-[#F9F8F2] relative z-10 w-full overflow-hidden border-l-0">
           {/* Subtle noise/texture for the ivory side */}
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/felt.png')]" />
           <div className="w-full max-w-md space-y-10">

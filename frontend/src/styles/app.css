@@ -248,7 +248,7 @@ h1, h2, h3, .judicial-title {
   right: 0;
   width: 15vw;
   height: 100%;
-  background: linear-gradient(to right, #062c1d, transparent);
+  background: linear-gradient(to right, #01140d, transparent);
   clip-path: ellipse(15% 100% at 0% 50%);
   z-index: 10;
   pointer-events: none;

@@ -127,7 +127,7 @@ export default function JudgeDashboard() {
  </div>
  </header>
 
- <div className="flex-1 overflow-y-auto p-10 scrollbar-hide space-y-10">
+ <div className="flex-1 overflow-y-auto p-6 scrollbar-hide space-y-6">
  {/* Alerts Section */}
  {(stats.urgent > 0 || stats.ready > 0) && (
  <div className="space-y-4">
@@ -163,7 +163,7 @@ export default function JudgeDashboard() {
  )}
 
  {/* MODULE CARDS */}
- <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+ <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
  {modules.map((mod, i) => (
  <div 
  key={i} 
@@ -193,7 +193,7 @@ export default function JudgeDashboard() {
  <section className="space-y-6">
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-3">
- <h2 className="text-xl font-black tracking-tight">Judicial Worklist</h2>
+ <h2 className="text-xl font-black tracking-tight">My Cases</h2>
  <div className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-black rounded-lg uppercase tracking-widest border border-primary/20">
  {recentCases.length} Cases
  </div>
