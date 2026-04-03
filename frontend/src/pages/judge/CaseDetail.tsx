@@ -412,7 +412,7 @@ const handleUpload = () => {
    {viewedIdx === 0 && (
    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 font-sans">
     <header className="flex items-center gap-4 pb-4 border-b border-border/20">
-    <div className="w-10 h-10 bg-[var(--bg-card)] border border-border/40 shadow-sm rounded-xl flex items-center justify-center text-[var(--primary)] shrink-0">
+    <div className="w-10 h-10 bg-[#F8F8F5] border border-border/40 shadow-sm rounded-xl flex items-center justify-center text-[var(--primary)] shrink-0">
     <Scale className="w-5 h-5"/>
     </div>
     <div>
@@ -423,8 +423,8 @@ const handleUpload = () => {
 
     <div className="grid grid-cols-3 gap-4">
    {/* Primary Metadata Cards */}
-    <div className="bg-[var(--bg-card)] p-4 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[100px] relative overflow-hidden group">
-    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-40 transition-opacity">
+    <div className="bg-[#F8F8F5] p-4 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[100px] relative overflow-hidden group">
+    <div className="absolute top-0 right-0 p-4 opacity-30 group-hover:opacity-70 transition-opacity">
     <FileText className="w-6 h-6 text-[var(--primary)]"/>
     </div>
     <div className="flex flex-col gap-1.5 pb-0">
@@ -433,8 +433,8 @@ const handleUpload = () => {
     </div>
     </div>
 
-    <div className="bg-[var(--bg-card)] p-4 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[100px] relative overflow-hidden group">
-    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-40 transition-opacity">
+    <div className="bg-[#F8F8F5] p-4 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[100px] relative overflow-hidden group">
+    <div className="absolute top-0 right-0 p-4 opacity-30 group-hover:opacity-70 transition-opacity">
     <Terminal className="w-6 h-6 text-[var(--primary)]"/>
     </div>
     <div className="flex flex-col gap-1.5 pb-0">
@@ -443,8 +443,8 @@ const handleUpload = () => {
     </div>
     </div>
 
-    <div className="bg-[var(--bg-card)] p-4 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[100px] relative overflow-hidden group">
-    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-40 transition-opacity">
+    <div className="bg-[#F8F8F5] p-4 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[100px] relative overflow-hidden group">
+    <div className="absolute top-0 right-0 p-4 opacity-30 group-hover:opacity-70 transition-opacity">
     <Scale className="w-6 h-6 text-[var(--primary)]"/>
     </div>
     <div className="flex flex-col gap-1.5 pb-0">
@@ -464,7 +464,7 @@ const handleUpload = () => {
    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)] flex items-center gap-2">
    <HistoryIcon className="w-3.5 h-3.5"/> Case Background
    </label>
-     <div className="p-5 bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-color)] relative overflow-hidden group flex-1 flex flex-col justify-center">
+     <div className="p-5 bg-[#F8F8F5] rounded-2xl border border-[var(--border-color)] relative overflow-hidden group flex-1 flex flex-col justify-center">
    <div className="absolute top-0 left-0 w-1 h-full bg-[var(--primary)] opacity-20"/>
    <p className="text-sm font-semibold leading-relaxed text-foreground/80 italic">
    {caseData?.description || 'No background information has been added to this case yet.'}
@@ -492,7 +492,7 @@ const handleUpload = () => {
   { label: 'Filing Date', val: caseData?.filing_date ? new Date(caseData.filing_date).toDateString() : 'N/A', icon: HistoryIcon },
   { label: 'Case Type', val: caseData?.case_type?.replace(/_/g, ' ') || 'OTHER', icon: Gavel }
   ].map((item, i) => (
-  <div key={i} className="p-5 bg-muted/10 rounded-2xl border border-border/20 flex flex-col gap-3 group hover:border-[var(--primary)]/20 transition-all duration-300">
+  <div key={i} className="p-5 bg-[#F8F8F5] rounded-2xl border border-border/20 flex flex-col gap-3 group hover:border-[var(--primary)]/20 transition-all duration-300">
   <item.icon className="w-4 h-4 text-[var(--primary)]/40 group-hover:text-[var(--primary)] transition-colors"/>
   <div>
   <p className="text-[9px] font-black uppercase text-muted-foreground opacity-40 mb-1 tracking-widest">{item.label}</p>
@@ -504,7 +504,7 @@ const handleUpload = () => {
   </div>
 
    <div className="col-span-4 flex flex-col h-full">
-    <div className="bg-[var(--bg-card)] p-6 rounded-2xl border border-border shadow-sm flex flex-col gap-6 relative overflow-visible group flex-1">
+    <div className="bg-[#F8F8F5] p-6 rounded-2xl border border-border shadow-sm flex flex-col gap-6 relative overflow-visible group flex-1">
    <div className="absolute top-0 right-0 p-8">
    <User className="w-5 h-5 text-muted-foreground opacity-20 group-hover:opacity-100 group-hover:text-[var(--primary)] transition-all"/>
    </div>
@@ -534,7 +534,7 @@ const handleUpload = () => {
   {viewedIdx === 1 && (
    <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
   <header className="flex items-center gap-4 mb-8">
-  <div className="w-12 h-12 bg-[var(--bg-card)] border border-border shadow-sm rounded-xl flex items-center justify-center text-[var(--primary)]">
+  <div className="w-12 h-12 bg-[#F8F8F5] border border-border shadow-sm rounded-xl flex items-center justify-center text-[var(--primary)]">
   <Upload className="w-6 h-6"/>
   </div>
   <div>
@@ -542,7 +542,7 @@ const handleUpload = () => {
   <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.25em] mt-2 opacity-50">Case File Storage Repository</p>
   </div>
   </header>
-  <div className="bg-[var(--bg-card)] p-8 rounded-2xl shadow-sm border border-border/80">
+  <div className="bg-[#F8F8F5] p-8 rounded-2xl shadow-sm border border-border/80">
  <DocumentsPanel
  documents={documentsQuery.data?.items ?? []}
  isActivelyLoading={isActivelyLoading}
@@ -570,7 +570,7 @@ const handleUpload = () => {
  precedents={precedents}
  />
   {!isReady && !isActivelyLoading && (
-   <div className="mt-6 text-center p-16 bg-[var(--bg-card)] border-2 border-dashed border-border/80 rounded-2xl shadow-inner w-full group hover:border-[var(--primary)]/30 transition-all">
+   <div className="mt-6 text-center p-16 bg-[#F8F8F5] border-2 border-dashed border-border/80 rounded-2xl shadow-inner w-full group hover:border-[var(--primary)]/30 transition-all">
    <div className="w-24 h-24 bg-[var(--primary)]/10 border border-[var(--primary)]/20 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 group-hover:scale-110 transition-transform">
    <BrainCircuit className="w-12 h-12 text-[var(--primary)] animate-pulse"/>
    </div>
@@ -591,7 +591,7 @@ const handleUpload = () => {
  {viewedIdx === 3 && (
  <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-10">
  <header className="flex items-center gap-6 mb-12">
- <div className="w-16 h-16 bg-[var(--bg-card)] border border-border shadow-2xl rounded-[1.75rem] flex items-center justify-center text-[var(--primary)]">
+ <div className="w-16 h-16 bg-[#F8F8F5] border border-border shadow-2xl rounded-[1.75rem] flex items-center justify-center text-[var(--primary)]">
  <Gavel className="w-8 h-8"/>
  </div>
  <div>
@@ -599,7 +599,7 @@ const handleUpload = () => {
  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mt-3 bg-muted/40 w-fit px-3 py-1 rounded-full border border-border/40">Manual Precision Calibration</p>
  </div>
  </header>
- <div className="bg-[var(--bg-card)] p-12 rounded-[4rem] shadow-sm border border-border/80 overflow-hidden">
+ <div className="bg-[#F8F8F5] p-12 rounded-[4rem] shadow-sm border border-border/80 overflow-hidden">
  <JudgmentEditor
  draftText={analysis?.draftText ?? caseData?.judgment_text ?? ''}
  confidence={analysis?.confidence ?? 0}
@@ -631,7 +631,7 @@ const handleUpload = () => {
  </div>
 
  {/* PERSISTENT FOOTER - Static, neat, clean */}
- <div className="border-t border-border bg-[var(--bg-card)] shrink-0">
+ <div className="border-t border-border bg-[#F8F8F5] shrink-0">
  <div className="w-full flex items-center justify-between h-20 px-6">
  
  {/* Back */}
