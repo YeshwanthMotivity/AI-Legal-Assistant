@@ -45,7 +45,7 @@ const SidebarItem = ({ icon: Icon, label, href, active, collapsed }: SidebarItem
     to={href}
     className={cn(
       "relative flex items-center gap-3 px-3 py-2 text-sm font-semibold transition-all rounded-xl mb-1 group overflow-hidden",
-      collapsed && "justify-center px-2",
+      collapsed && "justify-center px-0 h-10",
       active 
         ? "bg-white/10 text-sidebar-text shadow-xl border border-white/10 scale-[1.01]" 
         : "text-white/50 hover:bg-white/5 hover:text-sidebar-text border border-transparent"
@@ -117,14 +117,17 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
           isRTL ? "right-0 border-l border-[var(--border-color)]" : "left-0 border-r border-[var(--border-color)]"
         )}
       >
-        <div className={cn("flex items-center gap-3 transition-all duration-300", isCollapsed ? "p-4 justify-center" : "p-6")}>
-          <div className="w-10 h-10 bg-white/10 rounded-2xl flex items-center justify-center text-sidebar-text shadow-lg transition-transform hover:scale-105 active:scale-95 shrink-0">
+        <div className={cn("flex items-center transition-all duration-300", isCollapsed ? "flex-col p-4 gap-4" : "p-6 gap-3")}>
+          <div className={cn(
+            "bg-white/10 rounded-2xl flex items-center justify-center text-sidebar-text shadow-lg transition-transform hover:scale-105 active:scale-95 shrink-0",
+            isCollapsed ? "w-10 h-10" : "w-10 h-10"
+          )}>
             <Scale className="w-6 h-6" />
           </div>
           {!isCollapsed && <span className="font-black text-xl tracking-tighter text-sidebar-text">{t('common.appName')}</span>}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className={cn("p-2 rounded-lg hover:bg-white/10 text-sidebar-text transition-colors", isCollapsed ? "mx-auto mt-2" : "ml-auto")}
+            className={cn("p-2 rounded-lg hover:bg-white/10 text-sidebar-text transition-colors", isCollapsed ? "" : "ml-auto")}
           >
             {isCollapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
           </button>
@@ -161,8 +164,8 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
           </div>
         )}
 
-        <div className={cn("bg-black/10 border-t border-[var(--border-color)] mt-auto", isCollapsed ? "p-3" : "p-5")}>
-          <div className={cn("flex items-center mb-4", isCollapsed ? "justify-center" : "gap-4 px-2")}>
+        <div className={cn("bg-black/10 border-t border-[var(--border-color)] mt-auto flex flex-col items-center", isCollapsed ? "p-3 gap-3" : "p-5")}>
+          <div className={cn("flex items-center", isCollapsed ? "justify-center w-full" : "gap-4 px-2 w-full")}>
             <div className={cn(
               "rounded-2xl bg-white/10 border-2 border-white/20 flex items-center justify-center text-text-accent font-black shadow-inner shrink-0",
               isCollapsed ? "w-10 h-10 text-base" : "w-12 h-12 text-lg"
@@ -179,12 +182,12 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
           <Button 
             variant="ghost" 
             className={cn(
-              "w-full text-white/70 hover:text-white hover:bg-white/10 rounded-2xl transition-all group",
-              isCollapsed ? "justify-center h-10 px-2" : "justify-start h-11 px-4"
+              "w-full text-white/70 hover:text-white hover:bg-white/10 rounded-2xl transition-all group flex items-center",
+              isCollapsed ? "justify-center h-10 px-0" : "justify-start h-11 px-4"
             )}
             onClick={logout}
           >
-            <LogOut className={cn("w-5 h-5 transition-transform group-hover:-translate-x-1", !isCollapsed && (isRTL ? "ml-3" : "mr-3"))} />
+            <LogOut className={cn("w-5 h-5 transition-transform group-hover:scale-110", !isCollapsed && (isRTL ? "ml-3" : "mr-3"))} />
             {!isCollapsed && <span className="font-bold">{t('auth.logout')}</span>}
           </Button>
         </div>
@@ -219,8 +222,8 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
           </header>
         )}
 
-        {/* Page Content Container - perfectly aligned with header px-12 */}
-        <div className="px-12 py-10 max-w-[1640px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {/* Page Content Container - Unified Compact Baseline */}
+        <div className="px-12 pt-0 pb-6 max-w-[1640px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
           {children}
         </div>
       </main>
