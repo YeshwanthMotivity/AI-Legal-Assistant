@@ -458,7 +458,7 @@ const handleUpload = () => {
     </div>
    </div>
 
-      <div className="grid grid-cols-12 gap-4 items-stretch mt-1.5 flex-1 min-h-0">
+      <div className="grid grid-cols-12 gap-4 items-start mt-1.5 min-h-0">
         <div className="col-span-8 space-y-3">
           <section className="bg-white p-5 rounded-2xl border border-border/80 shadow-sm space-y-3">
             <label className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)] flex items-center gap-2">
