@@ -22,15 +22,7 @@ const BackgroundPreview = () => {
         className="absolute bottom-1/4 left-[20%] w-[500px] h-[400px] bg-tertiary/10 blur-[150px] rounded-full" 
       />
 
-      {/* Structured Line Grid to simulate Data Layer */}
-      <div className="absolute inset-0" style={{
-        backgroundImage: `linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)`,
-        backgroundSize: '40px 40px',
-        transform: 'perspective(500px) rotateX(60deg) translateY(-100px) scale(1.5)',
-        opacity: 0.3,
-        overflow: 'hidden',
-        contain: 'strict'
-      }} />
+
     </div>
   )
 }
