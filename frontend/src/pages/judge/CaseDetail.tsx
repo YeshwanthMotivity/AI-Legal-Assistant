@@ -411,9 +411,9 @@ const handleUpload = () => {
    {/* STAGE 1: CASE CREATION DETAILS */}
    {viewedIdx === 0 && (
    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 font-sans">
-    <header className="flex items-center gap-4 pb-4 border-b border-border/20">
-    <div className="w-10 h-10 bg-white border border-border/40 shadow-sm rounded-xl flex items-center justify-center text-[var(--primary)] shrink-0">
-    <Scale className="w-5 h-5"/>
+    <header className="flex items-center gap-4 pb-2 border-b border-border/10">
+    <div className="w-8 h-8 bg-white border border-border/40 shadow-sm rounded-lg flex items-center justify-center text-[var(--primary)] shrink-0">
+    <Scale className="w-4 h-4"/>
     </div>
     <div>
     <h2 className="text-lg font-bold text-foreground tracking-tight">Case Overview</h2>
@@ -421,7 +421,7 @@ const handleUpload = () => {
     </div>
     </header>
 
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-3 gap-3 pt-1">
    {/* Primary Metadata Cards */}
     <div className="bg-white p-4 rounded-lg border border-border shadow-sm flex flex-col justify-start min-h-[100px] relative overflow-hidden group">
     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-40 transition-opacity">
@@ -472,20 +472,6 @@ const handleUpload = () => {
             </div>
           </section>
 
-          <div className="flex items-center gap-6 pt-2">
-            <button className="flex flex-col items-center gap-1.5 text-[9px] font-bold text-muted-foreground uppercase tracking-widest hover:text-[var(--primary)] transition-colors">
-              <LayoutDashboard className="w-4 h-4 opacity-40"/>
-              <span>Overview</span>
-            </button>
-            <button className="flex flex-col items-center gap-1.5 text-[9px] font-bold text-muted-foreground uppercase tracking-widest hover:text-[var(--primary)] transition-colors">
-              <HistoryIcon className="w-4 h-4 opacity-40"/>
-              <span>History</span>
-            </button>
-            <button className="flex flex-col items-center gap-1.5 text-[9px] font-bold text-muted-foreground uppercase tracking-widest hover:text-[var(--primary)] transition-colors">
-              <AlertCircle className="w-4 h-4 opacity-40"/>
-              <span>Notes</span>
-            </button>
-          </div>
 
           <section className="grid grid-cols-3 gap-6 pt-1">
             {[
