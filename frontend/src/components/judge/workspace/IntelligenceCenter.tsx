@@ -21,7 +21,7 @@ const IntelligenceCenter = ({
  const { t } = useTranslation()
 
  if (!analysis) return (
- <div className="p-20 text-center border-2 border-dashed border-border/80 rounded-[4rem] bg-[var(--bg-card)] shadow-inner max-w-4xl mx-auto flex flex-col items-center gap-8">
+ <div className="p-16 text-center border-2 border-dashed border-border/80 rounded-2xl bg-[var(--bg-card)] shadow-inner w-full flex flex-col items-center gap-6">
  <div className="w-24 h-24 rounded-[2.5rem] bg-[var(--primary)]/5 flex items-center justify-center text-[var(--primary)]/30">
  <BrainCircuit className="w-12 h-12 animate-pulse"/>
  </div>

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
 import { getJudgeCases } from '../api/judge';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import PortalLayout from '../components/layout/PortalLayout';
 import LanguageToggle from '../components/LanguageToggle';
 
@@ -81,32 +82,30 @@ export default function JudgeDashboard() {
     <PortalLayout 
       title="Dashboard" 
       subtitle="Judicial summary of recent session activity"
+      headerActions={
+        <div className="flex items-center gap-3">
+          <button 
+            className={`flex items-center gap-2 h-9 px-4 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all border ${isAiPanelOpen ? 'bg-[var(--primary)]/10 border-[var(--primary)] text-[var(--primary)] shadow-sm' : 'bg-muted border-transparent hover:border-border text-muted-foreground/60'}`}
+            onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            {isAiPanelOpen ? 'Hide Assistant' : 'Show Assistant'}
+          </button>
+          <button 
+            className="flex items-center gap-2 h-9 px-5 text-[10px] font-bold bg-[var(--primary)] text-white rounded-lg shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest"
+            onClick={() => navigate('/judge/cases/new')}
+          >
+            <Plus className="w-3.5 h-3.5"/> CREATE CASE
+          </button>
+        </div>
+      }
     >
-      <div className="flex h-[calc(100vh-140px)] overflow-hidden bg-[var(--bg-base)]">
-        
-        {/* MAIN WORKSPACE */}
-        <main className="flex-1 flex flex-col overflow-hidden bg-background">
-          {/* Top Registry Ribbon - Integrated & Compact */}
-          <div className="px-12 py-3 border-b border-[var(--border-color)] flex justify-end items-center bg-[var(--bg-surface)] sticky top-0 z-30 h-[56px] shrink-0 gap-4">
-            <button 
-              className={`flex items-center gap-2 h-10 px-4 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all border ${isAiPanelOpen ? 'bg-[var(--primary)]/10 border-[var(--primary)] text-[var(--primary)] shadow-sm' : 'bg-muted border-transparent hover:border-border text-muted-foreground/60'}`}
-              onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              {isAiPanelOpen ? 'Hide Assistant' : 'Show Assistant'}
-            </button>
-            <button 
-              className="flex items-center gap-2 h-10 px-6 text-[10px] font-bold bg-[var(--primary)] text-white rounded-lg shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest"
-              onClick={() => navigate('/judge/cases/new')}
-            >
-              <Plus className="w-4 h-4"/> CREATE CASE
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto px-12 py-8 scrollbar-hide space-y-8">
+      <div className="flex bg-[var(--bg-base)]">
+        <div className="flex-1 flex flex-col min-w-0 bg-background">
+          <div className="flex-1 overflow-y-auto px-8 py-5 scrollbar-hide space-y-5">
             {/* Alerts Section - Compressed Vertical Footprint */}
             {(stats.urgent > 0 || stats.ready > 0) && (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
                 {stats.urgent > 0 && (
                   <div className="px-5 py-3 rounded-lg bg-[var(--bg-card)] border-l-4 border-error shadow-sm flex items-center justify-between group animate-in slide-in-from-top-2">
                     <div className="flex items-center gap-4">
@@ -133,16 +132,16 @@ export default function JudgeDashboard() {
               {modules.map((mod, i) => (
                 <div 
                   key={i} 
-                  className="bg-[var(--bg-card)] p-5 rounded-lg border border-outline-variant/30 shadow-sm hover:border-[var(--primary)]/30 transition-all duration-300 flex flex-col justify-between min-h-[140px]"
+                  className="bg-[var(--bg-card)] p-4 rounded-lg border border-outline-variant/30 shadow-sm hover:border-[var(--primary)]/30 transition-all duration-300 flex flex-col justify-between"
                 >
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-tertiary uppercase tracking-widest opacity-60">{mod.label}</p>
-                    <h3 className="font-headline text-3xl font-medium text-primary">
+                  <div className="flex-1">
+                    <p className="text-[10px] font-bold text-tertiary uppercase tracking-widest opacity-60 mb-1">{mod.label}</p>
+                    <h3 className="font-headline text-3xl font-medium text-primary leading-none">
                       {mod.count !== undefined ? String(mod.count).padStart(2, '0') : `${mod.progress}%`}
                     </h3>
                   </div>
                   
-                  <div className="flex items-center text-[10px] font-bold text-[var(--primary)] uppercase tracking-wider">
+                  <div className="flex items-center text-[10px] font-bold text-[var(--primary)] uppercase tracking-wider h-4 mt-3">
                     <mod.icon className="w-3.5 h-3.5 mr-2 opacity-70"/>
                     <span>{mod.desc}</span>
                   </div>
@@ -150,13 +149,12 @@ export default function JudgeDashboard() {
               ))}
             </section>
 
-            {/* RECENT ACTIVITY - Symmetrically Aligned Grid */}
-            <section className="space-y-4">
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-[var(--bg-card)] px-6 py-4 rounded-lg border border-outline-variant/30 shadow-sm">
+            <section className="space-y-4 pt-2 pb-12">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-1 py-1">
                 <div className="flex items-center gap-4">
-                  <h2 className="text-lg font-bold tracking-tight text-on-surface">Recent Activity</h2>
-                  <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded border border-primary/20 tracking-widest uppercase">
-                    {recentCases.length} Active Dockets
+                  <h2 className="text-base font-bold tracking-tight text-foreground">My Cases</h2>
+                  <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-black rounded border border-primary/20 tracking-widest uppercase">
+                    {recentCases.length} {recentCases.length === 1 ? 'Case' : 'Cases'}
                   </span>
                 </div>
                 
@@ -188,39 +186,41 @@ export default function JudgeDashboard() {
                         className="bg-[var(--bg-card)] p-6 rounded-lg shadow-sm border border-outline-variant/30 hover:border-[var(--primary)]/40 transition-all duration-300 group cursor-pointer"
                         onClick={() => navigate(`/judge/cases/${c.id}`)}
                       >
-                        <div className="flex justify-between items-start mb-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-[1fr_200px] gap-4 mb-3">
                           <div>
-                            <span className="text-[10px] font-bold text-tertiary uppercase tracking-[0.15em] mb-1.5 block opacity-50">
-                              CHAMBER DOCKET: {c.case_number || c.id.substring(0, 8).toUpperCase()}
+                            <span className="text-[10px] font-bold text-tertiary uppercase tracking-[0.15em] mb-1 block opacity-50">
+                              Case ID: {c.case_number || c.id.substring(0, 8).toUpperCase()}
                             </span>
                             <h5 className="font-headline text-xl text-on-surface font-bold group-hover:text-primary transition-colors leading-none">{c.title || 'Untitled Action'}</h5>
                           </div>
-                          <span className={`px-2 py-1 text-[9px] font-black uppercase tracking-widest rounded border ${
-                            isUrgent ? 'bg-error/10 text-error border-error/20' : 'bg-primary/5 text-primary/70 border-primary/10'
-                          }`}>
-                            {isUrgent ? 'Urgent Hearing' : c.status === 'DraftGenerated' ? 'Draft Ready' : 'In Progress'}
-                          </span>
+                          <div className="flex flex-col items-end pt-1">
+                            <span className={`px-2 py-1 text-[9px] font-black uppercase tracking-widest rounded border self-end ${
+                              isUrgent ? 'bg-error/10 text-error border-error/20' : 'bg-primary/5 text-primary/70 border-primary/10'
+                            }`}>
+                              {isUrgent ? 'Urgent Hearing' : c.status === 'DraftGenerated' ? 'Draft Ready' : 'In Progress'}
+                            </span>
+                          </div>
                         </div>
                         
-                        {/* THE TRI-SECTOR BASELINE - Perfect Symmetry Pass */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-6 border-t border-border/10 items-center">
+                        {/* THE TRI-SECTOR BASELINE - Precision Baseline Pass */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-border/10 items-baseline">
                           {/* Sector 1: Intelligence */}
                           <div className="space-y-2">
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-40">Intelligence Mapping</p>
-                            <div className="flex items-center gap-3">
-                              <span className="px-2 py-0.5 bg-muted/40 text-muted-foreground text-[10px] font-bold rounded border border-border/30 uppercase tracking-widest">
-                                {c.case_type ? c.case_type.replace(/_/g, ' ') : 'GENERAL'}
+                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-40 leading-none">Intelligence Mapping</p>
+                            <div className="flex items-center gap-3 mt-4">
+                              <span className="text-[10px] font-medium bg-[var(--primary)]/8 text-[var(--primary)] border border-[var(--primary)]/15 px-2 py-0.5 rounded-md">
+                                {c.case_type?.replace(/_/g, ' ') || 'Other'}
                               </span>
-                              <div className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface">
-                                <Verified className="w-3.5 h-3.5 text-primary opacity-60"/>
-                                <span className="whitespace-nowrap">{c.status === 'AIAnalysisReady' ? 'Precedents Matched' : 'Analysis Active'}</span>
+                              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                <Search className="w-3 h-3 opacity-40" />
+                                <span>Precedents Matched</span>
                               </div>
                             </div>
                           </div>
                           
                           {/* Sector 2: Score */}
                           <div className="space-y-2">
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-40">AI Precision Score</p>
+                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-40 leading-none">AI Precision Score</p>
                             <div className="flex items-center gap-3">
                               <div className="flex-1 max-w-[140px] h-1.5 bg-muted rounded-full overflow-hidden">
                                 <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: c.status === 'AIAnalysisReady' ? '94%' : '30%' }} />
@@ -231,7 +231,7 @@ export default function JudgeDashboard() {
                           
                           {/* Sector 3: Schedule */}
                           <div className="text-right flex flex-col items-end space-y-2">
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-40">Hearing Schedule</p>
+                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-40 leading-none">Hearing Schedule</p>
                             <div className="flex items-center gap-2 text-[13px] font-bold text-primary">
                               <Calendar className="w-4 h-4 opacity-30"/>
                               {c.hearing_date ? new Date(c.hearing_date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : <span className="opacity-40 italic">Unscheduled</span>}
@@ -245,11 +245,10 @@ export default function JudgeDashboard() {
               </div>
             </section>
           </div>
-        </main>
+        </div>
 
-        {/* AI Assistant Panel */}
         <aside 
-          className={`transition-all duration-500 border-l border-border bg-surface flex flex-col ${isAiPanelOpen ? 'w-96 opacity-100 translate-x-0' : 'w-0 opacity-0 translate-x-full overflow-hidden'}`}
+          className={`h-[calc(100vh-64px)] sticky top-[64px] transition-all duration-500 border-l border-border bg-surface flex flex-col ${isAiPanelOpen ? 'w-96 opacity-100 translate-x-0' : 'w-0 opacity-0 translate-x-full overflow-hidden'}`}
         >
           <div className="p-8 border-b border-border flex justify-between items-center bg-muted/10 backdrop-blur-md">
             <div className="flex items-center gap-3">

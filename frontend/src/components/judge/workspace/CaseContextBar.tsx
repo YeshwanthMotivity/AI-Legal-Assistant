@@ -42,65 +42,72 @@ const CaseContextBar = ({
 
  return (
  <>
-  <header className="px-12 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--bg-surface)] sticky top-0 z-40 shrink-0 h-[72px]">
-  <div className="flex-1 min-w-0">
-  <nav className="flex items-center gap-2 text-[10px] font-black text-muted-foreground mb-1 uppercase tracking-[0.2em]">
-  <span>Judicial</span>
-  <ChevronRight className="w-3 h-3 opacity-30"/>
-  <span>Case Portfolio</span>
-  <ChevronRight className="w-3 h-3 opacity-30"/>
-  <span className="text-[var(--primary)] truncate">{caseNumber}</span>
-  </nav>
-  <div className="flex items-center gap-4">
-  <h1 className="text-3xl font-black tracking-tight text-foreground truncate max-w-2xl leading-none uppercase">
-  {title || 'Initializing Case...'}
-  </h1>
-  <Badge variant="outline" className="text-[10px] uppercase font-black border-[var(--primary)]/30 text-[var(--primary)] bg-[var(--primary)]/5 px-2.5 h-6">
-  <PlayCircle className="w-4 h-4 mr-2"/> LIVE SESSION
-  </Badge>
-  </div>
-  </div>
+  <header className="px-6 py-0 border-b border-[var(--border-color)] bg-[var(--bg-surface)] sticky top-0 z-40 shrink-0">
+    {/* Row 1: breadcrumb + actions */}
+    <div className="flex justify-between items-center h-10 border-b border-[var(--border-color)]/40">
+      <nav className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+        <span>Judicial</span>
+        <ChevronRight className="w-3 h-3 opacity-40"/>
+        <span>Case Portfolio</span>
+        <ChevronRight className="w-3 h-3 opacity-40"/>
+        <span className="text-[var(--primary)]">{caseNumber}</span>
+      </nav>
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 mr-2">
+          <span className="text-[9px] font-bold text-muted-foreground uppercase opacity-40">AI Grounding:</span>
+          <span className="text-[10px] font-black text-[var(--primary)] uppercase tracking-tight">
+            {confidence ? `${Math.round(confidence)}% Precision` : 'Analyzing...'}
+          </span>
+        </div>
+        <LanguageToggle />
+      </div>
+    </div>
 
-  <div className="flex items-center gap-4 shrink-0">
-  <div className="flex items-center gap-2 border-r border-border/40 pr-8 mr-2">
-  <LanguageToggle />
-  </div>
-  <div className="flex flex-col items-end mr-4 border-r border-border pr-8">
-  <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.25em] opacity-40">AI GROUNDING</span>
-  <span className="text-xs font-black text-[var(--primary)] uppercase tracking-wider">{confidence ? `${Math.round(confidence)}% PRECISION` : 'ANALYZING...'}</span>
-  </div>
+    {/* Row 2: title + action buttons */}
+    <div className="flex justify-between items-center h-12">
+      <div className="flex items-center gap-3 min-w-0">
+        <h1 className="text-base font-bold text-foreground truncate max-w-[480px]">
+          {title || 'Initializing Case...'}
+        </h1>
+        <Badge variant="outline" className="shrink-0 text-[10px] font-black border-[var(--primary)]/30 text-[var(--primary)] bg-[var(--primary)]/5 px-2.5 h-6">
+          <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] mr-1.5 animate-pulse"/>
+          Live Session
+        </Badge>
+      </div>
 
-  <Button
-  variant="outline"
-  className="gap-2 h-12 px-6 border-border bg-[var(--bg-surface)] shadow-sm hover:bg-muted font-black text-[11px] uppercase tracking-widest transition-all rounded-xl"
-  disabled={isActivelyLoading}
-  onClick={onRunAnalysis}
-  >
-  <Sparkles className={cn('w-4 h-4 text-[var(--primary)]', isActivelyLoading && 'animate-spin')} />
-  {isActivelyLoading ? 'Synthesizing...' : 'Run Analysis'}
-  </Button>
+      <div className="flex items-center gap-2 shrink-0">
+        <Button
+          variant="outline"
+          className="h-8 px-4 text-[10px] font-bold border border-[var(--border-color)] rounded-lg hover:border-[var(--primary)]/40 flex items-center gap-2 uppercase tracking-widest transition-all"
+          disabled={isActivelyLoading}
+          onClick={onRunAnalysis}
+        >
+          <Sparkles className={cn("w-3.5 h-3.5 text-[var(--primary)]", isActivelyLoading && "animate-spin")} />
+          {isActivelyLoading ? 'Synthesizing...' : 'Run Analysis'}
+        </Button>
 
-  <Button
-  className="gap-2 h-12 px-8 bg-[var(--primary)] text-white shadow-lg hover:bg-[var(--primary-hover)] hover:scale-[1.02] active:scale-[0.98] font-black text-[11px] uppercase tracking-widest transition-all rounded-xl"
-  onClick={onFinalize}
-  >
-  <Gavel className="w-4 h-4"/>
-  Finalize Outcome
-  </Button>
+        <Button
+          className="h-8 px-4 text-[10px] font-bold bg-[var(--primary)] text-white rounded-lg flex items-center gap-2 uppercase tracking-widest hover:bg-[var(--primary-hover)] transition-all"
+          onClick={onFinalize}
+        >
+          <Gavel className="w-3.5 h-3.5"/>
+          Finalize Outcome
+        </Button>
 
-  <Button
-  variant="outline"
-  className="w-12 h-12 p-0 text-muted-foreground hover:text-red-600 hover:bg-red-50 border-border rounded-xl transition-all"
-  disabled={isDeleting}
-  onClick={handleDeleteClick}
-  >
-  {isDeleting ? (
-  <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin"/>
-  ) : (
-  <Trash2 className="w-5 h-5"/>
-  )}
-  </Button>
-  </div>
+        <Button
+          variant="outline"
+          className="h-8 w-8 p-0 border border-[var(--border-color)] rounded-lg flex items-center justify-center hover:border-red-400/40 hover:text-red-500 transition-all text-muted-foreground"
+          disabled={isDeleting}
+          onClick={handleDeleteClick}
+        >
+          {isDeleting ? (
+            <div className="w-3 h-3 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin"/>
+          ) : (
+            <Trash2 className="w-3.5 h-3.5"/>
+          )}
+        </Button>
+      </div>
+    </div>
   </header>
 
  {/* Confirmation Dialog (matching dashboard style) */}

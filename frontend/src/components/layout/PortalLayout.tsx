@@ -30,6 +30,7 @@ interface PortalLayoutProps {
   subtitle?: string
   children: ReactNode
   hideHeaderContent?: boolean
+  headerActions?: ReactNode
 }
 
 interface SidebarItemProps {
@@ -60,7 +61,7 @@ const SidebarItem = ({ icon: Icon, label, href, active, collapsed }: SidebarItem
   </NavLink>
 );
 
-const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLayoutProps) => {
+const PortalLayout = ({ title, subtitle, children, hideHeaderContent, headerActions }: PortalLayoutProps) => {
   const { t, i18n } = useTranslation()
   const { user, logout } = useAuth()
   const location = useLocation()
@@ -202,7 +203,7 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
       >
         {/* Header — expanded height for breathing room */}
         {!hideHeaderContent && (
-          <header className="sticky top-0 z-30 w-full glass-strong border-b px-12 py-4 flex justify-between items-center h-[72px]">
+          <header className="sticky top-0 z-30 w-full glass-strong border-b px-8 py-3 flex justify-between items-center h-[64px]">
             <div className="animate-in fade-in slide-in-from-top-2 duration-500">
               <h1 className="text-2xl font-black tracking-tighter text-gradient leading-none">
                 {title}
@@ -215,7 +216,12 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
             </div>
             
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-4 border-border/40 h-10">
+              {headerActions && (
+                <div className="flex items-center gap-3 border-r border-border/40 pr-6 h-8">
+                  {headerActions}
+                </div>
+              )}
+              <div className="flex items-center gap-4 h-10">
                 <LanguageToggle />
               </div>
             </div>
@@ -223,7 +229,7 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent }: PortalLa
         )}
 
         {/* Page Content Container - Unified Compact Baseline */}
-        <div className="px-12 pt-0 pb-6 max-w-[1640px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="px-8 pt-0 pb-5 max-w-[1640px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
           {children}
         </div>
       </main>
