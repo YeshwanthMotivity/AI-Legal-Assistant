@@ -242,6 +242,19 @@ h1, h2, h3, .judicial-title {
   opacity: 0.6;
 }
 
+.portal-divider-glow-rtl {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, rgba(212, 175, 55, 0.3), transparent);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 .portal-divider-curve {
   position: absolute;
   top: 0;
@@ -249,6 +262,17 @@ h1, h2, h3, .judicial-title {
   width: 25vw;
   height: 100%;
   background: linear-gradient(to right, #01140d 0%, #01140d 10%, rgba(1,20,13,0.4) 60%, transparent 100%);
+  z-index: 15;
+  pointer-events: none;
+}
+
+.portal-divider-curve-rtl {
+  position: absolute;
+  top: 0;
+  left: -4px;
+  width: 25vw;
+  height: 100%;
+  background: linear-gradient(to left, #01140d 0%, #01140d 10%, rgba(1,20,13,0.4) 60%, transparent 100%);
   z-index: 15;
   pointer-events: none;
 }

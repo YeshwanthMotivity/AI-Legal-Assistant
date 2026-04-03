@@ -12,6 +12,7 @@ const Login = () => {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { login } = useAuth()
+  const isRTL = i18n.dir() === 'rtl'
   
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -73,7 +74,7 @@ const Login = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
         
         {/* Left Side - Branding & Architecture Preview */}
-        <section className="relative hidden lg:flex flex-col justify-center px-20 xl:px-32 bg-[#01140d] overflow-hidden isolate" style={{ marginRight: '-2px', zIndex: 1, isolation: 'isolate' }}>
+        <section className="relative hidden lg:flex flex-col justify-center px-20 xl:px-32 bg-[#01140d] overflow-hidden" style={{ [isRTL ? 'marginLeft' : 'marginRight']: '-2px', zIndex: 1 }}>
           <BackgroundPreview />
 
           {/* Background Islamic Geometric Pattern (reduced opacity for arch preview) */}
@@ -89,7 +90,7 @@ const Login = () => {
             />
           </div>
           
-          <div className="relative z-10 space-y-6 max-w-lg">
+          <div className="relative z-10 space-y-6 w-full max-w-2xl">
             <div className="inline-flex items-center px-3 py-1 rounded-full border border-accent/20 bg-accent/10 text-accent text-[10px] uppercase tracking-[0.2em] font-bold">
               {t('landing.suite')}
             </div>
@@ -113,8 +114,8 @@ const Login = () => {
           </div>
           
           {/* Organic 'Imperial Curve' Divider */}
-          <div className="portal-divider-curve" />
-          <div className="portal-divider-glow" />
+          <div className={isRTL ? "portal-divider-curve-rtl" : "portal-divider-curve"} />
+          <div className={isRTL ? "portal-divider-glow-rtl" : "portal-divider-glow"} />
         </section>
 
         {/* Right Section: Login Form */}
