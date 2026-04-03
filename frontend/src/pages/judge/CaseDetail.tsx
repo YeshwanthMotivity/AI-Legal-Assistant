@@ -406,11 +406,11 @@ const handleUpload = () => {
   </div>
   )}
 
-    <div className="px-4 py-3 w-full space-y-3 flex-1 flex flex-col">
+    <div className="px-4 py-1.5 w-full space-y-2 flex-1 flex flex-col">
   
    {/* STAGE 1: CASE CREATION DETAILS */}
    {viewedIdx === 0 && (
-   <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 font-sans">
+   <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700 font-sans">
     <header className="flex items-center gap-4 pb-2 border-b border-border/10">
     <div className="w-8 h-8 bg-white border border-border/40 shadow-sm rounded-lg flex items-center justify-center text-[var(--primary)] shrink-0">
     <Scale className="w-4 h-4"/>
@@ -458,9 +458,9 @@ const handleUpload = () => {
     </div>
    </div>
 
-      <div className="grid grid-cols-12 gap-4 items-stretch mt-2 flex-1 min-h-0">
-        <div className="col-span-8 space-y-4">
-          <section className="bg-white p-5 rounded-2xl border border-border/80 shadow-sm space-y-4">
+      <div className="grid grid-cols-12 gap-4 items-stretch mt-1.5 flex-1 min-h-0">
+        <div className="col-span-8 space-y-3">
+          <section className="bg-white p-5 rounded-2xl border border-border/80 shadow-sm space-y-3">
             <label className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)] flex items-center gap-2">
               <HistoryIcon className="w-3.5 h-3.5"/> Case Background
             </label>
@@ -473,7 +473,7 @@ const handleUpload = () => {
           </section>
 
 
-          <section className="grid grid-cols-3 gap-6 pt-1">
+          <section className="grid grid-cols-3 gap-6 pt-1 mb-0">
             {[
               { label: 'Court Ref', val: caseData?.court_number || 'DIFC-MAIN', icon: LayoutDashboard },
               { label: 'Filing Date', val: caseData?.filing_date ? new Date(caseData.filing_date).toDateString() : 'N/A', icon: HistoryIcon },
