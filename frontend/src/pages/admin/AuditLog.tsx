@@ -70,7 +70,7 @@ const AuditLog = () => {
  <Button variant="outline"size="icon"className="h-10 w-10 rounded-xl">
  <Filter className="w-4 h-4"/>
  </Button>
- <Button variant="outline"size="icon"className="h-10 w-10 rounded-xl text-[var(--primary)] border-[var(--primary)]/20 bg-emerald-500/5">
+ <Button variant="outline"size="icon"className="h-10 w-10 rounded-xl text-[var(--primary)] border-[var(--primary)]/20 bg-[var(--primary)]/5">
  <Download className="w-4 h-4"/>
  </Button>
  </div>

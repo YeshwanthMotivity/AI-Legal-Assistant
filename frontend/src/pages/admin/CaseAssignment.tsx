@@ -122,7 +122,7 @@ const CaseAssignment = () => {
  <TableRow>
  <TableCell colSpan={5} className="py-20 text-center">
  <div className="flex flex-col items-center gap-3">
- <div className="w-16 h-16 bg-emerald-500/5 rounded-full flex items-center justify-center text-emerald-500/20">
+ <div className="w-16 h-16 bg-[var(--primary)]/5 rounded-full flex items-center justify-center text-[var(--primary)]/20">
  <CheckCircle2 className="w-8 h-8"/>
  </div>
  <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">All cases successfully docketed</p>
@@ -210,7 +210,7 @@ const CaseAssignment = () => {
  <span className="font-bold text-xs text-muted-foreground opacity-80 truncate block">{item.title}</span>
  </TableCell>
  <TableCell>
- <Badge variant="outline"className="text-[10px] font-black uppercase tracking-widest border-[var(--primary)]/20 text-[var(--primary)] bg-emerald-500/5 h-6">
+ <Badge variant="outline"className="text-[10px] font-black uppercase tracking-widest border-[var(--primary)]/20 text-[var(--primary)] bg-[var(--primary)]/5 h-6">
  {judgeName(item.assigned_to)}
  </Badge>
  </TableCell>

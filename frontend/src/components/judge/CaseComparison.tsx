@@ -62,7 +62,7 @@ const CaseComparison = ({ currentCase, precedentCase }: CaseComparisonProps) => 
             <TableRow className="bg-muted/50 hover:bg-muted/50 border-b border-border/50">
               <TableHead className="w-1/4 font-black uppercase text-[10px] tracking-[0.2em] px-6 py-4 text-muted-foreground">{t('common.field') || 'Field'}</TableHead>
               <TableHead className="w-3/8 font-black uppercase text-[10px] tracking-[0.2em] px-6 py-4 text-primary">{t('judge.workspace.currentCase') || 'Current Case'}</TableHead>
-              <TableHead className="w-3/8 font-black uppercase text-[10px] tracking-[0.2em] px-6 py-4 text-emerald-600">{t('judge.workspace.precedentCase') || 'Precedent Case'}</TableHead>
+              <TableHead className="w-3/8 font-black uppercase text-[10px] tracking-[0.2em] px-6 py-4 text-[var(--primary)]">{t('judge.workspace.precedentCase') || 'Precedent Case'}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -93,7 +93,7 @@ const CaseComparison = ({ currentCase, precedentCase }: CaseComparisonProps) => 
                   {Array.isArray(row.precedentValue) ? (
                     <div className="flex flex-wrap gap-1.5">
                       {row.precedentValue.map((v, i) => (
-                        <Badge key={i} variant="secondary" className="text-[9px] px-2 py-0.5 bg-emerald-500/10 text-emerald-700 border-emerald-500/20 font-black uppercase tracking-tighter">{v}</Badge>
+                        <Badge key={i} variant="secondary" className="text-[9px] px-2 py-0.5 bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20 font-black uppercase tracking-tighter">{v}</Badge>
                       ))}
                       {row.precedentValue.length === 0 && <span className="text-muted-foreground/50 italic font-medium">N/A</span>}
                     </div>

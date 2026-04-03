@@ -55,7 +55,7 @@ const CaseContextBar = ({
  <h1 className="text-2xl font-black tracking-tight text-foreground truncate max-w-2xl leading-none">
  {title || 'Initializing Case...'}
  </h1>
- <Badge variant="outline"className="text-[10px] uppercase font-black border-emerald-500/30 text-[var(--primary)] bg-emerald-500/5 px-2 h-6">
+ <Badge variant="outline"className="text-[10px] uppercase font-black border-[var(--primary)]/30 text-[var(--primary)] bg-[var(--primary)]/5 px-2 h-6">
  <PlayCircle className="w-3 h-3 mr-1.5"/> LIVE SESSION
  </Badge>
  </div>
@@ -81,7 +81,7 @@ const CaseContextBar = ({
  </Button>
 
  <Button
- className="gap-2 h-11 px-6 bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 hover:scale-[1.02] active:scale-[0.98] font-black text-[11px] uppercase tracking-widest transition-all rounded-xl"
+ className="gap-2 h-11 px-6 bg-[var(--primary)] text-white shadow-lg hover:bg-[var(--primary-hover)] hover:scale-[1.02] active:scale-[0.98] font-black text-[11px] uppercase tracking-widest transition-all rounded-xl"
  onClick={onFinalize}
  >
  <Gavel className="w-4 h-4"/>

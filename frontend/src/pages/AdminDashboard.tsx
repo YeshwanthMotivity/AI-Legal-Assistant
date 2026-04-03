@@ -73,7 +73,7 @@ export default function AdminDashboard(): ReactNode {
  <CardHeader className="bg-muted/10 border-b py-6 px-8">
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-3">
- <div className="p-2.5 bg-[var(--primary)]/10 dark:bg-emerald-500/20 rounded-xl text-[var(--primary)]">
+ <div className="p-2.5 bg-[var(--primary)]/10 dark:bg-[var(--primary)]/20 rounded-xl text-[var(--primary)]">
  <BarChart3 className="w-6 h-6"/>
  </div>
  <div>
@@ -93,7 +93,7 @@ export default function AdminDashboard(): ReactNode {
  {t('admin.dashboard.aiPerfDesc')}
  </p>
  <Link to="/admin/metrics">
- <Button variant="outline"className="w-full h-10 border-[var(--primary)]/20 text-[var(--primary)] bg-emerald-500/5 hover:bg-[var(--primary)]/10 gap-2 font-bold uppercase text-[10px] tracking-widest">
+ <Button variant="outline"className="w-full h-10 border-[var(--primary)]/20 text-[var(--primary)] bg-[var(--primary)]/5 hover:bg-[var(--primary)]/10 gap-2 font-bold uppercase text-[10px] tracking-widest">
  {t('admin.dashboard.viewAnalytics')}
  </Button>
  </Link>

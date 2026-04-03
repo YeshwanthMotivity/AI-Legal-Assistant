@@ -62,24 +62,24 @@ const CreateCaseModal = ({ isOpen, isSubmitting, onClose, onSubmit }: CreateCase
       />
       
       {/* 1. Modal Container - Panel */}
-      <div className="relative w-full max-w-4xl bg-surface-container-lowest dark:bg-surface-container rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200 border border-outline-variant/30">
+      <div className="relative w-full max-w-4xl bg-surface-container-lowest rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200 border border-outline-variant/30">
         
         {/* Header Ribbon (Kept for LexAI branding) */}
         <div className="h-1.5 w-full bg-gradient-to-r from-primary via-tertiary to-primary opacity-80" />
         
         {/* 2. Header */}
-        <div className="flex items-center justify-between px-10 py-8 bg-surface-container-lowest dark:bg-surface-container relative">
+        <div className="flex items-center justify-between px-10 py-8 bg-surface-container-lowest relative">
           <div>
             <span className="text-[10px] font-bold text-tertiary uppercase tracking-wider mb-1.5 block opacity-80">
               LexAI Command Center
             </span>
-            <h2 className="text-3xl font-headline font-semibold text-primary dark:text-emerald-400 tracking-tight">
+            <h2 className="text-3xl font-headline font-semibold text-primary dark:text-[var(--primary)] tracking-tight">
               {t('judge.form.createNewCase')}
             </h2>
           </div>
           <button 
             onClick={handleClose} 
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container-low dark:bg-surface-container-high border border-outline-variant/20 text-on-surface-variant hover:text-primary hover:border-primary/50 transition-all duration-200 hover:scale-105"
+            className="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container-low-high border border-outline-variant/20 text-on-surface-variant hover:text-primary hover:border-primary/50 transition-all duration-200 hover:scale-105"
           >
             <X className="w-5 h-5" />
           </button>

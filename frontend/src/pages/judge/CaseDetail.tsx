@@ -702,7 +702,7 @@ const CaseDetail = () => {
  className="w-full text-left p-4 bg-muted/20 hover:bg-[var(--primary)]/10 hover:border-[var(--primary)]/20 group rounded-2xl border border-border/60 transition-all flex items-center justify-between"
  >
  <span className="text-[11px] font-black text-foreground group-hover:text-[var(--primary)] uppercase tracking-tight">{action}</span>
- <div className="p-1.5 bg-[var(--bg-card)] group-hover:bg-emerald-100 rounded-lg border border-border/40 transition-colors">
+ <div className="p-1.5 bg-[var(--bg-card)] group-hover:bg-[var(--primary)]/10 rounded-lg border border-border/40 transition-colors">
  <Plus className="w-3.5 h-3.5 text-muted-foreground group-hover:text-[var(--primary)] transition-colors"/>
  </div>
  </button>

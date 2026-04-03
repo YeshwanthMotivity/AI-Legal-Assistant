@@ -190,11 +190,11 @@ const MetricsDashboard = () => {
  <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-1">AI Latency</p>
  <p className="text-xl font-bold">{metrics ? ms(metrics.ai_latency) : '—'}</p>
  </div>
- <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900">
- <p className="text-xs text-emerald-700 font-bold uppercase tracking-wider mb-1">Outcome Agreement</p>
- <p className="text-xl font-bold text-emerald-800">{metrics ? pct(metrics.outcome_agreement) : '—'}</p>
+ <div className="p-4 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/20">
+ <p className="text-xs text-[var(--primary)] font-bold uppercase tracking-wider mb-1">Outcome Agreement</p>
+ <p className="text-xl font-bold text-[var(--primary)]">{metrics ? pct(metrics.outcome_agreement) : '—'}</p>
  </div>
- <div className="p-4 rounded-lg bg-[var(--accent-gold)]/10 border border-indigo-100 dark:border-indigo-900">
+ <div className="p-4 rounded-lg bg-[var(--accent-gold)]/10 border border-indigo-100">
  <p className="text-xs text-[var(--accent-gold)] font-bold uppercase tracking-wider mb-1">Judge Score (Avg)</p>
  <p className="text-xl font-bold text-indigo-800">{metrics ? score(metrics.judge_score) + ' / 5' : '—'}</p>
  </div>

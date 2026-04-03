@@ -75,7 +75,7 @@ const JudgmentEditor = ({
         <div className="col-span-12 lg:col-span-8 bg-white p-12 rounded-[4rem] border border-border shadow-[0_4px_30px_rgba(0,0,0,0.02)] space-y-12">
            <header className="flex items-center justify-between border-b border-border/40 pb-8">
               <div className="flex items-center gap-6">
-                <div className="w-16 h-16 bg-emerald-600/5 text-emerald-600 rounded-[1.75rem] border border-emerald-600/10 flex items-center justify-center">
+                <div className="w-16 h-16 bg-[var(--primary)]/5 text-[var(--primary)] rounded-[1.75rem] border border-[var(--primary)]/10 flex items-center justify-center">
                   <Target className="w-8 h-8" />
                 </div>
                 <div>
@@ -84,7 +84,7 @@ const JudgmentEditor = ({
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2">
-                 <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100">CONFIDENCE: {Math.round(confidence || 0)}%</span>
+                 <span className="text-[9px] font-black text-[var(--primary)] uppercase tracking-widest px-3 py-1 bg-[var(--primary)]/10 rounded-full border border-[var(--primary)]/20">CONFIDENCE: {Math.round(confidence || 0)}%</span>
                  <p className="text-[8px] font-bold text-muted-foreground uppercase opacity-40">PROTOCOL: JUDICIAL-DETERMINATION-4.0</p>
               </div>
            </header>
@@ -93,7 +93,7 @@ const JudgmentEditor = ({
               <div className="space-y-4">
                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-40 block">Final Directive Outcome</label>
                  <select 
-                    className="w-full bg-muted/20 border border-border rounded-2xl px-6 h-16 text-sm font-black uppercase tracking-tight focus:border-emerald-600 outline-none transition-all cursor-pointer"
+                    className="w-full bg-muted/20 border border-border rounded-2xl px-6 h-16 text-sm font-black uppercase tracking-tight focus:border-[var(--primary)] outline-none transition-all cursor-pointer"
                     value={decision}
                     onChange={(e) => setDecision(e.target.value)}
                  >
@@ -111,27 +111,27 @@ const JudgmentEditor = ({
                       type="text" 
                       value={compensation}
                       onChange={(e) => setCompensation(e.target.value)}
-                      className="w-full bg-muted/20 border border-border rounded-2xl px-6 h-16 text-sm font-black uppercase tracking-tight focus:border-emerald-600 outline-none transition-all placeholder:opacity-30"
+                      className="w-full bg-muted/20 border border-border rounded-2xl px-6 h-16 text-sm font-black uppercase tracking-tight focus:border-[var(--primary)] outline-none transition-all placeholder:opacity-30"
                       placeholder="e.g. 50,000.00"
                     />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600"><CheckCircle2 className="w-4 h-4" /></div>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)]"><CheckCircle2 className="w-4 h-4" /></div>
                  </div>
               </div>
 
               <div className="space-y-4">
                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-40 block">Verification Badge</label>
-                 <div className="h-16 flex items-center gap-4 bg-emerald-50 rounded-2xl border border-emerald-100 px-6">
-                    <ShieldCheck className="w-6 h-6 text-emerald-600" />
+                 <div className="h-16 flex items-center gap-4 bg-[var(--primary)]/10 rounded-2xl border border-[var(--primary)]/20 px-6">
+                    <ShieldCheck className="w-6 h-6 text-[var(--primary)]" />
                     <div className="text-left font-black tracking-tighter uppercase leading-none">
-                       <p className="text-[8px] opacity-60 text-emerald-800 mb-1">Human Validation</p>
-                       <p className="text-[10px] text-emerald-800">Officer Confirmed</p>
+                       <p className="text-[8px] opacity-60 text-[var(--primary)] mb-1">Human Validation</p>
+                       <p className="text-[10px] text-[var(--primary)]">Officer Confirmed</p>
                     </div>
                  </div>
               </div>
            </div>
 
            <div className="space-y-6">
-              <label className="text-[10px] font-black uppercase tracking-widest text-emerald-600 flex items-center gap-3">
+              <label className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)] flex items-center gap-3">
                  <Terminal className="w-4 h-4" /> Reasoned Finality Corpus
               </label>
               <div className="rounded-[2rem] border border-border overflow-hidden bg-white shadow-inner quill-dashboard-wrapper">
@@ -151,7 +151,7 @@ const JudgmentEditor = ({
 
            <div className="flex gap-4 pt-10 border-t border-border/40">
               <Button 
-                className="h-16 px-10 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/20 hover:bg-emerald-700 hover:scale-105 active:scale-95 transition-all flex-1"
+                className="h-16 px-10 bg-[var(--primary)] text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/20 hover:bg-[var(--primary-hover)] hover:scale-105 active:scale-95 transition-all flex-1"
                 onClick={handleFinalize}
                 disabled={isSubmitting}
               >
@@ -159,13 +159,13 @@ const JudgmentEditor = ({
               </Button>
               <Button 
                 variant="outline"
-                className="h-16 px-10 rounded-2xl font-black uppercase tracking-[0.2em] border-border hover:bg-emerald-50 hover:text-emerald-600 transition-all"
+                className="h-16 px-10 rounded-2xl font-black uppercase tracking-[0.2em] border-border hover:bg-[var(--primary)]/10 hover:text-[var(--primary)] transition-all"
                 onClick={handleRegenerate}
                 disabled={isRegenerating}
               >
                 {isRegenerating ? (
                   <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 border-2 border-emerald-600/30 border-t-emerald-600 rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-[var(--primary)]/30 border-t-[var(--primary)] rounded-full animate-spin" />
                     <span>Synchronizing...</span>
                   </div>
                 ) : (
@@ -181,7 +181,7 @@ const JudgmentEditor = ({
         {/* Right: Synthesis Panel */}
         <div className="col-span-12 lg:col-span-4 space-y-10">
            <div className="bg-white p-12 rounded-[4rem] border border-border shadow-[0_4px_30px_rgba(0,0,0,0.02)] space-y-10">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-600 flex items-center gap-3">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-[var(--primary)] flex items-center gap-3">
                 <History className="w-4 h-4" /> Case Grounding Check
               </h3>
               <div className="space-y-10">
@@ -203,11 +203,11 @@ const JudgmentEditor = ({
               </div>
            </div>
 
-           <div className="bg-[#F8FAFC] p-12 rounded-[4rem] border border-emerald-100/40 space-y-8 relative overflow-hidden group">
+           <div className="bg-[#F8FAFC] p-12 rounded-[4rem] border border-[var(--border-color)] space-y-8 relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-5 opacity-10 group-hover:scale-150 transition-transform duration-1000 rotate-12">
-                 <Scale className="w-24 h-24 text-emerald-600" />
+                 <Scale className="w-24 h-24 text-[var(--primary)]" />
               </div>
-              <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-600">Referenced Corpus</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-[var(--primary)]">Referenced Corpus</h3>
               <div className="space-y-8 relative z-10">
                  <div className="space-y-3">
                     <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40 italic">Statutory Citation Mapping</p>
@@ -223,8 +223,8 @@ const JudgmentEditor = ({
                     <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40 italic">Matched Precedent Analysis</p>
                     <div className="flex flex-col gap-3">
                        {precedents.map((p, i) => (
-                         <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-border shadow-sm group-hover:border-emerald-600/30 transition-all">
-                            <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg"><Gavel className="w-3 h-3" /></div>
+                         <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-border shadow-sm group-hover:border-[var(--primary)]/30 transition-all">
+                            <div className="p-1.5 bg-[var(--primary)]/10 text-[var(--primary)] rounded-lg"><Gavel className="w-3 h-3" /></div>
                             <span className="text-[10px] font-bold text-foreground uppercase tracking-tight truncate">{p}</span>
                          </div>
                        ))}

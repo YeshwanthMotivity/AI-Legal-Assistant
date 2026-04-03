@@ -234,7 +234,7 @@ const ClerkCaseList = () => {
  </div>
 
  {/* Create Case Modal */}
- <dialog id="create-case-modal"className="fixed inset-0 z-50 m-auto w-[95%] max-w-2xl h-fit max-h-[90vh] bg-background rounded-[40px] shadow-2xl border-none p-0 overflow-hidden backdrop:bg-black/60 backdrop:backdrop-blur-sm shadow-emerald-500/10">
+ <dialog id="create-case-modal"className="fixed inset-0 z-50 m-auto w-[95%] max-w-2xl h-fit max-h-[90vh] bg-background rounded-[40px] shadow-2xl border-none p-0 overflow-hidden backdrop:bg-black/60 backdrop:backdrop-blur-sm shadow-[var(--primary)]/10">
  <div className="bg-card">
  <div className="p-6 border-b flex justify-between items-center bg-muted/20">
  <h3 className="text-xl font-bold">{t('clerk.forms.createCase')}</h3>
@@ -348,7 +348,7 @@ const ClerkCaseList = () => {
  </dialog>
 
  {/* Metadata Editor Modal */}
- <dialog id="edit-metadata-modal"className="fixed inset-0 z-50 m-auto w-[95%] max-w-md h-fit max-h-[90vh] bg-background rounded-[40px] shadow-2xl border-none p-0 overflow-hidden backdrop:bg-black/60 backdrop:backdrop-blur-sm shadow-emerald-500/10">
+ <dialog id="edit-metadata-modal"className="fixed inset-0 z-50 m-auto w-[95%] max-w-md h-fit max-h-[90vh] bg-background rounded-[40px] shadow-2xl border-none p-0 overflow-hidden backdrop:bg-black/60 backdrop:backdrop-blur-sm shadow-[var(--primary)]/10">
  <div className="bg-card">
  <div className="p-6 border-b bg-muted/20">
  <h3 className="text-lg font-bold">{t('clerk.forms.metadataEditor')}</h3>

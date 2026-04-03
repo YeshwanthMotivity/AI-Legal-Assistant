@@ -68,7 +68,7 @@ export default function JudgeDashboard() {
  { title: 'Cases', desc: 'Active judicial proceedings', count: Math.max(stats.pending, 24), icon: Briefcase, color: 'text-primary' },
  { title: 'AI Analysis', desc: 'Predictive legal insights', progress: 92, icon: Sparkles, color: 'text-purple-500' },
  { title: 'Judgments', desc: 'Drafts awaiting review', count: stats.ready || 0, icon: History, color: 'text-amber-500' },
- { title: 'Performance', desc: 'Efficiency metrics', progress: Math.round((performance.resolved / performance.total) * 100), icon: BarChart3, color: 'text-emerald-500' },
+ { title: 'Performance', desc: 'Efficiency metrics', progress: Math.round((performance.resolved / performance.total) * 100), icon: BarChart3, color: 'text-[var(--primary)]' },
  ];
 
  const getStatusBadge = (status: string) => {
@@ -77,7 +77,7 @@ export default function JudgeDashboard() {
  return <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-primary/10 text-primary border border-primary/20">Completed</span>;
  case 'AIAnalysisReady':
  case 'DraftGenerated':
- return <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">In Progress</span>;
+ return <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">In Progress</span>;
  default:
  return <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-text-accent/10 text-text-accent border border-text-accent/20">Pending</span>;
  }
@@ -254,7 +254,7 @@ export default function JudgeDashboard() {
  <td className="px-6 py-5">
  <div className="flex items-center gap-3">
  <div className="flex-1 h-1.5 w-24 bg-muted rounded-full overflow-hidden">
- <div className={`h-full rounded-full ${c.status === 'AIAnalysisReady' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]' : 'bg-primary/40'}`} style={{ width: c.status === 'AIAnalysisReady' ? '94%' : '40%' }} />
+ <div className={`h-full rounded-full ${c.status === 'AIAnalysisReady' ? 'bg-[var(--primary)] shadow-[0_0_8px_rgba(16,185,129,0.3)]' : 'bg-primary/40'}`} style={{ width: c.status === 'AIAnalysisReady' ? '94%' : '40%' }} />
  </div>
  <span className="text-xs font-bold text-foreground/80">{c.status === 'AIAnalysisReady' ? '94%' : '--'}</span>
  </div>
@@ -300,7 +300,7 @@ export default function JudgeDashboard() {
  </div>
  <div>
  <h3 className="text-sm font-black tracking-tight">Cylix Assistant</h3>
- <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Enterprise reasoning active</p>
+ <p className="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest">Enterprise reasoning active</p>
  </div>
  </div>
  <button 

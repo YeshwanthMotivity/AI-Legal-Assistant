@@ -29,7 +29,7 @@ const StatCard = ({ label, value, icon: Icon, trend, className }: StatCardProps)
  {trend && (
  <div className={cn(
 "text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest",
- trend.isPositive ?"bg-[var(--primary)]/10 text-[var(--primary)]":"bg-rose-500/10 text-rose-600 dark:text-rose-400"
+ trend.isPositive ?"bg-[var(--primary)]/10 text-[var(--primary)]":"bg-rose-500/10 text-rose-600"
  )}>
  {trend.isPositive ? '↑' : '↓'} {trend.value}%
  </div>

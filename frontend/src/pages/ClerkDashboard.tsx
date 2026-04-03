@@ -88,7 +88,7 @@ export default function ClerkDashboard(): ReactNode {
  {t('clerk.dashboard.ingestionDesc')}
  </p>
  <Link to="/clerk/documents">
- <Button variant="secondary"className="w-full h-11 border-[var(--primary)]/20 text-emerald-700 bg-emerald-500/5 hover:bg-[var(--primary)]/10 gap-2 font-bold">
+ <Button variant="secondary"className="w-full h-11 border-[var(--primary)]/20 text-[var(--primary)] bg-[var(--primary)]/5 hover:bg-[var(--primary)]/10 gap-2 font-bold">
  {t('clerk.dashboard.startBulkUpload')}
  </Button>
  </Link>
@@ -99,7 +99,7 @@ export default function ClerkDashboard(): ReactNode {
  {/* System Status Banner */}
  <div className="mt-10 p-6 bg-card border rounded-2xl flex items-center justify-between shadow-sm">
  <div className="flex items-center gap-4">
- <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"/>
+ <div className="w-3 h-3 bg-[var(--primary)] rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"/>
  <div>
  <h4 className="text-sm font-bold tracking-tight">{t('clerk.dashboard.aiNodesOnline')}</h4>
  <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest leading-none mt-0.5">{t('clerk.dashboard.latencyInfo')}</p>

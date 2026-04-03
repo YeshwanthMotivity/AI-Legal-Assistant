@@ -148,9 +148,9 @@ const DocumentUpload = () => {
  </Card>
 
  <Card className="shadow-lg border-[var(--primary)]/10 overflow-hidden">
- <CardHeader className="bg-emerald-500/5 border-b py-5">
+ <CardHeader className="bg-[var(--primary)]/5 border-b py-5">
  <div className="flex items-center gap-2">
- <Upload className="w-5 h-5 text-emerald-500"/>
+ <Upload className="w-5 h-5 text-[var(--primary)]"/>
  <CardTitle className="text-lg">{t('clerk.forms.uploadZone')}</CardTitle>
  </div>
  </CardHeader>
@@ -165,7 +165,7 @@ const DocumentUpload = () => {
  onDragLeave={(e) => { e.preventDefault(); setIsDragging(false) }}
  onDrop={(e) => { e.preventDefault(); setIsDragging(false); pushFiles(e.dataTransfer.files) }}
  >
- <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center text-muted-foreground group-hover:scale-110 group-hover:text-emerald-500 transition-all">
+ <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center text-muted-foreground group-hover:scale-110 group-hover:text-[var(--primary)] transition-all">
  <FileCheck className="w-8 h-8"/>
  </div>
  <div>
@@ -226,7 +226,7 @@ const DocumentUpload = () => {
  <div className="min-w-0 flex-1">
  <p className="text-[13px] font-bold truncate">{job.file.name}</p>
  <div className="flex items-center gap-2 mt-1">
- <Badge variant="outline"className="text-[9px] uppercase font-black py-0 h-4 border-[var(--primary)]/20 text-[var(--primary)] bg-emerald-500/5">
+ <Badge variant="outline"className="text-[9px] uppercase font-black py-0 h-4 border-[var(--primary)]/20 text-[var(--primary)] bg-[var(--primary)]/5">
  {t(`clerk.uploadStatus.${job.status}`)}
  </Badge>
  <span className="text-[10px] text-muted-foreground font-medium italic">{(job.file.size / 1024 / 1024).toFixed(2)} MB</span>
@@ -244,7 +244,7 @@ const DocumentUpload = () => {
  </div>
  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
  <div 
- className={cn("h-full transition-all duration-300", job.status === 'failed' ?"bg-destructive":"bg-emerald-500")}
+ className={cn("h-full transition-all duration-300", job.status === 'failed' ?"bg-destructive":"bg-[var(--primary)]")}
  style={{ width: `${job.progress}%` }} 
  />
  </div>
@@ -288,7 +288,7 @@ const DocumentUpload = () => {
  </div>
  ) : documentsQuery.data?.items?.length === 0 ? (
  <div className="h-full min-h-[400px] flex flex-col items-center justify-center text-center p-12 space-y-4 animate-in fade-in duration-700">
- <div className="w-20 h-20 bg-emerald-500/5 rounded-full flex items-center justify-center text-emerald-500/20">
+ <div className="w-20 h-20 bg-[var(--primary)]/5 rounded-full flex items-center justify-center text-[var(--primary)]/20">
  <Upload className="w-10 h-10"/>
  </div>
  <div className="space-y-1">
@@ -323,7 +323,7 @@ const DocumentUpload = () => {
  </TableCell>
  <TableCell className="pr-8">
  <div className="flex items-center gap-2">
- {doc.processing_status === 'completed' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500"/> :
+ {doc.processing_status === 'completed' ? <CheckCircle2 className="w-3.5 h-3.5 text-[var(--primary)]"/> :
  doc.processing_status === 'failed' ? <AlertCircle className="w-3.5 h-3.5 text-destructive"/> :
  <Clock className="w-3.5 h-3.5 text-amber-500 animate-spin"/>}
  <span className={cn(

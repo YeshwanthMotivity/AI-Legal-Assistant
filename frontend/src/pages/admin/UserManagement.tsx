@@ -135,7 +135,7 @@ const UserManagement = () => {
  <div className="flex items-center gap-2">
  {user.role === 'admin' ? <ShieldCheck className="w-3.5 h-3.5 text-amber-500"/> :
  user.role === 'judge' ? <Shield className="w-3.5 h-3.5 text-primary"/> :
- <ShieldAlert className="w-3.5 h-3.5 text-emerald-500"/>}
+ <ShieldAlert className="w-3.5 h-3.5 text-[var(--primary)]"/>}
  <span className="text-[11px] font-black uppercase tracking-widest opacity-80">{t(`roles.${user.role}`)}</span>
  </div>
  </TableCell>
@@ -144,7 +144,7 @@ const UserManagement = () => {
  variant="outline"
  className={cn(
 "text-[9px] font-black uppercase tracking-tighter py-0 h-5",
- String(user.is_active).toLowerCase() === 'true' ?"border-[var(--primary)]/20 text-[var(--primary)] bg-emerald-500/5":"border-destructive/20 text-destructive bg-destructive/5"
+ String(user.is_active).toLowerCase() === 'true' ?"border-[var(--primary)]/20 text-[var(--primary)] bg-[var(--primary)]/5":"border-destructive/20 text-destructive bg-destructive/5"
  )}
  >
  {String(user.is_active).toLowerCase() === 'true' ? t('admin.forms.active') : t('admin.forms.inactive')}
