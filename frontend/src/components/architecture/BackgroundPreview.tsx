@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 
 const BackgroundPreview = () => {
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-20">
+    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-20" style={{ contain: 'strict', isolation: 'isolate' }}>
       {/* Dynamic blurred nodes mimicking system components */}
       <motion.div 
         animate={{ 
@@ -26,8 +26,10 @@ const BackgroundPreview = () => {
       <div className="absolute inset-0" style={{
         backgroundImage: `linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)`,
         backgroundSize: '40px 40px',
-        transform: 'perspective(500px) rotateX(60deg) translateY(-100px) scale(2)',
-        opacity: 0.3
+        transform: 'perspective(500px) rotateX(60deg) translateY(-100px) scale(1.5)',
+        opacity: 0.3,
+        overflow: 'hidden',
+        contain: 'strict'
       }} />
     </div>
   )
