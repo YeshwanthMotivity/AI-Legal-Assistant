@@ -85,23 +85,23 @@ export default function JudgeDashboard() {
 
  return (
  <PortalLayout title=""hideHeaderContent>
- <div className="flex h-[calc(100vh-40px)] -m-10 overflow-hidden bg-background">
+ <div className="flex h-[calc(100vh-64px)] -m-6 overflow-hidden bg-background">
  
  {/* MAIN WORKSPACE - EXPANDED */}
  <main className="flex-1 flex flex-col overflow-hidden bg-background">
  {/* Header */}
- <header className="px-10 py-6 border-b border-border flex justify-between items-center bg-background/5 backdrop-blur-md sticky top-0 z-10">
+ <header className="px-8 py-4 border-b border-border flex justify-between items-center bg-background/5 backdrop-blur-md sticky top-0 z-10">
  <div>
  <nav className="flex items-center gap-2 text-xs font-bold text-muted-foreground mb-1 uppercase tracking-widest">
  <span>Judge</span>
  <ChevronRight className="w-3 h-3"/>
  <span>Dashboard</span>
  <ChevronRight className="w-3 h-3"/>
- <span className="text-primary">Judicial Insight</span>
+ <span className="text-primary">Overview</span>
  </nav>
  <h1 className="text-2xl font-black tracking-tight flex items-center gap-3">
- Command Overview
- <Badge variant="outline"className="text-[10px] uppercase tracking-tighter border-[var(--primary)]/30 text-[var(--primary)] bg-emerald-500/5 px-2">
+ Dashboard
+ <Badge variant="outline"className="text-[10px] uppercase tracking-tighter border-[var(--primary)]/30 text-[var(--primary)] bg-[var(--primary)]/5 px-2">
  <PlayCircle className="w-3 h-3 mr-1"/> Active Session
  </Badge>
  </h1>
@@ -167,7 +167,7 @@ export default function JudgeDashboard() {
  {modules.map((mod, i) => (
  <div 
  key={i} 
- className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-[2rem] border border-outline-variant/30 hover:shadow-2xl hover:shadow-primary/5 hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
+ className="bg-[var(--bg-card)] p-6 rounded-[2rem] border border-outline-variant/30 hover:shadow-2xl hover:shadow-primary/5 hover:scale-[1.02] transition-all duration-300 group cursor-pointer"
  >
  <div className="flex justify-between items-start mb-6">
  <div className={`p-3 rounded-2xl bg-muted/50 group-hover:bg-primary/10 transition-colors overflow-hidden`}>
@@ -213,7 +213,7 @@ export default function JudgeDashboard() {
  </div>
  </div>
 
- <div className="bg-surface-container-lowest dark:bg-surface-container rounded-[2rem] border border-outline-variant/20 shadow-sm overflow-hidden">
+ <div className="bg-[var(--bg-card)] rounded-[2rem] border border-outline-variant/20 shadow-sm overflow-hidden">
  <table className="w-full border-collapse text-left">
  <thead>
  <tr className="border-b border-outline-variant/30 bg-muted/20">

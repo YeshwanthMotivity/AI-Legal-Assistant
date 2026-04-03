@@ -73,7 +73,7 @@ const Login = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
         
         {/* Left Side - Branding & Architecture Preview */}
-        <section className="relative hidden lg:flex flex-col justify-center px-20 xl:px-32 bg-gradient-to-br from-[#062c1d] to-[#01140d] overflow-hidden border-0 outline-0">
+        <section className="relative hidden lg:flex flex-col justify-center px-20 xl:px-32 bg-gradient-to-br from-[#062c1d] to-[#01140d] overflow-hidden border-0 outline-0" style={{ marginRight: '-1px' }}>
           <BackgroundPreview />
 
           {/* Background Islamic Geometric Pattern (reduced opacity for arch preview) */}

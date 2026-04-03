@@ -245,7 +245,7 @@ h1, h2, h3, .judicial-title {
 .portal-divider-curve {
   position: absolute;
   top: 0;
-  right: 0;
+  right: -1px;
   width: 15vw;
   height: 100%;
   background: linear-gradient(to right, #01140d, transparent);
@@ -399,7 +399,7 @@ h1, h2, h3, .judicial-title {
 
 /* LexAI UAE Utility Classes */
 .editorial-shadow {
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 26, 19, 0.08);
 }
 
 .ghost-border {

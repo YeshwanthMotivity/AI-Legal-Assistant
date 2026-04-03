@@ -66,10 +66,10 @@ const CaseWorkflow = ({ viewedIdx, currentIdx, stages, onStageClick }: { viewedI
  <div key={stage.id} className="relative z-10 flex flex-col group flex-1 items-center">
  {/* Progress Line segments (Active) */}
  {isCompleted && i < stages.length - 1 && (
- <div className="absolute top-5 left-[50%] right-[-50%] h-[2px] bg-emerald-500 z-0"/>
+ <div className="absolute top-5 left-[50%] right-[-50%] h-[2px] bg-[var(--primary)] z-0"/>
  )}
  {isViewed && i < currentIdx && i < stages.length - 1 && (
- <div className="absolute top-5 left-[50%] right-[-50%] h-[2px] bg-emerald-500 z-0"/>
+ <div className="absolute top-5 left-[50%] right-[-50%] h-[2px] bg-[var(--primary)] z-0"/>
  )}
  
  <button 
@@ -82,9 +82,9 @@ const CaseWorkflow = ({ viewedIdx, currentIdx, stages, onStageClick }: { viewedI
  <div 
  className={cn(
 "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 border-2 bg-[var(--bg-card)] relative z-10",
- isViewed ?"border-emerald-600 text-[var(--primary)] shadow-[0_0_20px_rgba(5,150,105,0.2)] scale-110": 
+ isViewed ?"border-[var(--primary)] text-[var(--primary)] shadow-[0_0_20px_rgba(5,150,105,0.2)] scale-110": 
  isCompleted ?"border-[var(--primary)] text-[var(--primary)] shadow-sm": 
- isReached ?"border-emerald-600/30 text-emerald-700 hover:border-emerald-600/60":
+ isReached ?"border-[var(--primary)]/30 text-[var(--primary)] hover:border-[var(--primary)]/60":
 "border-muted text-muted-foreground/40 opacity-40"
  )}
  >
@@ -96,7 +96,7 @@ const CaseWorkflow = ({ viewedIdx, currentIdx, stages, onStageClick }: { viewedI
  <div className="text-center px-2">
  <p className={cn(
 "text-[9px] font-black tracking-[0.2em] uppercase mb-1.5 transition-colors", 
- isViewed ?"text-[var(--primary)]": isReached ?"text-emerald-700/60":"text-muted-foreground/30"
+ isViewed ?"text-[var(--primary)]": isReached ?"text-[var(--primary)]/60":"text-muted-foreground/30"
  )}>
  Phase {stage.id}
  </p>
@@ -127,12 +127,12 @@ const FeedbackForm = ({ caseId, onSubmit }: { caseId: string, onSubmit: (data: a
  return (
  <div className="w-full bg-[var(--bg-card)] p-10 rounded-[2rem] border border-border shadow-sm animate-in fade-in slide-in-from-bottom-8 duration-700">
  <header className="flex items-center gap-5 border-b border-border/50 pb-6 mb-8">
- <div className="p-3 bg-emerald-600 rounded-xl shadow-sm flex items-center justify-center">
+ <div className="p-3 bg-[var(--primary)] rounded-xl shadow-sm flex items-center justify-center">
  <MessagesSquare className="w-5 h-5 text-white"/>
  </div>
  <div>
- <h2 className="text-xl font-black tracking-tighter text-foreground uppercase leading-none">Judicial Audit & Node Feedback</h2>
- <p className="text-[10px] font-black text-[var(--primary)]/70 uppercase tracking-[0.2em] mt-1.5">System Calibration Protocol</p>
+ <h2 className="text-xl font-black tracking-tighter text-foreground uppercase leading-none">Judge Feedback</h2>
+ <p className="text-[10px] font-black text-[var(--primary)]/70 uppercase tracking-[0.2em] mt-1.5">Rate AI Performance</p>
  </div>
  </header>
  
@@ -150,7 +150,7 @@ const FeedbackForm = ({ caseId, onSubmit }: { caseId: string, onSubmit: (data: a
  <div className="relative pt-2">
  <input 
  type="range"min="1"max="10"
- className="w-full accent-emerald-600 h-1 bg-muted rounded-full appearance-none cursor-pointer"
+ className="w-full accent-[var(--primary)] h-1 bg-muted rounded-full appearance-none cursor-pointer"
  value={(feedback as any)[field]}
  onChange={(e) => setFeedback({...feedback, [field]: parseInt(e.target.value)})}
  />
@@ -163,16 +163,16 @@ const FeedbackForm = ({ caseId, onSubmit }: { caseId: string, onSubmit: (data: a
  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-6">Qualitative Analysis</h3>
  <div className="flex-1 flex flex-col gap-6">
  <textarea 
- className="w-full flex-1 min-h-[160px] p-5 bg-[var(--bg-surface)] border border-border/80 rounded-xl text-sm font-medium focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none transition-all placeholder:italic placeholder:opacity-50"
+ className="w-full flex-1 min-h-[160px] p-5 bg-[var(--bg-surface)] border border-border/80 rounded-xl text-sm font-medium focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] outline-none transition-all placeholder:italic placeholder:opacity-50"
  placeholder="Log anomalies, edge cases, or override justifications here..."
  value={feedback.feedback_text}
  onChange={(e) => setFeedback({...feedback, feedback_text: e.target.value})}
  />
  <Button 
- className="w-full h-12 bg-emerald-600 text-white font-black uppercase tracking-[0.15em] text-[11px] rounded-xl hover:bg-emerald-700 transition-all shadow-md shadow-emerald-500/10 shrink-0"
+ className="w-full h-12 bg-[var(--primary)] text-white font-black uppercase tracking-[0.15em] text-[11px] rounded-xl hover:bg-[var(--primary-hover)] transition-all shadow-md shadow-[var(--primary)]/10 shrink-0"
  onClick={() => onSubmit(feedback)}
  >
- Submit Calibration Payload
+ Submit Feedback
  </Button>
  </div>
  </div>
@@ -313,31 +313,31 @@ const CaseDetail = () => {
  switch (viewedIdx) {
  case 0:
  return {
- title:"Registration Synthesis",
+ title:"Case Overview",
  insight:"Detecting party mapping. Claimant indicates possible labor breach under Federal Law.",
  actions: ["Verify Claimant ID","Check Respondent License","Scan for conflict of interest"]
  };
  case 1:
  return {
- title:"Evidence Ingestion",
+ title:"Upload Documents",
  insight:"Missing Notice Period notification. Recommend scanning for email correspondence exhibits.",
  actions: ["Scan PDF OCR","Cross-link Exhibits","Check Signature Validity","Identify Labor Contract"]
  };
  case 2:
  return {
- title:"Reasoning Workbench",
+ title:"AI Analysis",
  insight:"94% alignment with DIFC-2022-04. Statutory interest calculation initialized.",
  actions: ["Export Precedents","Verify Entitlements","Launch Research Node","Simulate Outcome"]
  };
  case 3:
  return {
- title:"Orchestration Critique",
+ title:"Judgment Review",
  insight:"Judgment logic consistent with Article 144. Suggest adding Article 146 citation.",
  actions: ["Critique Reasoning","Check Consistency","Inject Law Article","Review Quantum"]
  };
  case 4:
  return {
- title:"System Evolution",
+ title:"Feedback",
  insight:"Your feedback will refine Node 4.0.2 grounding for wrongful termination cases.",
  actions: ["Analyze Feedback","Export Learning","Finalize Audit","Recalibrate AI Node"]
  };
@@ -356,7 +356,7 @@ const CaseDetail = () => {
  return (
  <PortalLayout title="Case Orchestrator"hideHeaderContent>
  <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
- <div className="w-16 h-16 border-4 border-emerald-600/20 border-t-emerald-600 rounded-full animate-spin"/>
+ <div className="w-16 h-16 border-4 border-[var(--primary)]/20 border-t-[var(--primary)] rounded-full animate-spin"/>
  <p className="text-xs font-black uppercase tracking-[.3em] text-[var(--primary)]/60">Initializing Judicial Node...</p>
  </div>
  </PortalLayout>
@@ -365,7 +365,7 @@ const CaseDetail = () => {
 
  return (
  <PortalLayout title="Case Orchestrator"hideHeaderContent>
- <div className="flex h-[calc(100vh-40px)] -m-10 overflow-hidden bg-[var(--bg-surface)]">
+ <div className="flex h-[calc(100vh-64px)] -m-6 overflow-hidden bg-[var(--bg-surface)]">
  
  {/* MAIN WORKSPACE CONTENT */}
  <div className="flex-1 flex flex-col overflow-hidden relative">
@@ -391,7 +391,7 @@ const CaseDetail = () => {
  />
 
  {localMessage && (
- <div className="mx-10 mt-10 p-5 rounded-2xl border flex items-center gap-4 animate-in fade-in bg-emerald-50 border-emerald-200 text-emerald-800 shadow-[0_4px_20px_rgba(16,185,129,0.05)]">
+ <div className="mx-10 mt-10 p-5 rounded-2xl border flex items-center gap-4 animate-in fade-in bg-[var(--primary)]/10 border-[var(--primary)]/20 text-[var(--primary)] shadow-[0_4px_20px_rgba(16,185,129,0.05)]">
  <CheckCircle2 className="w-6 h-6"/>
  <div>
  <p className="text-[10px] font-black uppercase tracking-widest opacity-60">System Update</p>
@@ -410,8 +410,8 @@ const CaseDetail = () => {
  <Scale className="w-8 h-8"/>
  </div>
  <div>
- <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase leading-none">Judicial Discovery</h2>
- <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mt-3 bg-muted/40 w-fit px-3 py-1 rounded-full border border-border/40">Verified Ingress Configuration</p>
+ <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase leading-none">Case Details</h2>
+ <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mt-3 bg-muted/40 w-fit px-3 py-1 rounded-full border border-border/40">Case Information</p>
  </div>
  </header>
 
@@ -419,11 +419,11 @@ const CaseDetail = () => {
  <div className="col-span-8 bg-[var(--bg-card)] p-12 rounded-[3.5rem] shadow-[0_4px_30px_rgba(0,0,0,0.02)] border border-border/80 space-y-12">
  <section className="grid grid-cols-2 gap-14">
  <div className="space-y-4">
- <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Proceeding Designation</label>
+ <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Case Title</label>
  <p className="text-xl font-black text-foreground leading-tight tracking-tight uppercase underline decoration-emerald-600/20 underline-offset-8 decoration-2">{caseQuery.data?.title}</p>
  </div>
  <div className="space-y-4">
- <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Registry ID</label>
+ <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Case ID</label>
  <div className="flex items-center gap-3">
  <Terminal className="w-4 h-4 text-[var(--primary)]"/>
  <p className="text-xl font-bold font-mono tracking-tighter text-foreground">{caseQuery.data?.case_number}</p>
@@ -435,10 +435,10 @@ const CaseDetail = () => {
 
  <section className="space-y-6">
  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)] flex items-center gap-3">
- <HistoryIcon className="w-4 h-4"/> Procedural Chronology
+ <HistoryIcon className="w-4 h-4"/> Case Background
  </label>
- <div className="p-10 bg-[var(--bg-surface)] rounded-[2.5rem] border border-emerald-100/40 relative overflow-hidden group">
- <div className="absolute top-0 left-0 w-1 h-full bg-emerald-600 opacity-20"/>
+ <div className="p-10 bg-[var(--bg-surface)] rounded-[2.5rem] border border-[var(--border-color)] relative overflow-hidden group">
+ <div className="absolute top-0 left-0 w-1 h-full bg-[var(--primary)] opacity-20"/>
  <p className="text-sm font-semibold leading-relaxed text-foreground/80 italic">
  {caseQuery.data?.description || 'Synchronizing procedural background... No legacy data detected.'}
  </p>
@@ -448,10 +448,10 @@ const CaseDetail = () => {
  <section className="grid grid-cols-3 gap-8 pt-4">
  {[
  { label: 'Court Ref', val: caseQuery.data?.court_number || 'DIFC-MAIN', icon: LayoutDashboard },
- { label: 'Ingress Date', val: caseQuery.data?.filing_date ? new Date(caseQuery.data.filing_date).toDateString() : 'N/A', icon: HistoryIcon },
- { label: 'Strategic Category', val: caseQuery.data?.case_type?.replace(/_/g, ' ') || 'OTHER', icon: Gavel }
+ { label: 'Filing Date', val: caseQuery.data?.filing_date ? new Date(caseQuery.data.filing_date).toDateString() : 'N/A', icon: HistoryIcon },
+ { label: 'Case Type', val: caseQuery.data?.case_type?.replace(/_/g, ' ') || 'OTHER', icon: Gavel }
  ].map((item, i) => (
- <div key={i} className="p-6 bg-muted/10 rounded-3xl border border-border/20 flex flex-col gap-3 group hover:border-emerald-600/20 transition-all duration-300">
+ <div key={i} className="p-6 bg-muted/10 rounded-3xl border border-border/20 flex flex-col gap-3 group hover:border-[var(--primary)]/20 transition-all duration-300">
  <item.icon className="w-4 h-4 text-[var(--primary)]/40 group-hover:text-[var(--primary)] transition-colors"/>
  <div>
  <p className="text-[9px] font-black uppercase text-muted-foreground opacity-40 mb-1 tracking-widest">{item.label}</p>
@@ -464,13 +464,13 @@ const CaseDetail = () => {
 
  <div className="col-span-4 space-y-8">
  <div className="bg-[var(--bg-card)] p-12 rounded-[3.5rem] shadow-[0_4px_30px_rgba(0,0,0,0.02)] border border-border/80 relative overflow-hidden group">
- <div className="absolute bottom-[-10%] right-[-10%] w-40 h-40 bg-emerald-600/5 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-600/10 transition-colors duration-700"/>
+ <div className="absolute bottom-[-10%] right-[-10%] w-40 h-40 bg-[var(--primary)]/5 rounded-full blur-3xl pointer-events-none group-hover:bg-[var(--primary)]/10 transition-colors duration-700"/>
  <h3 className="text-[10px] font-black uppercase tracking-[.25em] text-[var(--primary)] mb-10 flex items-center gap-3">
- <User className="w-4 h-4"/> Party Orchestration
+ <User className="w-4 h-4"/> Parties
  </h3>
  <div className="space-y-10 relative z-10">
  <div className="space-y-3">
- <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40">Validated Claimant</p>
+ <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40">Claimant</p>
  <p className="text-xl font-black tracking-tighter text-foreground uppercase">{caseQuery.data?.claimant_name}</p>
  </div>
  <div className="w-full flex items-center gap-4">
@@ -479,18 +479,18 @@ const CaseDetail = () => {
  <div className="h-px bg-muted/60 flex-1"/>
  </div>
  <div className="space-y-3">
- <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40">Target Respondent</p>
+ <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40">Respondent</p>
  <p className="text-xl font-black tracking-tighter text-foreground uppercase">{caseQuery.data?.respondent_name}</p>
  </div>
  </div>
  </div>
 
  <div className="bg-[var(--bg-card)] p-10 rounded-[3rem] border border-border/80 shadow-[0_4px_30px_rgba(0,0,0,0.02)] hover:border-[var(--primary)]/30 transition-all duration-300">
- <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-40 block mb-6">Aggregate Claim Quantum</label>
+ <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-40 block mb-6">Claim Amount</label>
  <p className="text-4xl font-black text-foreground tracking-tighter tabular-nums">{caseQuery.data?.claim_amount || 'AED 0,00'}</p>
- <div className="mt-6 flex items-center gap-3 text-[var(--primary)] py-2 px-4 bg-emerald-50 w-fit rounded-full border border-emerald-100">
+ <div className="mt-6 flex items-center gap-3 text-[var(--primary)] py-2 px-4 bg-[var(--primary)]/10 w-fit rounded-full border border-[var(--primary)]/20">
  <TrendingUp className="w-4 h-4 shrink-0"/>
- <span className="text-[9px] font-black uppercase tracking-[0.2em] whitespace-nowrap">Economic Priority: CRITICAL</span>
+ <span className="text-[9px] font-black uppercase tracking-[0.2em] whitespace-nowrap">Claim Priority: HIGH</span>
  </div>
  </div>
  </div>
@@ -506,8 +506,8 @@ const CaseDetail = () => {
  <Upload className="w-8 h-8"/>
  </div>
  <div>
- <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase leading-none">Evidence Ingestion</h2>
- <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mt-3 bg-muted/40 w-fit px-3 py-1 rounded-full border border-border/40">Synchronized Digital Repository</p>
+ <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase leading-none">Upload Documents</h2>
+ <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mt-3 bg-muted/40 w-fit px-3 py-1 rounded-full border border-border/40">Case File Storage</p>
  </div>
  </header>
  <div className="bg-[var(--bg-card)] p-12 rounded-[4rem] shadow-sm border border-border/80">
@@ -538,17 +538,17 @@ const CaseDetail = () => {
  precedents={precedents}
  />
  {!isReady && !isActivelyLoading && (
- <div className="mt-12 text-center p-24 bg-[var(--bg-card)] border-2 border-dashed border-border/80 rounded-[4rem] shadow-inner max-w-4xl mx-auto group hover:border-emerald-600/30 transition-all">
- <div className="w-24 h-24 bg-emerald-50 border border-emerald-100 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 group-hover:scale-110 transition-transform">
+ <div className="mt-12 text-center p-24 bg-[var(--bg-card)] border-2 border-dashed border-border/80 rounded-[4rem] shadow-inner max-w-4xl mx-auto group hover:border-[var(--primary)]/30 transition-all">
+ <div className="w-24 h-24 bg-[var(--primary)]/10 border border-[var(--primary)]/20 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 group-hover:scale-110 transition-transform">
  <BrainCircuit className="w-12 h-12 text-[var(--primary)] animate-pulse"/>
  </div>
- <h3 className="text-3xl font-black text-foreground uppercase tracking-tight">Run Intelligence Mapping</h3>
+ <h3 className="text-3xl font-black text-foreground uppercase tracking-tight">Run AI Analysis</h3>
  <p className="text-sm font-bold text-muted-foreground mt-6 italic max-w-lg mx-auto opacity-70">Activate the Cylix synthesis engine to perform high-precision cross-statutory reconciliation and automated precedent discovery across the regional judicial database.</p>
  <Button 
- className="mt-12 h-16 px-14 bg-emerald-600 text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-emerald-500/30 hover:bg-emerald-700 hover:scale-105 active:scale-95 transition-all"
+ className="mt-12 h-16 px-14 bg-[var(--primary)] text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-[var(--primary)]/30 hover:bg-[var(--primary-hover)] hover:scale-105 active:scale-95 transition-all"
  onClick={() => runAnalysisMutation.mutate()}
  >
- <Sparkles className="w-4 h-4 mr-3"/> Initialize Synthesis
+ <Sparkles className="w-4 h-4 mr-3"/> Run AI Analysis
  </Button>
  </div>
  )}
@@ -605,7 +605,7 @@ const CaseDetail = () => {
  {/* Back */}
  <Button
  variant="outline"
- className="h-11 px-7 rounded-xl gap-2 font-black uppercase tracking-widest disabled:opacity-20 transition-all border-border hover:border-emerald-600/30 hover:bg-emerald-50 hover:text-emerald-700 text-[11px]"
+ className="h-11 px-7 rounded-xl gap-2 font-black uppercase tracking-widest disabled:opacity-20 transition-all border-border hover:border-[var(--primary)]/30 hover:bg-[var(--primary)]/10 hover:text-[var(--primary)] text-[11px]"
  disabled={viewedIdx === 0}
  onClick={() => setViewedIdx(prev => Math.max(0, prev - 1))}
  >
@@ -621,7 +621,7 @@ const CaseDetail = () => {
  key={i}
  className={cn(
 "h-1.5 rounded-full transition-all duration-500 ease-out",
- i === viewedIdx ?"bg-emerald-600 w-8":
+ i === viewedIdx ?"bg-[var(--primary)] w-8":
  i < currentIdx ?"bg-emerald-400 w-5":
 "bg-muted w-5"
  )}
@@ -633,8 +633,8 @@ const CaseDetail = () => {
  className={cn(
 "w-11 h-11 rounded-xl transition-all duration-300 border flex items-center justify-center",
  isAiPanelOpen
- ?"bg-emerald-600 text-white border-[var(--primary)] shadow-md shadow-emerald-500/20"
- :"bg-[var(--bg-card)] border-border text-muted-foreground hover:border-emerald-600/30 hover:text-emerald-700"
+ ?"bg-[var(--primary)] text-white border-[var(--primary)] shadow-md shadow-emerald-500/20"
+ :"bg-[var(--bg-card)] border-border text-muted-foreground hover:border-[var(--primary)]/30 hover:text-[var(--primary)]"
  )}
  onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
  >
@@ -645,7 +645,7 @@ const CaseDetail = () => {
  {/* Next */}
  <Button
  disabled={viewedIdx === 4 || viewedIdx > currentIdx}
- className="h-11 px-8 rounded-xl gap-2 bg-emerald-600 text-white font-black uppercase tracking-widest shadow-md shadow-emerald-500/20 hover:bg-emerald-700 hover:scale-105 active:scale-95 transition-all text-[11px]"
+ className="h-11 px-8 rounded-xl gap-2 bg-[var(--primary)] text-white font-black uppercase tracking-widest shadow-md shadow-emerald-500/20 hover:bg-[var(--primary-hover)] hover:scale-105 active:scale-95 transition-all text-[11px]"
  onClick={() => setViewedIdx(prev => Math.min(4, prev + 1))}
  >
  {stages[viewedIdx + 1]?.label || 'Complete'} <ArrowRight className="w-4 h-4"/>
@@ -664,7 +664,7 @@ const CaseDetail = () => {
  {/* Assistant Header */}
  <div className="p-6 border-b border-border flex justify-between items-center bg-[var(--bg-surface)] shrink-0">
  <div className="flex items-center gap-3">
- <div className="p-2.5 bg-emerald-600 rounded-xl shadow-md shadow-emerald-500/20">
+ <div className="p-2.5 bg-[var(--primary)] rounded-xl shadow-md shadow-emerald-500/20">
  <Sparkles className="w-4 h-4 text-white"/>
  </div>
  <div>
@@ -678,7 +678,7 @@ const CaseDetail = () => {
  </div>
 
  {/* Insight Card */}
- <div className="p-6 border-b border-border bg-emerald-600 text-white relative overflow-hidden shrink-0">
+ <div className="p-6 border-b border-border bg-[var(--primary)] text-white relative overflow-hidden shrink-0">
  <div className="absolute -right-10 -top-10 w-36 h-36 bg-white/10 rounded-full blur-3xl pointer-events-none"/>
  <p className="text-[9px] font-black uppercase tracking-[.25em] mb-3 opacity-60">Strategic Synthesis</p>
  <h4 className="text-[13px] font-bold italic leading-relaxed tracking-tight">
@@ -699,11 +699,11 @@ const CaseDetail = () => {
  {assistant.actions.map((action, i) => (
  <button
  key={i}
- className="w-full text-left p-4 bg-muted/20 hover:bg-emerald-50 hover:border-emerald-200 group rounded-2xl border border-border/60 transition-all flex items-center justify-between"
+ className="w-full text-left p-4 bg-muted/20 hover:bg-[var(--primary)]/10 hover:border-[var(--primary)]/20 group rounded-2xl border border-border/60 transition-all flex items-center justify-between"
  >
- <span className="text-[11px] font-black text-foreground group-hover:text-emerald-700 uppercase tracking-tight">{action}</span>
+ <span className="text-[11px] font-black text-foreground group-hover:text-[var(--primary)] uppercase tracking-tight">{action}</span>
  <div className="p-1.5 bg-[var(--bg-card)] group-hover:bg-emerald-100 rounded-lg border border-border/40 transition-colors">
- <Plus className="w-3.5 h-3.5 text-muted-foreground group-hover:text-emerald-700 transition-colors"/>
+ <Plus className="w-3.5 h-3.5 text-muted-foreground group-hover:text-[var(--primary)] transition-colors"/>
  </div>
  </button>
  ))}
@@ -721,8 +721,8 @@ const CaseDetail = () => {
  </div>
  </div>
  <div className="flex gap-3">
- <div className="w-8 h-8 rounded-xl bg-emerald-600 flex items-center justify-center shrink-0 shadow-sm"><Sparkles className="w-4 h-4 text-white"/></div>
- <div className="bg-emerald-50 p-4 rounded-2xl rounded-tl-none border border-emerald-100 text-xs font-bold text-foreground/80 leading-relaxed">
+ <div className="w-8 h-8 rounded-xl bg-[var(--primary)] flex items-center justify-center shrink-0 shadow-sm"><Sparkles className="w-4 h-4 text-white"/></div>
+ <div className="bg-[var(--primary)]/10 p-4 rounded-2xl rounded-tl-none border border-[var(--primary)]/20 text-xs font-bold text-foreground/80 leading-relaxed">
  High consistency detected with Dubai Court of First Instance precedents.
  </div>
  </div>
@@ -736,14 +736,14 @@ const CaseDetail = () => {
  <input
  type="text"
  placeholder="Ask Cylix..."
- className="w-full bg-[var(--bg-card)] border border-border/60 hover:border-emerald-600/30 focus:border-emerald-600/50 focus:ring-4 focus:ring-emerald-600/5 h-12 pl-5 pr-14 rounded-2xl outline-none transition-all placeholder:opacity-40 text-sm font-bold"
+ className="w-full bg-[var(--bg-card)] border border-border/60 hover:border-[var(--primary)]/30 focus:border-[var(--primary)]/50 focus:ring-4 focus:ring-[var(--primary)]/5 h-12 pl-5 pr-14 rounded-2xl outline-none transition-all placeholder:opacity-40 text-sm font-bold"
  />
- <button className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-md hover:bg-emerald-700 transition-colors">
+ <button className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-[var(--primary)] text-white rounded-xl flex items-center justify-center shadow-md hover:bg-[var(--primary-hover)] transition-colors">
  <ChevronRight className="w-4 h-4"/>
  </button>
  </div>
  <div className="flex items-center justify-center gap-2 mt-3">
- <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"/>
+ <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary)]/100 animate-pulse"/>
  <p className="text-[9px] text-muted-foreground font-black uppercase tracking-[0.3em] opacity-40">Cylix Neural Node Active</p>
  </div>
  </div>

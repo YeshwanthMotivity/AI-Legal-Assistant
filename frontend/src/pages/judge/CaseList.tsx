@@ -95,7 +95,7 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
 
  {/* 1. Top Metrics */}
  <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
- <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
+ <div className="bg-[var(--bg-card)] p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
  <div>
  <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">{t('judge.caseList.activePortfolio')}</p>
  <h3 className="font-headline text-3xl font-medium text-primary">
@@ -108,7 +108,7 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
  </div>
  </div>
 
- <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
+ <div className="bg-[var(--bg-card)] p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
  <div>
  <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">{t('judge.caseList.aiScoredReady')}</p>
  <h3 className="font-headline text-3xl font-medium text-primary">
@@ -121,7 +121,7 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
  </div>
  </div>
 
- <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
+ <div className="bg-[var(--bg-card)] p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
  <div>
  <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">{t('judge.caseList.criticalHearings')}</p>
  <h3 className="font-headline text-3xl font-medium text-primary">
@@ -134,7 +134,7 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
  </div>
  </div>
 
- <div className="bg-surface-container-lowest dark:bg-surface-container p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
+ <div className="bg-[var(--bg-card)] p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
  <div>
  <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">{t('judge.caseList.decisionsIssued')}</p>
  <h3 className="font-headline text-3xl font-medium text-primary">
@@ -150,15 +150,15 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
 
  <div className="flex flex-col gap-8">
  {/* Filtering & Actions Ribbon */}
- <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-surface-container-lowest dark:bg-surface-container p-4 rounded-lg editorial-shadow border border-outline-variant/30">
+ <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-[var(--bg-card)] p-4 rounded-lg editorial-shadow border border-outline-variant/30">
 
- <div className="flex bg-surface-container-low dark:bg-surface-container-high p-1.5 rounded border border-outline-variant/20 w-full lg:w-auto">
+ <div className="flex bg-surface-container-low-high p-1.5 rounded border border-outline-variant/20 w-full lg:w-auto">
  <button
  onClick={() => setActiveTab('assigned')}
  className={cn(
 "px-6 py-2 rounded text-[11px] font-bold uppercase tracking-wider transition-all",
  activeTab === 'assigned'
- ?"bg-surface-container-lowest dark:bg-surface-container text-primary shadow-sm border border-outline-variant/20"
+ ?"bg-[var(--bg-card)] text-primary shadow-sm border border-outline-variant/20"
  :"text-on-surface-variant hover:text-on-surface"
  )}
  >
@@ -169,7 +169,7 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
  className={cn(
 "px-6 py-2 rounded text-[11px] font-bold uppercase tracking-wider transition-all",
  activeTab === 'previous'
- ?"bg-surface-container-lowest dark:bg-surface-container text-primary shadow-sm border border-outline-variant/20"
+ ?"bg-[var(--bg-card)] text-primary shadow-sm border border-outline-variant/20"
  :"text-on-surface-variant hover:text-on-surface"
  )}
  >
@@ -181,7 +181,7 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
  <div className="relative w-full sm:w-80">
  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant"/>
  <input
- className="w-full bg-surface-container-low dark:bg-surface-container border border-outline-variant/30 rounded py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary/20 transition-all font-medium text-on-surface"
+ className="w-full bg-surface-container-low border border-outline-variant/30 rounded py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary/20 transition-all font-medium text-on-surface"
  placeholder={t('judge.caseList.searchPlaceholder')}
  value={searchQuery}
  onChange={(e) => setSearchQuery(e.target.value)}
@@ -217,7 +217,7 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
  {t('judge.caseList.errorLoadingPortfolio')}
  </div>
  ) : visibleCases.length === 0 ? (
- <div className="p-10 text-center italic text-on-surface-variant bg-surface-container-lowest dark:bg-surface-container rounded-lg border border-outline-variant/30">
+ <div className="p-10 text-center italic text-on-surface-variant bg-[var(--bg-card)] rounded-lg border border-outline-variant/30">
  {t('judge.caseList.docketClear')}
  </div>
  ) : (
@@ -226,7 +226,7 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
  const isUrgent = c.hearing_date && new Date(c.hearing_date) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
 
  return (
- <div key={c.id} className="bg-surface-container-lowest dark:bg-surface-container p-5 rounded-lg editorial-shadow border border-outline-variant/30 hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-all duration-300">
+ <div key={c.id} className="bg-[var(--bg-card)] p-5 rounded-lg editorial-shadow border border-outline-variant/30 hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-all duration-300">
  <div className="flex justify-between items-start mb-3">
  <div>
  <span className="text-[10px] font-bold text-tertiary tracking-widest uppercase mb-1 block">
