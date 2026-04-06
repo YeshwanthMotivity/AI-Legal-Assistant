@@ -26,10 +26,13 @@ import {
 
 export default function JudgeDashboard() {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [chatInput, setChatInput] = useState('');
+  const [chatHistory, setChatHistory] = useState<{role: 'user'|'assistant', content: string}[]>([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
 
   const casesQuery = useQuery({
     queryKey: ['judge-cases'],
@@ -71,17 +74,52 @@ export default function JudgeDashboard() {
     return { performance: { resolved, total } };
   }, [allCasesQuery.data]);
 
+  const sendChat = async () => {
+    if (!chatInput.trim()) return;
+    const userMsg = chatInput.trim();
+    setChatInput('');
+    setChatHistory(prev => [...prev, { role: 'user', content: userMsg }]);
+    setIsChatLoading(true);
+
+    const systemPrompt = `You are Cylix, an AI judicial assistant. The user is on the Judge Dashboard. 
+    Active cases: ${stats.pending}. Urgent hearings: ${stats.urgent}. AI Ready cases: ${stats.ready}.
+    ${focusCase ? `Current focus case: ${focusCase.title}, Status: ${focusCase.status}, Case number: ${focusCase.case_number}.` : ''}
+    Answer questions about the dashboard, cases, and judicial workflow. ${i18n.language === 'ar' ? 'Always respond in Arabic.' : 'Always respond in English.'}`;
+
+    try {
+      const response = await fetch('http://localhost:11434/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'qwen2.5:1.5b-instruct',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...chatHistory,
+            { role: 'user', content: userMsg }
+          ],
+          stream: false
+        })
+      });
+      const data = await response.json();
+      setChatHistory(prev => [...prev, { role: 'assistant', content: data.message.content }]);
+    } catch {
+      setChatHistory(prev => [...prev, { role: 'assistant', content: 'Unable to connect to AI model.' }]);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
+
   const modules = [
-    { label: 'Active Cases', desc: 'Currently assigned', count: Math.max(stats.pending, 24), icon: Briefcase },
-    { label: 'AI Ready', desc: 'Ready for review', count: stats.ready || 0, icon: Sparkles },
-    { label: 'Urgent Hearings', desc: 'Require attention', count: stats.urgent || 0, icon: History },
-    { label: 'Performance', desc: 'Archived cases', progress: Math.round((performance.resolved / performance.total) * 100), icon: BarChart3 },
+    { label: t('active_cases', 'Active Cases'), desc: t('currently_assigned', 'Currently assigned'), count: stats.pending, icon: Briefcase },
+    { label: t('ai_ready', 'AI Ready'), desc: t('ready_for_review', 'Ready for review'), count: stats.ready || 0, icon: Sparkles },
+    { label: t('urgent_hearings', 'Urgent Hearings'), desc: t('require_attention', 'Require attention'), count: stats.urgent || 0, icon: History },
+    { label: t('performance', 'Performance'), desc: t('archived_cases', 'Archived cases'), progress: Math.round((performance.resolved / performance.total) * 100), icon: BarChart3 },
   ];
 
   return (
     <PortalLayout 
-      title="Dashboard" 
-      subtitle="Judicial summary of recent session activity"
+      title={t('dashboard', 'Dashboard')} 
+      subtitle={t('judicial_summary', 'Judicial summary of recent session activity')}
       headerActions={
         <div className="flex items-center gap-3">
           <button 
@@ -110,18 +148,18 @@ export default function JudgeDashboard() {
                   <div className="px-5 py-3 rounded-lg bg-[var(--bg-card)] border-l-4 border-error shadow-sm flex items-center justify-between group animate-in slide-in-from-top-2">
                     <div className="flex items-center gap-4">
                       <AlertTriangle className="w-4 h-4 text-error"/>
-                      <p className="text-sm font-semibold text-on-surface">{stats.urgent} cases detected with hearings in less than 7 days.</p>
+                      <p className="text-sm font-semibold text-on-surface">{stats.urgent} {t('urgent_cases_msg', 'cases detected with hearings in less than 7 days.')}</p>
                     </div>
-                    <button className="h-8 px-4 text-[9px] font-bold bg-error text-white rounded uppercase tracking-widest hover:brightness-110">Review Urgent</button>
+                    <button className="h-8 px-4 text-[9px] font-bold bg-error text-white rounded uppercase tracking-widest hover:brightness-110">{t('review_urgent', 'Review Urgent')}</button>
                   </div>
                 )}
                 {stats.ready > 0 && (
                   <div className="px-5 py-3 rounded-lg bg-[var(--bg-card)] border-l-4 border-[var(--primary)] shadow-sm flex items-center justify-between group animate-in slide-in-from-top-2 delay-75">
                     <div className="flex items-center gap-4">
                       <Zap className="w-4 h-4 text-[var(--primary)]"/>
-                      <p className="text-sm font-semibold text-on-surface">{stats.ready} case drafts are ready for judicial finalization.</p>
+                      <p className="text-sm font-semibold text-on-surface">{stats.ready} {t('draft_ready_msg', 'case drafts are ready for judicial finalization.')}</p>
                     </div>
-                    <button className="h-8 px-4 text-[9px] font-bold bg-[var(--primary)] text-white rounded uppercase tracking-widest hover:brightness-110">Finalize Drafts</button>
+                    <button className="h-8 px-4 text-[9px] font-bold bg-[var(--primary)] text-white rounded uppercase tracking-widest hover:brightness-110">{t('finalize_drafts', 'Finalize Drafts')}</button>
                   </div>
                 )}
               </div>
@@ -152,7 +190,7 @@ export default function JudgeDashboard() {
             <section className="space-y-4 pt-2 pb-12">
               <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-1 py-1">
                 <div className="flex items-center gap-4">
-                  <h2 className="text-base font-bold tracking-tight text-foreground">My Cases</h2>
+                  <h2 className="text-base font-bold tracking-tight text-foreground">{t('my_cases', 'My Cases')}</h2>
                   <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-black rounded border border-primary/20 tracking-widest uppercase">
                     {recentCases.length} {recentCases.length === 1 ? 'Case' : 'Cases'}
                   </span>
@@ -162,7 +200,7 @@ export default function JudgeDashboard() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40"/>
                   <input
                     className="w-full bg-surface-container-low border border-outline-variant/30 rounded py-2 pl-9 pr-4 text-[11px] uppercase tracking-widest focus:outline-none focus:border-tertiary font-bold transition-all placeholder:opacity-50"
-                    placeholder="Quick search dockets..."
+                    placeholder={t('quick_search_dockets', 'Quick search dockets...')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -220,12 +258,12 @@ export default function JudgeDashboard() {
                           
                           {/* Sector 2: Score */}
                           <div className="space-y-2">
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-40 leading-none">AI Precision Score</p>
+                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-40 leading-none">{t('ai_precision_score', 'AI Precision Score')}</p>
                             <div className="flex items-center gap-3">
                               <div className="flex-1 max-w-[140px] h-1.5 bg-muted rounded-full overflow-hidden">
-                                <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: c.status === 'AIAnalysisReady' ? '94%' : '30%' }} />
+                                <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: c.ai_precision_score ? `${c.ai_precision_score}%` : c.status === 'AIAnalysisReady' ? '94%' : '30%' }} />
                               </div>
-                              <span className="text-[12px] font-bold tabular-nums text-primary">{c.status === 'AIAnalysisReady' ? '94%' : '--'}</span>
+                              <span className="text-[12px] font-bold tabular-nums text-primary">{c.ai_precision_score ? `${c.ai_precision_score}%` : c.status === 'AIAnalysisReady' ? '94%' : '--'}</span>
                             </div>
                           </div>
                           
@@ -273,13 +311,13 @@ export default function JudgeDashboard() {
               <div className="space-y-6 animate-in fade-in duration-500">
                 <div className="p-6 rounded-2xl bg-primary text-on-primary shadow-xl shadow-primary/20 relative overflow-hidden group border border-white/10">
                   <div className="absolute -right-10 -top-10 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-70">Focus Insight</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-70">{t('focus_insight', 'Focus Insight')}</p>
                   <h4 className="text-sm font-bold mb-3 italic leading-relaxed">
-                    {`"Case ${focusCase.case_number || 'ID-XX'} analysis: Discovery phase complete. High alignment with labor statutory precedents noted."`}
+                    {`Case ${focusCase.case_number} - Status: ${focusCase.status}. Last updated: ${new Date(focusCase.updated_at).toLocaleDateString()}.`}
                   </h4>
                   <div className="flex items-center gap-2 mt-6">
                     <Verified className="w-4 h-4 text-emerald-300"/>
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Standard Verified Mapping</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">{t('standard_verified_mapping', 'Standard Verified Mapping')}</span>
                   </div>
                 </div>
 
@@ -298,24 +336,19 @@ export default function JudgeDashboard() {
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="text-[11px] font-bold text-foreground">Assistant Interaction</h4>
+                  <h4 className="text-[11px] font-bold text-foreground">{t('assistant_interaction', 'Assistant Interaction')}</h4>
                   <div className="space-y-4">
-                    <div className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 border border-border/40">
-                        <User className="w-4 h-4 text-muted-foreground"/>
+                    {chatHistory.map((msg, i) => (
+                      <div key={i} className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${msg.role === 'user' ? 'bg-muted border-border/40' : 'bg-primary/10 border-primary/20'}`}>
+                          {msg.role === 'user' ? <User className="w-4 h-4 text-muted-foreground"/> : <Sparkles className="w-4 h-4 text-primary"/>}
+                        </div>
+                        <div className={`${msg.role === 'user' ? 'bg-muted/20 border-border/20' : 'bg-primary/5 border-primary/10 shadow-sm shadow-primary/5'} p-4 rounded-2xl rounded-tl-none border`}>
+                          <p className="text-xs font-medium text-foreground/90 leading-relaxed">{msg.content}</p>
+                        </div>
                       </div>
-                      <div className="bg-muted/20 p-4 rounded-2xl rounded-tl-none border border-border/20">
-                        <p className="text-xs font-medium italic text-foreground/80 leading-relaxed tracking-tight underline underline-offset-4 decoration-primary/20">Compare with UAE Federal Law No. 2 (2015)</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
-                        <Sparkles className="w-4 h-4 text-primary"/>
-                      </div>
-                      <div className="bg-primary/5 p-4 rounded-2xl rounded-tl-none border border-primary/10 shadow-sm shadow-primary/5">
-                        <p className="text-xs font-medium text-foreground/90 leading-relaxed antialiased">Detected strong alignment with Article 144.2. Probability score: 94% based on similar precedents.</p>
-                      </div>
-                    </div>
+                    ))}
+                    {isChatLoading && <div className="text-[10px] text-muted-foreground animate-pulse font-bold uppercase tracking-widest">{t('thinking', 'Thinking...')}</div>}
                   </div>
                 </div>
               </div>
@@ -331,10 +364,17 @@ export default function JudgeDashboard() {
             <div className="relative group">
               <input 
                 type="text"
-                placeholder="Ask Cylix AI..."
+                placeholder={t('ask_cylix_ai', 'Ask Cylix AI...')}
                 className="w-full bg-background border border-border/60 focus:border-primary/50 focus:ring-4 focus:ring-primary/5 h-12 pl-4 pr-12 rounded-2xl shadow-sm outline-none transition-all placeholder:text-muted-foreground/50 text-sm font-medium"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && sendChat()}
               />
-              <button className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-primary text-on-primary rounded-xl flex items-center justify-center shadow-lg hover:scale-105 transition-all">
+              <button 
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-primary text-on-primary rounded-xl flex items-center justify-center shadow-lg hover:scale-105 transition-all"
+                onClick={sendChat}
+                disabled={isChatLoading}
+              >
                 <ChevronRight className="w-4 h-4"/>
               </button>
             </div>

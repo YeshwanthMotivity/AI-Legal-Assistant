@@ -5,8 +5,14 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { AuthProvider } from './auth/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
-import './i18n'
+import i18n from './i18n'
 import './styles/app.css'
+
+// Watch language change and set document direction:
+i18n.on('languageChanged', (lng) => {
+  document.documentElement.dir = lng === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.lang = lng;
+});
 
 const queryClient = new QueryClient({
   defaultOptions: {
