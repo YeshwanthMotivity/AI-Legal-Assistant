@@ -313,7 +313,7 @@ export default function JudgeDashboard() {
                   <div className="absolute -right-10 -top-10 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
                   <p className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-70">{t('focus_insight', 'Focus Insight')}</p>
                   <h4 className="text-sm font-bold mb-3 italic leading-relaxed">
-                    {`Case ${focusCase.case_number} - Status: ${focusCase.status}. Last updated: ${new Date(focusCase.updated_at).toLocaleDateString()}.`}
+                    {`Case ${focusCase.case_number} - Status: ${focusCase.status}. ${focusCase.updated_at ? `Last updated: ${new Date(focusCase.updated_at).toLocaleDateString()}.` : ''}`}
                   </h4>
                   <div className="flex items-center gap-2 mt-6">
                     <Verified className="w-4 h-4 text-emerald-300"/>

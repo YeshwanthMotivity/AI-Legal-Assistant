@@ -48,6 +48,7 @@ async def get_audit_logs(
     )
 
 
+
 @router.get("/audit-logs", response_model=AuditLogListResponse)
 async def get_audit_logs_endpoint(
     skip: int = 0,
@@ -59,4 +60,23 @@ async def get_audit_logs_endpoint(
 ):
     """Get audit logs (Admin only)."""
     return await get_audit_logs(skip, limit, action, user_id, db, current_user)
+
+
+# Add a new router without /admin prefix for judges
+judge_router = APIRouter(prefix="/audit", tags=["Audit"])
+
+@judge_router.get("", response_model=List[AuditLogResponse])
+async def get_case_activity(
+    case_id: str,
+    limit: int = 50,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_role(UserRole.JUDGE))
+):
+    """Get activity for a specific case (accessible by Judges)."""
+    query = select(AuditLog).where(
+        AuditLog.resource_id == case_id
+    ).order_by(AuditLog.created_at.desc()).limit(limit)
+    result = await db.execute(query)
+    logs = list(result.scalars().all())
+    return [AuditLogResponse.model_validate(log) for log in logs]
 

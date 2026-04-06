@@ -29,7 +29,15 @@ export default function AIActivityLogs() {
 
   const { data: logs, isLoading, isRefetching } = useQuery<AuditLogEntry[]>({
     queryKey: ['activity-logs', id],
-    queryFn: () => apiClient.get(`/audit?case_id=${id}&limit=50`).then(r => r.data),
+    queryFn: async () => {
+      try {
+        const r = await apiClient.get(`/audit?case_id=${id}&limit=50`);
+        return r.data;
+      } catch (err) {
+        console.error('Audit fetch failed:', err);
+        return [];
+      }
+    },
     refetchInterval: 5000,
     enabled: !!id,
   });

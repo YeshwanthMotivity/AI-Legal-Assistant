@@ -73,7 +73,9 @@ def create_app() -> FastAPI:
     app.include_router(case_document_router, prefix="/api/v1", tags=["documents"])
     app.include_router(document_router, prefix="/api/v1", tags=["documents"])
     app.include_router(user_admin_router, prefix="/api/v1", tags=["admin"])
+    from app.modules.audit.routes import router as audit_router, judge_router as audit_judge_router
     app.include_router(audit_router, prefix="/api/v1", tags=["admin"])
+    app.include_router(audit_judge_router, prefix="/api/v1", tags=["audit"])
     app.include_router(evaluation_router, prefix="/api/v1", tags=["admin"])
     app.include_router(search_router, prefix="/api/v1", tags=["search"])
     app.include_router(similarity_router, prefix="/api/v1", tags=["similarity"])
