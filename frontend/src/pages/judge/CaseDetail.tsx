@@ -188,7 +188,7 @@ const CaseDetail = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [analysisRequested, setAnalysisRequested] = useState(false)
-  const [localMessage, setLocalMessage] = useState<string | null>('')
+  const [localMessage, setLocalMessage] = useState<{ text: string, phase: number } | null>(null)
   const [messageType, setMessageType] = useState<'success' | 'error'>('success')
 
   const [viewedIdx, setViewedIdx] = useState(0)
@@ -244,12 +244,12 @@ const CaseDetail = () => {
       queryClient.invalidateQueries({ queryKey: ['case-documents', id] })
       queryClient.invalidateQueries({ queryKey: ['judge-case', id] })
       setMessageType('success')
-      setLocalMessage(t('judge.workspace.uploadSuccess'))
+      setLocalMessage({ text: t('judge.workspace.uploadSuccess'), phase: 1 })
       setSelectedFile(null)
     },
     onError: (error) => {
       setMessageType('error')
-      setLocalMessage(t('judge.workspace.uploadError'))
+      setLocalMessage({ text: t('judge.workspace.uploadError'), phase: 1 })
     },
   })
 
@@ -262,7 +262,7 @@ const CaseDetail = () => {
     },
     onError: (error) => {
       setMessageType('error')
-      setLocalMessage(t('common.error'))
+      setLocalMessage({ text: t('common.error'), phase: 2 })
     }
   })
 
@@ -271,7 +271,7 @@ const CaseDetail = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['judge-case', id] })
       setMessageType('success')
-      setLocalMessage(t('judge.workspace.judgmentFinalized'))
+      setLocalMessage({ text: t('judge.workspace.judgmentFinalized'), phase: 3 })
     },
   })
 
@@ -279,7 +279,7 @@ const CaseDetail = () => {
     mutationFn: (payload: any) => submitFeedback(id as string, payload),
     onSuccess: () => {
       setMessageType('success')
-      setLocalMessage(t('judge.feedback.submitted', 'Feedback submitted successfully.'))
+      setLocalMessage({ text: t('judge.feedback.submitted', 'Feedback submitted successfully.'), phase: 4 })
       navigate('/judge/dashboard')
     }
   })
@@ -426,11 +426,11 @@ const CaseDetail = () => {
               onStageClick={(idx) => setViewedIdx(idx)} 
             />
 
-            {localMessage && (
+            {localMessage && localMessage.phase === viewedIdx && (
               <div className="mx-6 mt-4 p-4 rounded-xl border border-[var(--primary)]/30 bg-[var(--primary)]/5 flex items-center justify-between animate-in zoom-in duration-500">
                 <div className="flex items-center gap-3">
                   <Sparkles className="w-4 h-4 text-[var(--primary)]"/>
-                  <span className="text-xs font-bold text-foreground">{localMessage}</span>
+                  <span className="text-xs font-bold text-foreground">{localMessage.text}</span>
                 </div>
                 <button onClick={() => setLocalMessage(null)} className="text-muted-foreground hover:text-foreground">
                   <XIcon className="w-4 h-4"/>
@@ -657,7 +657,10 @@ const CaseDetail = () => {
                 variant="outline"
                 className="h-10 px-6 rounded-xl gap-2 font-black uppercase tracking-widest disabled:opacity-20 transition-all border-border hover:border-[var(--primary)]/30 hover:bg-[var(--primary)]/10 hover:text-[var(--primary)] text-[10px]"
                 disabled={viewedIdx === 0}
-                onClick={() => setViewedIdx(prev => Math.max(0, prev - 1))}
+                onClick={() => {
+                  setLocalMessage(null)
+                  setViewedIdx(prev => Math.max(0, prev - 1))
+                }}
               >
                 <ArrowLeft className="w-3.5 h-3.5"/>
                 {stages[viewedIdx - 1]?.label || t('common.back', 'Back')}
@@ -674,7 +677,12 @@ const CaseDetail = () => {
                         i < currentIdx ?"bg-emerald-400 w-4":
                         "bg-muted w-4"
                       )}
-                      onClick={() => i <= currentIdx && setViewedIdx(i)}
+                      onClick={() => {
+                        if (i <= currentIdx) {
+                          setLocalMessage(null)
+                          setViewedIdx(i)
+                        }
+                      }}
                     />
                   ))}
                 </div>
@@ -695,7 +703,10 @@ const CaseDetail = () => {
               <Button
                 disabled={viewedIdx === 4 || (viewedIdx >= currentIdx && viewedIdx !== 3)}
                 className="h-10 px-7 rounded-xl gap-2 bg-[var(--primary)] text-white font-black uppercase tracking-widest shadow-md shadow-emerald-500/20 hover:bg-[var(--primary-hover)] hover:scale-105 active:scale-95 transition-all text-[10px]"
-                onClick={() => setViewedIdx(prev => Math.min(4, prev + 1))}
+                onClick={() => {
+                  setLocalMessage(null)
+                  setViewedIdx(prev => Math.min(4, prev + 1))
+                }}
               >
                 {stages[viewedIdx + 1]?.label || t('common.complete', 'Complete')} <ArrowRight className="w-3.5 h-3.5"/>
               </Button>
@@ -734,10 +745,12 @@ const CaseDetail = () => {
               <div className="flex-1 max-w-[200px] h-1.5 bg-white/20 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-white rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(255,255,255,0.5)]" 
-                  style={{ width: caseData?.ai_precision_score ? `${caseData.ai_precision_score}%` : '94%' }} 
+                  style={{ width: caseData?.ai_precision_score ? `${caseData.ai_precision_score}%` : (analysis?.confidence ? `${Math.round(analysis.confidence * 100)}%` : '30%') }} 
                 />
               </div>
-              <span className="text-[14px] font-black tabular-nums text-white">{caseData?.ai_precision_score ? `${caseData.ai_precision_score}%` : '94%'}</span>
+              <span className="text-[14px] font-black tabular-nums text-white">
+                {caseData?.ai_precision_score ? `${caseData.ai_precision_score}%` : (analysis?.confidence ? `${Math.round(analysis.confidence * 100)}%` : '--')}
+              </span>
             </div>
             <p className="text-[9px] font-black uppercase tracking-widest opacity-40 mt-1">{t('judge.workspace.precisionConfidence', 'AI PRECISION CONFIDENCE')}</p>
           </div>

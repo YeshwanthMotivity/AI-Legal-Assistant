@@ -122,6 +122,13 @@ def hybrid_chunk_legal_doc(
         content = structured_data.get(section_name, "")
         if not content:
             continue
+        
+        # Safely handle list content from LLM extractors
+        if isinstance(content, list):
+            content = " ".join(str(c) for c in content)
+        elif not isinstance(content, str):
+            content = str(content)
+            
         section_chunks = chunk_text(content, chunk_size=chunk_size, overlap=overlap)
         for i, chunk_txt in enumerate(section_chunks):
             all_chunks.append({
@@ -137,6 +144,12 @@ def hybrid_chunk_legal_doc(
             ""
         )
         if raw_text:
+            # Safely handle list fallback
+            if isinstance(raw_text, list):
+                raw_text = " ".join(str(c) for c in raw_text)
+            elif not isinstance(raw_text, str):
+                raw_text = str(raw_text)
+                
             fallback_chunks = chunk_text(raw_text, chunk_size=chunk_size, overlap=overlap)
             for i, chunk_txt in enumerate(fallback_chunks):
                 all_chunks.append({

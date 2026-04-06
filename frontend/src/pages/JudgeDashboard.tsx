@@ -324,12 +324,21 @@ export default function JudgeDashboard() {
                 <div className="space-y-4">
                   <h4 className="text-[11px] font-bold text-foreground">Quick Actions</h4>
                   <div className="grid grid-cols-2 gap-2">
-                    {['Analyze documents', 'Extract citations', 'Generate summary', 'Check similarity'].map((q, i) => (
+                    {[
+                      { label: 'Analyze documents', query: 'Can you analyze the uploaded documents for this case?' },
+                      { label: 'Extract citations', query: 'Please extract all legal citations from the primary filing.' },
+                      { label: 'Generate summary', query: 'Provide a concise judicial summary of this action.' },
+                      { label: 'Check similarity', query: 'Search the registry for similar precedents to this case.' }
+                    ].map((q, i) => (
                       <button 
                         key={i} 
+                        onClick={() => {
+                          setChatInput(q.query);
+                          // Trigger chat immediately if desired, or let user edit it
+                        }}
                         className="px-3 py-2 text-[11px] font-bold bg-muted/40 hover:bg-primary/10 hover:text-primary rounded-xl border border-border/50 group transition-all text-left"
                       >
-                        {q}
+                        {q.label}
                       </button>
                     ))}
                   </div>
@@ -338,16 +347,29 @@ export default function JudgeDashboard() {
                 <div className="space-y-4">
                   <h4 className="text-[11px] font-bold text-foreground">{t('assistant_interaction', 'Assistant Interaction')}</h4>
                   <div className="space-y-4">
-                    {chatHistory.map((msg, i) => (
-                      <div key={i} className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${msg.role === 'user' ? 'bg-muted border-border/40' : 'bg-primary/10 border-primary/20'}`}>
-                          {msg.role === 'user' ? <User className="w-4 h-4 text-muted-foreground"/> : <Sparkles className="w-4 h-4 text-primary"/>}
+                    {chatHistory.length === 0 && !isChatLoading ? (
+                      <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-700">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
+                          <Sparkles className="w-4 h-4 text-primary"/>
                         </div>
-                        <div className={`${msg.role === 'user' ? 'bg-muted/20 border-border/20' : 'bg-primary/5 border-primary/10 shadow-sm shadow-primary/5'} p-4 rounded-2xl rounded-tl-none border`}>
-                          <p className="text-xs font-medium text-foreground/90 leading-relaxed">{msg.content}</p>
+                        <div className="bg-primary/5 p-4 rounded-2xl rounded-tl-none border border-primary/10 shadow-sm shadow-primary/5">
+                          <p className="text-xs font-medium text-foreground/70 italic leading-relaxed">
+                            {t('dashboard_chat_welcome', 'Ask me anything about your judicial registry, active cases, or workflow optimization.')}
+                          </p>
                         </div>
                       </div>
-                    ))}
+                    ) : (
+                      chatHistory.map((msg, i) => (
+                        <div key={i} className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${msg.role === 'user' ? 'bg-muted border-border/40' : 'bg-primary/10 border-primary/20'}`}>
+                            {msg.role === 'user' ? <User className="w-4 h-4 text-muted-foreground"/> : <Sparkles className="w-4 h-4 text-primary"/>}
+                          </div>
+                          <div className={`${msg.role === 'user' ? 'bg-muted/20 border-border/20' : 'bg-primary/5 border-primary/10 shadow-sm shadow-primary/5'} p-4 rounded-2xl rounded-tl-none border`}>
+                            <p className="text-xs font-medium text-foreground/90 leading-relaxed">{msg.content}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
                     {isChatLoading && <div className="text-[10px] text-muted-foreground animate-pulse font-bold uppercase tracking-widest">{t('thinking', 'Thinking...')}</div>}
                   </div>
                 </div>
