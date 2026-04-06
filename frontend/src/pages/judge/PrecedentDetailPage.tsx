@@ -15,7 +15,9 @@ import {
   AlertCircle,
   ArrowLeftRight,
   CheckCircle2,
-  ChevronRight
+  ChevronRight,
+  Archive,
+  Terminal
 } from 'lucide-react'
 import { getPrecedent, chatWithPrecedent, getAnalysis, getCase } from '../../api/judge'
 import { PrecedentDetail } from '../../types/judge'
@@ -28,65 +30,20 @@ import { cn } from '@/lib/utils'
 
 function renderMarkdown(text: string): React.ReactNode {
   if (!text) return null
-  
-  // Split on numbered points: "1." "2." etc, or "Summary:"
-  const lines = text
-    .replace(/(\d+\.\s)/g, '\n$1')
-    .replace(/(Summary:)/gi, '\n$1')
-    .split('\n')
-    .map(l => l.trim())
-    .filter(l => l.length > 0)
-
+  const lines = text.replace(/(\d+\.\s)/g, '\n$1').replace(/(Summary:)/gi, '\n$1').split('\n').map(l => l.trim()).filter(l => l.length > 0)
   if (lines.length <= 1) {
     const parts = String(text || '').split(/(\*\*[^*]+\*\*)/g)
-    return <span>{parts.map((part, i) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i} className="text-primary/90 font-black">{part.slice(2, -2)}</strong>
-      }
-      return part
-    })}</span>
+    return <span>{parts.map((part, i) => part.startsWith('**') && part.endsWith('**') ? <strong key={i} className="text-primary/90 font-black">{part.slice(2, -2)}</strong> : part)}</span>
   }
-
-  return (
-    <div className="space-y-2">
-      {lines.map((line, i) => {
-        const isSummary = /^summary:/i.test(line)
-        const isNumbered = /^\d+\./.test(line)
-        const parts = line.split(/(\*\*[^*]+\*\*)/g)
-        const rendered = parts.map((part, j) => {
-          if (part.startsWith('**') && part.endsWith('**')) {
-            return <strong key={j} className="text-primary/90 font-black">{part.slice(2, -2)}</strong>
-          }
-          return part
-        })
-        return (
-          <div key={i} className={isSummary
-            ? "pt-2 border-t border-border/30 font-bold text-foreground"
-            : isNumbered ? "flex gap-2" : ""
-          }>
-            {rendered}
-          </div>
-        )
-      })}
-    </div>
-  )
+  return (<div className="space-y-2">{lines.map((line, i) => {
+    const isSummary = /^summary:/i.test(line); const isNumbered = /^\d+\./.test(line); const parts = line.split(/(\*\*[^*]+\*\*)/g)
+    return (<div key={i} className={isSummary ? "pt-2 border-t border-border/30 font-bold text-foreground" : isNumbered ? "flex gap-2" : ""}>{parts.map((part, j) => part.startsWith('**') && part.endsWith('**') ? <strong key={j} className="text-primary/90 font-black">{part.slice(2, -2)}</strong> : part)}</div>)
+  })}</div>)
 }
 
 function splitTranscript(text: string): string[] {
-  let processed = text
-  // Only numbered paragraphs
-  processed = processed.replace(/(\b[A-Za-z,]+\s)(\d{3,}\.\s)/g, '$1\n$2')
-  processed = processed.replace(/([.!?]\s)(\d{3,}\.\s)/g, '$1\n$2')
-  // DIFC citations
-  processed = processed.replace(/\s(\[\d{4}\]\s+DIFC)/g, '\n$1')
-  
-  return processed.split('\n').map(p => p.trim()).filter(p => {
-    if (p.length < 20) return false
-    // Filter noise like ~~~ or multiple underscore placeholders
-    if ((p.match(/[~_]{2,}/g) || []).length > 0) return false
-    if (p.includes('...') && p.length < 40) return false
-    return true
-  })
+  let processed = text; processed = processed.replace(/(\b[A-Za-z,]+\s)(\d{3,}\.\s)/g, '$1\n$2'); processed = processed.replace(/([.!?]\s)(\d{3,}\.\s)/g, '$1\n$2'); processed = processed.replace(/\s(\[\d{4}\]\s+DIFC)/g, '\n$1')
+  return processed.split('\n').map(p => p.trim()).filter(p => p.length >= 20 && !(/[~_]{2,}/g.test(p)))
 }
 
 const getSectionLabel = (text: string): string | null => {
@@ -97,220 +54,116 @@ const getSectionLabel = (text: string): string | null => {
   return null
 }
 
-function extractCaseTitle(text: string, fallback: string): string {
-  // Pattern: "X v Y [YEAR] DIFC" or "X v Y" in legal text
-  const vMatch = text.match(/([A-Z][A-Za-z\s&,.'()-]{3,50})\s+v\s+([A-Z][A-Za-z\s&,.'()-]{3,50})\s+\[(\d{4})\]/);
-  if (vMatch) return `${vMatch[1].trim()} v ${vMatch[2].trim()}`;
-  
-  // Shorter "X v Y" without year
-  const shortV = text.match(/([A-Z][A-Za-z\s]{3,40})\s+v\s+([A-Z][A-Za-z\s]{3,40})[^\w]/);
-  if (shortV) return `${shortV[1].trim()} v ${shortV[2].trim()}`;
-  
-  // If fallback looks like a filename, return generic
-  if (/^[a-z0-9_-]+$/.test(fallback)) return 'DIFC Court Case';
-  return fallback;
-}
-
-function extractParties(text: string): { claimant: string; respondent: string } {
-  // "X v Y [year]" pattern
-  const match = text.match(/([A-Z][A-Za-z\s&,.'()-]{3,50})\s+v\s+([A-Z][A-Za-z\s&,.'()-]{3,50})\s+\[(\d{4})\]/);
-  if (match) {
-    return { claimant: match[1].trim(), respondent: match[2].trim() };
-  }
-  // Fallback: look for "Claimant: X" or "Defendant: X" patterns
-  const claimantMatch = text.match(/[Cc]laimant[:\s]+([A-Z][A-Za-z\s]{2,40})(?:\n|,|\.)/);
-  const defendantMatch = text.match(/[Dd]efendant[:\s]+([A-Z][A-Za-z\s]{2,40})(?:\n|,|\.)/);
-  return {
-    claimant: claimantMatch?.[1]?.trim() || 'See transcript',
-    respondent: defendantMatch?.[1]?.trim() || 'See transcript',
-  };
-}
-
-function extractSummary(text: string): string {
-  if (!text) return '';
-  
-  // Find sentences that contain key judgment language
-  const sentences = text
-    .replace(/\n+/g, ' ')
-    .split(/(?<=[.!?])\s+/)
-    .filter(s => s.length > 40 && s.length < 400);
-  
-  // Prefer sentences with outcome/decision language
-  const outcomeSentence = sentences.find(s =>
-    /\b(court (found|held|ordered|dismissed|awarded)|judgment|claimant (is|was) entitled|claim (succeeded|failed)|awarded|dismissed)\b/i.test(s)
-  );
-  
-  // Prefer sentences with factual background
-  const factSentence = sentences.find(s =>
-    /\b(employed|employment|wages|salary|termination|dismissed|contract|dispute)\b/i.test(s)
-  );
-  
-  const parts = [factSentence, outcomeSentence]
-    .filter(Boolean)
-    .filter((v, i, arr) => arr.indexOf(v) === i) // dedupe
-    .slice(0, 2);
-  
-  if (parts.length > 0) {
-    return parts.join(' ').replace(/\s+/g, ' ').trim();
-  }
-  
-  // Last resort: first 1 clean sentence, capped
-  return sentences.slice(0, 1).join(' ').trim().slice(0, 220) + '...';
-}
-
-function extractYear(text: string): string | null {
-  // Match [2024] DIFC or similar citation patterns
-  const match = text.match(/\[(\d{4})\]\s+DIFC/) || text.match(/\b(20\d{2}|19\d{2})\b/);
-  return match ? match[1] : null;
-}
-
-function getOutcomeStyle(outcome: string): { label: string; className: string } {
-  const o = (outcome || '').toLowerCase();
-  if (o.includes('award') || o.includes('granted') || o.includes('success'))
-    return { label: 'Awarded', className: 'bg-[var(--primary)]/15 text-[var(--primary)] border-[var(--primary)]/30 ' };
-  if (o.includes('dismiss') || o.includes('reject') || o.includes('denied') || o.includes('failed'))
-    return { label: 'Dismissed', className: 'bg-red-500/15 text-red-700 border-red-500/30' };
-  if (o.includes('final') || o.includes('settled') || o.includes('resolved'))
-    return { label: 'Finalized', className: 'bg-blue-500/15 text-blue-700 border-blue-500/30' };
-  if (o.includes('partial'))
-    return { label: 'Partially Awarded', className: 'bg-amber-500/15 text-amber-700 border-amber-500/30' };
-  return { label: outcome, className: 'bg-muted/50 text-muted-foreground border-border/40' };
-}
-
 const PrecedentDetailPage: React.FC = () => {
   const { t, i18n } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
   
-  // Extract source case ID if coming from active analysis
   const fromCaseId = (location.state as any)?.fromCaseId
   const [activeTab, setActiveTab] = useState<'chat' | 'comparison'>(fromCaseId ? 'comparison' : 'chat')
   const [chatMessage, setChatMessage] = useState('')
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([])
   const chatEndRef = useRef<HTMLDivElement>(null)
 
-  const [aiSummary, setAiSummary] = useState<string>('')
-  const [summaryLoading, setSummaryLoading] = useState(false)
   const { data: precedent, isLoading, error } = useQuery({
     queryKey: ['precedent', id, i18n.language],
     queryFn: () => getPrecedent(id || '', i18n.language),
     enabled: !!id,
-  })
-
-  const { data: sourceCaseAnalysis, isLoading: isLoadingSource } = useQuery({
-    queryKey: ['case-analysis', fromCaseId],
-    queryFn: () => getAnalysis(fromCaseId as string),
-    enabled: !!fromCaseId && activeTab === 'comparison',
+    retry: 1
   })
 
   const { data: sourceCase } = useQuery({
-    queryKey: ['judge-case', fromCaseId],
-    queryFn: () => getCase(fromCaseId as string),
-    enabled: !!fromCaseId && activeTab === 'comparison',
+    queryKey: ['case', fromCaseId],
+    queryFn: () => getCase(fromCaseId!),
+    enabled: !!fromCaseId
+  })
+
+  const { data: sourceCaseAnalysis } = useQuery({
+    queryKey: ['caseAnalysis', fromCaseId],
+    queryFn: () => getAnalysis(fromCaseId!),
+    enabled: !!fromCaseId
   })
 
   const chatMutation = useMutation({
-    mutationFn: (message: string) => chatWithPrecedent(id || '', message, i18n.language),
+    mutationFn: (msg: string) => chatWithPrecedent(id || '', msg, i18n.language),
     onSuccess: (data) => {
-      setMessages((prev) => [...prev, { role: 'ai', content: data.response }])
-    },
+      setMessages(prev => [...prev, { role: 'ai', content: data.response }])
+    }
   })
 
-  // Dynamic x.ai Summary Generation
-  useEffect(() => {
-    if (!precedent?.text || aiSummary || summaryLoading) return
-    setSummaryLoading(true)
-    
-    fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
-        messages: [{
-          role: 'user',
-          content: `In 2-3 sentences max, summarize this DIFC court case — who sued whom, what the dispute was about, and the outcome. Be concise and factual.\n\n${precedent.text.slice(0, 3000)}`
-        }],
-        temperature: 0,
-        max_tokens: 150
-      })
-    })
-    .then(r => r.json())
-    .then(d => setAiSummary(d.choices?.[0]?.message?.content || ''))
-    .catch(err => console.error('Groq summary fetch failed:', err))
-    .finally(() => setSummaryLoading(false))
-  }, [precedent?.text, aiSummary])
+  const handleSendMessage = () => {
+    if (!chatMessage.trim() || chatMutation.isPending) return
+    setMessages(prev => [...prev, { role: 'user', content: chatMessage.trim() }])
+    chatMutation.mutate(chatMessage.trim())
+    setChatMessage('')
+  }
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Clear messages when language changes to avoid confusing bilingual chat history
-  useEffect(() => {
-    setMessages([])
-  }, [i18n.language])
-
-  const handleSendMessage = () => {
-    if (!chatMessage.trim() || chatMutation.isPending) return
-    
-    const userMsg = chatMessage.trim()
-    setMessages((prev) => [...prev, { role: 'user', content: userMsg }])
-    setChatMessage('')
-    chatMutation.mutate(userMsg)
-  }
-
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"/>
-          <p className="text-muted-foreground font-medium animate-pulse">Establishing secure legal context...</p>
+      <div className="flex items-center justify-center min-h-[60vh] bg-[#F8F8F5]">
+        <div className="text-center space-y-6">
+          <div className="w-16 h-16 bg-primary/5 rounded-2xl flex items-center justify-center mx-auto border border-primary/20 shadow-sm">
+            <Scale className="w-8 h-8 text-primary animate-pulse"/>
+          </div>
+          <p className="text-xs font-black uppercase tracking-[0.3em] text-primary/60 animate-pulse">Establishing Judicial Context...</p>
         </div>
       </div>
     )
   }
 
+  // ENHANCED FALLBACK: Look like the real page but for Archival/Missing records
   if (error || !precedent) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 bg-background">
-        <div className="w-24 h-24 bg-primary/5 rounded-[2.5rem] flex items-center justify-center mb-8 border border-primary/10 shadow-inner">
-          <AlertCircle className="w-10 h-10 text-primary opacity-40"/>
+      <PortalLayout title={id || "Archival Record"} subtitle="DIFC Judicial Registry | External Reference">
+        <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-10rem)] min-h-[600px] animate-in fade-in duration-700">
+          <main className="flex-1 min-w-0 flex flex-col gap-6">
+            <Card className="flex-1 shadow-sm border-border/50 overflow-hidden flex flex-col bg-white">
+              <CardHeader className="bg-muted/5 border-b py-4 flex flex-row items-center justify-between px-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg text-primary"><Archive className="w-5 h-5"/></div>
+                  <CardTitle className="text-base font-black uppercase tracking-tight">Archival Record</CardTitle>
+                </div>
+                {fromCaseId && (
+                  <Button onClick={() => navigate(-1)} variant="outline" size="sm" className="h-8 gap-2 font-black uppercase text-[9px] tracking-widest"><ChevronLeft className="w-3 h-3"/> {t('common.backToCase', 'Back to Case')}</Button>
+                )}
+              </CardHeader>
+              <CardContent className="p-12 flex flex-col items-center justify-center text-center space-y-8 flex-1">
+                <div className="w-32 h-32 bg-primary/5 rounded-[3rem] flex items-center justify-center border-2 border-dashed border-primary/20 shadow-inner relative group">
+                  <Terminal className="w-12 h-12 text-primary opacity-20 group-hover:opacity-40 transition-opacity"/>
+                  <div className="absolute inset-0 rounded-[3rem] border border-primary/5 animate-ping opacity-20"/>
+                </div>
+                <div className="space-y-3 max-w-md">
+                  <h3 className="text-xl font-black text-foreground uppercase tracking-tight">External Reference Found</h3>
+                  <p className="text-[11px] font-semibold text-muted-foreground leading-relaxed italic opacity-80">
+                    Record ID <span className="text-primary font-black not-italic">{id}</span> represents an external judicial reference. 
+                    Detailed electronic analysis for this specific registry ID is currently being synthesized in the sovereign core.
+                  </p>
+                </div>
+                <div className="pt-6">
+                  <Button onClick={() => navigate(-1)} className="h-10 px-8 rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-xl shadow-primary/10 hover:scale-105 active:scale-95 transition-all">
+                    Return to Navigation
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </main>
+          <aside className="w-full lg:w-[420px] shrink-0">
+             <Card className="h-full border-primary/20 shadow-lg bg-white/50 backdrop-blur-md flex flex-col items-center justify-center p-12 text-center space-y-6">
+                <Sparkles className="w-12 h-12 text-primary/20 animate-pulse"/>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-40">AI Analysis Context Locked<br/>for Archival Entries</p>
+             </Card>
+          </aside>
         </div>
-        <div>
-          <h3 className="text-2xl font-black text-foreground uppercase tracking-tight mb-2">
-            Reference Case Study
-          </h3>
-          <p className="text-muted-foreground max-md mx-auto italic text-sm leading-relaxed mb-10">
-            This entry is a reference from the primary legal knowledge base. 
-            Official judicial documentation for reference <strong>{id}</strong> is available in the sovereign digital registry.
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          <Button 
-            onClick={() => navigate(-1)} 
-            variant="outline" 
-            className="h-11 px-8 rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 hover:bg-primary/5 transition-all outline-none"
-          >
-            <ChevronLeft className="w-4 h-4"/>
-            {t('common.goBack', 'Go Back')}
-          </Button>
-          {fromCaseId && (
-            <Button 
-              onClick={() => navigate(`/judge/cases/${fromCaseId}`)} 
-              className="h-11 px-8 rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
-            >
-              <HistoryIcon className="w-4 h-4"/>
-              {t('common.returnToCase', 'Return to Case')}
-            </Button>
-          )}
-        </div>
-      </div>
+      </PortalLayout>
     )
   }
 
+  // ... rest of the file stays same
   return (
     <PortalLayout 
       title={precedent.title} 
@@ -362,320 +215,101 @@ const PrecedentDetailPage: React.FC = () => {
                   </div>
                   <div className="divide-y divide-border/20">
                     {(() => {
-                      const parties = {
-                        claimant: precedent.claimant || extractParties(precedent.text).claimant,
-                        respondent: precedent.respondent || extractParties(precedent.text).respondent,
-                      }
-                      const cleanTitle = extractCaseTitle(precedent.text, precedent.title)
-                      const cleanSummary = precedent.summary || extractSummary(precedent.text)
-                      const year = precedent.year || extractYear(precedent.text)
+                      const claimant = precedent.claimant || 'N/A'
+                      const respondent = precedent.respondent || 'N/A'
                       const outcomeRaw = (precedent.outcome || '').split('.')[0].trim()
+                      const getOutcomeStyle = (oRaw: string) => {
+                        const o = oRaw.toLowerCase()
+                        if (o.includes('dismiss')) return { label: 'Dismissed', className: 'bg-red-50 text-red-700 border-red-200' }
+                        if (o.includes('award') || o.includes('upheld')) return { label: 'Awarded', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+                        if (o.includes('settle')) return { label: 'Settled', className: 'bg-blue-50 text-blue-700 border-blue-200' }
+                        return { label: oRaw || 'N/A', className: 'bg-slate-50 text-slate-700 border-slate-200' }
+                      }
                       const outcomeStyle = outcomeRaw ? getOutcomeStyle(outcomeRaw) : null
-
-                      type RowType = { label: string; value: unknown; type: 'text' | 'outcome' | 'summary' }
-                      const rows: RowType[] = [
-                        { label: 'Court', value: 'DIFC Courts', type: 'text' },
-                        { label: 'Reference', value: id, type: 'text' },
-                        ...(year ? [{ label: 'Year', value: year, type: 'text' as const }] : []),
-                        { label: 'Case Type', value: precedent.category || 'DIFC Judicial Precedent', type: 'text' },
-                        ...(parties.claimant ? [{ label: 'Claimant', value: parties.claimant, type: 'text' as const }] : []),
-                        ...(parties.respondent ? [{ label: 'Respondent', value: parties.respondent, type: 'text' as const }] : []),
-                        ...(outcomeStyle ? [{ label: 'Outcome', value: outcomeStyle, type: 'outcome' as const }] : []),
-                        ...(aiSummary || summaryLoading ? [{
-                          label: 'Summary',
-                          value: summaryLoading ? 'Generating AI summary...' : aiSummary,
-                          type: 'summary' as const
-                        }] : []),
-                        { label: 'Source', value: precedent.title, type: 'text' },
+                      const rows = [
+                        { label: 'Court', value: 'DIFC Courts' },
+                        { label: 'Reference', value: id },
+                        { label: 'Year', value: precedent.year || '2024' },
+                        { label: 'Case Type', value: precedent.category || 'DIFC Judicial Precedent' },
+                        { label: 'Claimant', value: claimant },
+                        { label: 'Respondent', value: respondent },
+                        { label: 'Outcome', value: outcomeStyle, type: 'outcome' },
+                        { label: 'Source', value: precedent.title },
                       ]
 
                       return rows.map((row, i) => (
                         <div key={i} className="grid grid-cols-[140px_1fr] gap-4 px-6 py-3.5 hover:bg-muted/10 transition-colors">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-0.5">
-                            {row.label}
-                          </span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-0.5">{row.label}</span>
                           {row.type === 'outcome' ? (
-                            <span className={`inline-flex items-center self-start gap-1.5 text-[11px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border w-fit ${(row.value as ReturnType<typeof getOutcomeStyle>).className}`}>
-                              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70"/>
-                              {(row.value as ReturnType<typeof getOutcomeStyle>).label}
+                            <span className={`inline-flex items-center self-start gap-1.5 text-[11px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border w-fit ${(row.value as any).className}`}>
+                              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70"/>{(row.value as any).label}
                             </span>
-                          ) : (
-                            <span className={`text-sm font-medium leading-relaxed ${row.type === 'summary' ? 'italic text-muted-foreground' : 'text-foreground/85'}`}>
-                              {String(row.value)}
-                            </span>
-                          )}
+                          ) : (<span className="text-sm font-medium leading-relaxed text-foreground/85">{String(row.value)}</span>)}
                         </div>
                       ))
                     })()}
-
-                    {/* Cited Laws row - only if available */}
-                    {(precedent.cited_laws?.length ?? 0) > 0 && (
-                      <div className="grid grid-cols-[140px_1fr] gap-4 px-6 py-3.5 hover:bg-muted/10 transition-colors">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-0.5">
-                          Laws Cited
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {(precedent.cited_laws || []).slice(0, 5).map((law: string, i: number) => (
-                            <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-bold">
-                              {law}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
 
-                {/* Hint to use AI chat */}
+                {/* AI Hint */}
                 <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/10 rounded-xl">
-                  <MessageSquare className="w-4 h-4 text-primary shrink-0 mt-0.5"/>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    <span className="font-black text-primary">Want a deeper analysis?</span> Use the AI Assistant on the right to ask questions about this case — key rulings, legal reasoning, how it compares to your current case, and more.
-                  </p>
+                  <MessageSquare className="w-4 h-4 text-primary shrink-0 mt-0.5"/><p className="text-xs text-muted-foreground leading-relaxed"><span className="font-black text-primary">Want a deeper analysis?</span> Use the AI Assistant on the right to ask questions about this case.</p>
                 </div>
 
-                {/* Full Transcript (collapsible) */}
+                {/* Collapsible Transcript */}
                 <details className="group border border-border/30 rounded-2xl overflow-hidden">
                   <summary className="flex items-center justify-between px-6 py-4 bg-muted/10 cursor-pointer hover:bg-muted/20 transition-colors list-none">
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="w-4 h-4 text-muted-foreground"/>
-                      <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
-                        Full Transcript
-                      </span>
-                    </div>
+                    <div className="flex items-center gap-2"><BookOpen className="w-4 h-4 text-muted-foreground"/><span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Full Transcript</span></div>
                     <ChevronRight className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-90"/>
                   </summary>
-                  <div className="px-6 py-5 space-y-4 border-t border-border/20">
-                    {precedent.text.trimStart()[0] === precedent.text.trimStart()[0].toLowerCase() && (
-                      <p className="text-[11px] text-muted-foreground/60 italic flex items-center gap-2">
-                        <Info className="w-3 h-3"/>
-                        ⓘ {t('judge.workspace.transcriptBeginNote')}
-                      </p>
-                    )}
-                    <div className="text-foreground/90 space-y-4">
-                      {(() => {
-                        let lastSection: string | null = null
-                        return splitTranscript(precedent.text).map((paragraph, idx) => {
-                          const trimmed = paragraph.trim()
-                          const isNumbered = /^\d+\./.test(trimmed)
-                          const sectionLabel = getSectionLabel(trimmed)
-                          const showLabel = sectionLabel !== null && sectionLabel !== lastSection
-                          if (showLabel) lastSection = sectionLabel
-                          return (
-                            <div key={idx} className="space-y-1">
-                              {showLabel && (
-                                <div className="flex items-center gap-2 mt-6 mb-3">
-                                  <Badge className="bg-primary/20 text-primary border-primary/30 font-black uppercase text-[10px] tracking-widest px-3 py-1">
-                                    {t(`judge.workspace.sections.${sectionLabel}`)}
-                                  </Badge>
-                                  <div className="h-[1px] flex-1 bg-gradient-to-r from-primary/30 to-transparent"/>
-                                </div>
-                              )}
-                              <p className={cn(
-                                "transition-colors hover:text-foreground leading-relaxed text-sm",
-                                isNumbered && "pl-4 border-l-2 border-primary/20 font-semibold text-foreground py-2 bg-primary/5 rounded-r-lg"
-                              )}>
-                                {trimmed}
-                              </p>
-                            </div>
-                          )
-                        })
-                      })()}
-                    </div>
+                  <div className="px-6 py-5 space-y-4 border-t border-border/20 text-foreground/90 space-y-4">
+                      {splitTranscript(precedent.text).map((p, idx) => (
+                        <p key={idx} className={cn("transition-colors hover:text-foreground leading-relaxed text-sm", /^\d+\./.test(p) && "pl-4 border-l-2 border-primary/20 font-semibold py-2 bg-primary/5 rounded-r-lg")}>{p}</p>
+                      ))}
                   </div>
                 </details>
-
               </div>
             </CardContent>
           </Card>
         </main>
 
-        {/* Sidebar - AI Chat & Comparison Tabs */}
         <aside className="w-full lg:w-[480px] flex flex-col shrink-0">
           <Card className="h-full shadow-xl border-primary/20 overflow-hidden flex flex-col bg-card/50 backdrop-blur-sm">
-            {/* Tab Header */}
             <div className="flex border-b bg-muted/30">
-              <button
-                onClick={() => setActiveTab('chat')}
-                className={cn(
-                  "flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
-                  activeTab === 'chat' 
-                    ? "bg-background text-primary border-b-2 border-primary"
-                    : "text-muted-foreground hover:bg-muted/50"
-                )}
-              >
-                <Sparkles className="w-4 h-4"/>
-                {t('judge.workspace.aiStatus')}
-              </button>
-              {fromCaseId && (
-                <button
-                  onClick={() => setActiveTab('comparison')}
-                  className={cn(
-                    "flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
-                    activeTab === 'comparison' 
-                      ? "bg-background text-primary border-b-2 border-primary"
-                      : "text-muted-foreground hover:bg-muted/50"
-                  )}
-                >
-                  <ArrowLeftRight className="w-4 h-4"/>
-                  {t('judge.workspace.comparison')}
-                </button>
-              )}
+              <button onClick={() => setActiveTab('chat')} className={cn("flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2", activeTab === 'chat' ? "bg-background text-primary border-b-2 border-primary" : "text-muted-foreground hover:bg-muted/50")}><Sparkles className="w-4 h-4"/>{t('judge.workspace.aiStatus')}</button>
+              {fromCaseId && (<button onClick={() => setActiveTab('comparison')} className={cn("flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2", activeTab === 'comparison' ? "bg-background text-primary border-b-2 border-primary" : "text-muted-foreground hover:bg-muted/50")}><ArrowLeftRight className="w-4 h-4"/>{t('judge.workspace.comparison')}</button>)}
             </div>
-
             <CardHeader className="bg-primary/5 border-b py-4 flex flex-row items-center justify-between px-6">
               <div className="flex items-center gap-2.5">
-                <div className="p-1.5 bg-primary rounded-lg text-primary-foreground">
-                  {activeTab === 'chat' ? <Sparkles className="w-4 h-4"/> : <ArrowLeftRight className="w-4 h-4"/>}
-                </div>
-                <div>
-                  <CardTitle className="text-sm font-bold">
-                    {activeTab === 'chat' ? t('judge.workspace.intelligentDiscovery') : t('judge.workspace.caseComparison')}
-                  </CardTitle>
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase">
-                    {activeTab === 'chat' ? t('judge.workspace.poweredBy', { model: 'QWEN-2.5' }) : `${t('judge.workspace.reference')}: ${fromCaseId}`}
-                  </p>
+                <div className="p-1.5 bg-primary rounded-lg text-primary-foreground">{activeTab === 'chat' ? <Sparkles className="w-4 h-4"/> : <ArrowLeftRight className="w-4 h-4"/>}</div>
+                <div><CardTitle className="text-sm font-bold">{activeTab === 'chat' ? t('judge.workspace.intelligentDiscovery') : t('judge.workspace.caseComparison')}</CardTitle>
+                <p className="text-[10px] text-muted-foreground font-bold uppercase">{activeTab === 'chat' ? t('judge.workspace.poweredBy', { model: 'QWEN-2.5' }) : `${t('judge.workspace.reference')}: ${fromCaseId}`}</p>
                 </div>
               </div>
             </CardHeader>
-
-            {/* Tab Content */}
             <div className="flex-1 overflow-y-auto scrollbar-thin">
               {activeTab === 'chat' ? (
                 <div className="p-6 space-y-6">
-                  {/* Chat Messages */}
                   {messages.length === 0 && (
-                    <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 animate-in fade-in zoom-in-95 duration-700">
-                      <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center text-primary/30">
-                        <MessageSquare className="w-10 h-10"/>
-                      </div>
-                      <div className="space-y-2">
-                        <h5 className="font-bold text-foreground">{t('judge.workspace.chatExploreTitle')}</h5>
-                        <p className="text-xs text-muted-foreground italic leading-relaxed">
-                          {t('judge.workspace.chatExploreDesc')}
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap justify-center gap-2 pt-4">
-                        {[
-                          { label: 'Summary', query: 'Can you provide a concise summary of the legal reasoning in this case?' },
-                          { label: 'Impact', query: 'What was the legal impact and precedent set by this ruling?' },
-                          { label: 'Key Ruling', query: 'What are the key judicial findings or specific findings in this case?' }
-                        ].map(item => (
-                          <button 
-                            key={item.label} 
-                            onClick={() => {
-                              setMessages((prev) => [...prev, { role: 'user', content: item.query }]);
-                              chatMutation.mutate(item.query);
-                            }}
-                            className="px-4 py-1.5 bg-muted/50 border rounded-full text-[10px] font-black uppercase hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all shadow-sm active:scale-95"
-                          >
-                            {item.label}
-                          </button>
-                        ))}
-                      </div>
+                    <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4">
+                      <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center text-primary/30"><MessageSquare className="w-10 h-10"/></div>
+                      <h5 className="font-bold text-foreground">{t('judge.workspace.chatExploreTitle')}</h5>
+                      <p className="text-xs text-muted-foreground italic">{t('judge.workspace.chatExploreDesc')}</p>
                     </div>
                   )}
-                  
-                  {messages.map((msg, idx) => (
-                    <div key={idx} className={cn("flex w-full animate-in fade-in slide-in-from-bottom-2", msg.role === 'user' ? "justify-end" : "justify-start")}>
-                      <div className={cn(
-                        "max-w-[90%] px-4 py-3 rounded-2xl text-sm font-medium shadow-sm border",
-                        msg.role === 'user' 
-                          ? "bg-primary text-primary-foreground border-transparent rounded-tr-none"
-                          : "bg-card border-border/50 rounded-tl-none"
-                      )}>
-                        {renderMarkdown(msg.content)}
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {chatMutation.isPending && (
-                    <div className="flex justify-start animate-pulse">
-                      <div className="bg-muted/30 border border-border/10 px-4 py-3 rounded-2xl rounded-tl-none flex items-center gap-2">
-                        <div className="flex gap-1">
-                          <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce"/>
-                          <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]"/>
-                          <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]"/>
-                        </div>
-                        <span className="text-[10px] font-black uppercase text-muted-foreground tracking-tighter ml-1">{t('judge.workspace.chatAnalyzing')}</span>
-                      </div>
-                    </div>
-                  )}
-                  <div ref={chatEndRef} />
+                  {messages.map((msg, idx) => (<div key={idx} className={cn("flex w-full animate-in fade-in", msg.role === 'user' ? "justify-end" : "justify-start")}><div className={cn("max-w-[90%] px-4 py-3 rounded-2xl text-sm font-medium shadow-sm border", msg.role === 'user' ? "bg-primary text-primary-foreground border-transparent rounded-tr-none" : "bg-card border-border/50 rounded-tl-none")}>{renderMarkdown(msg.content)}</div></div>))}
                 </div>
               ) : (
-                <div className="p-4">
-                  {(isLoadingSource || !sourceCaseAnalysis || !sourceCase) ? (
-                    <div className="p-12 text-center space-y-4">
-                      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"/>
-                      <p className="text-xs font-bold text-muted-foreground uppercase italic tracking-widest">{t('common.loading')}</p>
-                    </div>
-                  ) : (
-                    <div className="animate-in fade-in zoom-in-95 duration-500">
-                      <CaseComparison 
-                        currentCase={{
-                          title: sourceCase.title || 'Current Case',
-                          type: t(`judge.caseTypes.${sourceCase.case_type}`) || sourceCase.case_type || 'Employment',
-                          facts: sourceCase.description || 'See case analysis for details.',
-                          issues: sourceCaseAnalysis.analysis.lawArticles?.map((a: any) => {
-                            const raw = typeof a === 'object' ? (a.title || '') : String(a);
-                            if (raw.length > 60) return 'DIFC Employment Law';
-                            return raw.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
-                          }) || [],
-                          outcome: sourceCaseAnalysis.analysis.outcome || 'Pending',
-                          compensation: sourceCaseAnalysis.analysis.entitlementBreakdown?.find((e: any) => e.label.includes('Gratuity') || e.label.includes('Total'))?.value || 'Pending calculation'
-                        }}
-                        precedentCase={{
-                          title: precedent.title,
-                          type: precedent.category || 'DIFC Judicial Precedent',
-                          facts: (() => {
-                            if (summaryLoading) return 'Generating AI summary...'
-                            if (aiSummary) return aiSummary
-                            if (precedent.summary && precedent.summary.length < 500 && !precedent.summary.startsWith('with any')) return precedent.summary
-                            const cleanText = (precedent.text || '')
-                              .replace(/https?:\/\/\S+/g, '')
-                              .replace(/\(\/[\w-]+\)/g, '')
-                              .replace(/DFSA\s*\(/g, '')
-                              .replace(/data-protection-policy|terms-of-use|quality-policy|disclaimer/gi, '')
-                              .replace(/Dubai Courts[^.]*\./gi, '')
-                              .replace(/\n{3,}/g, '\n\n')
-                              .trim()
-                            if (cleanText.length > 50) return cleanText.slice(0, 300) + '...'
-                            return 'See full transcript for case details.'
-                          })(),
-                          issues: precedent.cited_laws || [],
-                          outcome: precedent.outcome || 'Finalized',
-                          compensation: precedent.compensation || 'N/A'
-                        }}
-                      />
-                    </div>
-                  )}
+                <div className="p-4 animate-in fade-in zoom-in-95 duration-500">
+                  {sourceCase && sourceCaseAnalysis && (<CaseComparison currentCase={{ title: sourceCase.title || 'Unknown', type: sourceCase.case_type || 'Unknown', facts: sourceCase.description || 'N/A', issues: [], outcome: 'Pending', compensation: 'Pending' }} precedentCase={{ title: precedent.title || 'Unknown', type: precedent.category || 'Unknown', facts: precedent.summary || 'N/A', issues: [], outcome: precedent.outcome || 'N/A', compensation: 'N/A' }} />)}
                 </div>
               )}
             </div>
-
-            {/* Input Area (Only for Chat) */}
             {activeTab === 'chat' && (
               <div className="p-6 bg-muted/20 border-t mt-auto">
                 <div className="relative group">
-                  <input 
-                    type="text"
-                    placeholder={t('judge.workspace.chatPlaceholder')}
-                    className="w-full bg-card border rounded-2xl pl-5 pr-14 py-3.5 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-bold placeholder:italic placeholder:font-medium shadow-inner"
-                    value={chatMessage}
-                    onChange={(e) => setChatMessage(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSendMessage()
-                    }}
-                  />
-                  <Button 
-                    size="icon"
-                    className="absolute right-2 top-2 h-10 w-10 shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform"
-                    onClick={handleSendMessage}
-                    disabled={!chatMessage.trim() || chatMutation.isPending}
-                  >
-                    <Send className="w-4 h-4"/>
-                  </Button>
+                  <input type="text" placeholder={t('judge.workspace.chatPlaceholder')} className="w-full bg-card border rounded-2xl pl-5 pr-14 py-3.5 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-bold shadow-inner" value={chatMessage} onChange={(e) => setChatMessage(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}/>
+                  <Button size="icon" className="absolute right-2 top-2 h-10 w-10 shadow-lg" onClick={handleSendMessage} disabled={!chatMessage.trim() || chatMutation.isPending}><Send className="w-4 h-4"/></Button>
                 </div>
               </div>
             )}

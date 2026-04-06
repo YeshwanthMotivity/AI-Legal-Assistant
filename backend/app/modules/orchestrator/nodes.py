@@ -363,86 +363,98 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
             score = c.score if hasattr(c, "score") else c.get("score", 0.0)
             
             if score > 0.6:
+                qdrant_point_id = str(c.id) if hasattr(c, "id") else ""
+                payload_case_id = payload.get("case_id", "") or ""
+                # Use payload case_id if it's a real ID, otherwise fall back to qdrant point UUID
+                resolved_id = payload_case_id if payload_case_id else qdrant_point_id
+
                 results.append({
-                    "id": str(c.id) if hasattr(c, "id") else str(uuid.uuid4()), # Point ID
-                    "case_id": payload.get("case_id", ""),                    # Payload ID
+                    "id": qdrant_point_id, # Point ID
+                    "case_id": resolved_id, # Payload ID or Point ID
                     "title": payload.get("case_name") or payload.get("title") or "Unknown Case",
                     "year": payload.get("year", "N/A"),
                     "category": payload.get("category", "Unspecified"),
                     "text": payload.get("raw_text", "")[:2000],
                     "score": score
                 })
-        async with httpx.AsyncClient(timeout=30) as client:
-            for item in results[:5]:
-                parsed = None
-                try:
-                    # Exclusive: Local Intelligence (Ollama)
-                    content = await _call_ollama(
-                        model_url=f"{settings.ollama_url}/api/generate",
-                        model_name=settings.ollama_model_fallback,
-                        system=(
-                            f"You are a DIFC legal case parser. Extract from the court text and return ONLY valid JSON.\n"
-                            f"Schema: {{\"case_name\": \"X v Y or null\", \"claimant\": \"name or null\", "
-                            f"\"respondent\": \"name or null\", \"year\": \"4-digit string or null\", "
-                            f"\"outcome\": \"Awarded|Dismissed|Partial|Settled|null\", "
-                            f"\"summary\": \"1-2 sentence factual summary\"}}\n"
-                            f"{'CRITICAL: Translate the summary and outcome into Arabic.' if state.get('ui_language') == 'ar' else ''}"
-                        ),
-                        user=_smart_slice(item["text"], 3000),
-                        token_limit=300
-                    )
-                    
-                    if content:
-                        # Attempt to extract JSON from Ollama response
-                        import json
-                        import re
-                        json_match = re.search(r"\{[\s\S]*\}", content)
-                        if json_match:
-                            parsed_data = json.loads(json_match.group(0))
-                            # Wrap in OpenAI-like shape for compatibility with existing parser logic below
-                            parsed = {"choices": [{"message": {"content": parsed_data}}]}
-                            logger.info(f"Local Ollama parsing successful for {item['title']}")
-                except Exception as e:
-                    logger.warning(f"Local Ollama parsing failed for {item['title']}: {e}")
+        async def _parse_one_precedent(item_dict):
+            parsed_data_wrapper = None
+            try:
+                # Exclusive: Local Intelligence (Ollama)
+                ollama_content = await _call_ollama(
+                    model_url=f"{settings.ollama_url}/api/generate",
+                    model_name=settings.ollama_model_fallback,
+                    system=(
+                        f"You are a DIFC legal case parser. Extract from the court text and return ONLY valid JSON.\n"
+                        f"Schema: {{\"case_name\": \"X v Y or null\", \"claimant\": \"name or null\", "
+                        f"\"respondent\": \"name or null\", \"year\": \"4-digit string or null\", "
+                        f"\"outcome\": \"Awarded|Dismissed|Partial|Settled|null\", "
+                        f"\"summary\": \"1-2 sentence factual summary\"}}\n"
+                        f"{'CRITICAL: Translate the summary and outcome into Arabic.' if state.get('ui_language') == 'ar' else ''}"
+                    ),
+                    user=_smart_slice(item_dict["text"], 3000),
+                    token_limit=150
+                )
+                
+                if ollama_content:
+                    import json
+                    import re
+                    json_match = re.search(r"\{[\s\S]*\}", ollama_content)
+                    if json_match:
+                        parsed_data = json.loads(json_match.group(0))
+                        # Wrap in OpenAI-like shape for compatibility with existing parser logic below
+                        parsed_data_wrapper = {"choices": [{"message": {"content": parsed_data}}]}
+                        logger.info(f"Local Ollama parsing successful for {item_dict['title']}")
+            except Exception as e:
+                logger.warning(f"Local Ollama parsing failed for {item_dict['title']}: {e}")
+            return item_dict, parsed_data_wrapper
 
-                if parsed:
-                    try:
-                        content = parsed["choices"][0]["message"]["content"]
-                        if isinstance(content, str):
-                            data = json.loads(content)
-                        else:
-                            data = content
-                        
-                        if data.get("case_name"):
-                            item["title"] = data["case_name"]
-                        
-                        # Validate party names — reject generic labels and cited-case prefixes
-                        _BAD_PARTY = {None, "", "the Claimant", "Claimant", "claimant",
-                                      "the Defendant", "Defendant", "defendant",
-                                      "the Respondent", "Respondent", "See transcript", "N/A"}
-                        _BAD_PREFIX = ("In ", "See ", "As in ", "Cited in", "Relying on",
-                                       "Although ", "Those ", "Court of Appeal in ",
-                                       "Justice ", "Lady ", "Lord ")
-                        
-                        raw_claimant = data.get("claimant")
-                        raw_respondent = data.get("respondent")
-                        
-                        if raw_claimant and raw_claimant not in _BAD_PARTY and not raw_claimant.startswith(_BAD_PREFIX):
-                            item["claimant"] = raw_claimant
-                        else:
-                            item["claimant"] = None
-                        
-                        if raw_respondent and raw_respondent not in _BAD_PARTY and not raw_respondent.startswith(_BAD_PREFIX):
-                            item["respondent"] = raw_respondent
-                        else:
-                            item["respondent"] = None
-                        
-                        item["outcome"]    = data.get("outcome") or item.get("outcome", "")
-                        item["year"]       = data.get("year") or item.get("year", "N/A")
-                        item["summary"]    = data.get("summary", "")
-                        item["text"]       = data.get("summary", item["text"])
-                    except Exception:
-                        pass
+        parse_tasks = [_parse_one_precedent(item) for item in results[:5]]
+        parse_results = await asyncio.gather(*parse_tasks, return_exceptions=True)
+
+        for result in parse_results:
+            if isinstance(result, Exception):
+                continue
+            item, parsed = result
+
+            if parsed:
+                try:
+                    content = parsed["choices"][0]["message"]["content"]
+                    if isinstance(content, str):
+                        data = json.loads(content)
+                    else:
+                        data = content
+                    
+                    if data.get("case_name"):
+                        item["title"] = data["case_name"]
+                    
+                    # Validate party names — reject generic labels and cited-case prefixes
+                    _BAD_PARTY = {None, "", "the Claimant", "Claimant", "claimant",
+                                  "the Defendant", "Defendant", "defendant",
+                                  "the Respondent", "Respondent", "See transcript", "N/A"}
+                    _BAD_PREFIX = ("In ", "See ", "As in ", "Cited in", "Relying on",
+                                   "Although ", "Those ", "Court of Appeal in ",
+                                   "Justice ", "Lady ", "Lord ")
+                    
+                    raw_claimant = data.get("claimant")
+                    raw_respondent = data.get("respondent")
+                    
+                    if raw_claimant and raw_claimant not in _BAD_PARTY and not raw_claimant.startswith(_BAD_PREFIX):
+                        item["claimant"] = raw_claimant
+                    else:
+                        item["claimant"] = None
+                    
+                    if raw_respondent and raw_respondent not in _BAD_PARTY and not raw_respondent.startswith(_BAD_PREFIX):
+                        item["respondent"] = raw_respondent
+                    else:
+                        item["respondent"] = None
+                    
+                    item["outcome"]    = data.get("outcome") or item.get("outcome", "")
+                    item["year"]       = data.get("year") or item.get("year", "N/A")
+                    item["summary"]    = data.get("summary", "")
+                    item["text"]       = data.get("summary", item["text"])
+                except Exception:
+                    pass
                     
         duration = time.time() - start_time
         logger.info(f"--- Node: precedent_search_node finished in {duration:.2f}s")
@@ -537,44 +549,51 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
                     "content": content,
                     "score": score
                 })
-        async with httpx.AsyncClient(timeout=30) as client:
-            for item in results[:5]:
-                item["content"] = _strip_noise(item["content"])
-                parsed = None
-                try:
-                    # Exclusive: Local Intelligence (Ollama)
-                    content = await _call_ollama(
-                        model_url=f"{settings.ollama_url}/api/generate",
-                        model_name=settings.ollama_model_fallback,
-                        system=(
-                            f"You are a DIFC legal article parser. Return ONLY valid JSON — no markdown, no explanation.\n"
-                            f"Schema: {{\"article_number\": \"e.g. Article 19(2) or null\", \"article_title\": \"short title or null\", "
-                            f"\"law_name\": \"full law name\", \"summary\": \"1-2 sentence plain English explanation\"}}\n"
-                            f"{'CRITICAL: Translate the summary, article title and law name into Arabic.' if state.get('ui_language') == 'ar' else ''}"
-                        ),
-                        user=item["content"][:1500],
-                        token_limit=250
-                    )
-                    
-                    if content:
-                        import json
-                        import re
-                        json_match = re.search(r"\{[\s\S]*\}", content)
-                        if json_match:
-                            parsed_data = json.loads(json_match.group(0))
-                            # Wrap for compatibility
-                            parsed = parsed_data
-                            logger.info(f"Local Ollama law parsing successful")
-                except Exception as e:
-                    logger.warning(f"Local Ollama law parsing failed: {e}")
+        async def _parse_one_law(item_dict):
+            item_dict["content"] = _strip_noise(item_dict["content"])
+            parsed_data_wrapper = None
+            try:
+                # Exclusive: Local Intelligence (Ollama)
+                ollama_content = await _call_ollama(
+                    model_url=f"{settings.ollama_url}/api/generate",
+                    model_name=settings.ollama_model_fallback,
+                    system=(
+                        f"You are a DIFC legal article parser. Return ONLY valid JSON — no markdown, no explanation.\n"
+                        f"Schema: {{\"article_number\": \"e.g. Article 19(2) or null\", \"article_title\": \"short title or null\", "
+                        f"\"law_name\": \"full law name\", \"summary\": \"1-2 sentence plain English explanation\"}}\n"
+                        f"{'CRITICAL: Translate the summary, article title and law name into Arabic.' if state.get('ui_language') == 'ar' else ''}"
+                    ),
+                    user=item_dict["content"][:1500],
+                    token_limit=150
+                )
+                
+                if ollama_content:
+                    import json
+                    import re
+                    json_match = re.search(r"\{[\s\S]*\}", ollama_content)
+                    if json_match:
+                        parsed_data = json.loads(json_match.group(0))
+                        parsed_data_wrapper = parsed_data
+                        logger.info(f"Local Ollama law parsing successful")
+            except Exception as e:
+                logger.warning(f"Local Ollama law parsing failed: {e}")
+            return item_dict, parsed_data_wrapper
 
-                if parsed:
-                    item["article_number"] = parsed.get("article_number")
-                    item["article_title"]  = parsed.get("article_title")
-                    item["law_name"]       = parsed.get("law_name") or item.get("title", "")
-                    item["content"]        = parsed.get("summary", item["content"])
-                    if parsed.get("article_number"):
-                        item["title"] = parsed["article_number"]
+        parse_tasks = [_parse_one_law(item) for item in results[:5]]
+        parse_results = await asyncio.gather(*parse_tasks, return_exceptions=True)
+
+        for result in parse_results:
+            if isinstance(result, Exception):
+                continue
+            item, parsed = result
+
+            if parsed:
+                item["article_number"] = parsed.get("article_number")
+                item["article_title"]  = parsed.get("article_title")
+                item["law_name"]       = parsed.get("law_name") or item.get("title", "")
+                item["content"]        = parsed.get("summary", item["content"])
+                if parsed.get("article_number"):
+                    item["title"] = parsed["article_number"]
 
         duration = time.time() - start_time
         logger.info(f"--- Node: law_search_node finished in {duration:.2f}s")
