@@ -14,12 +14,13 @@ import apiClient from '../../api/client';
 
 interface AuditLogEntry {
   id: string;
-  case_id: string;
-  phase_name: string;
+  user_id?: string;
   action: string;
-  status: string;
-  timestamp: string;
-  details?: any;
+  resource_type?: string;
+  resource_id?: string;
+  description?: string;
+  created_at: string;
+  extra_metadata?: any;
 }
 
 export default function AIActivityLogs() {
@@ -88,35 +89,27 @@ export default function AIActivityLogs() {
                   <div className="flex items-center gap-6">
                     {/* Status Indicator */}
                     <div className="relative flex items-center justify-center shrink-0">
-                      <div className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center bg-background z-10 transition-colors ${
-                        log.status === 'SUCCESS' ? 'border-emerald-500/50 text-emerald-600' : 
-                        log.status === 'FAILURE' ? 'border-red-500/50 text-red-600' : 
-                        'border-primary/50 text-primary'
-                      }`}>
-                        {log.phase_name.includes('Creation') ? <Layout className="w-4 h-4" /> : 
-                         log.phase_name.includes('Evidence') ? <Database className="w-4 h-4" /> : 
+                      <div className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center bg-background z-10 transition-colors border-emerald-500/50 text-emerald-600`}>
+                        {log.action.includes('create') ? <Layout className="w-4 h-4" /> : 
+                         log.action.includes('document') ? <Database className="w-4 h-4" /> : 
                          <Activity className="w-4 h-4" />}
                       </div>
                     </div>
 
                     <div>
                       <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">{log.phase_name}</span>
-                        <span className="text-xs font-bold text-foreground">{log.action}</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">{log.resource_type || 'System'}</span>
+                        <span className="text-xs font-bold text-foreground">{log.action.replace(/_/g, ' ')}</span>
                       </div>
                       <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground font-medium uppercase tracking-tight">
                         <Clock className="w-3 h-3 opacity-40" />
-                        {new Date(log.timestamp).toLocaleString()}
+                        {new Date(log.created_at).toLocaleString()}
                       </div>
                     </div>
                   </div>
 
-                  <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border transition-colors ${
-                    log.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20' : 
-                    log.status === 'FAILURE' ? 'bg-red-500/10 text-red-700 border-red-500/20' : 
-                    'bg-primary/10 text-primary border-primary/20'
-                  }`}>
-                    {log.status}
+                  <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border transition-colors bg-primary/10 text-primary border-primary/20`}>
+                    {log.action}
                   </div>
                 </div>
               ))}

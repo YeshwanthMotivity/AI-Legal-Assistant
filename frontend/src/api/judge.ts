@@ -89,6 +89,7 @@ const extractSimilarPrecedents = (
     const title =
       String(row.title ?? row.case_title ?? row.summary ?? row.name ?? `Precedent ${index + 1}`)
     const caseId = String(
+      (row.similar_case_id && row.similar_case_id !== '') ? row.similar_case_id :
       (row.caseId && row.caseId !== '') ? row.caseId :
       (row.case_id && row.case_id !== '') ? row.case_id : 
       (row.id && row.id !== '') ? row.id : 

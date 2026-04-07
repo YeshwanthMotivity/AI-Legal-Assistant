@@ -111,13 +111,13 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent, headerActi
   return (
     <div className="flex min-h-screen bg-background text-foreground selection:bg-primary/20">
       {/* Collapsible Sidebar */}
-      <aside 
-        className={cn(
-          "bg-sidebar text-sidebar-text flex flex-col fixed h-full z-40 border-r-0 border-l-0 shadow-2xl transition-all duration-300",
-          sidebarWidth,
-          isRTL ? "right-0 border-l border-[var(--border-color)]" : "left-0 border-r border-[var(--border-color)]"
-        )}
-      >
+  <aside 
+    className={cn(
+      "bg-sidebar text-sidebar-text flex flex-col sticky top-0 h-screen z-50 border-r-0 border-l-0 shadow-2xl transition-all duration-300 shrink-0",
+      sidebarWidth,
+      isRTL ? "border-l border-[var(--border-color)]" : "border-r border-[var(--border-color)]"
+    )}
+  >
         <div className={cn("flex items-center transition-all duration-300", isCollapsed ? "flex-col p-4 gap-4" : "p-6 gap-3")}>
           <div className={cn(
             "bg-white/10 rounded-2xl flex items-center justify-center text-sidebar-text shadow-lg transition-transform hover:scale-105 active:scale-95 shrink-0",
@@ -197,8 +197,8 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent, headerActi
       {/* Main Content Area */}
       <main 
         className={cn(
-          "flex-1 transition-all duration-300 min-h-screen",
-          mainMargin
+          "flex-1 transition-all duration-300 min-h-screen relative flex flex-col",
+          hideHeaderContent && "h-screen overflow-hidden"
         )}
       >
         {/* Header — expanded height for breathing room */}
@@ -230,7 +230,7 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent, headerActi
 
         {/* Page Content Container - Unified Compact Baseline */}
         <div className={cn(
-          "animate-in fade-in slide-in-from-bottom-4 duration-700",
+          "animate-in fade-in slide-in-from-bottom-4 duration-700 flex-1 h-full",
           hideHeaderContent ? "p-0" : "px-8 pt-0 pb-5 max-w-[1640px] mx-auto"
         )}>
           {children}

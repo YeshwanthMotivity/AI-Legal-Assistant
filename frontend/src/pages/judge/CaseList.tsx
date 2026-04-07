@@ -153,7 +153,7 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
         <div className="bg-[var(--bg-card)] p-6 rounded-lg editorial-shadow flex flex-col justify-between border border-outline-variant/30">
           <div>
             <p className="text-xs font-bold text-tertiary uppercase tracking-widest mb-1">{t('judge.caseList.decisionsIssued')}</p>
-            <h3 className="font-headline text-3xl font-medium text-primary">
+            <h3 className="font-headline text-2xl font-semibold text-primary">
               {casesQuery.isLoading ? '...' : String(stats.finalized).padStart(2, '0')}
             </h3>
           </div>
@@ -248,7 +248,7 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
                         <span className="text-[10px] font-bold text-tertiary tracking-widest uppercase mb-1 block">
                           {t('judge.caseList.caseIdLabel')}: {c.case_number || c.id.substring(0, 8).toUpperCase()}
                         </span>
-                        <h5 className="font-headline text-xl text-on-surface font-semibold">{c.title || t('judge.caseList.untitledAction')}</h5>
+                        <h5 className="font-headline text-lg text-on-surface font-semibold">{c.title || t('judge.caseList.untitledAction')}</h5>
                       </div>
                       <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-tighter rounded ${
                         isUrgent ? 'bg-error-container text-on-error-container' : 'bg-secondary-container text-on-secondary-container'

@@ -6,6 +6,7 @@ import { getJudgeCases } from '../api/judge';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import PortalLayout from '../components/layout/PortalLayout';
+import { Button } from '@/components/ui/button';
 import LanguageToggle from '../components/LanguageToggle';
 
 import { 
@@ -21,10 +22,15 @@ import {
   Terminal,
   Zap,
   BarChart3,
-  Briefcase
+  Briefcase,
+  ArrowRight,
+  Send,
+  LayoutDashboard,
+  PanelRightClose,
+  Scale
 } from 'lucide-react';
 
-export default function JudgeDashboard() {
+function JudgeDashboard() {
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -51,7 +57,7 @@ export default function JudgeDashboard() {
     return {
       pending: items.filter(c => c.status !== 'Finalized').length,
       ready: items.filter(c => c.status === 'DraftGenerated' || c.status === 'AIAnalysisReady').length,
-      urgent: items.filter(c => c.hearing_date && new Date(c.hearing_date) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)).length
+      urgent: items.filter(c => c.status !== 'Finalized' && c.hearing_date && new Date(c.hearing_date) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)).length
     };
   }, [casesQuery.data]);
 
@@ -87,7 +93,7 @@ export default function JudgeDashboard() {
     Answer questions about the dashboard, cases, and judicial workflow. ${i18n.language === 'ar' ? 'Always respond in Arabic.' : 'Always respond in English.'}`;
 
     try {
-      const response = await fetch('http://localhost:11434/api/chat', {
+      const response = await fetch('http://172.20.100.215:11434/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -112,7 +118,7 @@ export default function JudgeDashboard() {
   const modules = [
     { label: t('active_cases', 'Active Cases'), desc: t('currently_assigned', 'Currently assigned'), count: stats.pending, icon: Briefcase },
     { label: t('ai_ready', 'AI Ready'), desc: t('ready_for_review', 'Ready for review'), count: stats.ready || 0, icon: Sparkles },
-    { label: t('urgent_hearings', 'Urgent Hearings'), desc: t('require_attention', 'Require attention'), count: stats.urgent || 0, icon: History },
+    { label: t('urgent_hearings', 'Urgent Hearings'), desc: t('require_attention', 'Require attention'), count: stats.urgent || 0, icon: AlertTriangle },
     { label: t('performance', 'Performance'), desc: t('archived_cases', 'Archived cases'), progress: Math.round((performance.resolved / performance.total) * 100), icon: BarChart3 },
   ];
 
@@ -123,96 +129,105 @@ export default function JudgeDashboard() {
       headerActions={
         <div className="flex items-center gap-3">
           <button 
-            className={`flex items-center gap-2 h-9 px-4 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all border ${isAiPanelOpen ? 'bg-[var(--primary)]/10 border-[var(--primary)] text-[var(--primary)] shadow-sm' : 'bg-muted border-transparent hover:border-border text-muted-foreground/60'}`}
-            onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            {isAiPanelOpen ? 'Hide Assistant' : 'Show Assistant'}
-          </button>
-          <button 
-            className="flex items-center gap-2 h-9 px-5 text-[10px] font-bold bg-[var(--primary)] text-white rounded-lg shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest"
+            className="flex items-center gap-2 h-10 px-6 text-[11px] font-black bg-primary text-on-primary rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest"
             onClick={() => navigate('/judge/cases/new')}
           >
-            <Plus className="w-3.5 h-3.5"/> CREATE CASE
+            <Plus className="w-4 h-4"/> {t('create_case', 'Create Case')}
           </button>
         </div>
       }
     >
-      <div className="flex bg-[var(--bg-base)]">
-        <div className="flex-1 flex flex-col min-w-0 bg-background">
-          <div className="flex-1 overflow-y-auto px-8 py-5 scrollbar-hide space-y-5">
-            {/* Alerts Section - Compressed Vertical Footprint */}
+      <div className="absolute inset-0 flex bg-[#F8F8F5]">
+        <div className="flex-1 flex flex-col min-w-0 bg-[#F8F8F5] overflow-y-auto">
+          <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
+            {/* ALERT BANNER */}
             {(stats.urgent > 0 || stats.ready > 0) && (
-              <div className="flex flex-col gap-2">
+              <div className="space-y-3">
                 {stats.urgent > 0 && (
-                  <div className="px-5 py-3 rounded-lg bg-[var(--bg-card)] border-l-4 border-error shadow-sm flex items-center justify-between group animate-in slide-in-from-top-2">
+                  <div className="p-4 bg-white rounded-2xl border border-red-100 shadow-sm flex items-center justify-between border-l-4 border-l-red-500 animate-in slide-in-from-top-4 duration-500">
                     <div className="flex items-center gap-4">
-                      <AlertTriangle className="w-4 h-4 text-error"/>
-                      <p className="text-sm font-semibold text-on-surface">{stats.urgent} {t('urgent_cases_msg', 'cases detected with hearings in less than 7 days.')}</p>
+                      <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-500">
+                         <AlertTriangle className="w-5 h-5"/>
+                      </div>
+                      <div>
+                         <p className="text-sm font-bold text-foreground">{stats.urgent} {t('urgent_cases_msg', 'cases detected with hearings in less than 7 days.')}</p>
+                         <p className="text-[10px] font-black uppercase text-red-500/60 tracking-widest mt-1">High Priority Attention Required</p>
+                      </div>
                     </div>
-                    <button className="h-8 px-4 text-[9px] font-bold bg-error text-white rounded uppercase tracking-widest hover:brightness-110">{t('review_urgent', 'Review Urgent')}</button>
-                  </div>
-                )}
-                {stats.ready > 0 && (
-                  <div className="px-5 py-3 rounded-lg bg-[var(--bg-card)] border-l-4 border-[var(--primary)] shadow-sm flex items-center justify-between group animate-in slide-in-from-top-2 delay-75">
-                    <div className="flex items-center gap-4">
-                      <Zap className="w-4 h-4 text-[var(--primary)]"/>
-                      <p className="text-sm font-semibold text-on-surface">{stats.ready} {t('draft_ready_msg', 'case drafts are ready for judicial finalization.')}</p>
-                    </div>
-                    <button className="h-8 px-4 text-[9px] font-bold bg-[var(--primary)] text-white rounded uppercase tracking-widest hover:brightness-110">{t('finalize_drafts', 'Finalize Drafts')}</button>
+                    <button className="h-9 px-6 text-[10px] font-black bg-red-500 text-white rounded-lg uppercase tracking-widest hover:brightness-110 shadow-md shadow-red-500/10 transition-all">{t('review_urgent', 'Review Urgent')}</button>
                   </div>
                 )}
               </div>
             )}
 
-            {/* MODULE CARDS - Symmetric Tight Grid */}
-            <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            {/* METRICS GRID - Premium Sovereign Cards */}
+            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {modules.map((mod, i) => (
                 <div 
                   key={i} 
-                  className="bg-[var(--bg-card)] p-4 rounded-lg border border-outline-variant/30 shadow-sm hover:border-[var(--primary)]/30 transition-all duration-300 flex flex-col justify-between"
+                  className="group bg-white p-8 rounded-[2.5rem] border border-border/60 shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-500 relative overflow-hidden"
                 >
-                  <div className="flex-1">
-                    <p className="text-[10px] font-bold text-tertiary uppercase tracking-widest opacity-60 mb-1">{mod.label}</p>
-                    <h3 className="font-headline text-3xl font-medium text-primary leading-none">
-                      {mod.count !== undefined ? String(mod.count).padStart(2, '0') : `${mod.progress}%`}
-                    </h3>
+                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
+                  <div className="flex items-start justify-between relative z-10">
+                    <div>
+                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.25em] mb-4 opacity-50">{mod.label}</p>
+                      <h3 className="text-4xl font-black text-foreground tracking-tighter tabular-nums leading-none">
+                        {mod.count !== undefined ? String(mod.count).padStart(2, '0') : `${mod.progress}%`}
+                      </h3>
+                    </div>
+                    <div className="w-14 h-14 bg-gradient-to-br from-primary/10 to-transparent rounded-2xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-500 shadow-inner">
+                       <mod.icon className="w-6 h-6"/>
+                    </div>
                   </div>
                   
-                  <div className="flex items-center text-[10px] font-bold text-[var(--primary)] uppercase tracking-wider h-4 mt-3">
-                    <mod.icon className="w-3.5 h-3.5 mr-2 opacity-70"/>
-                    <span>{mod.desc}</span>
+                  <div className="mt-8 flex items-center justify-between relative z-10">
+                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-40">{mod.desc}</span>
+                    <div className="h-1 w-12 bg-primary/10 rounded-full overflow-hidden">
+                       <div className="h-full bg-primary rounded-full" style={{ width: mod.progress !== undefined ? `${mod.progress}%` : '40%' }} />
+                    </div>
                   </div>
                 </div>
               ))}
             </section>
 
-            <section className="space-y-4 pt-2 pb-12">
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-1 py-1">
-                <div className="flex items-center gap-4">
-                  <h2 className="text-base font-bold tracking-tight text-foreground">{t('my_cases', 'My Cases')}</h2>
-                  <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-black rounded border border-primary/20 tracking-widest uppercase">
-                    {recentCases.length} {recentCases.length === 1 ? 'Case' : 'Cases'}
-                  </span>
+            {/* CASE LISTING - Registry Interface */}
+            <section className="space-y-8 pb-32">
+              <header className="flex flex-col lg:flex-row justify-between lg:items-center gap-6 bg-white/50 p-6 rounded-[2rem] border border-border/40 shadow-sm backdrop-blur-sm">
+                <div>
+                   <div className="flex items-center gap-3 mb-1.5">
+                      <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                         <Scale className="w-4 h-4"/>
+                      </div>
+                      <h2 className="text-xl font-black tracking-tighter text-foreground uppercase">{t('my_cases', 'Judicial Registry')}</h2>
+                   </div>
+                   <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] opacity-40 px-11">{recentCases.length} {t('active_dockets', 'Active Dockets Found')}</p>
                 </div>
                 
-                <div className="relative w-full sm:w-80">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40"/>
+                <div className="relative w-full lg:w-[420px] group">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary transition-all group-focus-within:scale-110"/>
                   <input
-                    className="w-full bg-surface-container-low border border-outline-variant/30 rounded py-2 pl-9 pr-4 text-[11px] uppercase tracking-widest focus:outline-none focus:border-tertiary font-bold transition-all placeholder:opacity-50"
-                    placeholder={t('quick_search_dockets', 'Quick search dockets...')}
+                    className="w-full bg-white border-2 border-border/40 rounded-2xl h-14 pl-12 pr-4 text-[12px] font-black focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all placeholder:opacity-30 uppercase tracking-widest antialiased"
+                    placeholder={t('quick_search_dockets', 'Identify Session / Case Ref...')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 opacity-20 pointer-events-none group-focus-within:opacity-0 transition-opacity">
+                     <span className="text-[10px] font-black tracking-tighter">CMD</span>
+                     <span className="text-[10px] font-black tracking-tighter">+</span>
+                     <span className="text-[10px] font-black tracking-tighter">K</span>
+                  </div>
                 </div>
-              </div>
+              </header>
 
-              <div className="grid grid-cols-1 gap-4 pb-12">
+              <div className="grid grid-cols-12 gap-6 items-start">
                 {casesQuery.isLoading ? (
-                  <div className="p-12 text-center animate-pulse text-muted-foreground uppercase text-[10px] font-black tracking-[0.2em]">Synchronizing Registry...</div>
+                  <div className="col-span-12 p-24 text-center">
+                     <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-6"/>
+                     <p className="text-[11px] font-black text-primary uppercase tracking-[0.3em]">{t('syncing', 'Synchronizing Registry...')}</p>
+                  </div>
                 ) : recentCases.length === 0 ? (
-                  <div className="p-12 text-center text-muted-foreground bg-[var(--bg-card)] rounded-lg border border-dashed border-border/60 italic text-sm">
-                    No recent activity matching your current session filters.
+                  <div className="col-span-12 p-16 text-center text-muted-foreground bg-white rounded-2xl border-2 border-dashed border-border/60 italic text-xs">
+                    No matching judicial records identified in current session.
                   </div>
                 ) : (
                   recentCases.map((c) => {
@@ -221,62 +236,105 @@ export default function JudgeDashboard() {
                     return (
                       <div 
                         key={c.id} 
-                        className="bg-[var(--bg-card)] p-6 rounded-lg shadow-sm border border-outline-variant/30 hover:border-[var(--primary)]/40 transition-all duration-300 group cursor-pointer"
+                        className="col-span-12 group relative"
                         onClick={() => navigate(`/judge/cases/${c.id}`)}
                       >
-                        <div className="grid grid-cols-1 sm:grid-cols-[1fr_200px] gap-4 mb-3">
-                          <div>
-                            <span className="text-[10px] font-bold text-tertiary uppercase tracking-[0.15em] mb-1 block opacity-50">
-                              Case ID: {c.case_number || c.id.substring(0, 8).toUpperCase()}
-                            </span>
-                            <h5 className="font-headline text-xl text-on-surface font-bold group-hover:text-primary transition-colors leading-none">{c.title || 'Untitled Action'}</h5>
-                          </div>
-                          <div className="flex flex-col items-end pt-1">
-                            <span className={`px-2 py-1 text-[9px] font-black uppercase tracking-widest rounded border self-end ${
-                              isUrgent ? 'bg-error/10 text-error border-error/20' : 'bg-primary/5 text-primary/70 border-primary/10'
-                            }`}>
-                              {isUrgent ? 'Urgent Hearing' : c.status === 'DraftGenerated' ? 'Draft Ready' : 'In Progress'}
-                            </span>
-                          </div>
-                        </div>
+                        {/* Status bar on the life edge */}
+                        <div className={cn(
+                          "absolute left-0 top-0 bottom-0 w-1.5 rounded-l-3xl z-10 transition-all duration-300 group-hover:w-3",
+                          isUrgent ? "bg-red-500" : c.status === 'Finalized' ? "bg-emerald-500" : "bg-primary"
+                        )} />
                         
-                        {/* THE TRI-SECTOR BASELINE - Precision Baseline Pass */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-border/10 items-baseline">
-                          {/* Sector 1: Intelligence */}
-                          <div className="space-y-2">
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-40 leading-none">Intelligence Mapping</p>
-                            <div className="flex items-center gap-3 mt-4">
-                              <span className="text-[10px] font-medium bg-[var(--primary)]/8 text-[var(--primary)] border border-[var(--primary)]/15 px-2 py-0.5 rounded-md">
-                                {c.case_type?.replace(/_/g, ' ') || 'Other'}
-                              </span>
-                              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                                <Search className="w-3 h-3 opacity-40" />
-                                <span>Precedents Matched</span>
+                        <div className="bg-white p-10 rounded-[2.5rem] border border-border/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)] hover:border-primary/40 transition-all duration-500 flex flex-col gap-10 cursor-pointer overflow-hidden backdrop-blur-sm relative">
+                           <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:scale-125 transition-transform duration-1000 rotate-12">
+                              <History className="w-32 h-32 text-primary"/>
+                           </div>
+                           
+                           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-10 relative z-10">
+                              <div className="space-y-4 max-w-3xl">
+                                 <div className="flex items-center gap-4">
+                                    <span className="text-[10px] font-black font-mono text-primary bg-primary/5 px-3 py-1 rounded-full border border-primary/20 tracking-[0.2em]">
+                                       {c.case_number || c.id.substring(0, 12).toUpperCase()}
+                                    </span>
+                                    {isUrgent && (
+                                      <span className="flex items-center gap-1.5 text-[9px] font-black text-red-600 bg-red-50 px-2 py-1 rounded-md animate-pulse">
+                                         <AlertTriangle className="w-3 h-3"/> PRIORITY S1
+                                      </span>
+                                    )}
+                                 </div>
+                                 <h3 className="text-2xl font-black text-foreground group-hover:text-primary transition-colors tracking-tighter leading-tight uppercase antialiased">{c.title || 'Untitled Action'}</h3>
+                                 <div className="flex flex-wrap items-center gap-6">
+                                    <div className="flex items-center gap-3 bg-muted/30 px-4 py-2 rounded-xl border border-border/40">
+                                       <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center border border-border/60">
+                                          <User className="w-3 h-3 text-primary opacity-60"/>
+                                       </div>
+                                       <span className="text-[11px] font-black text-foreground tracking-tight uppercase">{c.claimant_name ? c.claimant_name.substring(0, 24) : 'Private Litigant'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 bg-muted/30 px-4 py-2 rounded-xl border border-border/40">
+                                       <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center border border-border/60">
+                                          <Scale className="w-3 h-3 text-primary opacity-60"/>
+                                       </div>
+                                       <span className="text-[11px] font-black text-foreground tracking-tight uppercase">{c.case_type?.replace(/_/g, ' ') || 'LABOR'}</span>
+                                    </div>
+                                 </div>
                               </div>
-                            </div>
-                          </div>
-                          
-                          {/* Sector 2: Score */}
-                          <div className="space-y-2">
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-40 leading-none">{t('ai_precision_score', 'AI Precision Score')}</p>
-                            <div className="flex items-center gap-3">
-                              <div className="flex-1 max-w-[140px] h-1.5 bg-muted rounded-full overflow-hidden">
-                                <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: c.ai_precision_score ? `${c.ai_precision_score}%` : c.status === 'AIAnalysisReady' ? '94%' : '30%' }} />
+
+                              <div className="flex flex-col items-end gap-6 min-w-[240px]">
+                                 <div className="flex flex-col items-end gap-1.5">
+                                    <p className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest italic">Temporal Status</p>
+                                    <div className="flex items-center gap-3">
+                                       <Calendar className="w-4 h-4 text-primary opacity-40"/>
+                                       <span className="text-sm font-black text-foreground tracking-tighter uppercase tabular-nums">
+                                          {c.hearing_date ? new Date(c.hearing_date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : 'Pending Schedule'}
+                                       </span>
+                                    </div>
+                                 </div>
+                                 <Button 
+                                    className={cn(
+                                       "h-12 w-full px-8 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg transition-all active:scale-95 group/btn",
+                                       isUrgent ? "bg-red-600 hover:bg-red-700 shadow-red-500/20" : c.status === 'Finalized' ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20" : "bg-primary shadow-primary/20"
+                                    )}
+                                 >
+                                    {c.status === 'AIAnalysisReady' ? 'Resume Synthesis' : 'Enter Workspace'} 
+                                    <ChevronRight className="w-4 h-4 ml-3 group-hover/btn:translate-x-1 transition-transform"/>
+                                 </Button>
                               </div>
-                              <span className="text-[12px] font-bold tabular-nums text-primary">{c.ai_precision_score ? `${c.ai_precision_score}%` : c.status === 'AIAnalysisReady' ? '94%' : '--'}</span>
-                            </div>
-                          </div>
-                          
-                          {/* Sector 3: Schedule */}
-                          <div className="text-right flex flex-col items-end space-y-2">
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-40 leading-none">Hearing Schedule</p>
-                            <div className="flex items-center gap-2 text-[13px] font-bold text-primary">
-                              <Calendar className="w-4 h-4 opacity-30"/>
-                              {c.hearing_date ? new Date(c.hearing_date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : <span className="opacity-40 italic">Unscheduled</span>}
-                            </div>
-                          </div>
+                           </div>
+                           
+                           <div className="pt-8 border-t border-border/60 flex flex-col md:flex-row md:items-center justify-between gap-8 relative z-10">
+                              <div className="flex items-center gap-10 flex-1">
+                                 <div className="flex-1 max-w-[280px]">
+                                    <div className="flex justify-between items-center text-[9px] font-black text-primary uppercase tracking-[0.2em] mb-3 opacity-60">
+                                       <span>Node Precision Rating</span>
+                                       <span>{c.ai_precision_score ? `${c.ai_precision_score}%` : '78%'}</span>
+                                    </div>
+                                    <div className="h-2 bg-primary/5 rounded-full overflow-hidden border border-primary/5 shadow-inner">
+                                       <div 
+                                          className="h-full bg-primary rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(5,150,105,0.4)]" 
+                                          style={{ width: c.ai_precision_score ? `${c.ai_precision_score}%` : '78%' }} 
+                                       />
+                                    </div>
+                                 </div>
+                                 <div className="w-[1px] h-10 bg-border/40 hidden md:block" />
+                                 <div className="flex items-center gap-4">
+                                    <div className={cn(
+                                       "w-3 h-3 rounded-full animate-pulse",
+                                       c.status === 'AIAnalysisReady' ? "bg-emerald-400" : "bg-primary/40"
+                                    )}/>
+                                    <div>
+                                       <p className="text-[8px] font-black text-muted-foreground/30 uppercase tracking-[0.3em] mb-1">State Vector</p>
+                                       <p className="text-[11px] font-black text-foreground uppercase tracking-tight">{c.status}</p>
+                                    </div>
+                                 </div>
+                              </div>
+                              <div className="flex items-center gap-4 opacity-30 group-hover:opacity-100 group-hover:text-primary transition-all">
+                                 <span className="text-[10px] font-black uppercase tracking-widest">Access Case Module</span>
+                                 <ArrowRight className="w-4 h-4" />
+                              </div>
+                           </div>
                         </div>
                       </div>
+                    );
                     );
                   })
                 )}
@@ -285,125 +343,160 @@ export default function JudgeDashboard() {
           </div>
         </div>
 
+        {/* SIDEBAR */}
         <aside 
-          className={`h-[calc(100vh-64px)] sticky top-[64px] transition-all duration-500 border-l border-border bg-surface flex flex-col ${isAiPanelOpen ? 'w-96 opacity-100 translate-x-0' : 'w-0 opacity-0 translate-x-full overflow-hidden'}`}
+          className={cn(
+             "h-full bg-white border-l border-border transition-all duration-500 flex flex-col relative",
+             isAiPanelOpen ? "w-[380px] opacity-100" : "w-0 opacity-0 overflow-hidden"
+          )}
         >
-          <div className="p-8 border-b border-border flex justify-between items-center bg-muted/10 backdrop-blur-md">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-xl shadow-inner shadow-primary/20">
-                <Sparkles className="w-5 h-5 text-primary"/>
-              </div>
-              <div>
-                <h3 className="text-sm font-black tracking-tight">Cylix Assistant</h3>
-                <p className="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest">Enterprise reasoning active</p>
-              </div>
-            </div>
-            <button 
-              className="p-2 hover:bg-muted rounded-lg transition-colors border border-transparent hover:border-border"
-              onClick={() => setIsAiPanelOpen(false)}
-            >
-              <ChevronRight className="w-4 h-4"/>
-            </button>
-          </div>
+          <header className="px-6 py-6 border-b border-border/40 bg-white/80 backdrop-blur-md flex items-center justify-between shrink-0 sticky top-0 z-20">
+             <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-transparent rounded-2xl flex items-center justify-center text-primary border border-primary/20 shadow-inner">
+                   <Sparkles className="w-6 h-6"/>
+                </div>
+                <div>
+                   <h3 className="text-xs font-black tracking-[0.1em] text-foreground uppercase leading-none">Assistant Hub</h3>
+                   <div className="flex items-center gap-1.5 mt-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <p className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">Neural Synthesis Active</p>
+                   </div>
+                </div>
+             </div>
+             <button onClick={() => setIsAiPanelOpen(false)} className="w-10 h-10 flex items-center justify-center hover:bg-muted rounded-xl transition-all group">
+                <PanelRightClose className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:scale-110 transition-all"/>
+             </button>
+          </header>
 
-          <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
+          <div className="flex-1 overflow-y-auto p-6 space-y-10 custom-scrollbar">
             {focusCase ? (
-              <div className="space-y-6 animate-in fade-in duration-500">
-                <div className="p-6 rounded-2xl bg-primary text-on-primary shadow-xl shadow-primary/20 relative overflow-hidden group border border-white/10">
-                  <div className="absolute -right-10 -top-10 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-70">{t('focus_insight', 'Focus Insight')}</p>
-                  <h4 className="text-sm font-bold mb-3 italic leading-relaxed">
-                    {`Case ${focusCase.case_number} - Status: ${focusCase.status}. ${focusCase.updated_at ? `Last updated: ${new Date(focusCase.updated_at).toLocaleDateString()}.` : ''}`}
-                  </h4>
-                  <div className="flex items-center gap-2 mt-6">
-                    <Verified className="w-4 h-4 text-emerald-300"/>
-                    <span className="text-[10px] font-bold uppercase tracking-widest">{t('standard_verified_mapping', 'Standard Verified Mapping')}</span>
+               <div className="space-y-10 animate-in fade-in duration-500">
+                  {/* DASHBOARD OVERVIEW SECTION */}
+                  <div className="p-6 bg-gradient-to-br from-primary/5 to-transparent border border-primary/10 rounded-[2rem] relative overflow-hidden group">
+                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform duration-700">
+                        <LayoutDashboard className="w-16 h-16 text-primary"/>
+                     </div>
+                     <p className="text-[9px] font-black uppercase text-primary tracking-[0.25em] mb-4 opacity-60">Strategic Pulse</p>
+                     <p className="text-[11px] font-bold leading-relaxed text-foreground antialiased">
+                       Sovereign monitoring active for <span className="text-primary">{stats.pending}</span> dockets. 
+                       Intelligence focus identified: <span className="underline decoration-primary/30 underline-offset-4">{focusCase.case_number}</span>.
+                     </p>
+                     <div className="mt-6 pt-4 border-t border-primary/10 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                           <Zap className="w-3.5 h-3.5 text-primary animate-pulse"/>
+                           <span className="text-[9px] font-black text-primary uppercase tracking-widest">Synthesis Engine Online</span>
+                        </div>
+                        <span className="text-[8px] font-black text-muted-foreground/40 uppercase">V2.4.0</span>
+                     </div>
                   </div>
-                </div>
 
-                <div className="space-y-4">
-                  <h4 className="text-[11px] font-bold text-foreground">Quick Actions</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { label: 'Analyze documents', query: 'Can you analyze the uploaded documents for this case?' },
-                      { label: 'Extract citations', query: 'Please extract all legal citations from the primary filing.' },
-                      { label: 'Generate summary', query: 'Provide a concise judicial summary of this action.' },
-                      { label: 'Check similarity', query: 'Search the registry for similar precedents to this case.' }
-                    ].map((q, i) => (
-                      <button 
-                        key={i} 
-                        onClick={() => {
-                          setChatInput(q.query);
-                          // Trigger chat immediately if desired, or let user edit it
-                        }}
-                        className="px-3 py-2 text-[11px] font-bold bg-muted/40 hover:bg-primary/10 hover:text-primary rounded-xl border border-border/50 group transition-all text-left"
-                      >
-                        {q.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                  {/* JUDICIAL ACTIONS SECTION */}
+                  <section className="space-y-6">
+                     <div className="flex items-center justify-between px-2">
+                        <h4 className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.3em]">Protocol Shortcuts</h4>
+                        <Terminal className="w-3.5 h-3.5 text-muted-foreground/30"/>
+                     </div>
+                     <div className="grid grid-cols-2 gap-3">
+                        {[
+                           { label: 'Review Urgency', q: 'Summarize why these cases are urgent.', icon: AlertTriangle },
+                           { label: 'Check Precision', q: 'Show me precision breakdowns for active cases.', icon: Verified },
+                           { label: 'Draft Outlook', q: 'Provide an outlook for cases ready for finalization.', icon: History },
+                           { label: 'Precedent Map', q: 'Map related precedents for the focuses case.', icon: Scale }
+                        ].map((act, i) => (
+                           <button 
+                             key={i} 
+                             onClick={() => setChatInput(act.q)}
+                             className="group/btn p-4 text-[10px] font-black bg-white border border-border/60 rounded-2xl hover:border-primary/40 hover:bg-primary/5 hover:scale-[1.02] transition-all text-left uppercase tracking-tight leading-tight flex flex-col gap-3 shadow-sm"
+                           >
+                              <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground group-hover/btn:bg-primary/10 group-hover/btn:text-primary transition-colors">
+                                 <act.icon className="w-4 h-4"/>
+                              </div>
+                              {act.label}
+                           </button>
+                        ))}
+                     </div>
+                  </section>
 
-                <div className="space-y-4">
-                  <h4 className="text-[11px] font-bold text-foreground">{t('assistant_interaction', 'Assistant Interaction')}</h4>
-                  <div className="space-y-4">
-                    {chatHistory.length === 0 && !isChatLoading ? (
-                      <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-700">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
-                          <Sparkles className="w-4 h-4 text-primary"/>
+                  {/* DIALOGUE SECTION */}
+                  <section className="flex flex-col flex-1 space-y-6">
+                     <div className="flex items-center justify-between px-2">
+                        <h4 className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.3em]">Dialogue Stream</h4>
+                        <div className="flex gap-1">
+                           <div className="w-1 h-1 rounded-full bg-primary/20" />
+                           <div className="w-1 h-1 rounded-full bg-primary/40" />
+                           <div className="w-1 h-1 rounded-full bg-primary/60" />
                         </div>
-                        <div className="bg-primary/5 p-4 rounded-2xl rounded-tl-none border border-primary/10 shadow-sm shadow-primary/5">
-                          <p className="text-xs font-medium text-foreground/70 italic leading-relaxed">
-                            {t('dashboard_chat_welcome', 'Ask me anything about your judicial registry, active cases, or workflow optimization.')}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      chatHistory.map((msg, i) => (
-                        <div key={i} className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${msg.role === 'user' ? 'bg-muted border-border/40' : 'bg-primary/10 border-primary/20'}`}>
-                            {msg.role === 'user' ? <User className="w-4 h-4 text-muted-foreground"/> : <Sparkles className="w-4 h-4 text-primary"/>}
+                     </div>
+                     <div className="space-y-5">
+                       {chatHistory.length === 0 ? (
+                          <div className="flex gap-3 animate-in fade-in duration-700">
+                             <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                                <Sparkles className="w-3.5 h-3.5 text-primary"/>
+                             </div>
+                             <div className="bg-[#F8F8F5] p-3.5 rounded-2xl rounded-tl-none border border-border/40 shadow-sm">
+                                <p className="text-[11px] font-medium text-foreground/70 italic leading-relaxed">
+                                   Ready for judicial discovery. How can I assist with your workspace today?
+                                </p>
+                             </div>
                           </div>
-                          <div className={`${msg.role === 'user' ? 'bg-muted/20 border-border/20' : 'bg-primary/5 border-primary/10 shadow-sm shadow-primary/5'} p-4 rounded-2xl rounded-tl-none border`}>
-                            <p className="text-xs font-medium text-foreground/90 leading-relaxed">{msg.content}</p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                    {isChatLoading && <div className="text-[10px] text-muted-foreground animate-pulse font-bold uppercase tracking-widest">{t('thinking', 'Thinking...')}</div>}
-                  </div>
-                </div>
-              </div>
+                       ) : (
+                          chatHistory.map((msg, i) => (
+                             <div key={i} className={cn("flex gap-3", msg.role === 'user' ? "flex-row-reverse" : "")}>
+                                <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border", msg.role === 'user' ? "bg-muted border-border/40" : "bg-primary/10 border-primary/20")}>
+                                   {msg.role === 'user' ? <User className="w-3.5 h-3.5 text-muted-foreground"/> : <Sparkles className="w-3.5 h-3.5 text-primary"/>}
+                                </div>
+                                <div className={cn("p-3.5 rounded-2xl border shadow-sm flex-1", msg.role === 'user' ? "bg-white border-border/60 rounded-tr-none" : "bg-[#F8F8F5] border-border/40 rounded-tl-none")}>
+                                   <p className="text-[11px] font-medium text-foreground leading-relaxed">{msg.content}</p>
+                                </div>
+                             </div>
+                          ))
+                       )}
+                       {isChatLoading && <div className="text-[8px] font-black text-primary animate-pulse uppercase tracking-[0.5em]">Processing...</div>}
+                     </div>
+                  </section>
+               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-4/5 text-center p-8 opacity-30 grayscale">
-                <Terminal className="w-12 h-12 mb-4"/>
-                <p className="text-xs font-black uppercase tracking-widest">Select case for analysis</p>
-              </div>
+               <div className="flex flex-col items-center justify-center h-4/5 text-center p-8 opacity-20">
+                  <LayoutDashboard className="w-12 h-12 mb-4"/>
+                  <p className="text-[10px] font-black uppercase tracking-widest italic">Awaiting session context</p>
+               </div>
             )}
           </div>
 
-          <div className="p-8 border-t border-border bg-muted/10 backdrop-blur-sm">
-            <div className="relative group">
-              <input 
-                type="text"
-                placeholder={t('ask_cylix_ai', 'Ask Cylix AI...')}
-                className="w-full bg-background border border-border/60 focus:border-primary/50 focus:ring-4 focus:ring-primary/5 h-12 pl-4 pr-12 rounded-2xl shadow-sm outline-none transition-all placeholder:text-muted-foreground/50 text-sm font-medium"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && sendChat()}
-              />
-              <button 
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-primary text-on-primary rounded-xl flex items-center justify-center shadow-lg hover:scale-105 transition-all"
-                onClick={sendChat}
-                disabled={isChatLoading}
-              >
-                <ChevronRight className="w-4 h-4"/>
-              </button>
-            </div>
-            <p className="text-[9px] text-center text-muted-foreground mt-3 font-bold uppercase tracking-widest opacity-40">Reasoning Node 4.0.2</p>
+          <div className="p-5 border-t border-border/40 bg-white shrink-0">
+             <div className="relative group">
+                <input 
+                  type="text" 
+                  placeholder="Query Registry..." 
+                  className="w-full bg-[#F8F8F5] border border-border/60 rounded-xl h-11 pl-4 pr-12 text-[11px] font-bold focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && sendChat()}
+                />
+                <button 
+                  className="absolute right-1.5 top-1.5 h-8 w-8 bg-primary text-on-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 transition-all disabled:opacity-40"
+                  onClick={sendChat}
+                  disabled={isChatLoading || !chatInput.trim()}
+                >
+                   <Send className="w-3.5 h-3.5 fill-current"/>
+                </button>
+             </div>
           </div>
         </aside>
+
+        {/* FLOATING TOGGLE BUTTON - Appears when AI panel is closed */}
+        {!isAiPanelOpen && (
+          <button 
+            onClick={() => setIsAiPanelOpen(true)}
+            className="fixed right-6 bottom-24 w-12 h-12 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group border border-white/20"
+            title={t('judge.assistant.open', 'Open AI Assistant')}
+          >
+            <Sparkles className="w-5 h-5 animate-pulse group-hover:rotate-12 transition-transform" />
+          </button>
+        )}
       </div>
     </PortalLayout>
   );
 }
+
+export default JudgeDashboard;
