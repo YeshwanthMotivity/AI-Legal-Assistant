@@ -36,6 +36,7 @@ function JudgeDashboard() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(true);
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState<{role: 'user'|'assistant', content: string}[]>([]);
@@ -89,7 +90,12 @@ function JudgeDashboard() {
     );
   }, [casesQuery.data, searchQuery, i18n.language]);
 
-  const focusCase = recentCases[0];
+  const focusCase = useMemo(() => {
+    if (selectedCaseId) {
+      return (casesQuery.data?.items ?? []).find(c => String(c.id) === String(selectedCaseId)) || recentCases[0];
+    }
+    return recentCases[0];
+  }, [selectedCaseId, recentCases, casesQuery.data]);
 
   const { performance } = useMemo(() => {
     const all = allCasesQuery.data?.items ?? [];
@@ -161,7 +167,7 @@ function JudgeDashboard() {
     >
       <div className={cn("flex flex-1 min-h-0", i18n.language === 'ar' ? "flex-row-reverse text-right" : "flex-row")}>
         <div className="flex-1 flex flex-col min-w-0 bg-[#F8F8F5] overflow-y-auto">
-          <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
+          <div className="p-8 space-y-8 w-full">
             {/* ALERT BANNER */}
             {(stats.urgent > 0 || stats.ready > 0) && (
               <div className="space-y-3">
@@ -224,7 +230,12 @@ function JudgeDashboard() {
                       </div>
                       <h2 className="text-[11px] font-black tracking-tighter text-foreground uppercase">{t('my_cases', 'Judicial Registry')}</h2>
                    </div>
-                   <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] opacity-40 px-11">{recentCases.length} {t('active_dockets', 'Active Dockets Found')}</p>
+                   <p className={cn(
+                     "text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] opacity-40",
+                     i18n.language === 'ar' ? "pr-11" : "pl-11"
+                   )}>
+                     {recentCases.length} {t('active_dockets', 'Active Dockets Found')}
+                   </p>
                 </div>
                 
                 <div className="relative w-full lg:w-[420px] group">
@@ -258,8 +269,14 @@ function JudgeDashboard() {
                     return (
                       <div 
                         key={c.id} 
-                        className="col-span-12 group relative"
-                        onClick={() => navigate(`/judge/cases/${c.id}`)}
+                        className={cn(
+                          "col-span-12 group relative transition-all duration-300",
+                          selectedCaseId === c.id ? "scale-[1.01] z-20" : "hover:scale-[1.005]"
+                        )}
+                        onClick={() => {
+                          setSelectedCaseId(c.id);
+                          if (!isAiPanelOpen) setIsAiPanelOpen(true);
+                        }}
                       >
                         <div className={cn(
                           "absolute top-0 bottom-0 w-1.5 z-10 transition-all duration-300 group-hover:w-3",
@@ -267,7 +284,10 @@ function JudgeDashboard() {
                           isUrgent ? "bg-red-500" : c.status === 'Finalized' ? "bg-emerald-500" : "bg-primary"
                         )} />
                         
-                        <div className="bg-white p-10 rounded-[2.5rem] border border-border/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)] hover:border-primary/40 transition-all duration-500 flex flex-col gap-10 cursor-pointer overflow-hidden backdrop-blur-sm relative">
+                        <div className={cn(
+                          "bg-white p-10 rounded-[2.5rem] border shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)] transition-all duration-500 flex flex-col gap-10 cursor-pointer overflow-hidden backdrop-blur-sm relative",
+                          selectedCaseId === c.id ? "border-primary ring-4 ring-primary/5" : "border-border/80 hover:border-primary/40"
+                        )}>
                            <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:scale-125 transition-transform duration-1000 rotate-12">
                               <History className="w-32 h-32 text-primary"/>
                            </div>
@@ -318,6 +338,10 @@ function JudgeDashboard() {
                                        "h-12 w-full px-8 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg transition-all active:scale-95 group/btn",
                                        isUrgent ? "bg-red-600 hover:bg-red-700 shadow-red-500/20" : c.status === 'Finalized' ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20" : "bg-primary shadow-primary/20"
                                     )}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(`/judge/cases/${c.id}`);
+                                    }}
                                  >
                                     {c.status === 'AIAnalysisReady' ? t('judge.dashboard.resumeSynthesis', 'Resume Synthesis') : t('judge.dashboard.enterWorkspace', 'Enter Workspace')} 
                                     <ChevronRight className={cn("w-4 h-4 transition-transform group-hover/btn:translate-x-1", i18n.language === 'ar' ? "mr-3 rotate-180" : "ml-3")}/>
@@ -389,10 +413,16 @@ function JudgeDashboard() {
              </div>
               <button 
                 onClick={() => setIsAiPanelOpen(false)} 
-                className="absolute top-1/2 -left-6 -translate-y-1/2 w-6 h-12 bg-white border border-border/40 rounded-l-xl flex items-center justify-center hover:bg-muted transition-all shadow-md group"
+                className={cn(
+                  "absolute top-1/2 -translate-y-1/2 w-8 h-16 bg-white border border-border/40 flex items-center justify-center hover:bg-muted transition-all shadow-xl group z-30",
+                  i18n.language === 'ar' ? "-right-8 rounded-r-2xl" : "-left-8 rounded-l-2xl"
+                )}
                 title={t('common.close', 'Close')}
               >
-                <X className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-all group-hover:scale-125"/>
+                <ChevronRight className={cn(
+                  "w-5 h-5 text-primary transition-all group-hover:scale-125",
+                  i18n.language === 'ar' ? "rotate-0" : "rotate-0" 
+                )}/>
               </button>
           </header>
 

@@ -134,12 +134,12 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent, headerActi
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className={cn(
-              "absolute top-8 p-1.5 bg-sidebar border border-white/10 rounded-full text-sidebar-text shadow-xl hover:bg-white/10 transition-all z-10",
-              isRTL ? "-left-4" : "-right-4",
-              isCollapsed ? "scale-110" : ""
+              "absolute top-8 w-8 h-8 bg-emerald-600 border-2 border-white/20 rounded-full text-white shadow-[0_0_20px_rgba(0,0,0,0.15)] hover:bg-emerald-500 hover:scale-110 active:scale-95 transition-all z-50 flex items-center justify-center",
+              isRTL ? "-left-4" : "-right-4"
             )}
+            title={isCollapsed ? t('common.expand') : t('common.collapse')}
           >
-            {isCollapsed ? (isRTL ? <ChevronLeft className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />) : (isRTL ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />)}
+            {isCollapsed ? (isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />) : (isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />)}
           </button>
         </div>
 
