@@ -149,33 +149,15 @@ const JudgmentEditor = ({
               </div>
            </div>
 
-           <div className="flex gap-4 pt-10 border-t border-border/40">
-              <Button 
-                className="h-16 px-10 bg-[var(--primary)] text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/20 hover:bg-[var(--primary-hover)] hover:scale-105 active:scale-95 transition-all flex-1"
-                onClick={handleFinalize}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Redacting Final Response...' : 'Authorize and Store Verdict'}
-              </Button>
-              <Button 
-                variant="outline"
-                className="h-16 px-10 rounded-2xl font-black uppercase tracking-[0.2em] border-border hover:bg-[var(--primary)]/10 hover:text-[var(--primary)] transition-all"
-                onClick={handleRegenerate}
-                disabled={isRegenerating}
-              >
-                {isRegenerating ? (
-                  <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 border-2 border-[var(--primary)]/30 border-t-[var(--primary)] rounded-full animate-spin" />
-                    <span>Synchronizing...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <Sparkles className="w-4 h-4" />
-                    <span>Cylix Regenerate</span>
-                  </div>
-                )}
-              </Button>
-           </div>
+            <div className="flex pt-10 border-t border-border/40">
+               <Button 
+                 className="h-16 px-10 bg-[var(--primary)] text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/20 hover:bg-[var(--primary-hover)] hover:scale-105 active:scale-95 transition-all w-full"
+                 onClick={handleFinalize}
+                 disabled={isSubmitting}
+               >
+                 {isSubmitting ? 'Redacting Final Response...' : 'Authorize and Store Verdict'}
+               </Button>
+            </div>
         </div>
 
         {/* Right: Synthesis Panel */}

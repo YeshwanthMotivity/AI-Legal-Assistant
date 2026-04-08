@@ -69,11 +69,8 @@ const CaseWorkflow = ({ viewedIdx, currentIdx, stages, onStageClick }: { viewedI
               )}
   
               <button 
-                className={cn(
-                  "flex flex-col items-center gap-3 transition-all duration-300 w-full outline-none",
-                  isReached ?"cursor-pointer":"cursor-not-allowed"
-                )}
-                onClick={() => isReached && onStageClick(i)}
+                className="flex flex-col items-center gap-3 transition-all duration-300 w-full outline-none cursor-pointer"
+                onClick={() => onStageClick(i)}
               >
                 <div 
                   className={cn(
@@ -190,7 +187,8 @@ const CaseDetail = () => {
   const [viewedIdx, setViewedIdx] = useState(0)
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(true)
   const [chatInput, setChatInput] = useState('')
-  const [chatHistory, setChatHistory] = useState<{role: 'user'|'assistant', content: string}[]>([]);
+  const [phaseChats, setPhaseChats] = useState<Record<number, {role: 'user'|'assistant', content: string}[]>>({});
+  const chatHistory = phaseChats[viewedIdx] || [];
   const [isChatLoading, setIsChatLoading] = useState(false);
 
   const stages = [
@@ -230,7 +228,10 @@ const CaseDetail = () => {
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteCase(id as string),
-    onSuccess: () => navigate('/judge/cases'),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['judge-cases'] })
+      navigate('/judge/cases')
+    },
   })
 
   const uploadMutation = useMutation({
@@ -250,7 +251,7 @@ const CaseDetail = () => {
   })
 
   const runAnalysisMutation = useMutation({
-    mutationFn: () => runAnalysis(id as string),
+    mutationFn: () => runAnalysis(id as string, i18n.language),
     onSuccess: async () => {
       setAnalysisRequested(true)
       await analysisQuery.refetch()
@@ -300,15 +301,26 @@ const CaseDetail = () => {
     if (!chatInput.trim()) return;
     const userMsg = chatInput.trim();
     setChatInput('');
-    setChatHistory(prev => [...prev, { role: 'user', content: userMsg }]);
+    
+    setPhaseChats(prev => ({
+      ...prev,
+      [viewedIdx]: [...(prev[viewedIdx] || []), { role: 'user', content: userMsg }]
+    }));
     setIsChatLoading(true);
 
     const currentStage = stages[viewedIdx]?.label || 'Unknown Phase';
     const systemPrompt = `You are Cylix, an AI judicial assistant. The user is reviewing Case: ${caseData?.title} (${caseData?.case_number}).
-    Current Phase being viewed: ${currentStage}.
-    Case Status: ${caseData?.status}.
-    Context: The user is in the ${currentStage} stage of the judicial workflow.
-    Respond as a helpful legal assistant. ${i18n.language === 'ar' ? 'Always respond in Arabic.' : 'Always respond in English.'}`;
+    
+    Current Phase context: ${currentStage}.
+    STRICT CONTEXT RULE: You ONLY answer questions related to the current phase of the case: "${currentStage}". 
+    - If Phase 1 (Overview), focus on facts and parties.
+    - If Phase 2 (Evidence), focus on uploaded documents and data extraction.
+    - If Phase 3 (Analysis), focus on law articles, precedents, and legal reasoning.
+    - If Phase 4 (Judgment), focus on the final verdict draft and reasoning consistency.
+    
+    If the user asks something outside this specific phase context, politely decline and explain that you can only assist with "${currentStage}" related queries in this section.
+    
+    Respond in ${i18n.language === 'ar' ? 'Arabic' : 'English'}. Keep responses professional and concise.`;
 
     try {
       const response = await fetch('http://172.20.100.215:11434/api/chat', {
@@ -325,9 +337,15 @@ const CaseDetail = () => {
         })
       });
       const data = await response.json();
-      setChatHistory(prev => [...prev, { role: 'assistant', content: data.message.content }]);
+      setPhaseChats(prev => ({
+        ...prev,
+        [viewedIdx]: [...(prev[viewedIdx] || []), { role: 'assistant', content: data.message.content }]
+      }));
     } catch {
-      setChatHistory(prev => [...prev, { role: 'assistant', content: 'Unable to connect to AI model.' }]);
+      setPhaseChats(prev => ({
+        ...prev,
+        [viewedIdx]: [...(prev[viewedIdx] || []), { role: 'assistant', content: i18n.language === 'ar' ? 'غير قادر على الاتصال بنموذج الذكاء الاصطناعي.' : 'Unable to connect to AI model.' }]
+      }));
     } finally {
       setIsChatLoading(false);
     }
@@ -338,43 +356,69 @@ const CaseDetail = () => {
       case 0:
         return {
           title: t('judge.assistant.overviewTitle', "Case Overview"),
-          insight: t('judge.assistant.overviewInsight', "Detecting party mapping. Claimant indicates possible labor breach under Federal Law."),
-          actions: [t('judge.assistant.verifyClaimant', "Verify Claimant ID"), t('judge.assistant.checkRespondent', "Check Respondent License")]
+          insight: t('judge.assistant.overviewInsight', "System has identified a potential labor dispute regarding unpaid salary."),
+          actions: [t('judge.assistant.validateStatus', "Validate Party Status"), t('judge.assistant.checkJurisdiction', "Check Jurisdiction")],
+          suggestions: [
+             i18n.language === 'ar' ? 'لخص وقائع القضية' : 'Summarize case facts',
+             i18n.language === 'ar' ? 'من هم أطراف النزاع؟' : 'Identify parties',
+             i18n.language === 'ar' ? 'ما هو موضوع الدعوى؟' : 'Case subject matter'
+          ]
         };
       case 1:
         return {
-          title: t('judge.assistant.uploadTitle', "Upload Documents"),
-          insight: t('judge.assistant.uploadInsight', "Missing Notice Period notification. Recommend scanning for email correspondence exhibits."),
-          actions: [t('judge.assistant.scanOcr', "Scan PDF OCR"), t('judge.assistant.crossLink', "Cross-link Exhibits")]
+          title: t('judge.assistant.evidenceTitle', "Evidence Review"),
+          insight: t('judge.assistant.evidenceInsight', "3 core documents uploaded. Salary Record extraction suggests missing payments."),
+          actions: [t('judge.assistant.extractSalary', "Extract Salary Data"), t('judge.assistant.analyzeContract', "Analyze Contract Terms")],
+          suggestions: [
+             i18n.language === 'ar' ? 'ما هي المستندات المقدمة؟' : 'List submitted documents',
+             i18n.language === 'ar' ? 'حلل الراتب المستحق' : 'Analyze salary entitlement',
+             i18n.language === 'ar' ? 'هل هناك مستندات ناقصة؟' : 'Any missing documents?'
+          ]
         };
       case 2:
         return {
           title: t('judge.assistant.analysisTitle', "AI Analysis"),
           insight: t('judge.assistant.analysisInsight', "Statutory interest calculation initialized based on labor law standards."),
-          actions: [t('judge.assistant.exportPrecedents', "Export Precedents"), t('judge.assistant.verifyEntitlements', "Verify Entitlements")]
+          actions: [t('judge.assistant.exportPrecedents', "Export Precedents"), t('judge.assistant.verifyEntitlements', "Verify Entitlements")],
+          suggestions: [
+             i18n.language === 'ar' ? 'قارن مع السوابق القضائية' : 'Compare with precedents',
+             i18n.language === 'ar' ? 'ما هي المواد القانونية المطبقة؟' : 'Applicable law articles',
+             i18n.language === 'ar' ? 'تحقق من دقة الحسابات' : 'Verify calculation logic'
+          ]
         };
       case 3:
         return {
           title: t('judge.assistant.reviewTitle', "Judgment Review"),
           insight: t('judge.assistant.reviewInsight', "Judgment logic consistent with Article 144. Suggest adding Article 146 citation."),
-          actions: [t('judge.assistant.critique', "Critique Reasoning"), t('judge.assistant.checkConsistency', "Check Consistency")]
+          actions: [t('judge.assistant.critique', "Critique Reasoning"), t('judge.assistant.checkConsistency', "Check Consistency")],
+          suggestions: [
+             i18n.language === 'ar' ? 'راجع المنطق القانوني' : 'Review legal reasoning',
+             i18n.language === 'ar' ? 'هل هناك تعارض في الحكم؟' : 'Check for inconsistencies',
+             i18n.language === 'ar' ? 'اقترح تعديلات على المسودة' : 'Suggest draft edits'
+          ]
         };
       case 4:
         return {
           title: t('judge.assistant.feedbackTitle', "Feedback"),
           insight: t('judge.assistant.feedbackInsight', "Your feedback will refine the judicial reasoning node for future cases."),
-          actions: [t('judge.assistant.analyzeFeedback', "Analyze Feedback"), t('judge.assistant.exportLearning', "Export Learning")]
+          actions: [t('judge.assistant.analyzeFeedback', "Analyze Feedback"), t('judge.assistant.exportLearning', "Export Learning")],
+          suggestions: [
+             i18n.language === 'ar' ? 'كيف أحسن دقة النظام؟' : 'How to improve accuracy?',
+             i18n.language === 'ar' ? 'سجل ملاحظاتي الفنية' : 'Log technical feedback',
+             i18n.language === 'ar' ? 'قيم أداء الذكاء الاصطناعي' : 'Rate AI performance'
+          ]
         };
       default:
         return {
           title: "Cylix Assistant",
           insight: "Awaiting workspace context.",
-          actions: ["Search case history"]
+          actions: ["Search case history"],
+          suggestions: ["Ask a general question"]
         };
     }
   };
 
-  const assistant = getAssistantContent() as { title: string; insight: string; actions: string[] };
+  const assistant = getAssistantContent() as { title: string; insight: string; actions: string[]; suggestions: string[] };
 
   const handleFinalize = async (payload: any) => {
     await finalizeMutation.mutateAsync({
@@ -400,10 +444,10 @@ const CaseDetail = () => {
 
   return (
     <PortalLayout title={t('judge.workspace.orchestrator', "Case Orchestrator")} hideHeaderContent>
-      <div className="flex h-full bg-[#F8F8F5] overflow-hidden">
+      <div className={cn("flex h-full bg-[#F8F8F5] overflow-hidden", i18n.language === 'ar' ? "flex-row-reverse text-right" : "flex-row")}>
         
         {/* LEFT/CENTER ACTION AREA (Workspace + Header) */}
-        <div className="flex-1 flex flex-col min-w-0 border-r border-border/40 bg-white/40 shadow-inner">
+        <div className={cn("flex-1 flex flex-col min-w-0 bg-white/40 shadow-inner", i18n.language === 'ar' ? "border-r border-border/40" : "border-l border-border/40")}>
           
           {/* TOP CONTEXT BAR - Scoped to this column, so it starts after the left sidebar */}
           <CaseContextBar
@@ -424,7 +468,7 @@ const CaseDetail = () => {
                viewedIdx={viewedIdx} 
                currentIdx={currentIdx} 
                stages={stages} 
-               onStageClick={(idx) => setViewedIdx(idx)} 
+                onStageClick={(idx) => { setLocalMessage(null); setViewedIdx(idx); setChatInput(""); }}
              />
 
              {localMessage && localMessage.phase === viewedIdx && (
@@ -643,6 +687,13 @@ const CaseDetail = () => {
                         />
                      </div>
                    )}
+
+                   {/* FALLBACK */}
+                   {(viewedIdx < 0 || viewedIdx > 4) && (
+                     <div className="p-12 text-center text-muted-foreground opacity-30 italic">
+                        Select a phase to continue...
+                     </div>
+                   )}
                 </div>
              </div>
 
@@ -652,7 +703,7 @@ const CaseDetail = () => {
                   variant="ghost"
                   className="h-10 px-5 text-[10px] font-black uppercase tracking-widest hover:bg-muted/40 transition-all rounded-xl disabled:opacity-30"
                   disabled={viewedIdx === 0}
-                  onClick={() => { setLocalMessage(null); setViewedIdx(prev => Math.max(0, prev - 1)); }}
+                  onClick={() => { setLocalMessage(null); setViewedIdx(prev => Math.max(0, prev - 1)); setChatInput(""); }}
                 >
                   <ArrowLeft className="w-3.5 h-3.5 mr-2"/> {t('common.back', 'Previous')}
                 </Button>
@@ -665,8 +716,8 @@ const CaseDetail = () => {
 
                 <Button
                   className="h-10 px-6 text-[10px] font-black uppercase tracking-widest bg-primary text-on-primary rounded-xl shadow-lg shadow-primary/10 hover:opacity-90 active:scale-95 transition-all disabled:opacity-40"
-                  disabled={viewedIdx === 4 || (viewedIdx >= currentIdx && viewedIdx !== 3)}
-                  onClick={() => { setLocalMessage(null); setViewedIdx(prev => Math.min(4, prev + 1)); }}
+                  disabled={viewedIdx === 4}
+                  onClick={() => { setLocalMessage(null); setViewedIdx(prev => Math.min(4, prev + 1)); setChatInput(""); }}
                 >
                   {stages[viewedIdx + 1]?.label || t('common.complete', 'End Session')} <ArrowRight className="w-3.5 h-3.5 ml-2"/>
                 </Button>
@@ -674,9 +725,9 @@ const CaseDetail = () => {
           </div>
         </div>
 
-        {/* ASSISTANT SIDE PANEL - Dedicated High-Level Column */}
         <aside className={cn(
-          "h-full bg-white border-l border-border transition-all duration-500 flex flex-col relative shrink-0",
+          "h-full bg-white transition-all duration-500 flex flex-col relative shrink-0",
+          i18n.language === 'ar' ? "border-r border-border" : "border-l border-border",
           isAiPanelOpen ? "w-[420px] opacity-100" : "w-0 opacity-0 overflow-hidden"
         )}>
              {/* SIDEBAR HEADER */}
@@ -690,8 +741,12 @@ const CaseDetail = () => {
                       <p className="text-[8px] font-black text-primary uppercase tracking-[0.2em] mt-1.5">{t('judge.assistant.nodeActive', 'Precision Node Active')}</p>
                    </div>
                 </div>
-                <button onClick={() => setIsAiPanelOpen(false)} className="p-2 hover:bg-muted rounded-lg transition-colors group">
-                   <PanelRightClose className="w-4 h-4 text-muted-foreground group-hover:text-foreground"/>
+                 <button 
+                  onClick={() => setIsAiPanelOpen(false)} 
+                  className="absolute top-1/2 -left-6 -translate-y-1/2 w-6 h-12 bg-white border border-border/40 rounded-l-xl flex items-center justify-center hover:bg-muted transition-all shadow-md group"
+                  title={t('common.close', 'Close')}
+                >
+                  <XIcon className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-all group-hover:scale-125"/>
                 </button>
              </header>
 
@@ -741,37 +796,41 @@ const CaseDetail = () => {
                     <section className="flex flex-col flex-1 min-h-[300px]">
                        <h4 className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-[0.25em] mb-4">{t('judge.assistant.dialogue', 'Reasoning Dialogue')}</h4>
                        <div className="flex-1 space-y-5 overflow-y-auto pr-1 pb-6">
-                         {chatHistory.length === 0 ? (
-                           <div className="flex gap-3 animate-in fade-in duration-500">
-                              <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                                 <Sparkles className="w-3.5 h-3.5 text-primary"/>
+                          {chatHistory.length === 0 ? (
+                            <div className="flex gap-3 animate-in fade-in duration-500">
+                               <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                                  <Sparkles className="w-3.5 h-3.5 text-primary"/>
+                               </div>
+                               <div className={cn("bg-[#F8F8F5] p-3.5 rounded-2xl border border-border/40 shadow-sm flex-1", i18n.language === 'ar' ? "rounded-tr-none" : "rounded-tl-none")}>
+                                  <p className="text-[11px] font-semibold text-foreground/70 leading-relaxed italic antialiased antialiased">
+                                    {t('judge.workspace.assistantPrompt', 'I am ready to assist with Phase {{phase}} logic discovery. How can I help?', { phase: viewedIdx + 1 })}
+                                  </p>
+                               </div>
+                            </div>
+                          ) : (
+                            chatHistory.map((msg, idx) => (
+                              <div key={idx} className={cn("flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300", 
+                                msg.role === 'user' 
+                                ? (i18n.language === 'ar' ? "flex-row" : "flex-row-reverse") 
+                                : (i18n.language === 'ar' ? "flex-row-reverse" : "flex-row")
+                              )}>
+                                 <div className={cn(
+                                    "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border",
+                                    msg.role === 'user' ? "bg-muted border-border/60" : "bg-primary/10 border-primary/20"
+                                 )}>
+                                    {msg.role === 'user' ? <User className="w-3.5 h-3.5 text-muted-foreground"/> : <Sparkles className="w-3.5 h-3.5 text-primary"/>}
+                                 </div>
+                                 <div className={cn(
+                                    "p-3.5 rounded-2xl flex-1 max-w-[85%] border shadow-sm",
+                                    msg.role === 'user' 
+                                    ? (i18n.language === 'ar' ? "rounded-tl-none" : "bg-white border-border/60 rounded-tr-none") 
+                                    : (i18n.language === 'ar' ? "rounded-tr-none" : "bg-[#F8F8F5] border-border/40 rounded-tl-none")
+                                 )}>
+                                    <p className="text-[11px] font-medium text-foreground antialiased leading-relaxed">{msg.content}</p>
+                                 </div>
                               </div>
-                              <div className="bg-[#F8F8F5] p-3.5 rounded-2xl rounded-tl-none border border-border/40 shadow-sm flex-1">
-                                 <p className="text-[11px] font-semibold text-foreground/70 leading-relaxed italic antialiased antialiased">
-                                   {t('judge.workspace.assistantPrompt', 'I am ready to assist with Phase {{phase}} logic discovery. How can I help?', { phase: viewedIdx + 1 })}
-                                 </p>
-                              </div>
-                           </div>
-                         ) : (
-                           chatHistory.map((msg, idx) => (
-                             <div key={idx} className={cn("flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300", msg.role === 'user' ? "flex-row-reverse" : "")}>
-                                <div className={cn(
-                                   "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border",
-                                   msg.role === 'user' ? "bg-muted border-border/60" : "bg-primary/10 border-primary/20"
-                                )}>
-                                   {msg.role === 'user' ? <User className="w-3.5 h-3.5 text-muted-foreground"/> : <Sparkles className="w-3.5 h-3.5 text-primary"/>}
-                                </div>
-                                <div className={cn(
-                                   "p-3.5 rounded-2xl flex-1 max-w-[85%] border shadow-sm",
-                                   msg.role === 'user' 
-                                   ? "bg-white border-border/60 rounded-tr-none" 
-                                   : "bg-[#F8F8F5] border-border/40 rounded-tl-none"
-                                )}>
-                                   <p className="text-[11px] font-medium text-foreground antialiased leading-relaxed">{msg.content}</p>
-                                </div>
-                             </div>
-                           ))
-                         )}
+                            ))
+                          )}
                          {isChatLoading && (
                            <div className="flex items-center gap-2 text-[8px] font-black text-primary opacity-60 uppercase tracking-widest px-1">
                               <div className="w-1 h-1 bg-primary rounded-full animate-bounce"/>
@@ -786,22 +845,17 @@ const CaseDetail = () => {
                       <div className="px-1 py-4 border-t border-border/20 mt-auto">
                         <p className="text-[7.5px] font-black text-muted-foreground/30 uppercase tracking-[.25em] mb-3">Contextual Queries</p>
                         <div className="flex flex-wrap gap-2">
-                           {[
-                              t('judge.assistant.suggest1', 'Summarize facts'),
-                              t('judge.assistant.suggest2', 'Identify breaches'),
-                              t('judge.assistant.suggest3', 'Compare precedents')
-                           ].map((s, i) => (
-                             <button 
-                               key={i}
-                               className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1.5 bg-muted/30 border border-border/40 rounded-lg hover:border-primary/30 hover:text-primary hover:bg-primary/5 transition-all outline-none"
-                               onClick={() => {
-                                 setChatInput(s);
-                                 // Optional: Auto-send would go here, but let's just populate input
-                               }}
-                             >
-                               {s}
-                             </button>
-                           ))}
+                            {assistant.suggestions.map((s, i) => (
+                              <button 
+                                key={i}
+                                className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1.5 bg-muted/30 border border-border/40 rounded-lg hover:border-primary/30 hover:text-primary hover:bg-primary/5 transition-all outline-none"
+                                onClick={() => {
+                                  setChatInput(s);
+                                }}
+                              >
+                                {s}
+                              </button>
+                            ))}
                         </div>
                       </div>
                    </section>
@@ -814,17 +868,23 @@ const CaseDetail = () => {
                    <input 
                      type="text" 
                      placeholder={t('judge.workspace.askAI', 'Ask Cylix...')} 
-                     className="w-full bg-[#F8F8F5] border border-border/60 rounded-xl h-11 pl-4 pr-12 text-[11px] font-bold focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all placeholder:opacity-30 antialiased"
+                     className={cn(
+                       "w-full bg-[#F8F8F5] border border-border/60 rounded-xl h-11 text-[11px] font-bold focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all placeholder:opacity-30 antialiased",
+                       i18n.language === 'ar' ? "pr-4 pl-12 text-right" : "pl-4 pr-12"
+                     )}
                      value={chatInput}
                      onChange={(e) => setChatInput(e.target.value)}
                      onKeyDown={(e) => e.key === 'Enter' && sendChat()}
                    />
                    <button 
-                     className="absolute right-1.5 top-1.5 h-8 w-8 bg-primary text-on-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-40"
+                     className={cn(
+                       "absolute top-1.5 h-8 w-8 bg-primary text-on-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-40",
+                       i18n.language === 'ar' ? "left-1.5" : "right-1.5"
+                     )}
                      onClick={sendChat}
                      disabled={isChatLoading || !chatInput.trim()}
                    >
-                      <Send className="w-3.5 h-3.5 fill-current"/>
+                      <Send className={cn("w-3.5 h-3.5 fill-current", i18n.language === 'ar' && "rotate-180")}/>
                    </button>
                 </div>
                 <div className="flex items-center justify-center gap-2 mt-3 opacity-30">
@@ -838,7 +898,10 @@ const CaseDetail = () => {
           {!isAiPanelOpen && (
             <button 
               onClick={() => setIsAiPanelOpen(true)}
-              className="fixed right-6 bottom-24 w-12 h-12 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group border border-white/20"
+              className={cn(
+                "fixed bottom-8 w-12 h-12 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group border border-white/20",
+                i18n.language === 'ar' ? "left-6" : "right-6"
+              )}
               title={t('judge.assistant.open', 'Open AI Assistant')}
             >
               <Sparkles className="w-5 h-5 animate-pulse group-hover:rotate-12 transition-transform" />

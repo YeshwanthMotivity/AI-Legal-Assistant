@@ -20,6 +20,30 @@ from app.modules.orchestrator.state import AnalysisState
 logger = logging.getLogger(__name__)
 
 
+def _contains_arabic(text: str) -> bool:
+    """Detects if a string contains Arabic script (including Persian and Urdu characters)."""
+    return bool(re.search(r'[\u0600-\u06FF]', str(text)))
+
+
+def _select_model(state: AnalysisState) -> tuple[str, str, float]:
+    query_text = state.get("query_text", "")
+    lang = state.get("query_language", "en")
+    
+    # Auto-Switch Logic: Use JAIS if Arabic script is detected or if specifically requested
+    if _contains_arabic(query_text) or lang.startswith("ar"):
+        model_label = settings.ollama_model_primary # "jais-adapted-7b..."
+        logger.info(f"Ollama Orchestrator: Switching to JAIS (Arabic detected/requested)")
+    else:
+        model_label = settings.ollama_model_fallback # "qwen2.5:7b"
+        logger.info(f"Ollama Orchestrator: Using Qwen 2.5 (Technical/English logic)")
+        
+    model_url = f"{settings.ollama_url}/api/generate"
+    complexity_score = 0.5
+        
+    return model_url, model_label, complexity_score
+
+
+
 def _entity_values(entities: list[dict[str, Any]], key: str) -> list[str]:
     return [str(e.get("entity_value", "")).strip() for e in entities if e.get("entity_type") == key and e.get("entity_value")]
 
@@ -381,9 +405,10 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
             parsed_data_wrapper = None
             try:
                 # Exclusive: Local Intelligence (Ollama)
+                model_url, model_name, _ = _select_model(state)
                 ollama_content = await _call_ollama(
-                    model_url=f"{settings.ollama_url}/api/generate",
-                    model_name=settings.ollama_model_fallback,
+                    model_url=model_url,
+                    model_name=model_name,
                     system=(
                         f"You are a DIFC legal case parser. Extract from the court text and return ONLY valid JSON.\n"
                         f"Schema: {{\"case_name\": \"X v Y or null\", \"claimant\": \"name or null\", "
@@ -554,9 +579,10 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
             parsed_data_wrapper = None
             try:
                 # Exclusive: Local Intelligence (Ollama)
+                model_url, model_name, _ = _select_model(state)
                 ollama_content = await _call_ollama(
-                    model_url=f"{settings.ollama_url}/api/generate",
-                    model_name=settings.ollama_model_fallback,
+                    model_url=model_url,
+                    model_name=model_name,
                     system=(
                         f"You are a DIFC legal article parser. Return ONLY valid JSON — no markdown, no explanation.\n"
                         f"Schema: {{\"article_number\": \"e.g. Article 19(2) or null\", \"article_title\": \"short title or null\", "
@@ -834,20 +860,6 @@ def _flatten_to_text(data: Any, indent: int = 0) -> str:
     return str(data)
 
 
-def _select_model(state: AnalysisState) -> tuple[str, str, float]:
-    lang = state.get("query_language", "en")
-    
-    if lang == "ar":
-        model_label = "jwnder/jais-adaptive:7b"
-    else:
-        model_label = "qwen2.5:1.5b-instruct"
-        
-    model_url = f"{settings.ollama_url}/api/generate"
-    complexity_score = 0.5
-        
-    return model_url, model_label, complexity_score
-
-
 async def _call_ollama(model_url: str, model_name: str, system: str, user: str, token_limit: int) -> str:
     """Generic Ollama /api/generate caller."""
     payload = {
@@ -1109,9 +1121,7 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
             "title": str(item),
             "similarityScore": 1.0
         }
-            
-        # Case-insensitive filter
-        return {"title": title, "content": short_content}
+
 
     def _to_article_obj(item):
         if not item: return None

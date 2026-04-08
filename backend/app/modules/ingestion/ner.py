@@ -41,8 +41,7 @@ def _regex_extract(text: str) -> list[dict]:
         text
     )
     salary = _first_match(
-        r"(?:Salary|Monthly Salary)\s*[:\-]\s*"
-        r"([A-Z]{0,3}\s?[\d,]+(?:\.\d{1,2})?)",
+        r"(?:Salary|Monthly Salary)\s*[:\-]?\s*([A-Z]{0,3}\s?[\d,]+(?:\.\d{1,2})?)",
         text
     )
     start = _first_match(

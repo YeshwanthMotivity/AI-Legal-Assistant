@@ -71,7 +71,7 @@ const IntelligenceCenter = ({
               <div className="p-2 bg-primary/10 rounded-lg text-primary shadow-sm">
                  <Scale className="w-4 h-4"/>
               </div>
-              <h3 className="text-base font-black text-foreground uppercase tracking-tight">{t('judge.workspace.similarCases', 'Similar Material Facts')}</h3>
+              <h3 className="text-base font-black text-foreground uppercase tracking-tight">{t('judge.workspace.similarCases', 'Similar Cases')}</h3>
             </div>
             <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-30">{precedents.length} PRECEDENTS</span>
           </header>
@@ -129,7 +129,7 @@ const IntelligenceCenter = ({
               <div className="p-2 bg-primary/10 rounded-lg text-primary shadow-sm">
                  <BookOpen className="w-4 h-4"/>
               </div>
-              <h3 className="text-base font-black text-foreground uppercase tracking-tight">{t('judge.workspace.relatedLaws', 'Statutory Map')}</h3>
+              <h3 className="text-base font-black text-foreground uppercase tracking-tight">{t('judge.workspace.relatedLaws', 'Law Articles')}</h3>
             </div>
             <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-30">{lawArticles.length} NODES</span>
           </header>

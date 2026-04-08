@@ -168,7 +168,7 @@ const DocumentsPanel = ({
 
            <div className="grid grid-cols-3 gap-6 relative z-10">
               {entitlements.map((e, idx) => {
-                const isZero = e.value?.includes('0.00')
+                const isZero = (e.value?.trim().endsWith('0.00') || e.value?.includes('0.00')) && !e.value?.match(/[1-9]/);
                 return (
                   <div key={idx} className="p-6 bg-[var(--bg-surface)] rounded-2xl border border-border/60 hover:border-[var(--primary)]/30 hover:shadow-sm transition-all group flex flex-col justify-between h-36">
                     <div className="space-y-1">

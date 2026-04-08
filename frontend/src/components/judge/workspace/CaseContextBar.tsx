@@ -127,10 +127,10 @@ const CaseContextBar = ({
  </div>
  <div className="space-y-2">
  <h3 className="text-xl font-black text-foreground uppercase tracking-tight">
- Tear Down Workspace?
+ Delete Case?
  </h3>
  <p className="text-sm font-medium text-muted-foreground leading-relaxed italic">
- This will permanently redact all digital footprints and evidence associated with this proceeding.
+ This will permanently delete all files and information for this case.
  </p>
  </div>
  </div>
@@ -140,13 +140,13 @@ const CaseContextBar = ({
  className="h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] border-border"
  onClick={handleCancel}
  >
- Abort
+ Cancel
  </Button>
  <Button
  className="h-14 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-xl shadow-red-500/20"
  onClick={handleConfirm}
  >
- Confirm Redaction
+ Confirm Delete
  </Button>
  </div>
  </div>

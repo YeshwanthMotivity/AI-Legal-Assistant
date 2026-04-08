@@ -109,28 +109,37 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent, headerActi
     : (isRTL ? 'mr-[280px]' : 'ml-[280px]')
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground selection:bg-primary/20">
+    <div 
+      className="flex min-h-screen bg-background text-foreground selection:bg-primary/20"
+      dir={isRTL ? 'rtl' : 'ltr'}
+    >
       {/* Collapsible Sidebar */}
-  <aside 
-    className={cn(
-      "bg-sidebar text-sidebar-text flex flex-col sticky top-0 h-screen z-50 border-r-0 border-l-0 shadow-2xl transition-all duration-300 shrink-0",
-      sidebarWidth,
-      isRTL ? "border-l border-[var(--border-color)]" : "border-r border-[var(--border-color)]"
-    )}
-  >
-        <div className={cn("flex items-center transition-all duration-300", isCollapsed ? "flex-col p-4 gap-4" : "p-6 gap-3")}>
+      <aside 
+        className={cn(
+          "bg-sidebar text-sidebar-text flex flex-col sticky top-0 h-screen z-50 shadow-2xl transition-all duration-300 shrink-0",
+          sidebarWidth,
+          isRTL ? "border-l border-white/10" : "border-r border-white/10"
+        )}
+      >
+        <div className={cn("flex items-center transition-all duration-300 relative", isCollapsed ? "flex-col p-4 gap-4" : "p-6 gap-3")}>
           <div className={cn(
-            "bg-white/10 rounded-2xl flex items-center justify-center text-sidebar-text shadow-lg transition-transform hover:scale-105 active:scale-95 shrink-0",
-            isCollapsed ? "w-10 h-10" : "w-10 h-10"
+            "bg-white/10 rounded-xl flex items-center justify-center text-sidebar-text shadow-lg transition-transform hover:scale-105 active:scale-95 shrink-0",
+            isCollapsed ? "w-8 h-8" : "w-10 h-10"
           )}>
-            <Scale className="w-6 h-6" />
+            <Scale className={cn("transition-all", isCollapsed ? "w-4 h-4" : "w-5 h-5")} />
           </div>
-          {!isCollapsed && <span className="font-black text-xl tracking-tighter text-sidebar-text">{t('common.appName')}</span>}
+          {!isCollapsed && <span className="font-black text-sm tracking-tighter text-sidebar-text whitespace-nowrap uppercase opacity-90">{t('common.appName')}</span>}
+          
+          {/* TAB-STYLE COLLAPSE BUTTON */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className={cn("p-2 rounded-lg hover:bg-white/10 text-sidebar-text transition-colors", isCollapsed ? "" : "ml-auto")}
+            className={cn(
+              "absolute top-8 p-1.5 bg-sidebar border border-white/10 rounded-full text-sidebar-text shadow-xl hover:bg-white/10 transition-all z-10",
+              isRTL ? "-left-4" : "-right-4",
+              isCollapsed ? "scale-110" : ""
+            )}
           >
-            {isCollapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+            {isCollapsed ? (isRTL ? <ChevronLeft className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />) : (isRTL ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />)}
           </button>
         </div>
 
@@ -165,7 +174,7 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent, headerActi
           </div>
         )}
 
-        <div className={cn("bg-black/10 border-t border-[var(--border-color)] mt-auto flex flex-col items-center", isCollapsed ? "p-3 gap-3" : "p-5")}>
+        <div className={cn("bg-black/10 border-t border-white/5 mt-auto flex flex-col items-center", isCollapsed ? "p-3 gap-3" : "p-5")}>
           <div className={cn("flex items-center", isCollapsed ? "justify-center w-full" : "gap-4 px-2 w-full")}>
             <div className={cn(
               "rounded-2xl bg-white/10 border-2 border-white/20 flex items-center justify-center text-text-accent font-black shadow-inner shrink-0",
@@ -197,32 +206,34 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent, headerActi
       {/* Main Content Area */}
       <main 
         className={cn(
-          "flex-1 transition-all duration-300 min-h-screen relative flex flex-col",
+          "flex-1 transition-all duration-300 min-h-screen relative flex flex-col min-w-0",
           hideHeaderContent && "h-screen overflow-hidden"
         )}
       >
         {/* Header — expanded height for breathing room */}
         {!hideHeaderContent && (
-          <header className="sticky top-0 z-30 w-full glass-strong border-b px-8 py-3 flex justify-between items-center h-[64px]">
-            <div className="animate-in fade-in slide-in-from-top-2 duration-500">
-              <h1 className="text-2xl font-black tracking-tighter text-gradient leading-none">
-                {title}
-              </h1>
-              {subtitle && (
-                <p className="text-xs text-muted-foreground font-bold mt-1 opacity-70 italic">
-                  {subtitle}
-                </p>
-              )}
-            </div>
-            
-            <div className="flex items-center gap-6">
-              {headerActions && (
-                <div className="flex items-center gap-3 border-r border-border/40 pr-6 h-8">
-                  {headerActions}
+          <header className="sticky top-0 z-30 w-full glass-strong border-b h-[72px] flex items-center">
+            <div className="w-full max-w-[1640px] mx-auto px-8 flex justify-between items-center">
+              <div className="animate-in fade-in slide-in-from-top-2 duration-500">
+                <h1 className="text-sm font-black tracking-tight text-gradient leading-none">
+                  {title || t('dashboard.title', 'Judicial Workspace')}
+                </h1>
+                {subtitle && (
+                  <p className="text-xs text-muted-foreground font-bold mt-1.5 opacity-70 italic tracking-tight">
+                    {subtitle}
+                  </p>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-6">
+                {headerActions && (
+                  <div className={cn("flex items-center gap-3 h-8", isRTL ? "border-l border-border/40 pl-6" : "border-r border-border/40 pr-6")}>
+                    {headerActions}
+                  </div>
+                )}
+                <div className="flex items-center gap-4 h-10">
+                  <LanguageToggle />
                 </div>
-              )}
-              <div className="flex items-center gap-4 h-10">
-                <LanguageToggle />
               </div>
             </div>
           </header>
@@ -230,8 +241,8 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent, headerActi
 
         {/* Page Content Container - Unified Compact Baseline */}
         <div className={cn(
-          "animate-in fade-in slide-in-from-bottom-4 duration-700 flex-1 h-full",
-          hideHeaderContent ? "p-0" : "px-8 pt-0 pb-5 max-w-[1640px] mx-auto"
+          "animate-in fade-in slide-in-from-bottom-4 duration-700 flex-1 h-full min-w-0",
+          hideHeaderContent ? "p-0" : "px-8 pt-6 pb-8 max-w-[1640px] w-full mx-auto"
         )}>
           {children}
         </div>
@@ -241,3 +252,4 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent, headerActi
 }
 
 export default PortalLayout
+

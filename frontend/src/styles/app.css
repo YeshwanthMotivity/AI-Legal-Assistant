@@ -90,7 +90,7 @@
   --color-text-accent: var(--text-accent);
   --color-text-main: var(--text-main);
 
-  --font-headline: 'Newsreader', serif;
+  --font-headline: 'Inter', sans-serif;
   --font-body: 'Inter', sans-serif;
   --font-label: 'Inter', sans-serif;
   
@@ -178,7 +178,7 @@
   --radius-xl: 18px;
 
   --font-body: 'Inter', sans-serif;
-  --font-heading: 'Newsreader', serif;
+  --font-heading: 'Inter', sans-serif;
 }
 
 
@@ -197,7 +197,7 @@ body {
 }
 
 h1, h2, h3, .judicial-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-body);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;

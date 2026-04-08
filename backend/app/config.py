@@ -41,9 +41,9 @@ class Settings(BaseSettings):
     ollama_url: str = "http://10.10.0.1:11434"
     bge_m3_url: str = "http://bge_m3:8001"
     bge_reranker_url: str = "http://bge_reranker:8002"
-    ollama_model_primary: str = "qwen2.5:1.5b-instruct"
-    ollama_model_fallback: str = "qwen2.5:1.5b-instruct"
-    ollama_timeout_seconds: int = 120
+    ollama_model_primary: str = "jais-adapted-7b-chat.Q4_K_M.gguf"
+    ollama_model_fallback: str = "qwen2.5:7b"
+    ollama_timeout_seconds: int = 600
     
     # Application
     debug: bool = True
