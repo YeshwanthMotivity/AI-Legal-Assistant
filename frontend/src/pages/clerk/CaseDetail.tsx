@@ -210,15 +210,11 @@ const CaseDetail = () => {
     }
   })
 
-
-
-// Mutations omitted
-
   const analysis = analysisQuery.analysis?.analysis
   const isReady = analysis?.status === 'AIAnalysisReady'
   const isActivelyLoading = runAnalysisMutation.isPending || (analysisQuery.isPolling && analysisRequested)
   const lawArticles = analysis?.lawArticles ?? []
-  const precedents = useMemo(() => (analysis?.similarPrecedents ?? []).slice(0, 5), [analysis?.similarPrecedents])
+  const precedents = useMemo(() => (analysis?.similarPrecedents ?? []).slice(0, 5), [analysis?.similarPrecedcedents])
   const entitlements = analysis?.entitlementBreakdown ?? []
 
   const handleBatchFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
@@ -277,7 +273,6 @@ const CaseDetail = () => {
           }
        } catch (e) {
           console.warn("AI relevance check failed", e);
-          // Proceed cautiously if AI check fails (don't block the user completely)
        }
     }
 
@@ -290,8 +285,6 @@ const CaseDetail = () => {
         await uploadMutation.mutateAsync({ file: selectedFiles[i], documentType: joinedTypes })
         successCount++
       } catch {
-        // error handled in mutation onError
-
       }
     }
     
@@ -323,12 +316,6 @@ const CaseDetail = () => {
     
     Current Phase context: ${currentStage}.
     STRICT CONTEXT RULE: You ONLY answer questions related to the current phase of the case: "${currentStage}". 
-    - If Phase 1 (Overview), focus on facts and parties.
-    - If Phase 2 (Evidence), focus on uploaded documents and data extraction.
-    - If Phase 3 (Analysis), focus on law articles, precedents, and legal reasoning.
-    - If Phase 4 (Judgment), focus on the final verdict draft and reasoning consistency.
-    
-    If the user asks something outside this specific phase context, politely decline and explain that you can only assist with "${currentStage}" related queries in this section.
     
     Respond in ${i18n.language === 'ar' ? 'Arabic' : 'English'}. Keep responses professional and concise.`;
 
@@ -396,28 +383,6 @@ const CaseDetail = () => {
              i18n.language === 'ar' ? 'تحقق من دقة الحسابات' : 'Verify calculation logic'
           ]
         };
-      case 3:
-        return {
-          title: t('judge.assistant.reviewTitle', "Judgment Review"),
-          insight: t('judge.assistant.reviewInsight', "Judgment logic consistent with Article 144. Suggest adding Article 146 citation."),
-          actions: [t('judge.assistant.critique', "Critique Reasoning"), t('judge.assistant.checkConsistency', "Check Consistency")],
-          suggestions: [
-             i18n.language === 'ar' ? 'راجع المنطق القانوني' : 'Review legal reasoning',
-             i18n.language === 'ar' ? 'هل هناك تعارض في الحكم؟' : 'Check for inconsistencies',
-             i18n.language === 'ar' ? 'اقترح تعديلات على المسودة' : 'Suggest draft edits'
-          ]
-        };
-      case 4:
-        return {
-          title: t('judge.assistant.feedbackTitle', "Feedback"),
-          insight: t('judge.assistant.feedbackInsight', "Your feedback will refine the judicial reasoning node for future cases."),
-          actions: [t('judge.assistant.analyzeFeedback', "Analyze Feedback"), t('judge.assistant.exportLearning', "Export Learning")],
-          suggestions: [
-             i18n.language === 'ar' ? 'كيف أحسن دقة النظام؟' : 'How to improve accuracy?',
-             i18n.language === 'ar' ? 'سجل ملاحظاتي الفنية' : 'Log technical feedback',
-             i18n.language === 'ar' ? 'قيم أداء الذكاء الاصطناعي' : 'Rate AI performance'
-          ]
-        };
       default:
         return {
           title: "Cylix Assistant",
@@ -429,8 +394,6 @@ const CaseDetail = () => {
   };
 
   const assistant = getAssistantContent() as { title: string; insight: string; actions: string[]; suggestions: string[] };
-
-  const handleFinalize = async (payload: any) => {};
 
   if (caseQuery.isLoading) {
     return (
@@ -447,10 +410,8 @@ const CaseDetail = () => {
     <PortalLayout title={t('judge.workspace.orchestrator', "Case Orchestrator")} hideHeaderContent>
       <div className={cn("flex h-full bg-[#F8F8F5] overflow-hidden", i18n.language === 'ar' ? "flex-row-reverse text-right" : "flex-row")}>
         
-        {/* LEFT/CENTER ACTION AREA (Workspace + Header) */}
         <div className={cn("flex-1 flex flex-col min-w-0 bg-white/40 shadow-inner", i18n.language === 'ar' ? "border-r border-border/40" : "border-l border-border/40")}>
           
-          {/* TOP CONTEXT BAR - Scoped to this column, so it starts after the left sidebar */}
           <CaseContextBar
             caseNumber={caseData?.case_number ?? '...'}
             title={caseData?.title ?? ''}
@@ -463,7 +424,6 @@ const CaseDetail = () => {
           />
           
           <div className="flex-1 flex flex-col overflow-y-auto">
-             {/* Workflow Header */}
              <CaseWorkflow 
                viewedIdx={viewedIdx} 
                currentIdx={currentIdx} 
@@ -485,7 +445,6 @@ const CaseDetail = () => {
 
              <div className="px-8 py-8 w-full">
                 <div className="max-w-5xl mx-auto space-y-8 pb-32">
-                   {/* CASE INFO TAB */}
                    {viewedIdx === 0 && (
                      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
                         <header className="flex items-center justify-between">
@@ -587,7 +546,6 @@ const CaseDetail = () => {
                      </div>
                    )}
 
-                   {/* EVIDENCE TAB */}
                    {viewedIdx === 1 && (
                      <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-500">
                         <header className="flex items-center gap-4 mb-8">
@@ -621,14 +579,18 @@ const CaseDetail = () => {
                      </div>
                    )}
 
-                   {/* ANALYSIS TAB */}
                    {viewedIdx === 2 && (
                      <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        < IntelligenceCenter
+                        <IntelligenceCenter
                           analysis={analysis}
                           caseId={id ?? ''}
                           lawArticles={lawArticles}
                           precedents={precedents}
+                          caseData={caseData}
+                          documents={documentsQuery.data?.items}
+                          entitlements={entitlements}
+                          onDeleteDocument={(docId) => deleteDocumentMutation.mutate(docId)}
+                          isDeletingDocument={deleteDocumentMutation.isPending ? deleteDocumentMutation.variables as string : null}
                         />
                         {!isReady && !isActivelyLoading && (
                           <div className="mt-8 text-center p-12 bg-white border border-dashed border-border/80 rounded-2xl shadow-inner w-full flex flex-col items-center gap-6">
@@ -659,9 +621,9 @@ const CaseDetail = () => {
                                </div>
                                <Button 
                                  className="h-12 px-10 bg-primary text-on-primary rounded-xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-[11px]"
-                                 onClick={() => navigate('/clerk/cases')}
+                                 onClick={() => navigate('/clerk/assignments')}
                                >
-                                 {t('clerk.analysis.returnToList', 'Return to Case List')} <ArrowRight className="ml-2 w-4 h-4"/>
+                                 {t('clerk.analysis.returnToList', 'Proceed to Assignment')} <ArrowRight className="ml-2 w-4 h-4"/>
                                </Button>
                              </div>
                           </div>
@@ -669,9 +631,6 @@ const CaseDetail = () => {
                      </div>
                    )}
 
-                   {/* REVIEW AND FEEDBACK TABS OMITTED FOR CLERK */}
-
-                   {/* FALLBACK */}
                    {(viewedIdx < 0 || viewedIdx > 2) && (
                      <div className="p-12 text-center text-muted-foreground opacity-30 italic">
                         Select a phase to continue...
@@ -680,7 +639,6 @@ const CaseDetail = () => {
                 </div>
              </div>
 
-             {/* BOTTOM NAV */}
              <div className="sticky bottom-0 bg-white border-t border-border/40 px-8 py-3 w-full flex items-center justify-between z-30 shadow-[0_-4px_20px_rgba(0,0,0,0.02)] shrink-0">
                 <Button
                   variant="ghost"
@@ -701,7 +659,7 @@ const CaseDetail = () => {
                   className={cn("h-10 px-6 text-[10px] font-black uppercase tracking-widest bg-primary text-on-primary rounded-xl shadow-lg hover:opacity-90 active:scale-95 transition-all", viewedIdx === 2 && !isReady ? "opacity-30 pointer-events-none" : "")}
                   onClick={() => { 
                     if (viewedIdx === 2) {
-                      navigate('/clerk/cases');
+                      navigate('/clerk/assignments');
                     } else {
                       setLocalMessage(null); 
                       setViewedIdx(prev => Math.min(2, prev + 1)); 
@@ -709,7 +667,7 @@ const CaseDetail = () => {
                     }
                   }}
                 >
-                  {viewedIdx === 2 ? t('common.complete', 'Return to List') : (stages[viewedIdx + 1]?.label || t('common.complete', 'Next'))} <ArrowRight className="w-3.5 h-3.5 ml-2"/>
+                  {viewedIdx === 2 ? t('common.complete', 'Proceed to Assignment') : (stages[viewedIdx + 1]?.label || t('common.complete', 'Next'))} <ArrowRight className="w-3.5 h-3.5 ml-2"/>
                 </Button>
              </div>
           </div>
@@ -720,7 +678,6 @@ const CaseDetail = () => {
           i18n.language === 'ar' ? "border-r border-border" : "border-l border-border",
           isAiPanelOpen ? "w-[420px] opacity-100" : "w-0 opacity-0 overflow-hidden"
         )}>
-             {/* SIDEBAR HEADER */}
              <header className="p-5 border-b border-border/40 bg-white flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
                    <div className="w-10 h-10 bg-primary/5 rounded-xl flex items-center justify-center text-primary border border-primary/10">
@@ -733,7 +690,7 @@ const CaseDetail = () => {
                 </div>
                  <button 
                   onClick={() => setIsAiPanelOpen(false)} 
-                  className="absolute top-1/2 -left-6 -translate-y-1/2 w-6 h-12 bg-white border border-border/40 rounded-l-xl flex items-center justify-center hover:bg-muted transition-all shadow-md group"
+                  className={cn("absolute top-1/2 -translate-y-1/2 w-6 h-12 bg-white border border-border/40 rounded-l-xl flex items-center justify-center hover:bg-muted transition-all shadow-md group", i18n.language === 'ar' ? "right-[-6px] rounded-r-xl rounded-l-none" : "left-[-6px]")}
                   title={t('common.close', 'Close')}
                 >
                   <XIcon className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-all group-hover:scale-125"/>
@@ -741,14 +698,12 @@ const CaseDetail = () => {
              </header>
 
              <div className="flex-1 overflow-y-auto w-full flex flex-col">
-                {/* STRATEGIC SYNTHESIS - REDUCED CONTRAST / MORE COMPACT */}
                 <div className="p-6 bg-primary/5 border-b border-border/40 relative overflow-hidden shrink-0 group">
                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
                    <p className="text-[8px] font-black uppercase tracking-[0.25em] text-primary opacity-60 mb-3">{t('judge.assistant.synthesis', 'Strategic Synthesis')}</p>
-                   <p className="text-[12px] font-bold italic leading-relaxed text-foreground antialiased antialiased">
+                   <p className="text-[12px] font-bold italic leading-relaxed text-foreground antialiased">
                      &ldquo;{assistant.insight}&rdquo;
                    </p>
-                   {/* MODIFIED CONFIDENCE BAR */}
                    <div className="mt-4 space-y-2">
                       <div className="flex justify-between items-center text-[10px] font-black text-primary tracking-widest uppercase">
                          <span>AI PRECISION</span>
@@ -764,25 +719,6 @@ const CaseDetail = () => {
                 </div>
 
                 <div className="p-6 space-y-8 flex flex-col flex-1">
-                   {/* PHASE PROTOCOLS */}
-                   <section className="space-y-4">
-                      <h4 className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-[0.25em]">{t('judge.assistant.protocols', 'Phase Protocols')}</h4>
-                      <div className="space-y-2.5">
-                         {assistant.actions.map((action, i) => (
-                           <button 
-                             key={i} 
-                             className="w-full text-left px-4 py-3.5 bg-white border border-border/60 hover:bg-primary/5 hover:border-primary/30 rounded-xl transition-all flex items-center justify-between group"
-                           >
-                              <span className="text-[10px] font-black text-foreground group-hover:text-primary transition-colors tracking-tight uppercase leading-none">{action}</span>
-                              <div className="w-5 h-5 rounded-lg bg-muted/40 flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-white transition-all">
-                                 <Plus className="w-3 h-3 group-hover:rotate-90 transition-transform"/>
-                              </div>
-                           </button>
-                         ))}
-                      </div>
-                   </section>
-
-                   {/* REASONING DIALOGUE - MORE CHAT-LIKE */}
                     <section className="flex flex-col flex-1 min-h-[300px]">
                        <h4 className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-[0.25em] mb-4">{t('judge.assistant.dialogue', 'Reasoning Dialogue')}</h4>
                        <div className="flex-1 space-y-5 overflow-y-auto pr-1 pb-6">
@@ -792,7 +728,7 @@ const CaseDetail = () => {
                                   <Sparkles className="w-3.5 h-3.5 text-primary"/>
                                </div>
                                <div className={cn("bg-[#F8F8F5] p-3.5 rounded-2xl border border-border/40 shadow-sm flex-1", i18n.language === 'ar' ? "rounded-tr-none" : "rounded-tl-none")}>
-                                  <p className="text-[11px] font-semibold text-foreground/70 leading-relaxed italic antialiased antialiased">
+                                  <p className="text-[11px] font-semibold text-foreground/70 leading-relaxed italic antialiased">
                                     {t('judge.workspace.assistantPrompt', 'I am ready to assist with Phase {{phase}} logic discovery. How can I help?', { phase: viewedIdx + 1 })}
                                   </p>
                                </div>
@@ -829,10 +765,9 @@ const CaseDetail = () => {
                               <span>ANALYZING NODE...</span>
                            </div>
                          )}
-                      </div>
-                      
-                      {/* CHAT SUGGESTIONS */}
-                      <div className="px-1 py-4 border-t border-border/20 mt-auto">
+                       </div>
+                       
+                       <div className="px-1 py-4 border-t border-border/20 mt-auto">
                         <p className="text-[7.5px] font-black text-muted-foreground/30 uppercase tracking-[.25em] mb-3">Contextual Queries</p>
                         <div className="flex flex-wrap gap-2">
                             {assistant.suggestions.map((s, i) => (
@@ -848,11 +783,10 @@ const CaseDetail = () => {
                             ))}
                         </div>
                       </div>
-                   </section>
+                    </section>
                 </div>
              </div>
 
-             {/* CHAT INPUT AREA */}
              <div className="p-5 border-t border-border/40 bg-white shrink-0">
                 <div className="relative group">
                    <input 
@@ -874,7 +808,7 @@ const CaseDetail = () => {
                      onClick={sendChat}
                      disabled={isChatLoading || !chatInput.trim()}
                    >
-                      <Send className={cn("w-3.5 h-3.5 fill-current", i18n.language === 'ar' && "rotate-180")}/>
+                       <Send className={cn("w-3.5 h-3.5 fill-current", i18n.language === 'ar' && "rotate-180")}/>
                    </button>
                 </div>
                 <div className="flex items-center justify-center gap-2 mt-3 opacity-30">
@@ -884,7 +818,6 @@ const CaseDetail = () => {
              </div>
            </aside>
 
-          {/* FLOATING TOGGLE BUTTON - Appears when AI panel is closed */}
           {!isAiPanelOpen && (
             <button 
               onClick={() => setIsAiPanelOpen(true)}

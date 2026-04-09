@@ -27,7 +27,7 @@ type DashboardTab = 'assigned' | 'previous'
 const FINAL_STATUSES = new Set(['CaseClosed'])
 
 const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const queryClient = useQueryClient()
@@ -189,7 +189,7 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
                   :"text-on-surface-variant hover:text-on-surface"
               )}
             >
-              {t('judge.caseList.archive')}
+              {t('judge.caseList.finalizedDecisions', 'Finalized Outcomes')}
             </button>
           </div>
 
@@ -223,6 +223,14 @@ const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
             </button>
           </div>
         )}
+
+        {/* Case List Header */}
+        <div className="flex items-center gap-3 mb-2 px-2">
+          <div className="w-1.5 h-6 bg-primary rounded-full" />
+          <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/60">
+            {activeTab === 'assigned' ? t('judge.caseList.activeDocket') : t('judge.caseList.finalizedDecisions', 'Finalized Outcomes')}
+          </h2>
+        </div>
 
         {/* Case List */}
         <div className="space-y-4">

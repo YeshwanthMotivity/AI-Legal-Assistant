@@ -43,7 +43,8 @@ import {
   saveJudgment,
   uploadCaseDocument,
   deleteCase,
-  submitFeedback
+  submitFeedback,
+  deleteCaseDocument
 } from '../../api/judge'
 import { useCaseAnalysisPolling } from '../../hooks/useCaseAnalysisPolling'
 import type { DocumentType, JudgmentRequest } from '../../types/judge'
@@ -280,6 +281,20 @@ const CaseDetail = () => {
     },
   })
 
+  const deleteDocumentMutation = useMutation({
+    mutationFn: (documentId: string) => deleteCaseDocument(id as string, documentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['case-documents', id] })
+      queryClient.invalidateQueries({ queryKey: ['judge-case', id] })
+      setMessageType('success')
+      setLocalMessage({ text: 'Document deleted successfully.', phase: 1 })
+    },
+    onError: () => {
+      setMessageType('error')
+      setLocalMessage({ text: 'Failed to delete document.', phase: 1 })
+    }
+  });
+
   const feedbackMutation = useMutation({
     mutationFn: (payload: any) => submitFeedback(id as string, payload),
     onSuccess: () => {
@@ -472,11 +487,16 @@ const CaseDetail = () => {
                    {/* ANALYSIS TAB */}
                    {viewedIdx === 0 && (
                      <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        < IntelligenceCenter
+                        <IntelligenceCenter
                           analysis={analysis}
                           caseId={id ?? ''}
                           lawArticles={lawArticles}
                           precedents={precedents}
+                          caseData={caseData}
+                          documents={documentsQuery.data?.items}
+                          entitlements={entitlements}
+                          onDeleteDocument={(docId) => deleteDocumentMutation.mutate(docId)}
+                          isDeletingDocument={deleteDocumentMutation.isPending ? deleteDocumentMutation.variables as string : null}
                         />
                         {!isReady && !isActivelyLoading && (
                           <div className="mt-8 text-center p-12 bg-white border border-dashed border-border/80 rounded-2xl shadow-inner w-full flex flex-col items-center gap-6">
@@ -637,23 +657,6 @@ const CaseDetail = () => {
                 </div>
 
                 <div className="p-6 space-y-8 flex flex-col flex-1">
-                   {/* PHASE PROTOCOLS */}
-                   <section className="space-y-4">
-                      <h4 className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-[0.25em]">{t('judge.assistant.protocols', 'Phase Protocols')}</h4>
-                      <div className="space-y-2.5">
-                         {assistant.actions.map((action, i) => (
-                           <button 
-                             key={i} 
-                             className="w-full text-left px-4 py-3.5 bg-white border border-border/60 hover:bg-primary/5 hover:border-primary/30 rounded-xl transition-all flex items-center justify-between group"
-                           >
-                              <span className="text-[10px] font-black text-foreground group-hover:text-primary transition-colors tracking-tight uppercase leading-none">{action}</span>
-                              <div className="w-5 h-5 rounded-lg bg-muted/40 flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-white transition-all">
-                                 <Plus className="w-3 h-3 group-hover:rotate-90 transition-transform"/>
-                              </div>
-                           </button>
-                         ))}
-                      </div>
-                   </section>
 
                    {/* REASONING DIALOGUE - MORE CHAT-LIKE */}
                     <section className="flex flex-col flex-1 min-h-[300px]">
