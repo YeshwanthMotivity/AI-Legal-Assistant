@@ -38,6 +38,15 @@ async def refresh_token(
     return await service.refresh_access_token(refresh_token)
 
 
+@router.get("/judges", response_model=List[UserResponse])
+async def get_judges(
+    service: UserService = Depends(get_user_service),
+    current_user: dict = Depends(require_role(UserRole.CLERK))
+):
+    """Get all active judges (Clerk or higher)."""
+    return await service.get_users_by_role(UserRole.JUDGE)
+
+
 # Admin user management routes
 admin_router = APIRouter(prefix="/admin/users", tags=["User Management"])
 

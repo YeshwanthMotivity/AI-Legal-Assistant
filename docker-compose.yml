@@ -1,5 +1,5 @@
 services:
-
+ 
   # ── Vector Database ───────────────────────────────────────────────────────
   qdrant:
     image: qdrant/qdrant:latest
@@ -16,7 +16,7 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-
+ 
   # ── Embedding Service ─────────────────────────────────────────────────────
   bge_m3:
     build:
@@ -35,7 +35,7 @@ services:
       retries: 10
       start_period: 300s
     restart: unless-stopped
-
+ 
   # ── Reranker Service ──────────────────────────────────────────────────────
   bge_reranker:
     build:
@@ -54,7 +54,7 @@ services:
       retries: 10
       start_period: 300s
     restart: unless-stopped
-
+ 
   # ── Backend API ───────────────────────────────────────────────────────────
   backend:
     build:
@@ -80,7 +80,7 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-
+ 
   # ── Frontend ──────────────────────────────────────────────────────────────
   frontend:
     build:
@@ -97,7 +97,7 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-
+ 
   # ── Object Storage ────────────────────────────────────────────────────────
   minio:
     image: minio/minio:latest
@@ -117,9 +117,10 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-
+ 
 # ── Native on VM (outside Docker) ────────────────────────────────────────────
 # PostgreSQL: sudo apt install postgresql
 # Ollama:     curl -fsSL https://ollama.com/install.sh | sh
 #             ollama pull jwnder/jais-adaptive:7b
 #             ollama pull qwen2.5:1.5b-instruct
+ 

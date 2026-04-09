@@ -287,6 +287,10 @@ export const uploadCaseDocument = async (
   return response.data
 }
 
+export const deleteCaseDocument = async (caseId: string, documentId: string): Promise<void> => {
+  await apiClient.delete(`/cases/${caseId}/documents/${documentId}`)
+}
+
 export const getCaseDocuments = async (caseId: string): Promise<DocumentListResponse> => {
   const response = await apiClient.get<DocumentListResponse>(`/cases/${caseId}/documents`)
   return {

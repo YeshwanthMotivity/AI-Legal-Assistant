@@ -5,7 +5,7 @@ from app.modules.document.models import ProcessingStatus, DocumentType
 
 
 class DocumentBase(BaseModel):
-    document_type: DocumentType
+    document_type: str
     file_name: str
 
 
@@ -14,7 +14,7 @@ class DocumentCreate(DocumentBase):
 
 
 class DocumentUpdate(BaseModel):
-    document_type: Optional[DocumentType] = None
+    document_type: Optional[str] = None
     doc_metadata: Optional[dict] = None
     processing_status: Optional[ProcessingStatus] = None
 

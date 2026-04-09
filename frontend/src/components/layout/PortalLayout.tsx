@@ -82,7 +82,7 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent, headerActi
         return [
           { icon: LayoutDashboard, label: t('nav.dashboard'), href: '/clerk/dashboard' },
           { icon: Briefcase, label: t('clerk.nav.cases'), href: '/clerk/cases' },
-          { icon: FileText, label: t('clerk.nav.documents'), href: '/clerk/documents' },
+          { icon: Gavel, label: t('clerk.nav.assignments', 'Case Assignment'), href: '/clerk/assignments' }
         ]
       case 'judge':
         return [
@@ -94,7 +94,6 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent, headerActi
           { icon: LayoutDashboard, label: t('nav.dashboard'), href: '/admin/dashboard' },
           { icon: ShieldCheck, label: t('admin.nav.metrics'), href: '/admin/metrics' },
           { icon: Users, label: t('admin.nav.users'), href: '/admin/users' },
-          { icon: Briefcase, label: t('admin.nav.assignments'), href: '/admin/assignments' },
           { icon: History, label: t('admin.nav.audit'), href: '/admin/audit' },
         ]
       default:
@@ -168,7 +167,7 @@ const PortalLayout = ({ title, subtitle, children, hideHeaderContent, headerActi
                <div className="w-2 h-2 rounded-full bg-text-accent animate-pulse shadow-[0_0_10px_#D4AF37]" />
                <span className="text-[10px] font-black uppercase tracking-widest text-text-accent">{t('judge.judgment.aiReasoningNode')}</span>
             </div>
-            <p className="text-[10px] text-white/50 leading-relaxed font-bold italic font-serif">
+            <p className="text-[10px] text-white/50 leading-relaxed font-bold italic font-sans">
                {t('judge.judgment.aiReasoningDesc')}
             </p>
           </div>

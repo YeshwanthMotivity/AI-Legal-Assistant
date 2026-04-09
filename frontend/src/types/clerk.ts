@@ -9,6 +9,7 @@ export interface ClerkCreateCaseRequest {
   court_number?: string
   description?: string
   claim_amount?: string
+  assigned_to?: string
 }
 
 export interface ClerkUpdateCaseMetadataRequest {

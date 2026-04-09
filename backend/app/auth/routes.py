@@ -143,3 +143,20 @@ async def refresh_token(request: RefreshRequest, session: AsyncSession = Depends
         access_token=new_access_token,
         refresh_token=new_refresh_token
     )
+
+from typing import List
+from app.modules.user.schemas import UserResponse
+from app.auth.rbac import require_role, UserRole
+from app.modules.user.repository import UserRepository
+
+@router.get("/judges", response_model=List[UserResponse])
+async def get_judges(
+    session: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_role(UserRole.CLERK))
+):
+    """Get all active judges (Clerk or higher)."""
+    repository = UserRepository(session)
+    users = await repository.get_by_role(UserRole.JUDGE)
+    return [UserResponse.model_validate(user) for user in users]
+
+

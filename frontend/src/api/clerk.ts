@@ -1,6 +1,13 @@
+import type { AxiosProgressEvent } from 'axios'
 import apiClient from './client'
-import type { ClerkCreateCaseRequest, ClerkUpdateCaseMetadataRequest } from '../types/clerk'
 import type { CaseListResponse, CaseResponse, DocumentListResponse, DocumentResponse, DocumentType } from '../types/judge'
+import type { ClerkCreateCaseRequest, ClerkUpdateCaseMetadataRequest } from '../types/clerk'
+import type { AdminUser } from '../types/admin'
+
+export const clerkGetJudges = async () => {
+  const response = await apiClient.get<AdminUser[]>('/auth/judges')
+  return response.data
+}
 
 export const clerkGetCases = async (params: { skip?: number; limit?: number; status?: string } = {}) => {
   const response = await apiClient.get<CaseListResponse>('/cases', { params })
@@ -14,6 +21,11 @@ export const clerkCreateCase = async (payload: ClerkCreateCaseRequest) => {
 
 export const clerkUpdateCaseMetadata = async (caseId: string, payload: ClerkUpdateCaseMetadataRequest) => {
   const response = await apiClient.patch<CaseResponse>(`/cases/${caseId}`, payload)
+  return response.data
+}
+
+export const clerkAssignCase = async (caseId: string, assignedTo: string) => {
+  const response = await apiClient.patch<CaseResponse>(`/cases/${caseId}/assign`, { assigned_to: assignedTo })
   return response.data
 }
 
@@ -34,7 +46,7 @@ export const clerkUploadDocument = async (
 
   const response = await apiClient.post<DocumentResponse>(`/cases/${caseId}/documents`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
-    onUploadProgress: (event) => {
+    onUploadProgress: (event: AxiosProgressEvent) => {
       if (!event.total || !onProgress) return
       const progress = Math.round((event.loaded / event.total) * 100)
       onProgress(progress)
@@ -42,4 +54,22 @@ export const clerkUploadDocument = async (
   })
   return response.data
 }
+export const clerkGetCase = async (caseId: string) => {
+  const response = await apiClient.get<CaseResponse>(`/cases/${caseId}`)
+  return response.data
+}
 
+export const clerkDeleteCaseDocument = async (caseId: string, documentId: string) => {
+  const response = await apiClient.delete(`/cases/${caseId}/documents/${documentId}`)
+  return response.data
+}
+
+export const clerkDeleteCase = async (caseId: string) => {
+  const response = await apiClient.delete(`/cases/${caseId}`)
+  return response.data
+}
+
+export const clerkRunAnalysis = async (caseId: string, language: string = 'en') => {
+  const response = await apiClient.post(`/cases/${caseId}/analyze`, { language })
+  return response.data
+}

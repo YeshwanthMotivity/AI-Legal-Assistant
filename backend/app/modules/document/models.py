@@ -35,8 +35,8 @@ class Document(Base):
     __tablename__ = "documents"
     
     id = Column(String, primary_key=True, index=True)
-    case_id = Column(String, ForeignKey("cases.id"), nullable=False)
-    document_type = Column(SQLEnum(DocumentType), nullable=False)
+    case_id = Column(String, ForeignKey("cases.id", ondelete="CASCADE"), nullable=False)
+    document_type = Column(String, nullable=False)
     file_name = Column(String, nullable=False)
     file_path = Column(String)
     file_size = Column(String)

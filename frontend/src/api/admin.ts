@@ -5,7 +5,7 @@ import type {
   AdminMetricsResponse,
   AdminUser,
 } from '../types/admin'
-import type { CaseListResponse, CaseResponse } from '../types/judge'
+import type { CaseListResponse } from '../types/judge'
 import type { BenchmarkRunResult, ReleaseGate, ReleaseGateRequest } from '../types/evaluation'
 
 export const adminGetUsers = async (params: { skip?: number; limit?: number } = {}) => {
@@ -27,12 +27,7 @@ export const adminGetCases = async (params: { skip?: number; limit?: number; sta
   return response.data
 }
 
-export const adminAssignCase = async (caseId: string, assignedTo: string) => {
-  const response = await apiClient.patch<CaseResponse>(`/cases/${caseId}/assign`, {
-    assigned_to: assignedTo,
-  })
-  return response.data
-}
+
 
 export const adminGetAuditLogs = async (params: { skip?: number; limit?: number } = {}) => {
   const response = await apiClient.get<AdminAuditLogResponse>('/admin/audit-logs', { params })

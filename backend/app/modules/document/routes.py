@@ -12,6 +12,7 @@ from app.modules.document.models import DocumentType, ProcessingStatus
 from app.modules.ingestion.minio_client import upload_file as upload_to_minio
 from app.modules.ingestion.pipeline import run_ingestion_pipeline
 from app.auth.rbac import require_role, UserRole
+from app.modules.audit.service import AuditService
 
 
 router = APIRouter(prefix="/cases", tags=["Documents"])
@@ -50,7 +51,7 @@ async def upload_document(
     case_id: str,
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    document_type: DocumentType = Form(DocumentType.OTHER),
+    document_type: str = Form("other"),
     db: AsyncSession = Depends(get_db),
     service: DocumentService = Depends(get_document_service),
     current_user: dict = Depends(require_role(UserRole.ADMIN, UserRole.CLERK, UserRole.JUDGE))
@@ -95,6 +96,19 @@ async def upload_document(
     await db.commit()
     await db.refresh(document)
 
+    audit_service = AuditService(db)
+    await audit_service.log(
+        user_id=current_user.get("sub", "unknown"),
+        action="DOCUMENT_UPLOAD",
+        resource_type="document",
+        resource_id=str(document.id),
+        metadata={
+            "file_name": file.filename or "unknown",
+            "document_type": document_type,
+            "case_id": case_id
+        }
+    )
+
     if background_tasks is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -107,7 +121,7 @@ async def upload_document(
         case_id,
         storage_key,
         file.content_type or "application/octet-stream",
-        document_type.value,
+        document_type,
     )
 
     return DocumentResponse.model_validate(document)
@@ -123,6 +137,34 @@ async def get_case_documents(
 ):
     """Get all documents for a case."""
     return await service.get_case_documents(case_id, skip, limit)
+
+
+@router.delete("/{case_id}/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_case_document(
+    case_id: str,
+    document_id: str,
+    db: AsyncSession = Depends(get_db),
+    service: DocumentService = Depends(get_document_service),
+    current_user: dict = Depends(require_role(UserRole.ADMIN, UserRole.CLERK, UserRole.JUDGE))
+):
+    """Delete a document from a case."""
+    audit_service = AuditService(db)
+    await audit_service.log(
+        user_id=current_user.get("sub", "unknown"),
+        action="DOCUMENT_DELETE",
+        resource_type="document",
+        resource_id=document_id,
+        metadata={
+            "case_id": case_id
+        }
+    )
+    
+    success = await service.delete_document(document_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found"
+        )
 
 
 document_router = APIRouter(prefix="/documents", tags=["Documents"])

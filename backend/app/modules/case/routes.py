@@ -13,6 +13,7 @@ from app.modules.case.schemas import (
 from app.modules.case.repository import CaseRepository
 from app.modules.case.services import CaseService
 from app.auth.rbac import require_role, UserRole
+from app.modules.audit.service import AuditService
 
 
 router = APIRouter(prefix="/cases", tags=["Cases"])
@@ -44,8 +45,8 @@ async def create_case(
 ):
     """Create a new case."""
     case = await service.create_case(case_data, current_user["sub"])
-    from app.modules.audit.service import AuditService
     await AuditService(db).log(current_user["sub"], "create_case", "case", case.id)
+    await db.commit()
     return case
 
 
@@ -80,8 +81,8 @@ async def update_case(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Case not found"
         )
-    from app.modules.audit.service import AuditService
     await AuditService(db).log(current_user["sub"], "update_case", "case", case.id)
+    await db.commit()
     return case
 
 
@@ -91,7 +92,7 @@ async def assign_case(
     assign_data: CaseAssign,
     db: AsyncSession = Depends(get_db),
     service: CaseService = Depends(get_case_service),
-    current_user: dict = Depends(require_role(UserRole.ADMIN))
+    current_user: dict = Depends(require_role(UserRole.ADMIN, UserRole.CLERK))
 ):
     """Assign case to a user."""
     case = await service.assign_case(case_id, assign_data.assigned_to)
@@ -100,8 +101,8 @@ async def assign_case(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Case not found"
         )
-    from app.modules.audit.service import AuditService
     await AuditService(db).log(current_user["sub"], "assign_case", "case", case.id)
+    await db.commit()
     return case
 
 
@@ -111,7 +112,7 @@ async def analyze_case(
     background_tasks: BackgroundTasks,
     language: Optional[str] = "en",
     service: CaseService = Depends(get_case_service),
-    current_user: dict = Depends(require_role(UserRole.JUDGE))
+    current_user: dict = Depends(require_role(UserRole.JUDGE, UserRole.CLERK))
 ):
     """Analyze case with AI."""
     # Verify case exists
@@ -128,7 +129,7 @@ async def analyze_case(
 async def get_case_analysis(
     case_id: str,
     service: CaseService = Depends(get_case_service),
-    current_user: dict = Depends(require_role(UserRole.JUDGE))
+    current_user: dict = Depends(require_role(UserRole.JUDGE, UserRole.CLERK))
 ):
     """Get case analysis."""
     case = await service.get_case(case_id, user_id=current_user["sub"], user_role=current_user["role"])
@@ -173,8 +174,8 @@ async def create_judgment(
             detail="Case not found"
         )
     judgment_res = await service.create_judgment(case_id, judgment_data.model_dump(), current_user["sub"])
-    from app.modules.audit.service import AuditService
     await AuditService(db).log(current_user["sub"], "finalize_judgment", "case", case_id)
+    await db.commit()
     return judgment_res
 
 
@@ -200,7 +201,7 @@ async def delete_case(
     case_id: str,
     db: AsyncSession = Depends(get_db),
     service: CaseService = Depends(get_case_service),
-    current_user: dict = Depends(require_role(UserRole.ADMIN, UserRole.JUDGE))
+    current_user: dict = Depends(require_role(UserRole.ADMIN, UserRole.JUDGE, UserRole.CLERK))
 ):
     """Delete case."""
     success = await service.delete_case(case_id)
@@ -209,7 +210,7 @@ async def delete_case(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Case not found"
         )
-    from app.modules.audit.service import AuditService
     await AuditService(db).log(current_user["sub"], "delete_case", "case", case_id)
+    await db.commit()
     return None
 

@@ -105,6 +105,11 @@ class UserService:
         users = await self.user_repository.get_all(skip, limit)
         return [UserResponse.model_validate(user) for user in users]
     
+    async def get_users_by_role(self, role: str, skip: int = 0, limit: int = 100) -> List[UserResponse]:
+        """Get users by role."""
+        users = await self.user_repository.get_by_role(role, skip, limit)
+        return [UserResponse.model_validate(user) for user in users]
+    
     async def update_user(self, user_id: str, user_data: UserUpdate) -> Optional[UserResponse]:
         """Update user."""
         user = await self.user_repository.update(user_id, user_data)

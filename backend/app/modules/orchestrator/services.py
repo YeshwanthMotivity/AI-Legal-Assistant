@@ -116,7 +116,7 @@ class OrchestratorService:
         if not judgment:
             raise ValueError(f"Judgment not found for case: {case_id}")
 
-        await self.case_repository.update_status(case_id, CaseStatus.FINALIZED)
+        await self.case_repository.update_status(case_id, CaseStatus.CASE_CLOSED)
         await self.db.commit()
         return {
             "id": judgment.id,
@@ -174,6 +174,10 @@ class OrchestratorService:
             metric_type="explanation_clarity_score",
             value=float(feedback_data.get("explanation_clarity_score", 0.0)),
         )
+        
+        # Ensure status is finalized when judge provides feedback
+        await self.case_repository.update_status(case_id, CaseStatus.CASE_CLOSED)
+        
         await self.db.commit()
 
         return {

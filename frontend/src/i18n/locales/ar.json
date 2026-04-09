@@ -205,7 +205,7 @@
     "AIAnalysisPending": "تحليل الذكاء الاصطناعي قيد الانتظار",
     "AIAnalysisReady": "نتائج التحليل جاهزة",
     "DraftGenerated": "تم توليد المسودة",
-    "Finalized": "تم الاعتماد"
+    "Finalized": "قضية مغلقة"
   },
   "judge": {
     "nav": {

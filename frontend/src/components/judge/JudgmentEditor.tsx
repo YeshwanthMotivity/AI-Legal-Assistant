@@ -1,69 +1,40 @@
-import { useState, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Gavel, Sparkles, AlertTriangle, CheckCircle2, Verified, Scale, History, User, Terminal, ChevronRight, PlayCircle, Target, ShieldCheck } from 'lucide-react'
+import { Terminal, Scale, History, User, Sparkles, Gavel, Target, ShieldCheck, CheckCircle2 } from 'lucide-react'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
 
 interface JudgmentEditorProps {
   draftText: string
+  onDraftChange: (text: string) => void
   confidence?: number
-  isSubmitting?: boolean
-  caseId?: string
   caseNumber?: string
   claimantName?: string
   respondentName?: string
   filingDate?: string
   lawArticles?: string[]
   precedents?: string[]
-  outcome?: string
+  decision: string
+  onDecisionChange: (val: string) => void
+  compensation: string
+  onCompensationChange: (val: string) => void
   onRegenerate: () => Promise<void>
-  onFinalize: (payload: any) => Promise<void>
 }
 
 const JudgmentEditor = ({
   draftText,
+  onDraftChange,
   confidence,
-  isSubmitting,
   caseNumber,
   claimantName,
   respondentName,
   lawArticles = [],
   precedents = [],
-  outcome: initialOutcome,
+  decision,
+  onDecisionChange,
+  compensation,
+  onCompensationChange,
   onRegenerate,
-  onFinalize,
 }: JudgmentEditorProps) => {
-  const { t } = useTranslation()
-  const [text, setText] = useState(draftText)
-  const [isRegenerating, setIsRegenerating] = useState(false)
-  const [decision, setDecision] = useState(initialOutcome || 'Awarded')
-  const [compensation, setCompensation] = useState('AED 0.00')
-
-  useEffect(() => {
-    setText(draftText)
-  }, [draftText])
-
-  const handleRegenerate = async () => {
-    setIsRegenerating(true)
-    try {
-      await onRegenerate()
-    } finally {
-      setIsRegenerating(false)
-    }
-  }
-
-  const handleFinalize = () => {
-    onFinalize({
-      judgmentText: text,
-      decision,
-      compensationAmount: compensation,
-      reasoning: 'Finalized by judicial officer via workbench.'
-    })
-  }
 
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -95,7 +66,7 @@ const JudgmentEditor = ({
                  <select 
                     className="w-full bg-muted/20 border border-border rounded-2xl px-6 h-16 text-sm font-black uppercase tracking-tight focus:border-[var(--primary)] outline-none transition-all cursor-pointer"
                     value={decision}
-                    onChange={(e) => setDecision(e.target.value)}
+                    onChange={(e) => onDecisionChange(e.target.value)}
                  >
                     <option value="Awarded">Awarded (Full/Partial)</option>
                     <option value="Dismissed">Dismissed (No Cause)</option>
@@ -110,7 +81,7 @@ const JudgmentEditor = ({
                     <input 
                       type="text" 
                       value={compensation}
-                      onChange={(e) => setCompensation(e.target.value)}
+                      onChange={(e) => onCompensationChange(e.target.value)}
                       className="w-full bg-muted/20 border border-border rounded-2xl px-6 h-16 text-sm font-black uppercase tracking-tight focus:border-[var(--primary)] outline-none transition-all placeholder:opacity-30"
                       placeholder="e.g. 50,000.00"
                     />
@@ -142,22 +113,12 @@ const JudgmentEditor = ({
                 `}</style>
                 <ReactQuill 
                   theme="snow" 
-                  value={text} 
-                  onChange={setText}
+                  value={draftText} 
+                  onChange={onDraftChange}
                   placeholder="Initiating reasoned drafting node..."
                 />
               </div>
            </div>
-
-            <div className="flex pt-10 border-t border-border/40">
-               <Button 
-                 className="h-16 px-10 bg-[var(--primary)] text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/20 hover:bg-[var(--primary-hover)] hover:scale-105 active:scale-95 transition-all w-full"
-                 onClick={handleFinalize}
-                 disabled={isSubmitting}
-               >
-                 {isSubmitting ? 'Redacting Final Response...' : 'Authorize and Store Verdict'}
-               </Button>
-            </div>
         </div>
 
         {/* Right: Synthesis Panel */}

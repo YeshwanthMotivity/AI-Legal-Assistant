@@ -9,7 +9,8 @@ import {
  Clock, 
  CheckCircle2,
  Settings,
- ArrowRight
+ ArrowRight,
+ Gavel
 } from 'lucide-react';
 import PortalLayout from '../components/layout/PortalLayout';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
@@ -63,21 +64,21 @@ export default function ClerkDashboard(): ReactNode {
  </CardContent>
  </Card>
 
- {/* Document Upload Card */}
+ {/* Case Assignment Card */}
  <Card className="shadow-sm border-border/50 hover:shadow-md transition-shadow group">
  <CardHeader className="bg-muted/10 border-b py-6 px-8">
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-3">
- <div className="p-2.5 bg-[var(--primary)]/10 rounded-xl text-[var(--primary)]">
- <Upload className="w-6 h-6"/>
+ <div className="p-2.5 bg-[var(--accent-gold)]/10 rounded-xl text-[var(--accent-gold)]">
+ <Gavel className="w-6 h-6"/>
  </div>
  <div>
- <CardTitle className="text-xl">{t('clerk.dashboard.directIngestion')}</CardTitle>
- <CardDescription className="text-xs font-medium uppercase tracking-wider mt-1 opacity-70">{t('clerk.dashboard.bulkEvidence')}</CardDescription>
+ <CardTitle className="text-xl">{t('clerk.dashboard.caseAssignment', 'Case Assignment')}</CardTitle>
+ <CardDescription className="text-xs font-medium uppercase tracking-wider mt-1 opacity-70">{t('clerk.dashboard.assignmentCenter', 'Judicial Assignment Center')}</CardDescription>
  </div>
  </div>
- <Link to="/clerk/documents">
- <Button variant="ghost"size="icon"className="group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
+ <Link to="/clerk/assignments">
+ <Button variant="ghost" size="icon" className="group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
  <ArrowRight className="w-5 h-5 rtl:rotate-180"/>
  </Button>
  </Link>
@@ -85,11 +86,11 @@ export default function ClerkDashboard(): ReactNode {
  </CardHeader>
  <CardContent className="p-8">
  <p className="text-muted-foreground text-sm leading-relaxed mb-6 italic">
- {t('clerk.dashboard.ingestionDesc')}
+ {t('clerk.dashboard.assignmentDesc', 'Assign analyzed cases to the appropriate judge for review and final decision-making.')}
  </p>
- <Link to="/clerk/documents">
- <Button variant="secondary"className="w-full h-11 border-[var(--primary)]/20 text-[var(--primary)] bg-[var(--primary)]/5 hover:bg-[var(--primary)]/10 gap-2 font-bold">
- {t('clerk.dashboard.startBulkUpload')}
+ <Link to="/clerk/assignments">
+ <Button variant="outline" className="w-full h-11 border-[var(--accent-gold)]/20 text-[var(--accent-gold)] bg-[var(--accent-gold)]/5 hover:bg-[var(--accent-gold)]/10 gap-2 font-bold">
+ {t('clerk.dashboard.openAssignments', 'Open Assignments')}
  </Button>
  </Link>
  </CardContent>

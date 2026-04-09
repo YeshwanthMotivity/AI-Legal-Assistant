@@ -14,8 +14,8 @@ interface CaseContextBarProps {
  confidence?: number
  isActivelyLoading: boolean
  isDeleting?: boolean
- onRunAnalysis: () => void
- onFinalize: () => void
+ onRunAnalysis?: () => void
+ onFinalize?: () => void
  onDelete: () => void
 }
 
@@ -82,6 +82,7 @@ const CaseContextBar = ({
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0">
+          {onRunAnalysis && (
           <Button
             variant="outline"
             className="h-9 px-5 text-[10px] font-black border-2 border-[var(--border-color)] rounded-xl hover:border-[var(--primary)]/40 hover:bg-[var(--primary)]/5 flex items-center gap-2.5 uppercase tracking-widest transition-all shadow-sm"
@@ -91,14 +92,17 @@ const CaseContextBar = ({
             <Sparkles className={cn("w-4 h-4 text-[var(--primary)]", isActivelyLoading && "animate-spin")} />
             {isActivelyLoading ? 'Synthesizing...' : 'Run Analysis'}
           </Button>
+          )}
 
-          <Button
-            className="h-9 px-5 text-[10px] font-black bg-[var(--primary)] text-white rounded-xl flex items-center gap-2.5 uppercase tracking-widest hover:bg-[var(--primary-hover)] transition-all shadow-md shadow-[var(--primary)]/20"
-            onClick={onFinalize}
-          >
-            <Gavel className="w-4 h-4"/>
-            Finalize Outcome
-          </Button>
+          {onFinalize && (
+            <Button
+              className="h-9 px-5 text-[10px] font-black bg-[var(--primary)] text-white rounded-xl flex items-center gap-2.5 uppercase tracking-widest hover:bg-[var(--primary-hover)] transition-all shadow-md shadow-[var(--primary)]/20"
+              onClick={onFinalize}
+            >
+              <Gavel className="w-4 h-4"/>
+              Finalize Judgment
+            </Button>
+          )}
 
           <Button
             variant="outline"

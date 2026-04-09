@@ -29,6 +29,7 @@ class CaseCreate(CaseBase):
     filing_date: Optional[datetime] = None
     court_number: Optional[str] = None
     notes: Optional[str] = None
+    assigned_to: Optional[str] = None
 
     class Config:
         json_schema_extra = {

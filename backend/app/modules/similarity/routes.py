@@ -18,7 +18,7 @@ router = APIRouter(prefix="", tags=["Similarity"])
 async def find_similar_cases(
     case_id: str,
     db: AsyncSession = Depends(get_db),
-    _current_user: dict = Depends(require_role(UserRole.JUDGE, UserRole.ADMIN)),
+    _current_user: dict = Depends(require_role(UserRole.JUDGE, UserRole.ADMIN, UserRole.CLERK)),
 ):
     """
     Find similar cases based on case summary embedding and reranking.
@@ -32,7 +32,7 @@ async def get_precedent_details(
     precedent_id: str,
     language: str = "en",
     db: AsyncSession = Depends(get_db),
-    _current_user: dict = Depends(require_role(UserRole.JUDGE, UserRole.ADMIN)),
+    _current_user: dict = Depends(require_role(UserRole.JUDGE, UserRole.ADMIN, UserRole.CLERK)),
 ):
     """Fetch full text and details of a specific precedent."""
     service = SimilarityService(db)
@@ -44,7 +44,7 @@ async def chat_with_precedent(
     precedent_id: str,
     request: PrecedentChatRequest,
     db: AsyncSession = Depends(get_db),
-    _current_user: dict = Depends(require_role(UserRole.JUDGE, UserRole.ADMIN)),
+    _current_user: dict = Depends(require_role(UserRole.JUDGE, UserRole.ADMIN, UserRole.CLERK)),
 ):
     """Interact with a specific precedent using AI chat."""
     service = SimilarityService(db)

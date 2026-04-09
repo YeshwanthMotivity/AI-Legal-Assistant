@@ -6,9 +6,9 @@ import CaseList from './pages/judge/CaseList'
 import CaseDetail from './pages/judge/CaseDetail'
 import PrecedentDetailPage from './pages/judge/PrecedentDetailPage'
 import ClerkCaseList from './pages/clerk/CaseList'
-import DocumentUpload from './pages/clerk/DocumentUpload'
+import ClerkCaseDetail from './pages/clerk/CaseDetail'
+import ClerkCaseAssignment from './pages/clerk/CaseAssignment'
 import UserManagement from './pages/admin/UserManagement'
-import CaseAssignment from './pages/admin/CaseAssignment'
 import MetricsDashboard from './pages/admin/MetricsDashboard'
 import AuditLog from './pages/admin/AuditLog'
 import GlobalConfig from './pages/admin/GlobalConfig'
@@ -76,7 +76,7 @@ function App() {
       <Route
         path="/judge/precedents/:id"
         element={
-          <PrivateRoute allowedRoles={['judge']}>
+          <PrivateRoute allowedRoles={['judge', 'clerk']}>
             <PrecedentDetailPage />
           </PrivateRoute>
         }
@@ -99,10 +99,18 @@ function App() {
         }
       />
       <Route
-        path="/clerk/documents"
+        path="/clerk/cases/:id"
         element={
           <PrivateRoute allowedRoles={['clerk']}>
-            <DocumentUpload />
+            <ClerkCaseDetail />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/clerk/assignments"
+        element={
+          <PrivateRoute allowedRoles={['clerk']}>
+            <ClerkCaseAssignment />
           </PrivateRoute>
         }
       />
@@ -137,14 +145,6 @@ function App() {
         element={
           <PrivateRoute allowedRoles={['admin']}>
             <UserManagement />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/admin/assignments"
-        element={
-          <PrivateRoute allowedRoles={['admin']}>
-            <CaseAssignment />
           </PrivateRoute>
         }
       />

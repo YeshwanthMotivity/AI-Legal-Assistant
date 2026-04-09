@@ -207,7 +207,7 @@
     "AIAnalysisPending": "AI Analysis Pending",
     "AIAnalysisReady": "AI Analysis Ready",
     "DraftGenerated": "Draft Generated",
-    "Finalized": "Finalized"
+    "Finalized": "Case Closed"
   },
   "judge": {
     "nav": {

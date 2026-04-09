@@ -39,6 +39,12 @@ class UserRepository:
         result = await self.db.execute(select(User).offset(skip).limit(limit))
         return list(result.scalars().all())
     
+    async def get_by_role(self, role: str, skip: int = 0, limit: int = 100) -> List[User]:
+        result = await self.db.execute(
+            select(User).where(User.role == role).where(User.is_active == "true").offset(skip).limit(limit)
+        )
+        return list(result.scalars().all())
+    
     async def create(self, user_data: UserCreate) -> User:
         hashed_password = bcrypt.hashpw(
             user_data.password.encode("utf-8"),

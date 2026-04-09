@@ -75,7 +75,7 @@ const DocumentUpload = () => {
  })
 
  const selectedCase = useMemo(
- () => (casesQuery.data?.items ?? []).find((item) => item.id === selectedCaseId),
+ () => (casesQuery.data?.items ?? []).find((item: any) => item.id === selectedCaseId),
  [casesQuery.data?.items, selectedCaseId]
  )
 
@@ -129,7 +129,7 @@ const DocumentUpload = () => {
  onChange={(event) => setSelectedCaseId(event.target.value)}
  >
  <option value="">{t('clerk.forms.selectCase')}</option>
- {(casesQuery.data?.items ?? []).map((item) => (
+ {(casesQuery.data?.items ?? []).map((item: any) => (
  <option key={item.id} value={item.id}>
  {item.case_number} - {item.title}
  </option>
@@ -306,7 +306,7 @@ const DocumentUpload = () => {
  </TableRow>
  </TableHeader>
  <TableBody>
- {(documentsQuery.data?.items ?? []).map((doc) => (
+ {(documentsQuery.data?.items ?? []).map((doc: any) => (
  <TableRow key={doc.id} className="group hover:bg-muted/20 transition-colors">
  <TableCell className="pl-8 py-4">
  <div className="flex items-center gap-3">

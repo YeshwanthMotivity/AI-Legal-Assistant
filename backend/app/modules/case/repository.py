@@ -57,7 +57,6 @@ class CaseRepository:
 
     async def get_clerk_visible(self, skip: int = 0, limit: int = 100, status: Optional[CaseStatus] = None) -> List[Case]:
         query = select(Case).where(
-            Case.status != CaseStatus.FINALIZED,
             ~Case.case_number.startswith('SEED-')
         )
         if status:
@@ -74,7 +73,6 @@ class CaseRepository:
 
     async def count_clerk_visible(self, status: Optional[CaseStatus] = None) -> int:
         query = select(func.count(Case.id)).where(
-            Case.status != CaseStatus.FINALIZED,
             ~Case.case_number.startswith('SEED-')
         )
         if status:
@@ -107,6 +105,7 @@ class CaseRepository:
             court_number=case_data.court_number,
             notes=case_data.notes,
             claim_amount=case_data.claim_amount,
+            assigned_to=case_data.assigned_to if case_data.assigned_to else None,
             status=CaseStatus.CREATED,
         )
         self.db.add(case)
@@ -139,7 +138,10 @@ class CaseRepository:
             return None
         
         case.assigned_to = user_id
-        case.status = CaseStatus.DOCUMENTS_UPLOADED
+        # Preserve existing status — clerk may have already completed AI analysis
+        # Only set to DOCUMENTS_UPLOADED if the case is still in CREATED state
+        if case.status == CaseStatus.CREATED:
+            case.status = CaseStatus.DOCUMENTS_UPLOADED
         await self.db.flush()
         await self.db.refresh(case)
         return case

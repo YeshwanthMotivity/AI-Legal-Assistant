@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import PortalLayout from '../components/layout/PortalLayout';
 import { Button } from '@/components/ui/button';
 import LanguageToggle from '../components/LanguageToggle';
+import { queryKeys } from '../api/queryKeys';
 
 import { 
   AlertTriangle, 
@@ -43,13 +44,13 @@ function JudgeDashboard() {
   const [isChatLoading, setIsChatLoading] = useState(false);
 
   const casesQuery = useQuery({
-    queryKey: ['judge-cases'],
+    queryKey: queryKeys.judgeCases({ limit: 10 }),
     queryFn: () => getJudgeCases({ limit: 10 }),
     refetchInterval: 30000,
   });
 
   const allCasesQuery = useQuery({
-    queryKey: ['judge-cases-all'],
+    queryKey: queryKeys.judgeCases({ limit: 100 }),
     queryFn: () => getJudgeCases({ limit: 100 }),
     refetchInterval: 60000,
   });
@@ -57,9 +58,9 @@ function JudgeDashboard() {
   const stats = useMemo(() => {
     const items = casesQuery.data?.items ?? [];
     return {
-      pending: items.filter(c => c.status !== 'Finalized').length,
+      pending: items.filter(c => c.status !== 'CaseClosed').length,
       ready: items.filter(c => c.status === 'DraftGenerated' || c.status === 'AIAnalysisReady').length,
-      urgent: items.filter(c => c.status !== 'Finalized' && c.hearing_date && new Date(c.hearing_date) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)).length
+      urgent: items.filter(c => c.status !== 'CaseClosed' && c.hearing_date && new Date(c.hearing_date) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)).length
     };
   }, [casesQuery.data]);
 
@@ -67,9 +68,8 @@ function JudgeDashboard() {
 
   const recentCases = useMemo(() => {
     const items = casesQuery.data?.items ?? [];
-    
-    // Filter cases by the selected language of the UI
     const filteredByLang = items.filter(c => {
+      if (c.status === 'CaseClosed') return false;
       const title = c.title || '';
       const desc = c.description || '';
       const hasArabic = isArabic(title) || isArabic(desc);
@@ -77,7 +77,6 @@ function JudgeDashboard() {
       if (i18n.language.startsWith('ar')) {
         return hasArabic;
       } else {
-        // In English mode, show cases that DON'T have Arabic titles (heuristic)
         return !isArabic(title);
       }
     });
@@ -99,7 +98,7 @@ function JudgeDashboard() {
 
   const { performance } = useMemo(() => {
     const all = allCasesQuery.data?.items ?? [];
-    const resolved = all.filter(c => c.status === 'Finalized').length;
+    const resolved = all.filter(c => c.status === 'CaseClosed').length;
     const total = Math.max(1, all.length);
     return { performance: { resolved, total } };
   }, [allCasesQuery.data]);
@@ -281,7 +280,7 @@ function JudgeDashboard() {
                         <div className={cn(
                           "absolute top-0 bottom-0 w-1.5 z-10 transition-all duration-300 group-hover:w-3",
                           i18n.language === 'ar' ? "right-0 rounded-r-3xl" : "left-0 rounded-l-3xl",
-                          isUrgent ? "bg-red-500" : c.status === 'Finalized' ? "bg-emerald-500" : "bg-primary"
+                          isUrgent ? "bg-red-500" : c.status === 'CaseClosed' ? "bg-emerald-500" : "bg-primary"
                         )} />
                         
                         <div className={cn(
@@ -336,7 +335,7 @@ function JudgeDashboard() {
                                  <Button 
                                     className={cn(
                                        "h-12 w-full px-8 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg transition-all active:scale-95 group/btn",
-                                       isUrgent ? "bg-red-600 hover:bg-red-700 shadow-red-500/20" : c.status === 'Finalized' ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20" : "bg-primary shadow-primary/20"
+                                       isUrgent ? "bg-red-600 hover:bg-red-700 shadow-red-500/20" : c.status === 'CaseClosed' ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20" : "bg-primary shadow-primary/20"
                                     )}
                                     onClick={(e) => {
                                       e.stopPropagation();
