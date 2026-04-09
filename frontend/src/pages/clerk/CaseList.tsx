@@ -1,487 +1,436 @@
-import React, { useState, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import {
-  Search,
-  Plus,
-  Filter,
-  MoreVertical,
-  Activity,
-  History,
-  FileText,
-  Clock,
-  ArrowRight,
-  Gavel,
-  CheckCircle2,
-  Trash2,
-  Brain,
-  Sparkles
+ Plus,
+ Search,
+ Filter,
+ MoreVertical,
+ Edit3,
+ Trash2,
+ ExternalLink,
+ Briefcase,
+ Clock,
+ CheckCircle2,
+ AlertCircle
 } from 'lucide-react'
-import {
-  clerkGetCases,
-  clerkCreateCase,
-  clerkGetJudges,
-  clerkDeleteCase
-} from '@/api/clerk'
-import PortalLayout from '@/components/layout/PortalLayout'
+import { cn } from '@/lib/utils'
+import PortalLayout from '../../components/layout/PortalLayout'
+import { clerkCreateCase, clerkGetCases, clerkUpdateCaseMetadata } from '../../api/clerk'
+import { queryKeys } from '../../api/queryKeys'
+import type { CaseStatus, CaseType } from '../../types/judge'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { queryKeys } from '@/api/queryKeys'
-import { ClerkCase } from '@/types/clerk'
-import { CaseType } from '@/types/judge'
-import { cn } from '@/lib/utils'
-
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import StatCard from '@/components/StatCard'
+ 
+const CASE_TYPES: CaseType[] = [
+ 'unpaid_wages',
+ 'wrongful_termination',
+ 'end_of_service',
+ 'contract_dispute',
+ 'other',
+]
+ 
+const STATUS_OPTIONS: CaseStatus[] = [
+ 'Created',
+ 'DocumentsUploaded',
+ 'AIAnalysisPending',
+ 'AIAnalysisReady',
+ 'DraftGenerated',
+ 'CaseClosed', // Replaced 'Finalized' with 'CaseClosed' to match types/judge.ts
+]
+ 
 const ClerkCaseList = () => {
-  const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null)
-  
-  // Create Case Form State
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
-  const [messageType, setMessageType] = useState<'success' | 'error'>('success')
-  const [createForm, setCreateForm] = useState({
-    title: '',
-    case_type: 'unpaid_wages',
-    claimant_name: '',
-    respondent_name: '',
-    filing_date: '',
-    court_number: '',
-    claim_amount: '',
-    description: ''
+ const { t } = useTranslation()
+ const queryClient = useQueryClient()
+ const navigate = useNavigate()
+ 
+ const [message, setMessage] = useState('')
+ const [messageType, setMessageType] = useState<'success' | 'error'>('success')
+ const [selectedCaseId, setSelectedCaseId] = useState('')
+ 
+ const [createForm, setCreateForm] = useState({
+ title: '',
+ case_type: 'unpaid_wages' as CaseType,
+ claimant_name: '',
+ respondent_name: '',
+ filing_date: '',
+ court_number: '',
+ description: '',
+ claim_amount: '',
+ })
+ 
+ const [metadataForm, setMetadataForm] = useState({
+ hearing_date: '',
+ status: 'Created' as CaseStatus,
+ })
+ 
+ const casesQuery = useQuery({
+ queryKey: queryKeys.clerkCases({ limit: 200 }),
+ queryFn: () => clerkGetCases({ limit: 200 }),
+ })
+ 
+ const selectedCase = useMemo(
+ () => (casesQuery.data?.items ?? []).find((item) => item.id === selectedCaseId),
+ [casesQuery.data?.items, selectedCaseId]
+ )
+ 
+ const createCaseMutation = useMutation({
+ mutationFn: clerkCreateCase,
+ onSuccess: () => {
+ queryClient.invalidateQueries({ queryKey: queryKeys.clerkCases() })
+ setMessageType('success')
+ setMessage(t('clerk.messages.caseCreated'))
+ setCreateForm({
+ title: '',
+ case_type: 'unpaid_wages',
+ claimant_name: '',
+ respondent_name: '',
+ filing_date: '',
+ court_number: '',
+ description: '',
+ claim_amount: '',
+ })
+ },
+ onError: () => {
+ setMessageType('error')
+ setMessage(t('clerk.messages.caseCreateFailed'))
+ },
+ })
+ 
+ const updateCaseMutation = useMutation({
+ mutationFn: ({ caseId, payload }: { caseId: string; payload: { hearing_date?: string; status?: string } }) =>
+ clerkUpdateCaseMetadata(caseId, payload),
+ onSuccess: () => {
+ queryClient.invalidateQueries({ queryKey: queryKeys.clerkCases() })
+ setMessageType('success')
+ setMessage(t('clerk.messages.caseUpdated'))
+ },
+ onError: () => {
+ setMessageType('error')
+ setMessage(t('clerk.messages.caseUpdateFailed'))
+ },
+ })
+ 
+ const stats = useMemo(() => {
+ const items = casesQuery.data?.items ?? []
+ return {
+ total: items.length,
+ pending: items.filter(c => ['Created', 'DocumentsUploaded', 'AIAnalysisPending'].includes(c.status)).length,
+ ready: items.filter(c => c.status === 'AIAnalysisReady').length,
+ finalized: items.filter(c => c.status === 'CaseClosed').length,
+ }
+ }, [casesQuery.data])
+ 
+ return (
+ <PortalLayout title={t('clerk.pages.casesTitle')} subtitle={t('clerk.pages.casesSubtitle')}>
+ 
+ {/* Quick Stats */}
+ <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+ <StatCard label="Total Cases" value={stats.total} icon={Briefcase} />
+ <StatCard label="Processing" value={stats.pending} icon={Clock} className="border-l-4 border-l-amber-500"/>
+ <StatCard label="Ready for Review" value={stats.ready} icon={AlertCircle} className="border-l-4 border-l-indigo-500"/>
+ <StatCard label="Finalized" value={stats.finalized} icon={CheckCircle2} className="border-l-4 border-l-[var(--primary)]"/>
+ </div>
+ 
+ <div className="flex flex-col gap-6">
+ {/* Actions & Filters Bar */}
+ <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+ <div className="relative w-full sm:w-96">
+ <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"/>
+ <input
+ className="w-full bg-card border rounded-lg pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+ style={{ paddingLeft: '3rem' }}
+ placeholder="Search by case number, title or claimant..."
+ />
+ </div>
+ <div className="flex items-center gap-3 w-full sm:w-auto">
+ <Button variant="outline" className="flex-1 sm:flex-none gap-2">
+ <Filter className="w-4 h-4"/>
+ Filters
+ </Button>
+ <Button className="flex-1 sm:flex-none gap-2 shadow-lg shadow-primary/20" onClick={() => (document.getElementById('create-case-modal') as any)?.showModal()}>
+ <Plus className="w-4 h-4"/>
+ {t('clerk.forms.createCaseAction')}
+ </Button>
+ </div>
+ </div>
+ 
+ {/* Case Table */}
+ <Card className="shadow-sm border-border/50">
+ <CardHeader className="bg-muted/10 border-b">
+ <CardTitle className="text-lg">{t('clerk.tables.recentCases')}</CardTitle>
+ </CardHeader>
+ <CardContent className="p-0">
+ {casesQuery.isLoading ? (
+ <div className="py-20 text-center text-muted-foreground italic">{t('common.loading')}</div>
+ ) : casesQuery.isError ? (
+ <div className="py-20 text-center text-destructive">{t('common.error')}</div>
+ ) : (
+  <div className="overflow-x-auto">
+  <Table>
+   <TableHeader>
+   <TableRow>
+   <TableHead className="pl-6 min-w-[150px]">{t('case.caseNumber')}</TableHead>
+  <TableHead className="min-w-[200px]">{t('clerk.forms.title')}</TableHead>
+  <TableHead className="min-w-[150px]">{t('case.caseType')}</TableHead>
+  <TableHead className="min-w-[150px]">{t('case.status')}</TableHead>
+  <TableHead className="min-w-[150px]">{t('clerk.forms.assignedJudge')}</TableHead>
+  <TableHead className="pr-6 text-right w-[100px] sticky right-0 bg-background shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.05)] border-l">{t('common.actions')}</TableHead>
+  </TableRow>
+  </TableHeader>
+ <TableBody>
+ {(casesQuery.data?.items ?? []).map((item) => (
+ <TableRow key={item.id} className="group">
+ <TableCell className="pl-6 font-bold text-primary">{item.case_number}</TableCell>
+ <TableCell className="font-medium">{item.title}</TableCell>
+ <TableCell>
+ <span className="text-xs uppercase text-muted-foreground font-semibold">
+ {t(`judge.caseTypes.${item.case_type}`)}
+ </span>
+ </TableCell>
+ <TableCell>
+                 <Badge
+                  variant={
+                    item.status === 'CaseClosed' ? 'success' :
+                    (['AIAnalysisReady', 'DraftGenerated'].includes(item.status) ? 'default' : 'warning') as any
+                  }
+                  className="px-2 py-0 h-5 text-[10px] font-black uppercase tracking-tighter"
+                 >
+                  {t(`status.${item.status}`)}
+                 </Badge>
+ </TableCell>
+ <TableCell>{item.assigned_to ?? '-'}</TableCell>
+  <TableCell className="pr-6 text-right sticky right-0 bg-background shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.05)] border-l">
+  <div className="flex justify-end gap-1">
+  <Button
+  variant="ghost"
+  size="icon"
+  className="h-8 w-8 text-primary hover:bg-primary/10"
+  onClick={() => {
+  setSelectedCaseId(item.id)
+  setMetadataForm({
+  hearing_date: item.hearing_date ? item.hearing_date.slice(0, 10) : '',
+  status: item.status,
   })
-
-  const casesQuery = useQuery({
-    queryKey: queryKeys.clerkCases({ limit: 200 }),
-    queryFn: () => clerkGetCases({ limit: 200 }),
-  })
-
-  const judgesQuery = useQuery({
-    queryKey: queryKeys.judges,
-    queryFn: clerkGetJudges,
-  })
-
-  const selectedCase = useMemo(
-    () => (casesQuery.data?.items ?? []).find((item: ClerkCase) => item.id === selectedCaseId),
-    [casesQuery.data?.items, selectedCaseId]
-  )
-
-  const createCaseMutation = useMutation({
-    mutationFn: clerkCreateCase,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.clerkCases() })
-      setMessageType('success')
-      setMessage(t('clerk.messages.caseCreated'))
-      setCreateForm({
-        title: '',
-        case_type: 'unpaid_wages',
-        claimant_name: '',
-        respondent_name: '',
-        filing_date: '',
-        court_number: '',
-        claim_amount: '',
-        description: ''
-      })
-      setTimeout(() => {
-        setIsCreateModalOpen(false)
-        setMessage(null)
-      }, 1500)
-    },
-    onError: () => {
-      setMessageType('error')
-      setMessage(t('clerk.messages.error'))
-    }
-  })
-
-  const deleteCaseMutation = useMutation({
-    mutationFn: (id: string) => clerkDeleteCase(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.clerkCases() })
-      if (selectedCaseId) setSelectedCaseId(null)
-    }
-  })
-
-  const filteredCases = useMemo(() => {
-    const items = casesQuery.data?.items ?? []
-    return items.filter((c: ClerkCase) =>
-      c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.case_number.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }, [casesQuery.data, searchQuery])
-
-  const handleCreateSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    createCaseMutation.mutate({
-      ...createForm,
-      case_type: createForm.case_type as CaseType,
-      claim_amount: String(createForm.claim_amount)
-    })
-  }
-
-  const handleDeleteCase = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (window.confirm(t('clerk.messages.confirmDelete'))) {
-      deleteCaseMutation.mutate(id)
-    }
-  }
-
-  return (
-    <PortalLayout title={t('clerk.dashboard.title', 'Judicial Registry')} hideHeaderContent>
-      <div className={cn("flex flex-col h-full bg-[#F8F8F5] overflow-hidden", i18n.language === 'ar' ? "flex-row-reverse text-right" : "flex-row")}>
-        
-        {/* MAIN REGISTRY COLUMN */}
-        <div className="flex-1 flex flex-col min-w-0 bg-white shadow-sm border-r border-border/40">
-          
-          {/* Header & Controls */}
-          <header className="p-8 space-y-8 shrink-0">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-black tracking-tight text-foreground uppercase leading-none">{t('clerk.dashboard.registry', 'Case Registry')}</h1>
-                <p className="text-[10px] font-black text-primary/60 uppercase tracking-[0.2em] mt-2">Precision Judicial Management Node</p>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="h-11 px-6 bg-primary text-white font-black uppercase tracking-widest text-[11px] rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
-                      <Plus className="w-4 h-4 mr-2" /> {t('clerk.dashboard.newCase', 'Create New Case')}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[600px] border-[var(--primary)]/20 p-0 overflow-hidden rounded-[2rem]">
-                    <div className="p-8 bg-white space-y-8">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-black uppercase tracking-tight text-foreground">{t('clerk.dashboard.newCase', 'Create New Judicial Record')}</DialogTitle>
-                    </DialogHeader>
-                    
-                    {message && (
-                      <div className={cn(
-                        "p-4 rounded-xl border flex items-center gap-3 animate-in slide-in-from-top-2 duration-300",
-                        messageType === 'success' ? "bg-primary/5 border-primary/20 text-primary" : "bg-destructive/5 border-destructive/20 text-destructive"
-                      )}>
-                        {messageType === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <MoreVertical className="w-5 h-5 rotate-90" />}
-                        <span className="text-xs font-black uppercase tracking-tight">{message}</span>
-                      </div>
-                    )}
-
-                    <form onSubmit={handleCreateSubmit} className="space-y-6">
-                      <div className="grid grid-cols-2 gap-6">
-                        <div className="space-y-2 col-span-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{t('clerk.form.title', 'Case Title (Narrative Identity)')}</Label>
-                          <Input 
-                            required
-                            placeholder="e.g. Al-Futtaim v. Landmark Group" 
-                            className="h-12 border-border/60 focus:border-primary/40 rounded-xl bg-muted/20"
-                            value={createForm.title}
-                            onChange={e => setCreateForm({...createForm, title: e.target.value})}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{t('clerk.form.type', 'Litigation Category')}</Label>
-                          <Select 
-                            value={createForm.case_type} 
-                            onValueChange={v => setCreateForm({...createForm, case_type: v})}
-                          >
-                            <SelectTrigger className="h-12 border-border/60 rounded-xl bg-muted/20">
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="unpaid_wages">Unpaid Wages</SelectItem>
-                              <SelectItem value="wrongful_termination">Arbitrary Dismissal</SelectItem>
-                              <SelectItem value="contract_dispute">Contract Dispute</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{t('clerk.form.amount', 'Claim Quantum (AED)')}</Label>
-                          <Input 
-                            type="number"
-                            placeholder="0.00" 
-                            className="h-12 border-border/60 rounded-xl bg-muted/20"
-                            value={createForm.claim_amount}
-                            onChange={e => setCreateForm({...createForm, claim_amount: e.target.value})}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{t('clerk.form.claimant', 'Claimant Name')}</Label>
-                          <Input 
-                            className="h-12 border-border/60 rounded-xl bg-muted/20"
-                            value={createForm.claimant_name}
-                            onChange={e => setCreateForm({...createForm, claimant_name: e.target.value})}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{t('clerk.form.respondent', 'Respondent Name')}</Label>
-                          <Input 
-                            className="h-12 border-border/60 rounded-xl bg-muted/20"
-                            value={createForm.respondent_name}
-                            onChange={e => setCreateForm({...createForm, respondent_name: e.target.value})}
-                          />
-                        </div>
-                      </div>
-
-                      <DialogFooter className="pt-4">
-                        <Button 
-                          type="submit" 
-                          disabled={createCaseMutation.isPending}
-                          className="w-full h-12 bg-primary text-white font-black uppercase tracking-widest text-[11px] rounded-xl"
-                        >
-                          {createCaseMutation.isPending ? 'Processing...' : t('clerk.form.submit', 'Establish Case Record')}
-                        </Button>
-                      </DialogFooter>
-                    </form>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
-                <Input 
-                  placeholder={t('clerk.dashboard.search', 'Search by title or reference number...')}
-                  className="h-14 pl-12 bg-white border-border/60 focus:border-primary/40 rounded-2xl shadow-sm text-sm"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Button variant="outline" className="h-14 px-6 border-border/60 text-muted-foreground bg-white rounded-2xl">
-                <Filter className="w-4 h-4 mr-2" /> {t('clerk.dashboard.filters', 'Filters')}
-              </Button>
-            </div>
-          </header>
-
-          {/* Table/List Area */}
-          <div className="flex-1 overflow-y-auto px-8 pb-8">
-            <div className="bg-white border border-border/50 rounded-[2rem] overflow-hidden shadow-sm">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-border/40 bg-muted/10">
-                    <th className="px-6 py-5 text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('clerk.table.caseDetail', 'Case Detail & Reference')}</th>
-                    <th className="px-6 py-5 text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('clerk.table.parties', 'Litigation Parties')}</th>
-                    <th className="px-6 py-5 text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('clerk.table.status', 'Analysis Status')}</th>
-                    <th className="px-6 py-5 text-[9px] font-black text-muted-foreground uppercase tracking-widest text-right">{t('clerk.table.actions', 'Protocols')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40">
-                  {filteredCases.map((c: ClerkCase) => (
-                    <tr 
-                      key={c.id} 
-                      className={cn(
-                        "group transition-all hover:bg-muted/5 cursor-pointer",
-                        selectedCaseId === c.id && "bg-primary/[0.03] active-row"
-                      )}
-                      onClick={() => setSelectedCaseId(c.id)}
-                    >
-                      <td className="px-6 py-6">
-                        <div className="space-y-1.5">
-                          <p className="text-[13px] font-bold text-foreground group-hover:text-primary transition-colors leading-tight truncate max-w-[280px] uppercase">
-                            {c.title}
-                          </p>
-                          <div className="flex items-center gap-2">
-                             <span className="text-[10px] font-black font-mono text-primary/40 group-hover:text-primary/60 transition-colors uppercase tracking-tight">{c.case_number}</span>
-                             <span className="w-1 h-1 rounded-full bg-border" />
-                             <span className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-widest">{c.case_type.replace('_', ' ')}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-6">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                             <div className="w-1.5 h-1.5 rounded-full bg-primary/20" />
-                             <span className="text-[11px] font-semibold text-foreground/70 uppercase tracking-tight truncate max-w-[140px]">{c.claimant_name}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                             <div className="w-1.5 h-1.5 rounded-full bg-muted/40" />
-                             <span className="text-[11px] font-semibold text-muted-foreground/60 uppercase tracking-tight truncate max-w-[140px]">{c.respondent_name}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-6">
-                        <div className="flex flex-col gap-2">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className={cn(
-                              "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md",
-                              c.status === 'Created' && "border-primary/20 text-primary bg-primary/5",
-                              c.status === 'AIAnalysisReady' && "border-blue-500/20 text-blue-500 bg-blue-500/5",
-                              c.status === 'CaseClosed' && "border-green-600/20 text-green-600 bg-green-600/5",
-                              c.status === 'DocumentsUploaded' && "border-orange-500/20 text-orange-500 bg-orange-500/5"
-                            )}>
-                              {c.status}
-                            </Badge>
-                            {c.ai_precision_score && (
-                              <div className="flex items-center gap-1">
-                                <Activity className="w-3 h-3 text-primary" />
-                                <span className="text-[9px] font-black text-primary">{c.ai_precision_score}%</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-6 text-right">
-                        <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="w-9 h-9 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-xl"
-                            onClick={(e) => handleDeleteCase(c.id, e)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            className="h-9 px-4 bg-primary/5 hover:bg-primary text-primary hover:text-white border border-primary/20 rounded-xl transition-all"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/clerk/cases/${c.id}`);
-                            }}
-                          >
-                            <span className="text-[10px] font-black uppercase tracking-widest">{t('clerk.table.view', 'Orchestrate')}</span>
-                            <ArrowRight className="w-3.5 h-3.5 ml-2" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredCases.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="px-6 py-32 text-center opacity-30 grayscale scale-95 transition-all">
-                        <div className="flex flex-col items-center gap-4">
-                           <History className="w-12 h-12 text-primary/40" />
-                           <p className="text-xs font-black uppercase tracking-[0.2em]">{t('clerk.dashboard.noCases', 'No active case records found.')}</p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* DETAILS/INSIGHT PANEL */}
-        <aside className="w-[450px] flex flex-col shrink-0 bg-[#FBFBF9]/80 backdrop-blur-xl transition-all duration-500">
-           {selectedCase ? (
-             <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-500">
-                {/* Header Section */}
-                <header className="p-8 border-b border-border/40 space-y-6">
-                   <div className="flex items-center justify-between">
-                      <div className="p-3 bg-primary/5 border border-primary/10 rounded-2xl shadow-sm">
-                         <Gavel className="w-6 h-6 text-primary" />
-                      </div>
-                      <Badge className="text-[9px] font-black uppercase tracking-widest bg-primary/10 text-primary border-primary/20">{selectedCase.status}</Badge>
-                   </div>
-                   <div>
-                      <h3 className="text-xl font-black tracking-tight text-foreground uppercase antialiased">{selectedCase.title}</h3>
-                      <p className="text-xs font-black font-mono text-primary/40 uppercase mt-2">{selectedCase.case_number}</p>
-                   </div>
-                </header>
-
-                {/* Info Groups */}
-                <div className="flex-1 overflow-y-auto w-full">
-                  <div className="p-8 space-y-10">
-                    <section className="space-y-4">
-                       <h4 className="text-[9px] font-black text-muted-foreground/30 uppercase tracking-[0.25em]">{t('clerk.dashboard.recordIdentity', 'Judicial Identity')}</h4>
-                       <div className="grid grid-cols-1 gap-4">
-                          <div className="p-5 bg-white border border-border/50 rounded-2xl shadow-sm space-y-3">
-                             <div className="flex items-center gap-2">
-                                <FileText className="w-3.5 h-3.5 text-primary opacity-30" />
-                                <span className="text-[9px] font-black text-muted-foreground/60 uppercase tracking-widest">{t('clerk.form.type', 'Litigation Category')}</span>
-                             </div>
-                             <p className="text-sm font-bold text-foreground antialiased uppercase">{selectedCase.case_type.replace('_', ' ')}</p>
-                          </div>
-                          <div className="p-5 bg-white border border-border/50 rounded-2xl shadow-sm space-y-3">
-                             <div className="flex items-center gap-2">
-                                <Clock className="w-3.5 h-3.5 text-primary opacity-30" />
-                                <span className="text-[9px] font-black text-muted-foreground/60 uppercase tracking-widest">{t('clerk.table.filingDate', 'Filing Date')}</span>
-                             </div>
-                             <p className="text-sm font-bold text-foreground antialiased">
-                               {selectedCase.filing_date ? new Date(selectedCase.filing_date).toLocaleDateString() : 'N/A'}
-                             </p>
-                          </div>
-                       </div>
-                    </section>
-
-                    <section className="space-y-4">
-                       <h4 className="text-[9px] font-black text-muted-foreground/30 uppercase tracking-[0.25em]">{t('clerk.dashboard.litigantProfile', 'Litigant Profile Matrix')}</h4>
-                       <div className="bg-white border border-border/50 rounded-2xl shadow-sm overflow-hidden">
-                          <div className="p-5 border-b border-border/40 space-y-1.5 hover:bg-muted/5 transition-colors group">
-                             <span className="text-[8px] font-black text-primary/60 uppercase tracking-widest">{t('clerk.form.claimant', 'Claimant (Principal)')}</span>
-                             <p className="text-[13px] font-bold text-foreground group-hover:text-primary transition-colors">{selectedCase.claimant_name}</p>
-                          </div>
-                          <div className="p-5 space-y-1.5 hover:bg-muted/5 transition-colors group">
-                             <span className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest">{t('clerk.form.respondent', 'Respondent (Entity)')}</span>
-                             <p className="text-[13px] font-bold text-foreground group-hover:text-primary transition-colors">{selectedCase.respondent_name}</p>
-                          </div>
-                       </div>
-                    </section>
-
-                    {selectedCase.ai_precision_score && (
-                      <section className="p-6 bg-primary/[0.03] border border-primary/10 rounded-2xl space-y-5">
-                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                               <Sparkles className="w-4 h-4 text-primary" />
-                               <span className="text-[10px] font-black text-primary uppercase tracking-widest">AI Intelligence Discovery</span>
-                            </div>
-                            <span className="text-xs font-black text-primary">{selectedCase.ai_precision_score}% Confidence</span>
-                         </div>
-                         <div className="h-1.5 bg-primary/10 rounded-full overflow-hidden">
-                            <div className="h-full bg-primary rounded-full" style={{ width: `${selectedCase.ai_precision_score}%` }} />
-                         </div>
-                      </section>
-                    )}
-                  </div>
-                </div>
-
-                {/* Footer Action */}
-                <footer className="p-8 border-t border-border/40 bg-white">
-                   <Button 
-                     className="w-full h-14 bg-primary text-white font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-xl shadow-primary/10 hover:translate-y-[-2px] transition-all"
-                     onClick={() => navigate(`/clerk/cases/${selectedCase.id}`)}
-                   >
-                      {t('clerk.dashboard.orchestrateCase', 'Activate Orchestration Hub')} <ArrowRight className="ml-2 w-4 h-4" />
-                   </Button>
-                </footer>
-             </div>
-           ) : (
-             <div className="flex-1 flex flex-col items-center justify-center text-center p-12 space-y-6 opacity-30 grayscale scale-95">
-                <div className="w-20 h-20 bg-primary/5 rounded-3xl flex items-center justify-center border border-primary/10">
-                   <Brain className="w-10 h-10 text-primary opacity-40" />
-                </div>
-                <div>
-                   <h3 className="text-sm font-black text-foreground uppercase tracking-widest">{t('clerk.dashboard.selectCase', 'Decision Engine Idle')}</h3>
-                   <p className="text-[10px] font-semibold text-muted-foreground mt-2 uppercase tracking-tight">Select a case record to initiate analysis and review protocols.</p>
-                </div>
-             </div>
-           )}
-        </aside>
-      </div>
-    </PortalLayout>
-  )
+  setTimeout(() => (document.getElementById('edit-metadata-modal') as any)?.showModal(), 10)
+  }}
+  >
+  <Edit3 className="w-4 h-4"/>
+  </Button>
+  <Button 
+    variant="ghost" 
+    size="icon" 
+    className="h-8 w-8 text-muted-foreground hover:bg-muted"
+    onClick={() => navigate(`/clerk/cases/${item.id}`)}
+  >
+  <ExternalLink className="w-4 h-4"/>
+  </Button>
+  </div>
+  </TableCell>
+ </TableRow>
+ ))}
+ </TableBody>
+  </Table>
+  </div>
+ )}
+ </CardContent>
+ </Card>
+ </div>
+ 
+ {/* Create Case Modal */}
+ <dialog id="create-case-modal" className="fixed inset-0 z-50 m-auto w-[95%] max-w-2xl h-fit max-h-[90vh] bg-background rounded-[40px] shadow-2xl border-none p-0 overflow-hidden backdrop:bg-black/60 backdrop:backdrop-blur-sm shadow-[var(--primary)]/10">
+ <div className="bg-card">
+ <div className="p-6 border-b flex justify-between items-center bg-muted/20">
+ <h3 className="text-xl font-bold">{t('clerk.forms.createCase')}</h3>
+ <Button variant="ghost" size="icon" onClick={() => (document.getElementById('create-case-modal') as any)?.close()}>
+ <Plus className="w-5 h-5 rotate-45"/>
+ </Button>
+ </div>
+ <div className="p-8">
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+ <div className="space-y-2">
+ <label className="text-xs font-black uppercase text-muted-foreground ml-1">{t('clerk.forms.title')}</label>
+ <input
+ className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+ placeholder="e.g. Al-Futtaim vs. Employee A"
+ value={createForm.title}
+ onChange={(event: any) => setCreateForm((prev: any) => ({ ...prev, title: event.target.value }))}
+ />
+ </div>
+ <div className="space-y-2">
+ <label className="text-xs font-black uppercase text-muted-foreground ml-1">{t('clerk.forms.caseType')}</label>
+ <select
+ className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+ value={createForm.case_type}
+ onChange={(event: any) => setCreateForm((prev: any) => ({ ...prev, case_type: event.target.value as CaseType }))}
+ >
+ {CASE_TYPES.map((caseType) => (
+ <option key={caseType} value={caseType}>
+ {t(`judge.caseTypes.${caseType}`)}
+ </option>
+ ))}
+ </select>
+ </div>
+ <div className="space-y-2">
+ <label className="text-xs font-black uppercase text-muted-foreground ml-1">{t('clerk.forms.claimant')}</label>
+ <input
+ className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+ value={createForm.claimant_name}
+ onChange={(event: any) => setCreateForm((prev: any) => ({ ...prev, claimant_name: event.target.value }))}
+ />
+ </div>
+ <div className="space-y-2">
+ <label className="text-xs font-black uppercase text-muted-foreground ml-1">{t('clerk.forms.respondent')}</label>
+ <input
+ className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+ value={createForm.respondent_name}
+ onChange={(event: any) => setCreateForm((prev: any) => ({ ...prev, respondent_name: event.target.value }))}
+ />
+ </div>
+ <div className="space-y-2">
+ <label className="text-xs font-black uppercase text-muted-foreground ml-1">{t('clerk.forms.filingDate')}</label>
+ <input
+ type="date"
+ className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+ value={createForm.filing_date}
+ onChange={(event: any) => setCreateForm((prev: any) => ({ ...prev, filing_date: event.target.value }))}
+ />
+ </div>
+ <div className="space-y-2">
+ <label className="text-xs font-black uppercase text-muted-foreground ml-1">{t('clerk.forms.courtNumber')}</label>
+ <input
+ className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+ placeholder="e.g. DIFC-LC-2024-001"
+ value={createForm.court_number}
+ onChange={(event: any) => setCreateForm((prev: any) => ({ ...prev, court_number: event.target.value }))}
+ />
+ </div>
+ <div className="space-y-2 md:col-span-2">
+ <label className="text-xs font-black uppercase text-muted-foreground ml-1">{t('clerk.forms.claimAmount') || 'Claim Amount (AED)'}</label>
+ <input
+ className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+ placeholder="e.g. 55000"
+ value={createForm.claim_amount}
+ onChange={(event: any) => setCreateForm((prev: any) => ({ ...prev, claim_amount: event.target.value }))}
+ />
+ </div>
+ <div className="space-y-2 md:col-span-2">
+ <label className="text-xs font-black uppercase text-muted-foreground ml-1">{t('clerk.forms.description') || 'Case Description / Notes'}</label>
+ <textarea
+ className="w-full bg-background border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none min-h-[100px]"
+ placeholder="Briefly describe the nature of the claim..."
+ value={createForm.description}
+ onChange={(event: any) => setCreateForm((prev: any) => ({ ...prev, description: event.target.value }))}
+ />
+ </div>
+ </div>
+ </div>
+ <div className="p-6 border-t bg-muted/10 flex justify-end gap-3">
+ <Button variant="outline" onClick={() => (document.getElementById('create-case-modal') as any)?.close()}>
+ {t('common.cancel')}
+ </Button>
+ <Button
+ disabled={createCaseMutation.isPending}
+ onClick={() => {
+ if (!createForm.title || !createForm.claimant_name || !createForm.respondent_name || !createForm.filing_date) {
+ setMessageType('error')
+ setMessage(t('clerk.messages.requiredFields'))
+ return
+ }
+ createCaseMutation.mutate({
+ ...createForm,
+ filing_date: `${createForm.filing_date}T00:00:00`,
+ }, {
+ onSuccess: () => (document.getElementById('create-case-modal') as any)?.close()
+ })
+ }}
+ >
+ {createCaseMutation.isPending ? t('common.loading') : t('clerk.forms.createCaseAction')}
+ </Button>
+ </div>
+ </div>
+ </dialog>
+ 
+ {/* Metadata Editor Modal */}
+ <dialog id="edit-metadata-modal" className="fixed inset-0 z-50 m-auto w-[95%] max-w-md h-fit max-h-[90vh] bg-background rounded-[40px] shadow-2xl border-none p-0 overflow-hidden backdrop:bg-black/60 backdrop:backdrop-blur-sm shadow-[var(--primary)]/10">
+ <div className="bg-card">
+ <div className="p-6 border-b bg-muted/20">
+ <h3 className="text-lg font-bold">{t('clerk.forms.metadataEditor')}</h3>
+ <p className="text-xs text-muted-foreground font-mono mt-1">{selectedCase?.case_number || '-'}</p>
+ </div>
+ <div className="p-6 space-y-4">
+ <div className="space-y-1">
+ <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">{t('clerk.forms.hearingDate')}</label>
+ <input
+ type="date"
+ className="w-full bg-background border rounded-lg px-3 py-2 text-sm"
+ value={metadataForm.hearing_date}
+ onChange={(event: any) => setMetadataForm((prev: any) => ({ ...prev, hearing_date: event.target.value }))}
+ />
+ </div>
+ <div className="space-y-1">
+ <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">{t('case.status')}</label>
+ <select
+ className="w-full bg-background border rounded-lg px-3 py-2 text-sm"
+ value={metadataForm.status}
+ onChange={(event) => setMetadataForm((prev) => ({ ...prev, status: event.target.value as CaseStatus }))}
+ >
+ {STATUS_OPTIONS.map((status) => (
+ <option key={status} value={status}>
+ {t(`status.${status}`)}
+ </option>
+ ))}
+ </select>
+ </div>
+ </div>
+ <div className="p-6 border-t flex gap-2">
+ <Button
+ variant="outline"
+ className="flex-1"
+ onClick={() => (document.getElementById('edit-metadata-modal') as any)?.close()}
+ >
+ {t('common.cancel')}
+ </Button>
+ <Button
+ className="flex-1"
+ disabled={updateCaseMutation.isPending}
+ onClick={() => {
+ updateCaseMutation.mutate({
+ caseId: selectedCaseId,
+ payload: {
+ hearing_date: metadataForm.hearing_date ? `${metadataForm.hearing_date}T10:00:00` : undefined,
+ status: metadataForm.status as any,
+ },
+ }, {
+ onSuccess: () => (document.getElementById('edit-metadata-modal') as any)?.close()
+ })
+ }}
+ >
+ {updateCaseMutation.isPending ? t('common.loading') : t('clerk.forms.saveMetadata')}
+ </Button>
+ </div>
+ </div>
+ </dialog>
+ 
+ {/* Toasts / Notifications */}
+ {message && (
+ <div className={cn(
+ "fixed bottom-8 right-8 z-50 flex items-center gap-3 px-6 py-4 rounded-xl border shadow-2xl animate-in slide-in-from-right-10 duration-300",
+ messageType === 'error' ?"bg-destructive text-destructive-foreground":"bg-card text-card-foreground border-primary/20"
+ )}>
+ {messageType === 'error' ? <AlertCircle className="w-5 h-5"/> : <CheckCircle2 className="w-5 h-5 text-primary"/>}
+ <span className="font-semibold">{message}</span>
+ <Button variant="ghost" size="icon" className="h-6 w-6 ml-4" onClick={() => setMessage('')}>
+ <Plus className="w-4 h-4 rotate-45"/>
+ </Button>
+ </div>
+ )}
+ </PortalLayout>
+ )
 }
-
+ 
 export default ClerkCaseList

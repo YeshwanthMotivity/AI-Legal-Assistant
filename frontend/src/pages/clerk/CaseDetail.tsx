@@ -610,22 +610,19 @@ const CaseDetail = () => {
                           </div>
                         )}
                         {isReady && !isActivelyLoading && (
-                          <div className="mt-12 bg-white p-8 rounded-2xl border border-[var(--primary)]/20 shadow-sm text-center">
-                             <div className="flex flex-col items-center gap-5">
-                               <div className="w-16 h-16 bg-[var(--primary)]/10 rounded-full flex items-center justify-center text-[var(--primary)]">
-                                  <CheckCircle2 className="w-8 h-8"/>
-                               </div>
-                               <div>
-                                 <h3 className="text-lg font-black text-foreground uppercase tracking-tight">{t('clerk.analysis.complete', 'Case Snapshot Ready')}</h3>
-                                 <p className="text-xs font-semibold text-muted-foreground mt-2 opacity-60 max-w-md mx-auto">AI analysis has been completed successfully. You can now assign this case to a judge from the Assignment page.</p>
-                               </div>
-                               <Button 
-                                 className="h-12 px-10 bg-primary text-on-primary rounded-xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-[11px]"
-                                 onClick={() => navigate('/clerk/assignments')}
-                               >
-                                 {t('clerk.analysis.returnToList', 'Proceed to Assignment')} <ArrowRight className="ml-2 w-4 h-4"/>
-                               </Button>
+                          <div className="mt-12 text-center py-10 animate-in fade-in duration-700">
+                             <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-emerald-100 shadow-inner">
+                                <CheckCircle2 className="w-8 h-8"/>
                              </div>
+                             <h3 className="text-xl font-black text-foreground uppercase tracking-tight mb-2">Analysis Phase Complete</h3>
+                             <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest opacity-40 mb-10">Intelligence Dossier finalized for Judicial Assignment</p>
+                             
+                             <Button 
+                               className="h-14 px-12 bg-primary text-on-primary rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-primary/30 hover:scale-[1.05] active:scale-95 transition-all text-xs group"
+                               onClick={() => navigate('/clerk/assignments')}
+                             >
+                               {t('clerk.analysis.returnToList', 'Proceed to Assignment')} <ArrowRight className="ml-3 w-4 h-4 transition-transform group-hover:translate-x-2"/>
+                             </Button>
                           </div>
                         )}
                      </div>

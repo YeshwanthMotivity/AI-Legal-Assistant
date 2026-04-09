@@ -21,10 +21,10 @@ const StatCard = ({ label, value, icon: Icon, trend, className }: StatCardProps)
  transition={{ duration: 0.2 }}
  >
  <Card className={cn("overflow-hidden border-border/50 shadow-md hover:shadow-xl hover:border-primary/30 transition-all duration-300 group", className)}>
-  <CardContent className="p-8">
-  <div className="flex items-center justify-between mb-6">
-  <div className="w-14 h-14 rounded-2xl bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] group-hover:scale-110 transition-transform duration-500 shadow-inner border border-[var(--primary)]/10">
-  <Icon className="w-6 h-6"/>
+  <CardContent className="p-5">
+  <div className="flex items-center justify-between mb-3">
+  <div className="w-10 h-10 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] group-hover:scale-110 transition-transform duration-500 shadow-inner border border-[var(--primary)]/10">
+  <Icon className="w-5 h-5"/>
   </div>
   {trend && (
   <div className={cn(
@@ -36,7 +36,7 @@ const StatCard = ({ label, value, icon: Icon, trend, className }: StatCardProps)
   )}
   </div>
   <div className="space-y-1">
-  <div className="text-4xl font-black tracking-tighter text-foreground leading-none">{value}</div>
+  <div className="text-2xl font-black tracking-tighter text-foreground leading-none">{value}</div>
   <div className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.25em] opacity-60">
   {label}
   </div>
