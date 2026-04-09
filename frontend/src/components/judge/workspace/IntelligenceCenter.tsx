@@ -130,6 +130,7 @@ const IntelligenceCenter = ({
               { label: t('judge.workspace.claimValue', 'Total Claimed Value'), val: `AED ${Number(caseData?.claim_amount || 0).toLocaleString('en-AE', { minimumFractionDigits: 2 })}`, icon: TrendingUp, color: 'text-primary' },
               { label: t('judge.workspace.filingDate', 'Filing Registry Date'), val: caseData?.filing_date ? new Date(caseData.filing_date).toLocaleDateString() : 'N/A', icon: History, color: 'text-muted-foreground' },
               { label: t('judge.workspace.caseType', 'Statutory Classification'), val: caseData?.case_type?.replace(/_/g, ' ') || 'LABOR DISPUTE', icon: Briefcase, color: 'text-muted-foreground' },
+              { label: t('judge.workspace.courtRef', 'Court Reference'), val: caseData?.court_number || 'DIFC-JUDICIAL', icon: Scale, color: 'text-muted-foreground' },
             ].map((metric, i) => (
               <div key={i} className="p-5 bg-white rounded-2xl border border-border flex items-center gap-4 group hover:border-primary/20 transition-all">
                 <div className="w-10 h-10 rounded-xl bg-muted/30 flex items-center justify-center text-muted-foreground/40 group-hover:bg-primary/5 group-hover:text-primary transition-all">
@@ -209,24 +210,30 @@ const IntelligenceCenter = ({
               {entitlements.length === 0 ? (
                 <div className="p-16 text-center italic text-[11px] font-bold text-muted-foreground/30 uppercase tracking-[0.2em]">{t('judge.workspace.noEntitlements', 'Awaiting Analysis Synthesis...')}</div>
               ) : (
-                entitlements.map((item: any, idx: number) => (
-                  <div key={idx} className="p-6 hover:bg-primary/[0.02] transition-colors flex items-center justify-between group">
-                    <div className="flex items-center gap-5">
-                      <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                        <Scale className="w-5 h-5"/>
+                entitlements.map((item: any, idx: number) => {
+                  const title = item.title || item.name || item.label || `Item ${idx + 1}`;
+                  const amount = item.amount || item.value || '0.00';
+                  const reasoning = item.reasoning || item.description || t('judge.workspace.calculatedReasoning', 'Validated statutory entitlement.');
+                  
+                  return (
+                    <div key={idx} className="p-6 hover:bg-primary/[0.02] transition-colors flex items-center justify-between group">
+                      <div className="flex items-center gap-5">
+                        <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                          <Scale className="w-5 h-5"/>
+                        </div>
+                        <div>
+                          <h5 className="text-[12px] font-black text-foreground uppercase tracking-tight">{title}</h5>
+                          <p className="text-[10px] font-bold text-muted-foreground/60 italic mt-0.5 antialiased">{reasoning}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h5 className="text-[12px] font-black text-foreground uppercase tracking-tight">{item.title || item.name}</h5>
-                        <p className="text-[10px] font-bold text-muted-foreground/60 italic mt-0.5 antialiased">{item.reasoning || item.description || t('judge.workspace.calculatedReasoning', 'Validated statutory entitlement.')}</p>
+                      <div className="text-right">
+                        <span className="text-[11px] font-black text-primary px-3 py-1 bg-primary/5 rounded-lg border border-primary/10">
+                          {typeof amount === 'number' ? `AED ${amount.toLocaleString()}` : (String(amount).startsWith('AED') ? amount : `AED ${amount}`)}
+                        </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <span className="text-[11px] font-black text-primary px-3 py-1 bg-primary/5 rounded-lg border border-primary/10">
-                        {typeof item.amount === 'number' ? `AED ${item.amount.toLocaleString()}` : item.amount}
-                      </span>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </section>

@@ -36,7 +36,7 @@ const ClerkCaseAssignment = () => {
   })
 
   const casesQuery = useQuery({
-    queryKey: queryKeys.clerkCases,
+    queryKey: queryKeys.clerkCases(),
     queryFn: () => clerkGetCases({ limit: 500 }),
   })
 
@@ -54,7 +54,7 @@ const ClerkCaseAssignment = () => {
   const assignMutation = useMutation({
     mutationFn: ({ caseId, judgeId }: { caseId: string; judgeId: string }) => clerkAssignCase(caseId, judgeId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.clerkCases })
+      queryClient.invalidateQueries({ queryKey: queryKeys.clerkCases() })
       setMessageType('success')
       setMessage(t('clerk.messages.caseAssigned', 'Case successfully assigned to judge.'))
     },

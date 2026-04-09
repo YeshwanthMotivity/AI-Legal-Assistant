@@ -1,0 +1,120 @@
+--progress is a global compose flag, better use `docker compose --progress xx build ...
+ Image ai-legal-assistant-bge_m3 Building 
+ Image ai-legal-assistant-bge_reranker Building 
+ Image ai-legal-assistant-backend Building 
+ Image ai-legal-assistant-frontend Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 2.14kB done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 812B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for mirror.gcr.io/library/node:20-alpine
+#3 ...
+
+#4 [internal] load metadata for mirror.gcr.io/library/nginx:alpine
+#4 DONE 0.2s
+
+#3 [internal] load metadata for mirror.gcr.io/library/node:20-alpine
+#3 DONE 0.2s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 2B done
+#5 DONE 0.0s
+
+#6 [builder 1/6] FROM mirror.gcr.io/library/node:20-alpine@sha256:f598378b5240225e6beab68fa9f356db1fb8efe55173e6d4d8153113bb8f333c
+#6 DONE 0.0s
+
+#7 [stage-1 1/3] FROM mirror.gcr.io/library/nginx:alpine@sha256:645eda1c2477aaa9b879f73909b9222c6f19798dd45be6706268d82a661c6e6d
+#7 DONE 0.0s
+
+#8 [internal] load build context
+#8 transferring context: 4.22kB done
+#8 DONE 0.0s
+
+#9 [builder 2/6] WORKDIR /app
+#9 CACHED
+
+#10 [builder 3/6] COPY package*.json ./
+#10 CACHED
+
+#11 [builder 4/6] RUN --mount=type=cache,target=/root/.npm npm ci
+#11 CACHED
+
+#12 [builder 5/6] COPY . .
+#12 CACHED
+
+#13 [builder 6/6] RUN npm run build
+#13 0.777 
+#13 0.777 > ai-judicial-assistant-frontend@1.0.0 build
+#13 0.777 > tsc && vite build
+#13 0.777 
+#13 12.73 src/pages/clerk/CaseAssignment.tsx(39,15): error TS2769: No overload matches this call.
+#13 12.73   Overload 1 of 3, '(options: DefinedInitialDataOptions<unknown, Error, unknown, readonly unknown[]>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<unknown, Error>', gave the following error.
+#13 12.73     Type '(params?: any) => readonly ["clerk-cases", any]' is not assignable to type 'readonly unknown[]'.
+#13 12.73   Overload 2 of 3, '(options: UndefinedInitialDataOptions<CaseListResponse, Error, CaseListResponse, readonly unknown[]>, queryClient?: QueryClient | undefined): UseQueryResult<...>', gave the following error.
+#13 12.73     Type '(params?: any) => readonly ["clerk-cases", any]' is not assignable to type 'readonly unknown[]'.
+#13 12.73   Overload 3 of 3, '(options: UseQueryOptions<CaseListResponse, Error, CaseListResponse, readonly unknown[]>, queryClient?: QueryClient | undefined): UseQueryResult<...>', gave the following error.
+#13 12.73     Type '(params?: any) => readonly ["clerk-cases", any]' is not assignable to type 'readonly unknown[]'.
+#13 12.73 src/pages/clerk/CaseAssignment.tsx(57,49): error TS2322: Type '(params?: any) => readonly ["clerk-cases", any]' is not assignable to type 'readonly unknown[]'.
+#13 12.73 src/pages/clerk/CaseAssignment.tsx(69,29): error TS2339: Property 'items' does not exist on type '{}'.
+#13 12.73 src/pages/clerk/CaseDetail.tsx(217,96): error TS2551: Property 'similarPrecedcedents' does not exist on type 'NormalizedCaseAnalysis'. Did you mean 'similarPrecedents'?
+#13 12.73 src/pages/clerk/CaseDetail.tsx(572,30): error TS2322: Type '{ documents: DocumentResponse[]; isActivelyLoading: boolean; isReady: boolean; selectedFiles: File[]; setSelectedFiles: Dispatch<SetStateAction<File[]>>; ... 9 more ...; isDeletingDocument: string; }' is not assignable to type 'IntrinsicAttributes & DocumentsPanelProps'.
+#13 12.73   Property 'batchUploading' does not exist on type 'IntrinsicAttributes & DocumentsPanelProps'.
+#13 12.73 src/pages/clerk/CaseList.tsx(37,8): error TS2307: Cannot find module '@/components/ui/dialog' or its corresponding type declarations.
+#13 12.73 src/pages/clerk/CaseList.tsx(38,23): error TS2307: Cannot find module '@/components/ui/input' or its corresponding type declarations.
+#13 12.73 src/pages/clerk/CaseList.tsx(39,23): error TS2307: Cannot find module '@/components/ui/label' or its corresponding type declarations.
+#13 12.73 src/pages/clerk/CaseList.tsx(46,8): error TS2307: Cannot find module '@/components/ui/select' or its corresponding type declarations.
+#13 12.73 src/pages/clerk/CaseList.tsx(135,7): error TS2322: Type 'number' is not assignable to type 'string'.
+#13 12.73 src/pages/clerk/CaseList.tsx(193,39): error TS7006: Parameter 'e' implicitly has an 'any' type.
+#13 12.73 src/pages/clerk/CaseList.tsx(201,44): error TS7006: Parameter 'v' implicitly has an 'any' type.
+#13 12.73 src/pages/clerk/CaseList.tsx(222,39): error TS7006: Parameter 'e' implicitly has an 'any' type.
+#13 12.73 src/pages/clerk/CaseList.tsx(231,39): error TS7006: Parameter 'e' implicitly has an 'any' type.
+#13 12.73 src/pages/clerk/CaseList.tsx(240,39): error TS7006: Parameter 'e' implicitly has an 'any' type.
+#13 12.73 src/pages/clerk/CaseList.tsx(268,29): error TS7006: Parameter 'e' implicitly has an 'any' type.
+#13 12.73 src/pages/clerk/CaseList.tsx(420,101): error TS2769: No overload matches this call.
+#13 12.73   Overload 1 of 4, '(value: string | number | Date): Date', gave the following error.
+#13 12.73     Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | Date'.
+#13 12.73       Type 'undefined' is not assignable to type 'string | number | Date'.
+#13 12.73   Overload 2 of 4, '(value: string | number): Date', gave the following error.
+#13 12.73     Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number'.
+#13 12.73       Type 'undefined' is not assignable to type 'string | number'.
+#13 12.80 npm notice
+#13 12.80 npm notice New major version of npm available! 10.8.2 -> 11.12.1
+#13 12.80 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
+#13 12.80 npm notice To update run: npm install -g npm@11.12.1
+#13 12.80 npm notice
+#13 ERROR: process "/bin/sh -c npm run build" did not complete successfully: exit code: 2
+------
+ > [builder 6/6] RUN npm run build:
+12.73     Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | Date'.
+12.73       Type 'undefined' is not assignable to type 'string | number | Date'.
+12.73   Overload 2 of 4, '(value: string | number): Date', gave the following error.
+12.73     Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number'.
+12.73       Type 'undefined' is not assignable to type 'string | number'.
+12.80 npm notice
+12.80 npm notice New major version of npm available! 10.8.2 -> 11.12.1
+12.80 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
+12.80 npm notice To update run: npm install -g npm@11.12.1
+12.80 npm notice
+------
+Dockerfile:17
+
+--------------------
+
+  15 |     # Build the app (skip TypeScript checking for faster builds in development)
+
+  16 |     # Use npm run build for production (includes tsc), npm run build:fast for development
+
+  17 | >>> RUN npm run build
+
+  18 |     
+
+  19 |     # Stage 2: Serve with Nginx
+
+--------------------
+
+failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 2
+

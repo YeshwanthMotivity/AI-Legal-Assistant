@@ -46,7 +46,7 @@ const DocumentUpload = () => {
  const fileInputRef = useRef<HTMLInputElement>(null)
 
  const casesQuery = useQuery({
- queryKey: queryKeys.clerkCases,
+ queryKey: queryKeys.clerkCases(),
  queryFn: () => clerkGetCases({ limit: 200 }),
  })
 

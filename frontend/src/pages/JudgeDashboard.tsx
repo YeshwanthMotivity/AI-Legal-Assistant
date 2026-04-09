@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
-import { getJudgeCases } from '../api/judge';
+import { getJudgeCases, getAnalysis } from '../api/judge';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import PortalLayout from '../components/layout/PortalLayout';
@@ -29,6 +29,7 @@ import {
   LayoutDashboard,
   PanelRightClose,
   Scale,
+  FileText,
   X
 } from 'lucide-react';
 
@@ -42,6 +43,7 @@ function JudgeDashboard() {
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState<{role: 'user'|'assistant', content: string}[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'assistant' | 'snapshot'>('assistant');
 
   const casesQuery = useQuery({
     queryKey: queryKeys.judgeCases({ limit: 10 }),
@@ -96,6 +98,14 @@ function JudgeDashboard() {
     return recentCases[0];
   }, [selectedCaseId, recentCases, casesQuery.data]);
 
+  const analysisQuery = useQuery({
+    queryKey: ['case-analysis', focusCase?.id],
+    queryFn: () => getAnalysis(focusCase?.id as string),
+    enabled: !!focusCase?.id,
+  });
+
+  const analysis = analysisQuery.data?.analysis;
+
   const { performance } = useMemo(() => {
     const all = allCasesQuery.data?.items ?? [];
     const resolved = all.filter(c => c.status === 'CaseClosed').length;
@@ -120,7 +130,7 @@ function JudgeDashboard() {
     Respond in ${i18n.language === 'ar' ? 'Arabic' : 'English'}. Keep responses concise and professional.`;
 
     try {
-      const response = await fetch('http://172.20.100.215:11434/api/chat', {
+      const response = await fetch(import.meta.env.VITE_LLM_URL || 'http://172.20.100.215:11434/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -397,136 +407,256 @@ function JudgeDashboard() {
              isAiPanelOpen ? "w-[380px] opacity-100" : "w-0 opacity-0 overflow-hidden"
           )}
         >
-          <header className="px-6 py-6 border-b border-border/40 bg-white/80 backdrop-blur-md flex items-center justify-between shrink-0 sticky top-0 z-20">
-             <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-transparent rounded-2xl flex items-center justify-center text-primary border border-primary/20 shadow-inner">
-                   <Sparkles className="w-6 h-6"/>
-                </div>
-                <div>
-                   <h3 className="text-xs font-black tracking-[0.1em] text-foreground uppercase leading-none">Assistant Hub</h3>
-                   <div className="flex items-center gap-1.5 mt-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <p className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">Neural Synthesis Active</p>
-                   </div>
-                </div>
-             </div>
+          <header className="shrink-0 sticky top-0 z-20 bg-white">
+            <div className="px-6 py-6 border-b border-border/40 bg-white/80 backdrop-blur-md flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                 <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-transparent rounded-2xl flex items-center justify-center text-primary border border-primary/20 shadow-inner">
+                    <Sparkles className="w-6 h-6"/>
+                 </div>
+                 <div>
+                    <h3 className="text-xs font-black tracking-[0.1em] text-foreground uppercase leading-none">{activeTab === 'assistant' ? 'Assistant Hub' : 'Case Snapshot'}</h3>
+                    <div className="flex items-center gap-1.5 mt-2">
+                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                       <p className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">{activeTab === 'assistant' ? 'Neural Synthesis Active' : 'Intelligence Ready'}</p>
+                    </div>
+                 </div>
+              </div>
+                <button 
+                  onClick={() => setIsAiPanelOpen(false)} 
+                  className={cn(
+                    "absolute top-1/2 -translate-y-1/2 w-8 h-16 bg-white border border-border/40 flex items-center justify-center hover:bg-muted transition-all shadow-xl group z-30",
+                    i18n.language === 'ar' ? "-right-8 rounded-r-2xl" : "-left-8 rounded-l-2xl"
+                  )}
+                  title={t('common.close', 'Close')}
+                >
+                  <ChevronRight className="w-5 h-5 text-primary transition-all group-hover:scale-125"/>
+                </button>
+            </div>
+
+            <div className="flex border-b border-border/40">
               <button 
-                onClick={() => setIsAiPanelOpen(false)} 
+                onClick={() => setActiveTab('assistant')}
                 className={cn(
-                  "absolute top-1/2 -translate-y-1/2 w-8 h-16 bg-white border border-border/40 flex items-center justify-center hover:bg-muted transition-all shadow-xl group z-30",
-                  i18n.language === 'ar' ? "-right-8 rounded-r-2xl" : "-left-8 rounded-l-2xl"
+                  "flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all border-b-2",
+                  activeTab === 'assistant' ? "border-primary text-primary bg-primary/5" : "border-transparent text-muted-foreground hover:bg-muted"
                 )}
-                title={t('common.close', 'Close')}
               >
-                <ChevronRight className={cn(
-                  "w-5 h-5 text-primary transition-all group-hover:scale-125",
-                  i18n.language === 'ar' ? "rotate-0" : "rotate-0" 
-                )}/>
+                Assistant
               </button>
+              <button 
+                onClick={() => setActiveTab('snapshot')}
+                className={cn(
+                  "flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all border-b-2",
+                  activeTab === 'snapshot' ? "border-primary text-primary bg-primary/5" : "border-transparent text-muted-foreground hover:bg-muted"
+                )}
+              >
+                Snapshot
+              </button>
+            </div>
           </header>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-10 custom-scrollbar">
             {focusCase ? (
                <div className="space-y-10 animate-in fade-in duration-500">
-                  {/* DASHBOARD OVERVIEW SECTION */}
-                  <div className="p-6 bg-gradient-to-br from-primary/5 to-transparent border border-primary/10 rounded-[2rem] relative overflow-hidden group">
-                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform duration-700">
-                        <LayoutDashboard className="w-16 h-16 text-primary"/>
-                     </div>
-                     <p className="text-[9px] font-black uppercase text-primary tracking-[0.25em] mb-4 opacity-60">Strategic Pulse</p>
-                     <p className="text-[11px] font-bold leading-relaxed text-foreground antialiased">
-                       Sovereign monitoring active for <span className="text-primary">{stats.pending}</span> dockets. 
-                       Intelligence focus identified: <span className="underline decoration-primary/30 underline-offset-4">{focusCase.case_number}</span>.
-                     </p>
-                     <div className="mt-6 pt-4 border-t border-primary/10 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                           <Zap className="w-3.5 h-3.5 text-primary animate-pulse"/>
-                           <span className="text-[9px] font-black text-primary uppercase tracking-widest">Synthesis Engine Online</span>
-                        </div>
-                        <span className="text-[8px] font-black text-muted-foreground/40 uppercase">V2.4.0</span>
-                     </div>
-                  </div>
+                  {activeTab === 'assistant' ? (
+                    <>
+                      {/* DASHBOARD OVERVIEW SECTION */}
+                      <div className="p-6 bg-gradient-to-br from-primary/5 to-transparent border border-primary/10 rounded-[2rem] relative overflow-hidden group">
+                         <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform duration-700">
+                            <LayoutDashboard className="w-16 h-16 text-primary"/>
+                         </div>
+                         <p className="text-[9px] font-black uppercase text-primary tracking-[0.25em] mb-4 opacity-60">Strategic Pulse</p>
+                         <p className="text-[11px] font-bold leading-relaxed text-foreground antialiased">
+                           Sovereign monitoring active for <span className="text-primary">{stats.pending}</span> dockets. 
+                           Intelligence focus identified: <span className="underline decoration-primary/30 underline-offset-4">{focusCase.case_number}</span>.
+                         </p>
+                         <div className="mt-6 pt-4 border-t border-primary/10 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                               <Zap className="w-3.5 h-3.5 text-primary animate-pulse"/>
+                               <span className="text-[9px] font-black text-primary uppercase tracking-widest">Synthesis Engine Online</span>
+                            </div>
+                            <span className="text-[8px] font-black text-muted-foreground/40 uppercase">V2.4.0</span>
+                         </div>
+                      </div>
 
-                  {/* JUDICIAL ACTIONS - CONTEXTUAL SUGGESTIONS */}
-                  <section className="space-y-6">
-                     <div className="flex items-center justify-between px-2">
-                        <h4 className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.3em]">{t('suggested_queries', 'Suggested Queries')}</h4>
-                        <Sparkles className="w-3.5 h-3.5 text-primary/40"/>
-                     </div>
-                     <div className="grid grid-cols-2 gap-3">
-                        {[
-                           { 
-                             label: i18n.language === 'ar' ? 'حالة القضايا العاجلة' : 'Urgency Outlook', 
-                             q: i18n.language === 'ar' ? 'لخص حالة القضايا العاجلة اليوم' : 'Summarize the status of urgent cases today.', 
-                             icon: AlertTriangle 
-                           },
-                           { 
-                             label: i18n.language === 'ar' ? 'تحليل الدقة' : 'Precision Audit', 
-                             q: i18n.language === 'ar' ? 'ما هي دقة الذكاء الاصطناعي الإجمالية؟' : 'What is the overall AI precision rating across registry?', 
-                             icon: Verified 
-                           },
-                           { 
-                             label: i18n.language === 'ar' ? 'قضايا جاهزة' : 'Readiness Report', 
-                             q: i18n.language === 'ar' ? 'أعطني ملخصاً للقضايا الجاهزة للمراجعة' : 'Give me a summary of cases ready for review.', 
-                             icon: Zap 
-                           },
-                           { 
-                             label: i18n.language === 'ar' ? 'نظرة عامة على الملفات' : 'Registry health', 
-                             q: i18n.language === 'ar' ? 'كيف هو أداء السجل القضائي حالياً؟' : 'How is the judicial registry performing currently?', 
-                             icon: BarChart3 
-                           }
-                        ].map((act, i) => (
-                           <button 
-                             key={i} 
-                             onClick={() => setChatInput(act.q)}
-                             className="group/btn p-4 text-[10px] font-black bg-white border border-border/60 rounded-2xl hover:border-primary/40 hover:bg-primary/5 hover:scale-[1.02] transition-all text-left uppercase tracking-tight leading-4 flex flex-col gap-3 shadow-sm min-h-[110px]"
-                           >
-                              <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground group-hover/btn:bg-primary/10 group-hover/btn:text-primary transition-colors">
-                                 <act.icon className="w-4 h-4"/>
+                      {/* JUDICIAL ACTIONS - CONTEXTUAL SUGGESTIONS */}
+                      <section className="space-y-6">
+                         <div className="flex items-center justify-between px-2">
+                            <h4 className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.3em]">{t('suggested_queries', 'Suggested Queries')}</h4>
+                            <Sparkles className="w-3.5 h-3.5 text-primary/40"/>
+                         </div>
+                         <div className="grid grid-cols-2 gap-3">
+                            {[
+                               { 
+                                 label: i18n.language === 'ar' ? 'حالة القضايا العاجلة' : 'Urgency Outlook', 
+                                 q: i18n.language === 'ar' ? 'لخص حالة القضايا العاجلة اليوم' : 'Summarize the status of urgent cases today.', 
+                                 icon: AlertTriangle 
+                               },
+                               { 
+                                 label: i18n.language === 'ar' ? 'تحليل الدقة' : 'Precision Audit', 
+                                 q: i18n.language === 'ar' ? 'ما هي دقة الذكاء الاصطناعي الإجمالية؟' : 'What is the overall AI precision rating across registry?', 
+                                 icon: Verified 
+                               },
+                               { 
+                                 label: i18n.language === 'ar' ? 'قضايا جاهزة' : 'Readiness Report', 
+                                 q: i18n.language === 'ar' ? 'أعطني ملخصاً للقضايا الجاهزة للمراجعة' : 'Give me a summary of cases ready for review.', 
+                                 icon: Zap 
+                               },
+                               { 
+                                 label: i18n.language === 'ar' ? 'نظرة عامة على الملفات' : 'Registry health', 
+                                 q: i18n.language === 'ar' ? 'كيف هو أداء السجل القضائي حالياً؟' : 'How is the judicial registry performing currently?', 
+                                 icon: BarChart3 
+                               }
+                            ].map((act, i) => (
+                               <button 
+                                 key={i} 
+                                 onClick={() => setChatInput(act.q)}
+                                 className="group/btn p-4 text-[10px] font-black bg-white border border-border/60 rounded-2xl hover:border-primary/40 hover:bg-primary/5 hover:scale-[1.02] transition-all text-left uppercase tracking-tight leading-4 flex flex-col gap-3 shadow-sm min-h-[110px]"
+                               >
+                                  <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground group-hover/btn:bg-primary/10 group-hover/btn:text-primary transition-colors">
+                                     <act.icon className="w-4 h-4"/>
+                                  </div>
+                                  {act.label}
+                               </button>
+                            ))}
+                         </div>
+                      </section>
+
+                      {/* DIALOGUE SECTION */}
+                      <section className="flex flex-col flex-1 space-y-6">
+                         <div className="flex items-center justify-between px-2">
+                            <h4 className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.3em]">Dialogue Stream</h4>
+                            <div className="flex gap-1">
+                               <div className="w-1 h-1 rounded-full bg-primary/20" />
+                               <div className="w-1 h-1 rounded-full bg-primary/40" />
+                               <div className="w-1 h-1 rounded-full bg-primary/60" />
+                            </div>
+                         </div>
+                         <div className="space-y-5">
+                           {chatHistory.length === 0 ? (
+                              <div className="flex gap-3 animate-in fade-in duration-700">
+                                 <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                                    <Sparkles className="w-3.5 h-3.5 text-primary"/>
+                                 </div>
+                                 <div className="bg-[#F8F8F5] p-3.5 rounded-2xl rounded-tl-none border border-border/40 shadow-sm">
+                                    <p className="text-[11px] font-medium text-foreground/70 italic leading-relaxed">
+                                       Ready for judicial discovery. How can I assist with your workspace today?
+                                    </p>
+                                 </div>
                               </div>
-                              {act.label}
-                           </button>
-                        ))}
-                     </div>
-                  </section>
-
-                  {/* DIALOGUE SECTION */}
-                  <section className="flex flex-col flex-1 space-y-6">
-                     <div className="flex items-center justify-between px-2">
-                        <h4 className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.3em]">Dialogue Stream</h4>
-                        <div className="flex gap-1">
-                           <div className="w-1 h-1 rounded-full bg-primary/20" />
-                           <div className="w-1 h-1 rounded-full bg-primary/40" />
-                           <div className="w-1 h-1 rounded-full bg-primary/60" />
-                        </div>
-                     </div>
-                     <div className="space-y-5">
-                       {chatHistory.length === 0 ? (
-                          <div className="flex gap-3 animate-in fade-in duration-700">
-                             <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                                <Sparkles className="w-3.5 h-3.5 text-primary"/>
+                           ) : (
+                              chatHistory.map((msg, i) => (
+                                 <div key={i} className={cn("flex gap-3", msg.role === 'user' ? "flex-row-reverse" : "")}>
+                                    <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border", msg.role === 'user' ? "bg-muted border-border/40" : "bg-primary/10 border-primary/20")}>
+                                       {msg.role === 'user' ? <User className="w-3.5 h-3.5 text-muted-foreground"/> : <Sparkles className="w-3.5 h-3.5 text-primary"/>}
+                                    </div>
+                                    <div className={cn("p-3.5 rounded-2xl border shadow-sm flex-1", msg.role === 'user' ? "bg-white border-border/60 rounded-tr-none" : "bg-[#F8F8F5] border-border/40 rounded-tl-none")}>
+                                       <p className="text-[11px] font-medium text-foreground leading-relaxed">{msg.content}</p>
+                                    </div>
+                                 </div>
+                              ))
+                           )}
+                           {isChatLoading && <div className="text-[8px] font-black text-primary animate-pulse uppercase tracking-[0.5em]">Processing...</div>}
+                         </div>
+                      </section>
+                    </>
+                  ) : (
+                    <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
+                       {/* CASE SNAPSHOT CONTENT */}
+                       <div className="p-6 bg-white rounded-[2rem] border border-border/60 shadow-sm space-y-6">
+                          <header className="flex items-center justify-between pb-4 border-b border-border/40">
+                             <div className="flex items-center gap-3">
+                                <Scale className="w-4 h-4 text-primary"/>
+                                <h4 className="text-[10px] font-black uppercase text-foreground tracking-widest leading-none">Contextual Summary</h4>
                              </div>
-                             <div className="bg-[#F8F8F5] p-3.5 rounded-2xl rounded-tl-none border border-border/40 shadow-sm">
-                                <p className="text-[11px] font-medium text-foreground/70 italic leading-relaxed">
-                                   Ready for judicial discovery. How can I assist with your workspace today?
-                                </p>
+                             <span className="text-[9px] font-black px-2 py-0.5 bg-primary/5 text-primary rounded border border-primary/10 uppercase tracking-tighter">{focusCase.status}</span>
+                          </header>
+                          
+                          <div className="space-y-4">
+                             <p className="text-[11px] font-medium text-foreground/70 leading-relaxed italic line-clamp-6">
+                               {analysis?.summary || focusCase.description || 'Analysis metadata pending for this docket...'}
+                             </p>
+                             <div className="grid grid-cols-2 gap-3 pt-2">
+                                <div className="p-3 bg-muted/30 rounded-xl border border-border/40">
+                                   <p className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">Claim Value</p>
+                                   <p className="text-[11px] font-black text-primary">AED {Number(focusCase.claim_amount || 0).toLocaleString()}</p>
+                                </div>
+                                <div className="p-3 bg-muted/30 rounded-xl border border-border/40">
+                                   <p className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">Case Type</p>
+                                   <p className="text-[11px] font-black text-foreground">{focusCase.case_type || 'CIVIL'}</p>
+                                </div>
                              </div>
                           </div>
-                       ) : (
-                          chatHistory.map((msg, i) => (
-                             <div key={i} className={cn("flex gap-3", msg.role === 'user' ? "flex-row-reverse" : "")}>
-                                <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border", msg.role === 'user' ? "bg-muted border-border/40" : "bg-primary/10 border-primary/20")}>
-                                   {msg.role === 'user' ? <User className="w-3.5 h-3.5 text-muted-foreground"/> : <Sparkles className="w-3.5 h-3.5 text-primary"/>}
-                                </div>
-                                <div className={cn("p-3.5 rounded-2xl border shadow-sm flex-1", msg.role === 'user' ? "bg-white border-border/60 rounded-tr-none" : "bg-[#F8F8F5] border-border/40 rounded-tl-none")}>
-                                   <p className="text-[11px] font-medium text-foreground leading-relaxed">{msg.content}</p>
-                                </div>
-                             </div>
-                          ))
-                       )}
-                       {isChatLoading && <div className="text-[8px] font-black text-primary animate-pulse uppercase tracking-[0.5em]">Processing...</div>}
-                     </div>
-                  </section>
+                       </div>
+
+                       {/* ENTITLEMENTS PREVIEW */}
+                       <section className="space-y-4">
+                          <div className="flex items-center justify-between px-2">
+                             <h4 className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.3em]">Entitlement Matrix</h4>
+                             <Zap className="w-3.5 h-3.5 text-primary/40"/>
+                          </div>
+                          <div className="space-y-3">
+                             {analysisQuery.isLoading ? (
+                               <div className="p-10 text-center animate-pulse">
+                                  <div className="w-5 h-5 border-2 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-3"/>
+                                  <p className="text-[9px] font-black text-primary uppercase tracking-widest">Hydrating Matrix...</p>
+                               </div>
+                             ) : (analysis?.entitlementBreakdown || []).length > 0 ? (
+                               (analysis?.entitlementBreakdown || []).slice(0, 3).map((item: any, i: number) => (
+                                 <div key={i} className="p-4 bg-white rounded-2xl border border-border/60 shadow-sm flex items-center justify-between group hover:border-primary/40 transition-all">
+                                    <div className="flex items-center gap-3">
+                                       <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                          <Scale className="w-4 h-4"/>
+                                       </div>
+                                       <div>
+                                          <p className="text-[10px] font-black text-foreground uppercase tracking-tight truncate max-w-[140px]">{item.label || item.name || item.title}</p>
+                                          <p className="text-[8px] font-bold text-muted-foreground/40 italic">Statutory Verified</p>
+                                       </div>
+                                    </div>
+                                    <span className="text-[11px] font-black text-primary">AED {Number(item.value || item.amount || 0).toLocaleString()}</span>
+                                 </div>
+                               ))
+                             ) : (
+                               <div className="p-8 text-center bg-muted/30 rounded-2xl border border-dashed border-border/40">
+                                  <p className="text-[9px] font-black text-muted-foreground/30 uppercase tracking-[0.2em]">No Intelligence Found</p>
+                               </div>
+                             )}
+                          </div>
+                       </section>
+
+                       {/* DOCUMENT DOSSIER PREVIEW */}
+                       <section className="space-y-4">
+                          <div className="flex items-center justify-between px-2">
+                             <h4 className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.3em]">Document Dossier</h4>
+                             <FileText className="w-3.5 h-3.5 text-primary/40"/>
+                          </div>
+                          <div className="grid grid-cols-1 gap-2">
+                             {(focusCase as any).documents_count > 0 ? (
+                               <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10 flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                     <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-primary border border-primary/10">
+                                        <Briefcase className="w-4 h-4"/>
+                                     </div>
+                                     <p className="text-[10px] font-black uppercase text-foreground">Verified Exhibits</p>
+                                  </div>
+                                  <span className="text-[10px] font-black text-primary">{(focusCase as any).documents_count} Files</span>
+                               </div>
+                             ) : (
+                               <div className="p-4 bg-muted/20 rounded-2xl border border-dashed border-border/40 text-center">
+                                  <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest">No Exhibits Uploaded</p>
+                               </div>
+                             )}
+                          </div>
+                       </section>
+
+                       <Button 
+                        className="w-full h-12 bg-primary text-on-primary rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-[11px]"
+                        onClick={() => navigate(`/judge/cases/${focusCase.id}`)}
+                       >
+                          Open Detailed Module <ArrowRight className="ml-2 w-4 h-4"/>
+                       </Button>
+                    </div>
+                  )}
                </div>
             ) : (
                <div className="flex flex-col items-center justify-center h-4/5 text-center p-8 opacity-20">

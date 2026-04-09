@@ -15,7 +15,8 @@ import {
   Gavel,
   CheckCircle2,
   Trash2,
-  Brain
+  Brain,
+  Sparkles
 } from 'lucide-react'
 import {
   clerkGetCases,
@@ -45,6 +46,7 @@ import {
 } from "@/components/ui/select"
 import { queryKeys } from '@/api/queryKeys'
 import { ClerkCase } from '@/types/clerk'
+import { CaseType } from '@/types/judge'
 import { cn } from '@/lib/utils'
 
 const ClerkCaseList = () => {
@@ -131,7 +133,8 @@ const ClerkCaseList = () => {
     e.preventDefault()
     createCaseMutation.mutate({
       ...createForm,
-      claim_amount: Number(createForm.claim_amount)
+      case_type: createForm.case_type as CaseType,
+      claim_amount: String(createForm.claim_amount)
     })
   }
 
@@ -202,9 +205,9 @@ const ClerkCaseList = () => {
                             <SelectTrigger className="h-12 border-border/60 rounded-xl bg-muted/20">
                               <SelectValue placeholder="Select type" />
                             </SelectTrigger>
-                            <SelectContent className="rounded-xl border-border/60">
+                            <SelectContent>
                               <SelectItem value="unpaid_wages">Unpaid Wages</SelectItem>
-                              <SelectItem value="arbitrary_dismissal">Arbitrary Dismissal</SelectItem>
+                              <SelectItem value="wrongful_termination">Arbitrary Dismissal</SelectItem>
                               <SelectItem value="contract_dispute">Contract Dispute</SelectItem>
                               <SelectItem value="other">Other</SelectItem>
                             </SelectContent>
@@ -416,7 +419,9 @@ const ClerkCaseList = () => {
                                 <Clock className="w-3.5 h-3.5 text-primary opacity-30" />
                                 <span className="text-[9px] font-black text-muted-foreground/60 uppercase tracking-widest">{t('clerk.table.filingDate', 'Filing Date')}</span>
                              </div>
-                             <p className="text-sm font-bold text-foreground antialiased">{new Date(selectedCase.filing_date).toLocaleDateString()}</p>
+                             <p className="text-sm font-bold text-foreground antialiased">
+                               {selectedCase.filing_date ? new Date(selectedCase.filing_date).toLocaleDateString() : 'N/A'}
+                             </p>
                           </div>
                        </div>
                     </section>

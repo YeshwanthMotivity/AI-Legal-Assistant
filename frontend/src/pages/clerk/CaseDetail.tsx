@@ -214,7 +214,7 @@ const CaseDetail = () => {
   const isReady = analysis?.status === 'AIAnalysisReady'
   const isActivelyLoading = runAnalysisMutation.isPending || (analysisQuery.isPolling && analysisRequested)
   const lawArticles = analysis?.lawArticles ?? []
-  const precedents = useMemo(() => (analysis?.similarPrecedents ?? []).slice(0, 5), [analysis?.similarPrecedcedents])
+  const precedents = useMemo(() => (analysis?.similarPrecedents ?? []).slice(0, 5), [analysis?.similarPrecedents])
   const entitlements = analysis?.entitlementBreakdown ?? []
 
   const handleBatchFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
@@ -246,7 +246,7 @@ const CaseDetail = () => {
     for (let i = 0; i < selectedFiles.length; i++) {
        const file = selectedFiles[i];
        try {
-          const response = await fetch('http://172.20.100.215:11434/api/chat', {
+          const response = await fetch(import.meta.env.VITE_LLM_URL || 'http://172.20.100.215:11434/api/chat', {
              method: 'POST',
              headers: { 'Content-Type': 'application/json' },
              body: JSON.stringify({
@@ -320,7 +320,7 @@ const CaseDetail = () => {
     Respond in ${i18n.language === 'ar' ? 'Arabic' : 'English'}. Keep responses professional and concise.`;
 
     try {
-      const response = await fetch('http://172.20.100.215:11434/api/chat', {
+      const response = await fetch(import.meta.env.VITE_LLM_URL || 'http://172.20.100.215:11434/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -569,11 +569,11 @@ const CaseDetail = () => {
                              batchFileInputRef={fileInputRef}
                              onBatchFileSelect={handleBatchFileSelect}
                              onBatchUpload={handleBatchUpload}
-                             batchUploading={batchUploading}
+                             isBatchUploading={batchUploading}
                              batchProgress={batchProgress}
                              entitlements={entitlements}
                              onDeleteDocument={(docId) => deleteDocumentMutation.mutate(docId)}
-                             isDeletingDocument={deleteDocumentMutation.variables as string}
+                             isDeletingDocument={deleteDocumentMutation.isPending ? deleteDocumentMutation.variables as string : null}
                            />
                         </div>
                      </div>
@@ -616,7 +616,7 @@ const CaseDetail = () => {
                                   <CheckCircle2 className="w-8 h-8"/>
                                </div>
                                <div>
-                                 <h3 className="text-lg font-black text-foreground uppercase tracking-tight">{t('clerk.analysis.complete', 'Analysis Complete')}</h3>
+                                 <h3 className="text-lg font-black text-foreground uppercase tracking-tight">{t('clerk.analysis.complete', 'Case Snapshot Ready')}</h3>
                                  <p className="text-xs font-semibold text-muted-foreground mt-2 opacity-60 max-w-md mx-auto">AI analysis has been completed successfully. You can now assign this case to a judge from the Assignment page.</p>
                                </div>
                                <Button 

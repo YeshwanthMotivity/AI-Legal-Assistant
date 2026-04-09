@@ -15,6 +15,7 @@ import {
 import PortalLayout from '../../components/layout/PortalLayout'
 import CreateCaseModal from '../../components/judge/CreateCaseModal'
 import { createCase, getJudgeCases, deleteCase } from '../../api/judge'
+import { queryKeys } from '../../api/queryKeys'
 import type { CaseResponse, CreateCaseRequest } from '../../types/judge'
 import { cn } from '@/lib/utils'
 
