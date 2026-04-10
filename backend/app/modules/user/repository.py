@@ -84,6 +84,24 @@ class UserRepository:
         user.is_active = "false"
         await self.db.flush()
         return True
+
+    async def activate(self, user_id: str) -> bool:
+        user = await self.get_by_id(user_id)
+        if not user:
+            return False
+        
+        user.is_active = "true"
+        await self.db.flush()
+        return True
+
+    async def hard_delete(self, user_id: str) -> bool:
+        user = await self.get_by_id(user_id)
+        if not user:
+            return False
+        
+        await self.db.delete(user)
+        await self.db.flush()
+        return True
     
     async def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         try:

@@ -205,7 +205,7 @@
     "AIAnalysisPending": "تحليل الذكاء الاصطناعي قيد الانتظار",
     "AIAnalysisReady": "نتائج التحليل جاهزة",
     "DraftGenerated": "تم توليد المسودة",
-    "Finalized": "قضية مغلقة"
+    "Finalized": "نهائية"
   },
   "judge": {
     "nav": {
@@ -240,7 +240,7 @@
       "factsAndReasoning": "الوقائع والتعليل القانوني",
       "judicialOutcome": "النتيجة القضائية",
       "caseId": "معرّف القضية",
-      "documents": "مستندات القضية",
+      "documents": "المستندات",
       "documentType": "نوع المستند",
       "uploadDocument": "رفع مستند",
       "uploadNow": "رفع الآن",
@@ -248,6 +248,8 @@
       "uploadSuccess": "تم رفع المستند بنجاح.",
       "uploadError": "فشل رفع المستند.",
       "runAnalysis": "تشغيل تحليل الذكاء الاصطناعي",
+      "awaitingSynthesis": "في انتظار تجميع البيانات الاستخباراتية",
+      "awaitingSynthesisDesc": "عقدة التنسيق القضائي في انتظار المعالجة من عقدة سجل الموظف.",
       "analysisPending": "تحليل الذكاء الاصطناعي قيد التنفيذ...",
       "analysisReady": "نتائج التحليل جاهزة.",
       "analysisFailed": "فشل تحليل الذكاء الاصطناعي.",

@@ -30,6 +30,7 @@ interface RawCaseAnalysis {
   confidence?: number | string | null
   draft_text?: string | null
   explainability?: Record<string, unknown> | null
+  summary?: string | null
 }
 
 interface RawCaseAnalysisResponse {
@@ -122,7 +123,7 @@ const extractLawArticles = (
     if (row.title || row.content || row.description || row.article_text || row.body) {
       return {
         title: String(row.title ?? row.law_name ?? row.article_number ?? 'Legal Article'),
-        content: String(row.content ?? row.text ?? row.description ?? row.article_text ?? row.body ?? row.summary ?? 'Citations mapped from primary case analysis.'),
+        content: String(row.content ?? row.text ?? row.description ?? row.article_text ?? row.body ?? row.summary ?? ''),
       }
     }
     return String(row.article ?? row.id ?? '').trim()
@@ -226,18 +227,21 @@ const normalizeCaseAnalysis = (raw: RawCaseAnalysisResponse): CaseAnalysisRespon
     ? analysis.reasoning 
     : String(reasoning.reasoning ?? '')
 
-  // Derive summary from first 2 sentences of reasoning
-  const summarySentences = reasoningText.split('. ').slice(0, 2).join('. ') + (reasoningText.includes('. ') ? '.' : '')
+  // Priority: 1. analysis.summary, 2. reasoning.summary, 3. Derived from reasoning text
+  const rawSummary = (typeof analysis.summary === 'string' && analysis.summary) ? analysis.summary : (typeof reasoning.summary === 'string' && reasoning.summary) ? reasoning.summary : ''
+  const summary = rawSummary || (reasoningText.split('. ').slice(0, 2).join('. ') + (reasoningText.includes('. ') ? '.' : ''))
+
+  const facts = Array.isArray(reasoning.facts) && reasoning.facts.length > 0 
+    ? reasoning.facts 
+    : reasoningText.split('. ').filter(s => s.length > 20).slice(0, 5)
 
   return {
     case_id: raw.case_id,
     analysis: {
       status: String(analysis.status ?? 'not_found'),
       outcome: analysis.outcome,
-      summary: summarySentences || undefined,
-      facts: reasoningText 
-        ? reasoningText.split('. ').filter(s => s.length > 20).slice(0, 5)
-        : [],
+      summary: (summary && summary.length > 10) ? summary : undefined,
+      facts: facts.map(f => String(f)),
       reasoning: reasoningText,
       lawArticles: extractLawArticles(explainability, analysis.cited_laws ?? reasoning.cited_laws),
       similarPrecedents: extractSimilarPrecedents(explainability, analysis.cited_cases ?? reasoning.cited_cases),
@@ -341,5 +345,12 @@ export const chatWithPrecedent = async (
     `/precedents/${precedentId}/chat`,
     { message, language }
   )
+  return response.data
+}
+
+export const getDocumentContent = async (caseId: string, documentId: string): Promise<Blob> => {
+  const response = await apiClient.get(`/cases/${caseId}/documents/${documentId}/content`, {
+    responseType: 'blob'
+  })
   return response.data
 }

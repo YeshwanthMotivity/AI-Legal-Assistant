@@ -40,7 +40,7 @@ const STATUS_OPTIONS: CaseStatus[] = [
  'AIAnalysisPending',
  'AIAnalysisReady',
  'DraftGenerated',
- 'CaseClosed', // Replaced 'Finalized' with 'CaseClosed' to match types/judge.ts
+ 'Finalized', // Replaced 'CaseClosed' with 'Finalized' to match database and types
 ]
  
 const ClerkCaseList = () => {
@@ -121,7 +121,7 @@ const ClerkCaseList = () => {
  total: items.length,
  pending: items.filter(c => ['Created', 'DocumentsUploaded', 'AIAnalysisPending'].includes(c.status)).length,
  ready: items.filter(c => c.status === 'AIAnalysisReady').length,
- finalized: items.filter(c => c.status === 'CaseClosed').length,
+ finalized: items.filter(c => c.status === 'Finalized').length,
  }
  }, [casesQuery.data])
  
@@ -129,11 +129,11 @@ const ClerkCaseList = () => {
  <PortalLayout title={t('clerk.pages.casesTitle')} subtitle={t('clerk.pages.casesSubtitle')}>
  
  {/* Quick Stats */}
- <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
- <StatCard label="Total Cases" value={stats.total} icon={Briefcase} />
- <StatCard label="Processing" value={stats.pending} icon={Clock} className="border-l-4 border-l-amber-500"/>
- <StatCard label="Ready for Review" value={stats.ready} icon={AlertCircle} className="border-l-4 border-l-indigo-500"/>
- <StatCard label="Finalized" value={stats.finalized} icon={CheckCircle2} className="border-l-4 border-l-[var(--primary)]"/>
+ <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+ <StatCard label="Total Cases" value={stats.total} icon={Briefcase} compact />
+ <StatCard label="Processing" value={stats.pending} icon={Clock} className="border-l-4 border-l-amber-500" compact/>
+ <StatCard label="Ready for Review" value={stats.ready} icon={AlertCircle} className="border-l-4 border-l-indigo-500" compact/>
+ <StatCard label="Finalized" value={stats.finalized} icon={CheckCircle2} className="border-l-4 border-l-[var(--primary)]" compact/>
  </div>
  
  <div className="flex flex-col gap-6">
@@ -170,18 +170,17 @@ const ClerkCaseList = () => {
  ) : casesQuery.isError ? (
  <div className="py-20 text-center text-destructive">{t('common.error')}</div>
  ) : (
-  <div className="overflow-x-auto">
-  <Table>
-   <TableHeader>
-   <TableRow>
-   <TableHead className="pl-6 min-w-[150px]">{t('case.caseNumber')}</TableHead>
-  <TableHead className="min-w-[200px]">{t('clerk.forms.title')}</TableHead>
-  <TableHead className="min-w-[150px]">{t('case.caseType')}</TableHead>
-  <TableHead className="min-w-[150px]">{t('case.status')}</TableHead>
-  <TableHead className="min-w-[150px]">{t('clerk.forms.assignedJudge')}</TableHead>
-  <TableHead className="pr-6 text-right w-[100px] sticky right-0 bg-background shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.05)] border-l">{t('common.actions')}</TableHead>
-  </TableRow>
-  </TableHeader>
+ <Table>
+ <TableHeader>
+ <TableRow>
+ <TableHead className="pl-6">{t('case.caseNumber')}</TableHead>
+ <TableHead>{t('clerk.forms.title')}</TableHead>
+ <TableHead>{t('case.caseType')}</TableHead>
+ <TableHead>{t('case.status')}</TableHead>
+ <TableHead>{t('clerk.forms.assignedJudge')}</TableHead>
+ <TableHead className="pr-6 text-right">{t('common.actions')}</TableHead>
+ </TableRow>
+ </TableHeader>
  <TableBody>
  {(casesQuery.data?.items ?? []).map((item) => (
  <TableRow key={item.id} className="group">
@@ -195,7 +194,7 @@ const ClerkCaseList = () => {
  <TableCell>
                  <Badge
                   variant={
-                    item.status === 'CaseClosed' ? 'success' :
+                    item.status === 'Finalized' ? 'success' :
                     (['AIAnalysisReady', 'DraftGenerated'].includes(item.status) ? 'default' : 'warning') as any
                   }
                   className="px-2 py-0 h-5 text-[10px] font-black uppercase tracking-tighter"
@@ -204,38 +203,37 @@ const ClerkCaseList = () => {
                  </Badge>
  </TableCell>
  <TableCell>{item.assigned_to ?? '-'}</TableCell>
-  <TableCell className="pr-6 text-right sticky right-0 bg-background shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.05)] border-l">
-  <div className="flex justify-end gap-1">
-  <Button
-  variant="ghost"
-  size="icon"
-  className="h-8 w-8 text-primary hover:bg-primary/10"
-  onClick={() => {
-  setSelectedCaseId(item.id)
-  setMetadataForm({
-  hearing_date: item.hearing_date ? item.hearing_date.slice(0, 10) : '',
-  status: item.status,
-  })
-  setTimeout(() => (document.getElementById('edit-metadata-modal') as any)?.showModal(), 10)
-  }}
-  >
-  <Edit3 className="w-4 h-4"/>
-  </Button>
-  <Button 
-    variant="ghost" 
-    size="icon" 
-    className="h-8 w-8 text-muted-foreground hover:bg-muted"
-    onClick={() => navigate(`/clerk/cases/${item.id}`)}
-  >
-  <ExternalLink className="w-4 h-4"/>
-  </Button>
-  </div>
-  </TableCell>
+ <TableCell className="pr-6 text-right">
+ <div className="flex justify-end gap-1 transition-opacity">
+ <Button
+ variant="ghost"
+ size="icon"
+ className="h-8 w-8 text-primary"
+ onClick={() => {
+ setSelectedCaseId(item.id)
+ setMetadataForm({
+ hearing_date: item.hearing_date ? item.hearing_date.slice(0, 10) : '',
+ status: item.status,
+ })
+ setTimeout(() => (document.getElementById('edit-metadata-modal') as any)?.showModal(), 10)
+ }}
+ >
+ <Edit3 className="w-4 h-4"/>
+ </Button>
+ <Button 
+   variant="ghost" 
+   size="icon" 
+   className="h-8 w-8 text-muted-foreground"
+   onClick={() => navigate(`/clerk/cases/${item.id}`)}
+ >
+ <ExternalLink className="w-4 h-4"/>
+ </Button>
+ </div>
+ </TableCell>
  </TableRow>
  ))}
  </TableBody>
-  </Table>
-  </div>
+ </Table>
  )}
  </CardContent>
  </Card>

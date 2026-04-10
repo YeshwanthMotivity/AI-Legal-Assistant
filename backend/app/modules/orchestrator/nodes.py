@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.modules.orchestrator.state import AnalysisState
+from app.utils.ai import call_ollama, extract_json
 
 logger = logging.getLogger(__name__)
 
@@ -406,7 +407,7 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
             try:
                 # Exclusive: Local Intelligence (Ollama)
                 model_url, model_name, _ = _select_model(state)
-                ollama_content = await _call_ollama(
+                ollama_content = await call_ollama(
                     model_url=model_url,
                     model_name=model_name,
                     system=(
@@ -580,7 +581,7 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
             try:
                 # Exclusive: Local Intelligence (Ollama)
                 model_url, model_name, _ = _select_model(state)
-                ollama_content = await _call_ollama(
+                ollama_content = await call_ollama(
                     model_url=model_url,
                     model_name=model_name,
                     system=(
@@ -764,67 +765,6 @@ async def context_builder_node(state: AnalysisState) -> dict[str, Any]:
 
 
 
-def _extract_json_object(raw: str) -> dict[str, Any] | None:
-    """Find and parse the largest JSON object in a string, with basic malformation recovery."""
-    raw = (raw or "").strip()
-    if not raw:
-        return None
-        
-    cleaned = raw.strip()
-    if cleaned.lower().startswith('json'):
-        cleaned = cleaned[4:].strip()
-    raw = cleaned
-
-    try:
-        parsed = json.loads(raw)
-        if isinstance(parsed, dict):
-            return parsed
-    except Exception:
-        pass
-    # Try finding the largest substring that looks like a JSON object
-    match = re.search(r"\{[\s\S]*\}", raw)
-    if not match:
-        return None
-    json_str = match.group(0)
-    try:
-        parsed = json.loads(json_str)
-        return parsed if isinstance(parsed, dict) else None
-    except Exception:
-        # Fallback: try to fix common small model mistakes (missing trailing brace, etc)
-        try:
-            parsed = json.loads(json_str + "}")
-            return parsed if isinstance(parsed, dict) else None
-        except Exception:
-            return None
-
-def _cleanse_text(text: Any) -> str:
-    """Remove markdown code blocks, stringify dicts/lists, and handle nested JSON strings."""
-    if text is None: return ""
-    
-    if not text:
-        return ""
-    
-    # Strip emojis from judgment drafts
-    text = re.sub(r'[\U0001F300-\U0001FFFF\U00002700-\U000027BF🔹🧾📌]', '', str(text)).strip()
-    
-    # If it is a dict or list, we must flatten it to a readable sentence/bullet list
-    # instead of just doing json.dumps (which looks bad to users)
-    if isinstance(text, (dict, list)):
-        return _flatten_to_text(text)
-
-    text = str(text).strip()
-    
-    # Guard against common hallucination artifacts
-    if _is_hallucination(text):
-        if len(text) < 50: 
-            return "" # Discard if exclusively hallucination
-        # Replace the artifact part
-        text = re.sub(r'\[\s*object\s+object\s*\]', "", text, flags=re.IGNORECASE)
-
-    # Remove markdown code blocks
-    text = re.sub(r"```(?:json)?\s*([\s\S]*?)\s*```", r"\1", text)
-    text = text.replace('```', '')
-    
     # Recursive JSON attempt (in case of double encoded strings)
     if text.startswith("{") or text.startswith("["):
         try:
@@ -860,27 +800,20 @@ def _flatten_to_text(data: Any, indent: int = 0) -> str:
     return str(data)
 
 
-async def _call_ollama(model_url: str, model_name: str, system: str, user: str, token_limit: int) -> str:
-    """Generic Ollama /api/generate caller."""
-    payload = {
-        "model": model_name,
-        "prompt": f"System: {system}\n\nUser Context: {user}\n\nAssistant Response (JSON ONLY):",
-        "stream": False,
-        "options": {
-            "num_ctx": 4096,
-            "temperature": 0.1,
-            "num_predict": token_limit
-        },
-    }
-    
-    async with httpx.AsyncClient(timeout=settings.ollama_timeout_seconds) as client:
-        resp = await client.post(model_url, json=payload)
-        if resp.status_code != 200:
-            logger.error(f"Ollama API Error {resp.status_code}: {resp.text}")
-            resp.raise_for_status()
-        
-        data = resp.json()
-        return str(data.get("response", ""))
+def _cleanse_text(text: Any) -> str:
+    if not text: return ""
+    return str(text).replace("\n", " ").replace("  ", " ").strip()
+
+
+def _is_hallucination(text: str) -> bool:
+    if not text: return True
+    # Basic check for typical LLM "I don't know" phrases used in place of data
+    low = text.lower()
+    return any(p in low for p in ["unknown", "n/a", "[missing]", "hallucination detected"])
+
+
+def _resolve_law_title(item: dict) -> str:
+    return item.get("title") or item.get("law_name") or item.get("article_number") or item.get("article") or "DIFC Law Entry"
 
 
 async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
@@ -955,9 +888,8 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         }
 
     # ── 4. JSON parsing helpers ───────────────────────────────────────────────
-    # (parsing logic stays same)
     def _normalize_reasoning(content: str, used_label: str, status: str) -> dict[str, Any]:
-        parsed = _extract_json_object(content)
+        parsed = extract_json(content)
         if not parsed:
             if content and len(content) > 50:
                 logger.warning(f"{used_label} returned non-JSON, attempting manual field extraction.")
@@ -1060,7 +992,7 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
 
     # Execute Ollama
     try:
-        content = await _call_ollama(
+        content = await call_ollama(
             model_url, 
             model_label, 
             system_prompt, 
@@ -1130,7 +1062,7 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
             raw_content = item.get("content") or item.get("text") or item.get("summary") or "Citation mapped from analysis."
             title, content = _cleanse_text(raw_title), _cleanse_text(raw_content)
         else:
-            title, content = str(item), "Citations mapped from primary case analysis."
+            title, content = str(item), "Legal authority identified during case analysis."
         if _is_hallucination(title) or _is_hallucination(content): return None
         short_content = content[:400] + "..." if len(content) > 400 else content
         return {"title": title, "content": short_content}
@@ -1212,7 +1144,7 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
 
     try:
         model_url, model_name, _ = _select_model(state)
-        draft_content = await _call_ollama(
+        draft_content = await call_ollama(
             model_url,
             model_name,
             system_prompt,

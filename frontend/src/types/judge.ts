@@ -4,7 +4,7 @@ export type CaseStatus =
   | 'AIAnalysisPending'
   | 'AIAnalysisReady'
   | 'DraftGenerated'
-  | 'CaseClosed'
+  | 'Finalized'
 
 export type CaseType =
   | 'unpaid_wages'

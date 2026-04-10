@@ -118,8 +118,16 @@ class UserService:
         return UserResponse.model_validate(user)
     
     async def delete_user(self, user_id: str) -> bool:
-        """Delete user."""
+        """Deactivate user (soft delete)."""
         return await self.user_repository.delete(user_id)
+
+    async def activate_user(self, user_id: str) -> bool:
+        """Activate a previously deactivated user."""
+        return await self.user_repository.activate(user_id)
+
+    async def hard_delete_user(self, user_id: str) -> bool:
+        """Permanently delete user from the database."""
+        return await self.user_repository.hard_delete(user_id)
     
     def _create_token_payload(self, user) -> dict:
         """Create token payload from user object."""

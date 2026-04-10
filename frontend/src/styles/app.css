@@ -85,6 +85,11 @@
   --color-surface: var(--bg-base);
   --color-on-secondary-fixed-variant: var(--secondary-foreground);
   
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--danger);
+  --color-destructive-foreground: var(--destructive-foreground);
+
   --color-sidebar: var(--bg-sidebar);
   --color-sidebar-active: var(--sidebar-active);
   --color-sidebar-text: var(--sidebar-text);
@@ -149,6 +154,7 @@
   --warning: #C9A03D;
   --danger: #823F3A;
   --info: #00573F;
+  --destructive-foreground: #ffffff;
 
   /* Layout Base — Golden Ratio Spacing */
   --bg-base: var(--bg-color);

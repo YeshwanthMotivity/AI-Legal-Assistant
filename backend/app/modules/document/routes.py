@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, BackgroundTasks, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, BackgroundTasks, Form, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
@@ -9,10 +9,12 @@ from app.modules.document.schemas import (
 from app.modules.document.repository import DocumentRepository
 from app.modules.document.services import DocumentService
 from app.modules.document.models import DocumentType, ProcessingStatus
-from app.modules.ingestion.minio_client import upload_file as upload_to_minio
+from app.modules.ingestion.minio_client import upload_file as upload_to_minio, download_file
 from app.modules.ingestion.pipeline import run_ingestion_pipeline
 from app.auth.rbac import require_role, UserRole
 from app.modules.audit.service import AuditService
+from app.modules.document.relevance import validate_document_relevance
+from app.modules.case.repository import CaseRepository
 
 
 router = APIRouter(prefix="/cases", tags=["Documents"])
@@ -57,7 +59,35 @@ async def upload_document(
     current_user: dict = Depends(require_role(UserRole.ADMIN, UserRole.CLERK, UserRole.JUDGE))
 ):
     """Upload document to a case."""
+    # 1. Fetch Case Context for Validation
+    case_repo = CaseRepository(db)
+    case = await case_repo.get_by_id(case_id)
+    if not case:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Case not found"
+        )
+
     file_bytes = await file.read()
+
+    # 2. AI Relevance & Audit Layer
+    selected_categories = [document_type] if "," not in document_type else document_type.split(",")
+    is_relevant, relevance_message = await validate_document_relevance(
+        file_bytes=file_bytes,
+        file_name=file.filename or "unknown",
+        mime_type=file.content_type or "application/octet-stream",
+        selected_categories=selected_categories,
+        case_title=case.title or "Unknown Case",
+        case_description=case.description or "",
+        claimant_name=case.claimant_name,
+        respondent_name=case.respondent_name
+    )
+
+    if not is_relevant:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=relevance_message
+        )
 
     document_data = DocumentCreate(
         case_id=case_id,
@@ -137,6 +167,44 @@ async def get_case_documents(
 ):
     """Get all documents for a case."""
     return await service.get_case_documents(case_id, skip, limit)
+
+
+@router.get("/{case_id}/documents/{document_id}/content")
+async def get_document_content(
+    case_id: str,
+    document_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_role(UserRole.ADMIN, UserRole.JUDGE, UserRole.CLERK))
+):
+    """Get document content from storage."""
+    repository = DocumentRepository(db)
+    document = await repository.get_by_id(document_id)
+    if not document or document.case_id != case_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found or does not belong to this case"
+        )
+    
+    if not document.storage_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Document content not available"
+        )
+    
+    try:
+        content = await download_file(bucket="case-documents", key=document.storage_key)
+        return Response(
+            content=content,
+            media_type=document.mime_type or "application/octet-stream",
+            headers={
+                "Content-Disposition": f'inline; filename="{document.file_name}"'
+            }
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve document: {str(e)}"
+        )
 
 
 @router.delete("/{case_id}/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)

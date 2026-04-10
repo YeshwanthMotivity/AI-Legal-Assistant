@@ -22,6 +22,14 @@ export const adminDeactivateUser = async (userId: string) => {
   await apiClient.delete(`/admin/users/${userId}`)
 }
 
+export const adminActivateUser = async (userId: string) => {
+  await apiClient.patch(`/admin/users/${userId}/activate`)
+}
+
+export const adminDeleteUserPermanent = async (userId: string) => {
+  await apiClient.delete(`/admin/users/${userId}/permanent`)
+}
+
 export const adminGetCases = async (params: { skip?: number; limit?: number; status?: string } = {}) => {
   const response = await apiClient.get<CaseListResponse>('/cases', { params })
   return response.data

@@ -17,7 +17,8 @@ import {
   CheckCircle2,
   ChevronRight,
   Archive,
-  Terminal
+  Terminal,
+  Loader2
 } from 'lucide-react'
 import { getPrecedent, chatWithPrecedent, getAnalysis, getCase } from '../../api/judge'
 import { PrecedentDetail } from '../../types/judge'
@@ -169,7 +170,7 @@ const PrecedentDetailPage: React.FC = () => {
       title={precedent.title} 
       subtitle={`${precedent.year || 'N/A'} | ${precedent.category || 'DIFC Judicial Precedent'}`}
     >
-      <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-12rem)] min-h-[600px]">
+      <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-12rem)] min-h-[600px] w-full items-stretch">
         {/* Main Content - Case Text */}
         <main className="flex-1 min-w-0 flex flex-col gap-6">
           <Card className="flex-1 shadow-sm border-border/50 overflow-hidden flex flex-col">
@@ -273,7 +274,7 @@ const PrecedentDetailPage: React.FC = () => {
           </Card>
         </main>
 
-        <aside className="w-full lg:w-[480px] flex flex-col shrink-0">
+        <aside className="w-full lg:w-1/2 flex flex-col min-w-0">
           <Card className="h-full shadow-xl border-primary/20 overflow-hidden flex flex-col bg-card/50 backdrop-blur-sm">
             <div className="flex border-b bg-muted/30">
               <button onClick={() => setActiveTab('chat')} className={cn("flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2", activeTab === 'chat' ? "bg-background text-primary border-b-2 border-primary" : "text-muted-foreground hover:bg-muted/50")}><Sparkles className="w-4 h-4"/>{t('judge.workspace.aiStatus')}</button>
@@ -298,6 +299,17 @@ const PrecedentDetailPage: React.FC = () => {
                     </div>
                   )}
                   {messages.map((msg, idx) => (<div key={idx} className={cn("flex w-full animate-in fade-in", msg.role === 'user' ? "justify-end" : "justify-start")}><div className={cn("max-w-[90%] px-4 py-3 rounded-2xl text-sm font-medium shadow-sm border", msg.role === 'user' ? "bg-primary text-primary-foreground border-transparent rounded-tr-none" : "bg-card border-border/50 rounded-tl-none")}>{renderMarkdown(msg.content)}</div></div>))}
+                  
+                  {chatMutation.isPending && (
+                    <div className="flex w-full justify-start animate-in fade-in slide-in-from-left-2 duration-300">
+                      <div className="bg-card border border-border/50 px-4 py-3 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-2">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-primary/40"/>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-primary/40 animate-pulse">
+                          Generating synthesis...
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="p-4 animate-in fade-in zoom-in-95 duration-500">

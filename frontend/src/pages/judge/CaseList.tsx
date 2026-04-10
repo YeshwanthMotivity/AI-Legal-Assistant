@@ -25,7 +25,7 @@ interface CaseListProps {
 
 type DashboardTab = 'assigned' | 'previous'
 
-const FINAL_STATUSES = new Set(['CaseClosed'])
+const FINAL_STATUSES = new Set(['Finalized'])
 
 const CaseList = ({ openCreateOnLoad = false }: CaseListProps) => {
   const { t, i18n } = useTranslation()

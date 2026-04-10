@@ -88,7 +88,7 @@ async def delete_user(
     service: UserService = Depends(get_admin_user_service),
     current_user: dict = Depends(require_role(UserRole.ADMIN))
 ):
-    """Delete a user (Admin only)."""
+    """Deactivate a user (soft delete - Admin only)."""
     success = await service.delete_user(user_id)
     if not success:
         raise HTTPException(
@@ -99,3 +99,37 @@ async def delete_user(
     await AuditService(db).log(current_user.get("sub", ""), "deactivate_user", "user", user_id)
 
 
+@admin_router.patch("/{user_id}/activate", status_code=status.HTTP_204_NO_CONTENT)
+async def activate_user(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+    service: UserService = Depends(get_admin_user_service),
+    current_user: dict = Depends(require_role(UserRole.ADMIN))
+):
+    """Re-activate a previously deactivated user (Admin only)."""
+    success = await service.activate_user(user_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    from app.modules.audit.service import AuditService
+    await AuditService(db).log(current_user.get("sub", ""), "activate_user", "user", user_id)
+
+
+@admin_router.delete("/{user_id}/permanent", status_code=status.HTTP_204_NO_CONTENT)
+async def permanently_delete_user(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+    service: UserService = Depends(get_admin_user_service),
+    current_user: dict = Depends(require_role(UserRole.ADMIN))
+):
+    """Permanently delete a user from the system (Admin only)."""
+    success = await service.hard_delete_user(user_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    from app.modules.audit.service import AuditService
+    await AuditService(db).log(current_user.get("sub", ""), "delete_user_permanent", "user", user_id)

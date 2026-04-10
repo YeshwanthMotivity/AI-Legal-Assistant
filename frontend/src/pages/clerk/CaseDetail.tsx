@@ -30,6 +30,7 @@ import {
   MessageSquare,
   Send
 } from 'lucide-react'
+import { toast } from 'sonner'
 import PortalLayout from '../../components/layout/PortalLayout'
 import JudgmentEditor from '../../components/judge/JudgmentEditor'
 import CaseContextBar from '../../components/judge/workspace/CaseContextBar'
@@ -41,7 +42,8 @@ import {
   clerkUploadDocument as clerkUploadCaseDocument,
   clerkDeleteCase,
   clerkGetCase,
-  clerkDeleteCaseDocument
+  clerkDeleteCaseDocument,
+  clerkGetDocumentContent
 } from '../../api/clerk'
 import { useCaseAnalysisPolling } from '../../hooks/useCaseAnalysisPolling'
 import type { DocumentType, JudgmentRequest } from '../../types/judge'
@@ -79,7 +81,11 @@ const CaseWorkflow = ({ viewedIdx, currentIdx, stages, onStageClick }: { viewedI
                     "border-muted text-muted-foreground/20 opacity-30"
                   )}
                 >
-                  {isCompleted ? <Check className="w-4 h-4 stroke-[3px] text-white"/> : <stage.icon className={cn("w-4 h-4", isViewed ? "stroke-[2.5px]" : "stroke-[2px]")}/>}
+                  {isCompleted && !isViewed ? (
+                    <Check className={cn("w-4 h-4 stroke-[3px]", "text-white")}/>
+                  ) : (
+                    <stage.icon className={cn("w-4 h-4", isViewed ? "stroke-[2.5px] text-[var(--primary)]" : "stroke-[2px]")}/>
+                  )}
                 </div>
                 <div className="text-center px-1">
                   <p className={cn(
@@ -132,7 +138,7 @@ const CaseDetail = () => {
   const stages = [
     { id: 1, label: t('judge.stages.creation', 'Case Creation'), sub: 'Details confirmation', icon: FileText, statuses: ['Created'] },
     { id: 2, label: t('judge.stages.evidence', 'Evidence Upload'), sub: 'Documents & Evidence', icon: Upload, statuses: ['DocumentsUploaded'] },
-    { id: 3, label: t('judge.stages.analysis', 'AI - Analysis'), sub: 'Research & Synthesis', icon: BrainCircuit, statuses: ['AIAnalysisPending', 'AIAnalysisReady', 'DraftGenerated', 'CaseClosed'] },
+    { id: 3, label: t('judge.stages.analysis', 'AI - Analysis'), sub: 'Research & Synthesis', icon: BrainCircuit, statuses: ['AIAnalysisPending', 'AIAnalysisReady', 'DraftGenerated', 'Finalized'] },
   ];
 
   const caseQuery = useQuery({
@@ -150,7 +156,7 @@ const CaseDetail = () => {
   const currentIdx = useMemo(() => {
     const status = caseData?.status || 'Created';
     const idx = stages.findIndex(s => s.statuses.includes(status));
-    return idx === -1 ? (status === 'CaseClosed' ? 2 : 0) : idx;
+    return idx === -1 ? (status === 'Finalized' ? 2 : 0) : idx;
   }, [caseData?.status]);
 
   const documentsQuery = useQuery({
@@ -177,9 +183,10 @@ const CaseDetail = () => {
       queryClient.invalidateQueries({ queryKey: ['case-documents', id] })
       queryClient.invalidateQueries({ queryKey: ['judge-case', id] })
     },
-    onError: (error) => {
+    onError: (error: any) => {
       setMessageType('error')
-      setLocalMessage({ text: t('judge.workspace.uploadError'), phase: 1 })
+      const errorDetail = error?.response?.data?.detail || t('judge.workspace.uploadError');
+      setLocalMessage({ text: errorDetail, phase: 1 })
     },
   })
 
@@ -210,9 +217,21 @@ const CaseDetail = () => {
     }
   })
 
+  const handleViewDocument = async (docId: string) => {
+    if (!id) return;
+    try {
+      const blob = await clerkGetDocumentContent(id, docId);
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error('Failed to view document:', error);
+      toast.error('Failed to open document');
+    }
+  };
+
   const analysis = analysisQuery.analysis?.analysis
   const isReady = analysis?.status === 'AIAnalysisReady'
-  const isActivelyLoading = runAnalysisMutation.isPending || (analysisQuery.isPolling && analysisRequested)
+  const isActivelyLoading = runAnalysisMutation.isPending || analysisQuery.isPolling
   const lawArticles = analysis?.lawArticles ?? []
   const precedents = useMemo(() => (analysis?.similarPrecedents ?? []).slice(0, 5), [analysis?.similarPrecedents])
   const entitlements = analysis?.entitlementBreakdown ?? []
@@ -239,64 +258,49 @@ const CaseDetail = () => {
       return;
     }
     
-    setBatchUploading(true);
-    setBatchProgress({ current: 0, total: selectedFiles.length });
-    
-    // AI Relevance Audit Loop
-    for (let i = 0; i < selectedFiles.length; i++) {
-       const file = selectedFiles[i];
-       try {
-          const response = await fetch(import.meta.env.VITE_LLM_URL || 'http://172.20.100.215:11434/api/chat', {
-             method: 'POST',
-             headers: { 'Content-Type': 'application/json' },
-             body: JSON.stringify({
-                model: 'qwen2.5:1.5b-instruct',
-                messages: [{ 
-                   role: 'system', 
-                   content: `You are a Relevance Checking AI for a legal system. Is the file named "${file.name}" potentially relevant to the document categories [${selectedDocTypes.join(', ')}] for a case titled "${caseData?.title}"? Respond with ONLY a single number between 0 and 100 representing your confidence. Example: 85`
-                }],
-                stream: false
-             })
-          });
-          const data = await response.json();
-          const score = parseInt(data.message.content.match(/\d+/)?.[0] || '100', 10);
-          
-          if (!isNaN(score) && score < 80) {
-             setBatchUploading(false);
-             setBatchProgress({ current: 0, total: 0 });
-             setMessageType('error');
-             setLocalMessage({ 
-                text: `AI Audit Alert: The file "${file.name}" was flagged as potentially irrelevant to the case context (Confidence: ${score}%). Upload blocked to ensure dataset purity.`, 
-                phase: 1 
-             });
-             return; // Block the upload
-          }
-       } catch (e) {
-          console.warn("AI relevance check failed", e);
-       }
-    }
-
+    setBatchUploading(true)
     const joinedTypes = selectedDocTypes.join(',')
     
     let successCount = 0
+    let failureCount = 0
+    const errors: string[] = []
+
     for (let i = 0; i < selectedFiles.length; i++) {
       setBatchProgress({ current: i + 1, total: selectedFiles.length })
       try {
         await uploadMutation.mutateAsync({ file: selectedFiles[i], documentType: joinedTypes })
         successCount++
-      } catch {
+      } catch (err: any) {
+        failureCount++
+        const errorDetail = err?.response?.data?.detail || "Upload failed";
+        errors.push(`${selectedFiles[i].name}: ${errorDetail}`)
       }
     }
     
     setBatchUploading(false)
     setBatchProgress({ current: 0, total: 0 })
-    setSelectedFiles([])
-    setSelectedDocTypes([])
-    if (fileInputRef.current) fileInputRef.current.value = ''
     
+    // Remove files that were successfully uploaded
     if (successCount > 0) {
-      setMessageType('success')
-      setLocalMessage({ text: `${successCount} file${successCount > 1 ? 's' : ''} uploaded and processed successfully.`, phase: 1 })
+      // In a real app, we'd more carefully match which ones succeeded
+      // For now, if all succeeded, clear all. If some failed, we keep them in list.
+      if (failureCount === 0) {
+        setSelectedFiles([])
+        setSelectedDocTypes([])
+        if (fileInputRef.current) fileInputRef.current.value = ''
+      } else {
+        // Just filter roughly (this is a simplification)
+        setSelectedFiles(prev => prev.slice(successCount))
+      }
+    }
+    
+    if (failureCount > 0) {
+       setMessageType('error')
+       const summary = `Uploaded ${successCount} files. ${failureCount} failed validation.\nErrors:\n${errors.join('\n')}`
+       setLocalMessage({ text: summary, phase: 1 })
+    } else {
+       setMessageType('success')
+       setLocalMessage({ text: `${successCount} file${successCount > 1 ? 's' : ''} uploaded and validated successfully.`, phase: 1 })
     }
   }
 
@@ -481,9 +485,11 @@ const CaseDetail = () => {
                                 <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">{t('judge.workspace.claimValue', 'Claim Value')}</span>
                               </div>
                               <p className="text-sm font-black text-foreground leading-none mt-1">
-                                {caseData?.claim_amount ? 
-                                  `AED ${Number(caseData.claim_amount).toLocaleString('en-AE', { minimumFractionDigits: 2 })}` : 
-                                  'AED 0.00'}
+                                {(() => {
+                                  const rawVal = String(caseData?.claim_amount || '0').replace(/,/g, '');
+                                  const val = Number(rawVal);
+                                  return isNaN(val) ? 'AED 0.00' : `AED ${val.toLocaleString('en-AE', { minimumFractionDigits: 2 })}`;
+                                })()}
                               </p>
                            </div>
                         </div>
@@ -548,20 +554,13 @@ const CaseDetail = () => {
 
                    {viewedIdx === 1 && (
                      <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <header className="flex items-center gap-4 mb-8">
-                           <div className="w-10 h-10 bg-primary/5 rounded-xl flex items-center justify-center text-primary shadow-sm border border-primary/10">
-                              <Upload className="w-5 h-5"/>
-                           </div>
-                           <div>
-                              <h2 className="text-lg font-black text-foreground tracking-tight uppercase leading-none">{t('judge.stages.evidence', 'Document Repository')}</h2>
-                              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1.5 opacity-50">Evidence Matrix Control</p>
-                           </div>
-                        </header>
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-border/80">
                            <DocumentsPanel
                              documents={documentsQuery.data?.items ?? []}
                              isActivelyLoading={isActivelyLoading}
                              isReady={isReady}
+                             caseTitle={caseData?.title ?? undefined}
+                             caseDescription={caseData?.description ?? undefined}
                              selectedFiles={selectedFiles}
                              setSelectedFiles={setSelectedFiles}
                              selectedDocTypes={selectedDocTypes}
@@ -571,9 +570,9 @@ const CaseDetail = () => {
                              onBatchUpload={handleBatchUpload}
                              isBatchUploading={batchUploading}
                              batchProgress={batchProgress}
-                             entitlements={entitlements}
                              onDeleteDocument={(docId) => deleteDocumentMutation.mutate(docId)}
                              isDeletingDocument={deleteDocumentMutation.isPending ? deleteDocumentMutation.variables as string : null}
+                             onViewDocument={handleViewDocument}
                            />
                         </div>
                      </div>
@@ -591,6 +590,7 @@ const CaseDetail = () => {
                           entitlements={entitlements}
                           onDeleteDocument={(docId) => deleteDocumentMutation.mutate(docId)}
                           isDeletingDocument={deleteDocumentMutation.isPending ? deleteDocumentMutation.variables as string : null}
+                          onViewDocument={handleViewDocument}
                         />
                         {!isReady && !isActivelyLoading && (
                           <div className="mt-8 text-center p-12 bg-white border border-dashed border-border/80 rounded-2xl shadow-inner w-full flex flex-col items-center gap-6">
@@ -610,18 +610,19 @@ const CaseDetail = () => {
                           </div>
                         )}
                         {isReady && !isActivelyLoading && (
-                          <div className="mt-12 text-center py-10 animate-in fade-in duration-700">
-                             <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-emerald-100 shadow-inner">
+                          <div className="mt-12 text-center flex flex-col items-center gap-6">
+                             <div className="w-16 h-16 bg-[var(--primary)]/10 rounded-full flex items-center justify-center text-[var(--primary)] mb-2">
                                 <CheckCircle2 className="w-8 h-8"/>
                              </div>
-                             <h3 className="text-xl font-black text-foreground uppercase tracking-tight mb-2">Analysis Phase Complete</h3>
-                             <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest opacity-40 mb-10">Intelligence Dossier finalized for Judicial Assignment</p>
-                             
+                             <div>
+                               <h3 className="text-xl font-black text-foreground uppercase tracking-tight">{t('clerk.analysis.ready', 'Analysis Synthesis Complete')}</h3>
+                               <p className="text-xs font-semibold text-muted-foreground mt-2 opacity-60">Verified legal insights are now available. Proceed to judge allocation.</p>
+                             </div>
                              <Button 
-                               className="h-14 px-12 bg-primary text-on-primary rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-primary/30 hover:scale-[1.05] active:scale-95 transition-all text-xs group"
+                               className="h-12 px-10 bg-primary text-on-primary rounded-xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-[11px]"
                                onClick={() => navigate('/clerk/assignments')}
                              >
-                               {t('clerk.analysis.returnToList', 'Proceed to Assignment')} <ArrowRight className="ml-3 w-4 h-4 transition-transform group-hover:translate-x-2"/>
+                               {t('clerk.analysis.returnToList', 'Proceed to Assignment')} <ArrowRight className="ml-2 w-4 h-4"/>
                              </Button>
                           </div>
                         )}

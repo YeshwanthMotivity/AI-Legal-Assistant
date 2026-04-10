@@ -30,21 +30,23 @@ import {
   MessageSquare,
   Send
 } from 'lucide-react'
+import { toast } from 'sonner'
 import PortalLayout from '../../components/layout/PortalLayout'
 import JudgmentEditor from '../../components/judge/JudgmentEditor'
 import CaseContextBar from '../../components/judge/workspace/CaseContextBar'
 import DocumentsPanel from '../../components/judge/workspace/DocumentsPanel'
 import IntelligenceCenter from '../../components/judge/workspace/IntelligenceCenter'
 import {
-  getCase,
-  getCaseDocuments,
-  runAnalysis,
-  getAnalysis,
-  saveJudgment,
-  uploadCaseDocument,
   deleteCase,
   submitFeedback,
-  deleteCaseDocument
+  deleteCaseDocument,
+  getDocumentContent,
+  getCase,
+  getCaseDocuments,
+  uploadCaseDocument,
+  runAnalysis,
+  saveJudgment,
+  getAnalysis
 } from '../../api/judge'
 import { useCaseAnalysisPolling } from '../../hooks/useCaseAnalysisPolling'
 import type { DocumentType, JudgmentRequest } from '../../types/judge'
@@ -82,7 +84,11 @@ const CaseWorkflow = ({ viewedIdx, currentIdx, stages, onStageClick }: { viewedI
                     "border-muted text-muted-foreground/20 opacity-30"
                   )}
                 >
-                  {isCompleted ? <Check className="w-4 h-4 stroke-[3px] text-white"/> : <stage.icon className={cn("w-4 h-4", isViewed ? "stroke-[2.5px]" : "stroke-[2px]")}/>}
+                  {isCompleted && !isViewed ? (
+                    <Check className={cn("w-4 h-4 stroke-[3px]", "text-white")}/>
+                  ) : (
+                    <stage.icon className={cn("w-4 h-4", isViewed ? "stroke-[2.5px] text-[var(--primary)]" : "stroke-[2px]")}/>
+                  )}
                 </div>
                 <div className="text-center px-1">
                   <p className={cn(
@@ -196,7 +202,7 @@ const CaseDetail = () => {
   const stages = [
     { id: 1, label: t('judge.stages.analysis', 'Analysis Results'), sub: 'Research & Synthesis', icon: BrainCircuit, statuses: ['Created', 'DocumentsUploaded', 'AIAnalysisPending', 'AIAnalysisReady'] },
     { id: 2, label: t('judge.stages.review', 'Judicial Review'), sub: 'Judgment drafting', icon: Gavel, statuses: ['DraftGenerated'] },
-    { id: 3, label: t('judge.stages.feedback', 'Feedback'), sub: 'Outcome learning', icon: MessagesSquare, statuses: ['CaseClosed'] },
+    { id: 3, label: t('judge.stages.feedback', 'Feedback'), sub: 'Outcome learning', icon: MessagesSquare, statuses: ['Finalized'] },
   ];
 
   const caseQuery = useQuery({
@@ -214,7 +220,7 @@ const CaseDetail = () => {
   const currentIdx = useMemo(() => {
     const status = caseData?.status || 'Created';
     const idx = stages.findIndex(s => s.statuses.includes(status));
-    return idx === -1 ? (status === 'CaseClosed' ? 3 : 0) : idx;
+    return idx === -1 ? (status === 'Finalized' ? 3 : 0) : idx;
   }, [caseData?.status]);
 
   const documentsQuery = useQuery({
@@ -263,6 +269,18 @@ const CaseDetail = () => {
     }
   })
 
+  const handleViewDocument = async (docId: string) => {
+    if (!id) return;
+    try {
+      const blob = await getDocumentContent(id, docId);
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error('Failed to view document:', error);
+      toast.error('Failed to open document');
+    }
+  };
+
   // JudgmentEditor State
   const [draftText, setDraftText] = useState('')
   const [decision, setDecision] = useState('Awarded')
@@ -306,7 +324,7 @@ const CaseDetail = () => {
 
   const analysis = analysisQuery.analysis?.analysis
   const isReady = analysis?.status === 'AIAnalysisReady'
-  const isActivelyLoading = runAnalysisMutation.isPending || (analysisQuery.isPolling && analysisRequested)
+  const isActivelyLoading = runAnalysisMutation.isPending || analysisQuery.isPolling
   const lawArticles = analysis?.lawArticles ?? []
   const precedents = useMemo(() => (analysis?.similarPrecedents ?? []).slice(0, 5), [analysis?.similarPrecedents])
   const entitlements = analysis?.entitlementBreakdown ?? []
@@ -497,15 +515,16 @@ const CaseDetail = () => {
                           entitlements={entitlements}
                           onDeleteDocument={(docId) => deleteDocumentMutation.mutate(docId)}
                           isDeletingDocument={deleteDocumentMutation.isPending ? deleteDocumentMutation.variables as string : null}
+                          onViewDocument={handleViewDocument}
                         />
                         {!isReady && !isActivelyLoading && (
                           <div className="mt-8 text-center p-12 bg-white border border-dashed border-border/80 rounded-2xl shadow-inner w-full flex flex-col items-center gap-6">
                              <div className="w-20 h-20 bg-primary/5 border border-primary/10 rounded-3xl flex items-center justify-center">
-                                <BrainCircuit className="w-10 h-10 text-primary animate-pulse"/>
+                                <HistoryIcon className="w-10 h-10 text-primary opacity-20"/>
                              </div>
                              <div>
-                                <h3 className="text-xl font-black text-foreground uppercase tracking-tight">{t('judge.workspace.runAnalysis', 'Awaiting Synthesis')}</h3>
-                                <p className="text-xs font-semibold text-muted-foreground mt-2 opacity-60 antialiased max-w-sm mx-auto">The orchestration node is awaiting intelligence processing from the registry.</p>
+                                <h3 className="text-xl font-black text-foreground uppercase tracking-tight">{t('judge.workspace.awaitingSynthesis', 'Awaiting Synthesis')}</h3>
+                                <p className="text-xs font-semibold text-muted-foreground mt-2 opacity-60 antialiased max-w-sm mx-auto">{t('judge.workspace.awaitingSynthesisDesc', 'The judicial orchestration node is awaiting intelligence processing from the clerk.')}</p>
                              </div>
                           </div>
                         )}

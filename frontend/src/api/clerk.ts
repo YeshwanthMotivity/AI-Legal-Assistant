@@ -73,3 +73,10 @@ export const clerkRunAnalysis = async (caseId: string, language: string = 'en') 
   const response = await apiClient.post(`/cases/${caseId}/analyze`, { language })
   return response.data
 }
+
+export const clerkGetDocumentContent = async (caseId: string, documentId: string) => {
+  const response = await apiClient.get(`/cases/${caseId}/documents/${documentId}/content`, {
+    responseType: 'blob'
+  })
+  return response.data
+}

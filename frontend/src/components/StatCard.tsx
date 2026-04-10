@@ -12,19 +12,23 @@ interface StatCardProps {
  isPositive: boolean;
  };
  className?: string;
+ compact?: boolean;
 }
 
-const StatCard = ({ label, value, icon: Icon, trend, className }: StatCardProps) => {
+const StatCard = ({ label, value, icon: Icon, trend, className, compact }: StatCardProps) => {
  return (
  <motion.div
  whileHover={{ y: -5 }}
  transition={{ duration: 0.2 }}
  >
  <Card className={cn("overflow-hidden border-border/50 shadow-md hover:shadow-xl hover:border-primary/30 transition-all duration-300 group", className)}>
-  <CardContent className="p-5">
-  <div className="flex items-center justify-between mb-3">
-  <div className="w-10 h-10 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] group-hover:scale-110 transition-transform duration-500 shadow-inner border border-[var(--primary)]/10">
-  <Icon className="w-5 h-5"/>
+  <CardContent className={cn(compact ? "p-4" : "p-8")}>
+  <div className={cn("flex items-center justify-between", compact ? "mb-4" : "mb-6")}>
+  <div className={cn(
+    "rounded-2xl bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] group-hover:scale-110 transition-transform duration-500 shadow-inner border border-[var(--primary)]/10",
+    compact ? "w-10 h-10" : "w-14 h-14"
+  )}>
+  <Icon className={cn(compact ? "w-5 h-5" : "w-6 h-6")}/>
   </div>
   {trend && (
   <div className={cn(
@@ -36,8 +40,8 @@ const StatCard = ({ label, value, icon: Icon, trend, className }: StatCardProps)
   )}
   </div>
   <div className="space-y-1">
-  <div className="text-2xl font-black tracking-tighter text-foreground leading-none">{value}</div>
-  <div className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.25em] opacity-60">
+  <div className={cn("font-black tracking-tighter text-foreground leading-none", compact ? "text-2xl" : "text-4xl")}>{value}</div>
+  <div className={cn("text-muted-foreground font-black uppercase tracking-[0.25em] opacity-60", compact ? "text-[8px]" : "text-[10px]")}>
   {label}
   </div>
   </div>

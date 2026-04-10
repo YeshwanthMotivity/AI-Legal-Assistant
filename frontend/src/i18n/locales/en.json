@@ -207,7 +207,7 @@
     "AIAnalysisPending": "AI Analysis Pending",
     "AIAnalysisReady": "AI Analysis Ready",
     "DraftGenerated": "Draft Generated",
-    "Finalized": "Case Closed"
+    "Finalized": "Finalized"
   },
   "judge": {
     "nav": {
@@ -242,7 +242,7 @@
       "factsAndReasoning": "Facts & Legal Reasoning",
       "judicialOutcome": "Judicial Outcome",
       "caseId": "Case ID",
-      "documents": "Case Documents",
+      "documents": "Documents",
       "documentType": "Document Type",
       "uploadDocument": "Upload Document",
       "uploadNow": "Upload Now",
@@ -250,6 +250,10 @@
       "uploadSuccess": "Document uploaded successfully.",
       "uploadError": "Document upload failed.",
       "runAnalysis": "Run AI Case Analysis",
+      "awaitingSynthesis": "Awaiting Intelligence Synthesis",
+      "awaitingSynthesisDesc": "The judicial orchestration node is awaiting processing from the clerk's registry node.",
+      "awaitingAnalysisTitle": "Awaiting Analysis",
+      "awaitingAnalysisDesc": "The system is currently processing your request. Please wait.",
       "analysisPending": "AI analysis is in progress...",
       "analysisReady": "AI analysis is ready.",
       "analysisFailed": "AI analysis failed.",

@@ -29,14 +29,15 @@ interface BatchFileProps {
   isBatchUploading: boolean
   batchProgress?: { current: number; total: number }
 }
-
 type DocumentsPanelProps = {
   documents: any[]
   isActivelyLoading: boolean
   isReady: boolean
-  entitlements?: any[]
   onDeleteDocument?: (docId: string) => void
   isDeletingDocument?: string | null
+  onViewDocument?: (docId: string) => void
+  caseTitle?: string
+  caseDescription?: string
 } & (SingleFileProps | BatchFileProps)
 
 const DOCUMENT_TYPES: DocumentType[] = [
@@ -148,8 +149,65 @@ const CategorySelector = ({ selectedTypes, onToggle, t }: { selectedTypes: Docum
 }
 
 const DocumentsPanel = (props: DocumentsPanelProps) => {
-  const { t } = useTranslation()
-  const { documents, entitlements = [], onDeleteDocument, isDeletingDocument } = props
+  const { t, i18n } = useTranslation()
+  const { documents, onDeleteDocument, isDeletingDocument, onViewDocument, caseTitle, caseDescription } = props
+
+  // ─── Relevance Audit State ───
+  const [relevanceAudit, setRelevanceAudit] = useState<{ 
+    status: 'idle' | 'checking' | 'warning', 
+    message?: string,
+    onBypass?: () => void 
+  }>({ status: 'idle' })
+
+  const handleRelevanceCheck = async (fileName: string, doctype: DocumentType, originalUpload: () => void) => {
+    if (!caseTitle) {
+      originalUpload()
+      return
+    }
+
+    setRelevanceAudit({ status: 'checking' })
+    
+    const prompt = `You are a legal document auditor. Analyze if the following file is relevant to the case.
+    Case Title: ${caseTitle}
+    Case Description: ${caseDescription?.substring(0, 500) || 'N/A'}
+    
+    Document info:
+    File Name: ${fileName}
+    Selected Type: ${doctype}
+    
+    Is this document potentially relevant to this case based ONLY on the names/types? 
+    Respond with JSON: {"is_relevant": boolean, "confidence": float (0-1), "reason": string}`
+
+    try {
+      const response = await fetch('http://172.20.100.215:11434/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'qwen2.5:1.5b-instruct',
+          messages: [{ role: 'user', content: prompt }],
+          stream: false,
+          format: 'json'
+        })
+      })
+      const data = await response.json()
+      const result = JSON.parse(data.message.content)
+
+      if (result.is_relevant === false && result.confidence > 0.8) {
+        setRelevanceAudit({ 
+          status: 'warning', 
+          message: result.reason || "This document seems unrelated to the current case parties or facts.",
+          onBypass: originalUpload
+        })
+      } else {
+        setRelevanceAudit({ status: 'idle' })
+        originalUpload()
+      }
+    } catch (err) {
+      console.error("Relevance check failed:", err)
+      setRelevanceAudit({ status: 'idle' })
+      originalUpload() // Bypass on error
+    }
+  }
 
   // ─── Batch Mode Rendering ───
   if (isBatchMode(props)) {
@@ -159,6 +217,20 @@ const DocumentsPanel = (props: DocumentsPanelProps) => {
       batchFileInputRef, onBatchFileSelect,
       onBatchUpload, isBatchUploading, batchProgress
     } = props
+
+    const triggerBatchUpload = () => {
+      // For batch, we check the first file or a summary. 
+      // For simplicity and speed, we check the first file's metadata.
+      if (selectedFiles.length > 0) {
+        handleRelevanceCheck(
+          selectedFiles[0].name, 
+          selectedDocTypes[0] || 'other', 
+          onBatchUpload
+        )
+      } else {
+        onBatchUpload()
+      }
+    }
 
     const handleToggleType = (type: DocumentType) => {
       setSelectedDocTypes(
@@ -291,13 +363,13 @@ const DocumentsPanel = (props: DocumentsPanelProps) => {
             {/* Upload Button */}
             <Button
               className="w-full h-12 rounded-xl bg-[var(--primary)] text-white font-black uppercase tracking-[0.15em] text-[11px] shadow-md shadow-[var(--primary)]/10 hover:bg-[var(--primary-hover)] hover:shadow-lg transition-all relative z-10"
-              onClick={onBatchUpload}
-              disabled={selectedFiles.length === 0 || selectedDocTypes.length === 0 || isBatchUploading}
+              onClick={triggerBatchUpload}
+              disabled={selectedFiles.length === 0 || selectedDocTypes.length === 0 || isBatchUploading || relevanceAudit.status === 'checking'}
             >
-              {isBatchUploading ? (
+              {isBatchUploading || relevanceAudit.status === 'checking' ? (
                 <div className="flex items-center gap-3">
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Uploading ({batchProgress?.current ?? 0}/{batchProgress?.total ?? selectedFiles.length})...</span>
+                  <span>{relevanceAudit.status === 'checking' ? 'Auditing Relevance...' : `Uploading (${batchProgress?.current ?? 0}/${batchProgress?.total ?? selectedFiles.length})...`}</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
@@ -306,14 +378,47 @@ const DocumentsPanel = (props: DocumentsPanelProps) => {
                 </div>
               )}
             </Button>
+            
+            {/* Relevance Warning UI */}
+            {relevanceAudit.status === 'warning' && (
+              <div className="p-5 bg-rose-50 border border-rose-100 rounded-2xl space-y-4 animate-in zoom-in-95 duration-300 relative z-50">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-rose-100 rounded-xl">
+                    <AlertCircle className="w-5 h-5 text-rose-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-rose-900 uppercase tracking-tight">Relevance Warning</h4>
+                    <p className="text-[11px] font-medium text-rose-800/80 leading-relaxed mt-1">
+                      {relevanceAudit.message}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 h-9 rounded-lg text-[10px] font-black uppercase border-rose-200 text-rose-700 hover:bg-rose-100"
+                    onClick={() => setRelevanceAudit({ status: 'idle' })}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    className="flex-1 h-9 rounded-lg text-[10px] font-black uppercase bg-rose-600 text-white hover:bg-rose-700"
+                    onClick={() => {
+                      const bypass = relevanceAudit.onBypass;
+                      setRelevanceAudit({ status: 'idle' });
+                      bypass?.();
+                    }}
+                  >
+                    Proceed Anyway
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right: Record List */}
-          {renderDocumentList(documents, t, onDeleteDocument, isDeletingDocument)}
+          {renderDocumentList(documents, t, onDeleteDocument, isDeletingDocument, onViewDocument)}
         </div>
-
-        {/* Entitlements */}
-        {renderEntitlements(entitlements, t)}
       </div>
     )
   }
@@ -324,6 +429,14 @@ const DocumentsPanel = (props: DocumentsPanelProps) => {
     onFileSelect, selectedFileName,
     fileInputRef, onUpload, isUploading
   } = props as (typeof props & SingleFileProps)
+
+  const triggerUpload = () => {
+    if (selectedFileName) {
+      handleRelevanceCheck(selectedFileName, selectedDocType, onUpload)
+    } else {
+      onUpload()
+    }
+  }
 
   return (
     <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -379,13 +492,13 @@ const DocumentsPanel = (props: DocumentsPanelProps) => {
 
           <Button
             className="w-full h-12 rounded-xl bg-[var(--primary)] text-white font-black uppercase tracking-[0.15em] text-[11px] shadow-md shadow-[var(--primary)]/10 hover:bg-[var(--primary-hover)] hover:shadow-lg transition-all relative z-10"
-            onClick={onUpload}
-            disabled={!selectedFileName || isUploading}
+            onClick={triggerUpload}
+            disabled={!selectedFileName || isUploading || relevanceAudit.status === 'checking'}
           >
-            {isUploading ? (
+            {isUploading || relevanceAudit.status === 'checking' ? (
               <div className="flex items-center gap-3">
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Uploading...</span>
+                <span>{relevanceAudit.status === 'checking' ? 'Auditing Relevance...' : 'Uploading...'}</span>
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -394,27 +507,61 @@ const DocumentsPanel = (props: DocumentsPanelProps) => {
               </div>
             )}
           </Button>
+
+          {/* Relevance Warning UI (Legacy Mode) */}
+          {relevanceAudit.status === 'warning' && (
+            <div className="p-5 bg-rose-50 border border-rose-100 rounded-2xl space-y-4 animate-in zoom-in-95 duration-300 relative z-50">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-rose-100 rounded-xl">
+                  <AlertCircle className="w-5 h-5 text-rose-600" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-rose-900 uppercase tracking-tight">Relevance Audit Warning</h4>
+                  <p className="text-[11px] font-medium text-rose-800/80 leading-relaxed mt-1">
+                    {relevanceAudit.message}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 h-9 rounded-lg text-[10px] font-black uppercase border-rose-200 text-rose-700 hover:bg-rose-100"
+                  onClick={() => setRelevanceAudit({ status: 'idle' })}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  className="flex-1 h-9 rounded-lg text-[10px] font-black uppercase bg-rose-600 text-white hover:bg-rose-700"
+                  onClick={() => {
+                    const bypass = relevanceAudit.onBypass;
+                    setRelevanceAudit({ status: 'idle' });
+                    bypass?.();
+                  }}
+                >
+                  Proceed Anyway
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {renderDocumentList(documents, t, onDeleteDocument, isDeletingDocument)}
+        {renderDocumentList(documents, t, onDeleteDocument, isDeletingDocument, onViewDocument)}
       </div>
-
-      {renderEntitlements(entitlements, t)}
     </div>
   )
 }
 
 // ─── Shared sub-renders ───
 
-function renderDocumentList(documents: any[], t: any, onDeleteDocument?: (docId: string) => void, isDeletingDocument?: string | null) {
+function renderDocumentList(documents: any[], t: any, onDeleteDocument?: (docId: string) => void, isDeletingDocument?: string | null, onViewDocument?: (docId: string) => void) {
   return (
     <div className="col-span-12 lg:col-span-5 bg-[var(--bg-card)] rounded-[2rem] border border-border shadow-sm flex flex-col h-full overflow-hidden relative">
       <header className="flex items-center justify-between p-6 bg-[var(--bg-surface)] border-b border-border/60 shrink-0 relative z-10">
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-[var(--primary)]" />
-          <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Uploaded Files</h4>
+          <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Documents</h4>
         </div>
-        <Badge variant="outline" className="text-[9px] font-black uppercase bg-white">{documents.length} Files</Badge>
+        <Badge variant="outline" className="text-[9px] font-black uppercase bg-white">{documents.length} Documents</Badge>
       </header>
 
       <div className="flex-1 overflow-y-auto w-full relative z-10">
@@ -428,7 +575,14 @@ function renderDocumentList(documents: any[], t: any, onDeleteDocument?: (docId:
             {documents.map((doc) => {
               const isDeleting = isDeletingDocument === doc.id;
               return (
-                <div key={doc.id} className="p-4 hover:bg-[var(--bg-surface)] transition-colors group flex items-center justify-between">
+                <div 
+                   key={doc.id} 
+                   className={cn(
+                     "p-4 hover:bg-[var(--primary)]/5 transition-all group flex items-center justify-between cursor-pointer",
+                     onViewDocument && "active:bg-[var(--primary)]/10"
+                   )}
+                   onClick={() => onViewDocument?.(doc.id)}
+                >
                   <div className="flex items-center gap-4 min-w-0 pr-4">
                     <div className="w-8 h-8 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/20 flex items-center justify-center shrink-0">
                       <FileText className="w-4 h-4 text-[var(--primary)]" />
@@ -453,7 +607,7 @@ function renderDocumentList(documents: any[], t: any, onDeleteDocument?: (docId:
                       <button
                         type="button"
                         disabled={isDeleting}
-                        onClick={() => onDeleteDocument(doc.id)}
+                        onClick={(e) => { e.stopPropagation(); onDeleteDocument(doc.id); }}
                         className="p-1.5 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all disabled:opacity-50"
                         title="Delete Document"
                       >
@@ -475,54 +629,5 @@ function renderDocumentList(documents: any[], t: any, onDeleteDocument?: (docId:
   )
 }
 
-function renderEntitlements(entitlements: any[], t: any) {
-  if (entitlements.length === 0) return null
-
-  return (
-    <div className="bg-[var(--bg-card)] p-8 rounded-[2rem] border border-border shadow-sm space-y-8 relative overflow-hidden">
-      <header className="flex items-center gap-5 border-b border-border/50 pb-6 relative z-10">
-        <div className="w-12 h-12 bg-[var(--primary)] shadow-sm rounded-xl flex items-center justify-center text-white">
-          <Calculator className="w-5 h-5" />
-        </div>
-        <div>
-          <h2 className="text-xl font-black text-foreground tracking-tighter uppercase leading-none">Entitlement Calculation</h2>
-          <p className="text-[10px] font-black text-[var(--primary)]/70 uppercase tracking-[0.2em] mt-1.5">Calculated Entitlements</p>
-        </div>
-      </header>
-
-      <div className="grid grid-cols-3 gap-6 relative z-10">
-        {entitlements.map((e, idx) => {
-          const isZero = (e.value?.trim().endsWith('0.00') || e.value?.includes('0.00')) && !e.value?.match(/[1-9]/);
-          return (
-            <div key={idx} className="p-6 bg-[var(--bg-surface)] rounded-2xl border border-border/60 hover:border-[var(--primary)]/30 hover:shadow-sm transition-all group flex flex-col justify-between h-36">
-              <div className="space-y-1">
-                <span className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground opacity-60">
-                  {e.label}
-                </span>
-                <p className={cn('text-2xl font-black tracking-tighter tabular-nums', isZero ? 'text-muted-foreground/30' : 'text-foreground')}>
-                  {e.value}
-                </p>
-              </div>
-              
-              <div className="w-full bg-border h-1 rounded-full overflow-hidden">
-                <div 
-                  className={cn("h-full transition-all duration-1000", isZero ? "bg-red-500/20 w-1" : "bg-[var(--primary)]/100")} 
-                  style={{ width: isZero ? '4px' : '70%' }} 
-                />
-              </div>
-
-              {isZero && (
-                <div className="flex items-center gap-1.5 text-red-500/80 mt-1">
-                  <AlertCircle className="w-3 h-3" />
-                  <span className="text-[8px] font-black uppercase tracking-widest">Missing Data</span>
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
 
 export default DocumentsPanel

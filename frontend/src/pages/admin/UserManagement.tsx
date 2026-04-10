@@ -10,6 +10,8 @@ import {
  Mail,
  User,
  Power,
+ PowerOff,
+ Trash2,
  MoreVertical,
  Search,
  CheckCircle2,
@@ -18,7 +20,7 @@ import {
  Key
 } from 'lucide-react'
 import PortalLayout from '../../components/layout/PortalLayout'
-import { adminCreateUser, adminDeactivateUser, adminGetUsers } from '../../api/admin'
+import { adminCreateUser, adminDeactivateUser, adminActivateUser, adminDeleteUserPermanent, adminGetUsers } from '../../api/admin'
 import { queryKeys } from '../../api/queryKeys'
 import type { AdminCreateUserRequest } from '../../types/admin'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
@@ -66,11 +68,37 @@ const UserManagement = () => {
  onSuccess: () => {
  queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers })
  setMessageType('success')
- setMessage(t('admin.messages.userDeactivated'))
+ setMessage(t('admin.messages.userDeactivated', 'User deactivated successfully.'))
  },
  onError: () => {
  setMessageType('error')
- setMessage(t('admin.messages.userDeactivateFailed'))
+ setMessage(t('admin.messages.userDeactivateFailed', 'Failed to deactivate user.'))
+ },
+ })
+
+ const activateMutation = useMutation({
+ mutationFn: adminActivateUser,
+ onSuccess: () => {
+ queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers })
+ setMessageType('success')
+ setMessage(t('admin.messages.userActivated', 'User activated successfully.'))
+ },
+ onError: () => {
+ setMessageType('error')
+ setMessage(t('admin.messages.userActivateFailed', 'Failed to activate user.'))
+ },
+ })
+
+ const deletePermMutation = useMutation({
+ mutationFn: adminDeleteUserPermanent,
+ onSuccess: () => {
+ queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers })
+ setMessageType('success')
+ setMessage(t('admin.messages.userDeleted', 'User permanently deleted.'))
+ },
+ onError: () => {
+ setMessageType('error')
+ setMessage(t('admin.messages.userDeleteFailed', 'Failed to delete user.'))
  },
  })
 
@@ -151,19 +179,50 @@ const UserManagement = () => {
  </Badge>
  </TableCell>
  <TableCell className="pr-8">
+ <div className="flex items-center gap-2">
+ {String(user.is_active).toLowerCase() === 'true' ? (
+ <Button 
+ variant="ghost"
+ size="sm"
+ className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 font-bold gap-2 h-8"
+ disabled={deactivateMutation.isPending}
+ onClick={() => {
+ if (!window.confirm(t('admin.messages.confirmDeactivate', 'Are you sure you want to deactivate this user?'))) return
+ deactivateMutation.mutate(user.id)
+ }}
+ >
+ <PowerOff className="w-3.5 h-3.5"/>
+ {t('admin.forms.deactivate', 'Deactivate')}
+ </Button>
+ ) : (
+ <Button 
+ variant="ghost"
+ size="sm"
+ className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-bold gap-2 h-8"
+ disabled={activateMutation.isPending}
+ onClick={() => {
+ if (!window.confirm(t('admin.messages.confirmActivate', 'Are you sure you want to activate this user?'))) return
+ activateMutation.mutate(user.id)
+ }}
+ >
+ <Power className="w-3.5 h-3.5"/>
+ {t('admin.forms.activate', 'Activate')}
+ </Button>
+ )}
  <Button 
  variant="ghost"
  size="sm"
  className="text-destructive hover:text-destructive hover:bg-destructive/10 font-bold gap-2 h-8"
- disabled={deactivateMutation.isPending}
+ disabled={deletePermMutation.isPending}
  onClick={() => {
- if (!window.confirm(t('admin.messages.confirmDeactivate'))) return
- deactivateMutation.mutate(user.id)
+ if (!window.confirm(t('admin.messages.confirmDelete', 'This will permanently remove the user. This cannot be undone. Continue?'))) return
+ deletePermMutation.mutate(user.id)
  }}
  >
- <Power className="w-3.5 h-3.5"/>
- {t('admin.forms.deactivate')}
+ <Trash2 className="w-3.5 h-3.5"/>
+ {t('admin.forms.delete', 'Delete')}
  </Button>
+ </div>
  </TableCell>
  </TableRow>
  ))}

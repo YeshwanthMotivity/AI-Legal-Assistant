@@ -11,7 +11,7 @@ class CaseStatus(str, enum.Enum):
     AI_ANALYSIS_PENDING = "AIAnalysisPending"
     AI_ANALYSIS_READY = "AIAnalysisReady"
     DRAFT_GENERATED = "DraftGenerated"
-    CASE_CLOSED = "CaseClosed"
+    CASE_CLOSED = "Finalized"
 
 
 class CaseType(str, enum.Enum):
