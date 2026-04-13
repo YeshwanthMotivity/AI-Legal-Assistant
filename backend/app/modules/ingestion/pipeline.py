@@ -147,6 +147,18 @@ async def run_ingestion_pipeline(
 
     if entities:
         await document_repo.save_extracted_entities(document_id, entities)
+        for entity in entities:
+            try:
+                await event_repo.create_event(
+                    document_id=document_id,
+                    case_id=case_id,
+                    metric_type="entity_extraction_accuracy",
+                    entity_type=entity.get("entity_type", "unknown"),
+                    value=float(entity.get("confidence_score", 0.0)),
+                    phase="phase_1",
+                )
+            except Exception:
+                pass
         await db.commit()
 
     logger.info(f"Extracted {len(entities)} entities for {document_id}")
@@ -238,20 +250,6 @@ async def run_ingestion_pipeline(
         logger.exception(
             "Case summary upsert failed for case_id=%s", case_id
         )
-
-    # ── KPI events ────────────────────────────────────────────────────────────
-    for entity in entities:
-        try:
-            await event_repo.create_event(
-                document_id=document_id,
-                case_id=case_id,
-                metric_type="entity_extraction_accuracy",
-                entity_type=entity.get("entity_type", "unknown"),
-                value=float(entity.get("confidence_score", 0.0)),
-                phase="phase_1",
-            )
-        except Exception:
-            pass  # KPI failure must not break ingestion
 
     await db.commit()
     logger.info(f"Pipeline complete for {document_id} | status={'FAILED' if qdrant_failed else 'COMPLETED'}")

@@ -164,7 +164,7 @@ function JudgeDashboard() {
       headerActions={
         <div className="flex items-center gap-3">
           <button 
-            className="flex items-center gap-2 h-10 px-6 text-[11px] font-black bg-primary text-on-primary rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest"
+            className="flex items-center gap-2 h-10 px-6 text-[11px] font-black bg-accent text-white hover:opacity-90 rounded-xl shadow-lg shadow-accent/20 hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest"
             onClick={() => navigate('/judge/cases/new')}
           >
             <Plus className="w-4 h-4"/> {t('create_case', 'Create Case')}
@@ -343,7 +343,7 @@ function JudgeDashboard() {
                                  <Button 
                                     className={cn(
                                        "h-12 w-full px-8 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg transition-all active:scale-95 group/btn",
-                                       isUrgent ? "bg-red-600 hover:bg-red-700 shadow-red-500/20" : c.status === 'Finalized' ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20" : "bg-primary shadow-primary/20"
+                                       isUrgent ? "bg-red-600 hover:bg-red-700 shadow-red-500/20" : c.status === 'Finalized' ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20" : "bg-accent hover:opacity-90 text-white shadow-accent/20"
                                     )}
                                     onClick={(e) => {
                                       e.stopPropagation();

@@ -2,6 +2,7 @@ from typing import Any, TypedDict
 
 
 class AnalysisState(TypedDict):
+    user_id: str
     case_id: str
     entities: list[dict[str, Any]]
     search_results: list[dict[str, Any]] # Uploaded doc chunks

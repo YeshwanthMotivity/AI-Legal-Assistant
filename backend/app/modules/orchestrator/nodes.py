@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.modules.orchestrator.state import AnalysisState
 from app.utils.ai import call_ollama, extract_json
+from app.modules.audit.service import AuditService
 
 logger = logging.getLogger(__name__)
 
@@ -212,6 +213,19 @@ async def document_agent_node(state: AnalysisState) -> dict[str, Any]:
     db: AsyncSession = state["db"]
     from app.modules.document.models import Document, ExtractedEntity
 
+    # Log phase start
+    await AuditService(db).log(
+        user_id=state["user_id"],
+        action="ai_node_start",
+        resource_type="case",
+        resource_id=state["case_id"],
+        metadata={
+            "phase": "Evidence_Discovery",
+            "node": "Document Agent",
+            "description": "Extracting entities and enriching context from uploaded documents."
+        }
+    )
+
     # 1. Fetch entities
     result = await db.execute(
         select(ExtractedEntity).join(Document).where(Document.case_id == state["case_id"])
@@ -277,6 +291,18 @@ async def search_agent_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: search_agent_node starting for case {state['case_id']}")
     db: AsyncSession = state["db"]
+    
+    await AuditService(db).log(
+        user_id=state["user_id"],
+        action="ai_node_start",
+        resource_type="case",
+        resource_id=state["case_id"],
+        metadata={
+            "phase": "Vector_Retrieval",
+            "node": "Search Agent",
+            "description": "Performing neural search across judicial document embeddings."
+        }
+    )
 
     # Use pre-computed values
     query_text = state.get("query_text")
@@ -310,6 +336,19 @@ async def search_agent_node(state: AnalysisState) -> dict[str, Any]:
 async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: precedent_search_node starting for case {state['case_id']}")
+    db: AsyncSession = state["db"]
+    
+    await AuditService(db).log(
+        user_id=state["user_id"],
+        action="ai_node_start",
+        resource_type="case",
+        resource_id=state["case_id"],
+        metadata={
+            "phase": "Precedent_Analysis",
+            "node": "Precedent Agent",
+            "description": "Identifying relevant judicial precedents from the high court database."
+        }
+    )
 
     query_embedding = state.get("query_embedding")
 
@@ -493,6 +532,19 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
 async def law_search_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: law_search_node starting for case {state['case_id']}")
+    db: AsyncSession = state["db"]
+    
+    await AuditService(db).log(
+        user_id=state["user_id"],
+        action="ai_node_start",
+        resource_type="case",
+        resource_id=state["case_id"],
+        metadata={
+            "phase": "Legal_Validation",
+            "node": "Law Agent",
+            "description": "Cross-referencing statutory articles and civil code requirements."
+        }
+    )
 
     query_embedding = state.get("query_embedding")
 
@@ -641,6 +693,20 @@ async def _citation_bridge_sync_fallback(extended_citations: list[str], case_id:
 async def calculation_agent_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: calculation_agent_node starting for case {state['case_id']}")
+    db: AsyncSession = state["db"]
+    
+    await AuditService(db).log(
+        user_id=state["user_id"],
+        action="ai_node_start",
+        resource_type="case",
+        resource_id=state["case_id"],
+        metadata={
+            "phase": "Numerical_Analysis",
+            "node": "Calculation Agent",
+            "description": "Synthesizing financial metrics and entitlement breakdowns."
+        }
+    )
+
     entities = state.get("entities", [])
     salary = _parse_salary(_first_entity(entities, "salary"))
     employment_start = _parse_date(_first_entity(entities, "employment_start"))
@@ -765,15 +831,7 @@ async def context_builder_node(state: AnalysisState) -> dict[str, Any]:
 
 
 
-    # Recursive JSON attempt (in case of double encoded strings)
-    if text.startswith("{") or text.startswith("["):
-        try:
-            parsed_nested = json.loads(text)
-            return _flatten_to_text(parsed_nested)
-        except:
-            pass
-    
-    return text.strip()
+
 
 
 def _flatten_to_text(data: Any, indent: int = 0) -> str:
@@ -819,6 +877,19 @@ def _resolve_law_title(item: dict) -> str:
 async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: reasoning_agent_node starting for case {state['case_id']}")
+    db: AsyncSession = state["db"]
+    
+    await AuditService(db).log(
+        user_id=state["user_id"],
+        action="ai_node_start",
+        resource_type="case",
+        resource_id=state["case_id"],
+        metadata={
+            "phase": "Legal_Reasoning",
+            "node": "Reasoning Agent",
+            "description": "Synthesizing legal arguments and identifying core judicial outcomes."
+        }
+    )
 
     # ── 1. Route to the right model ──────────────────────────────────────────
     model_url, model_label, complexity_score = _select_model(state)
@@ -830,11 +901,11 @@ async def reasoning_agent_node(state: AnalysisState) -> dict[str, Any]:
         "RESPONSE SCHEMA (STRICT):\n"
         "{\n"
         "  \"outcome\": \"Approved\" | \"Rejected\" | \"Partial\",\n"
-        "  \"summary\": \"Case Metadata and Parties summary using EXACT Markdown requested (e.g. 📌 Case Metadata...)\",\n"
+        "  \"summary\": \"Provide a clean, narrative, human-readable summary of the dispute (1-3 sentences). Focus on the parties and the core issue (e.g. unpaid wages, wrongful termination). DO NOT include Case IDs, raw metadata lists, or emojis like 📌.\",\n"
         "  \"facts\": [\"String array of Key Facts and Court Analysis formatted cleanly with emojis (e.g. Issue 1:, 📌 Final Decision)\"],\n"
         "  \"reasoning\": \"Step-by-step legal justification. USE PLAIN TEXT ONLY. NO JSON OR OBJECTS INSIDE.\",\n"
-        "  \"cited_laws\": [\"Exact name/Article number of applicable UAE/DIFC Laws\"],\n"
-        "  \"cited_cases\": [\"Case References or Precedents\"],\n"
+        "  \"cited_laws\": [\"Exact name/Article number of applicable UAE/DIFC Laws. ONLY use the names, DO NOT include Match scores or percentages.\"],\n"
+        "  \"cited_cases\": [\"Case References or Precedents. ONLY use the names, DO NOT include Match scores.\"],\n"
         "  \"confidence\": 0.0 to 1.0,\n"
         "  \"draft_judgment\": \"Write a COURT RULING document using the case facts. NEVER copy law metadata. Use this format EXACTLY:\\n"
         f"{'محاكم مركز دبي المالي العالمي - المحكمة' if state.get('ui_language') == 'ar' else 'DIFC COURTS - TRIBUNAL'}\\n"
@@ -1031,11 +1102,23 @@ def _error_result(
         "error":              error_repr,
     }
 
-
-
 async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: explainability_builder_node starting for case {state['case_id']}")
+    db: AsyncSession = state["db"]
+
+    await AuditService(db).log(
+        user_id=state["user_id"],
+        action="ai_node_start",
+        resource_type="case",
+        resource_id=state["case_id"],
+        metadata={
+            "phase": "Legal_Validation",
+            "node": "Explainability Engine",
+            "description": "Finalizing legal citations and verifying article summaries."
+        }
+    )
+
     reasoning = state.get("reasoning", {})
     # Align with keys expected by OrchestratorService.run_analysis and get_case_analysis
     # Use search results from state if the LLM didn't provide specific citations
@@ -1057,13 +1140,35 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
 
     def _to_article_obj(item):
         if not item: return None
+        
+        # 1. HANDLE DICT INPUT (Direct Vector Result)
         if isinstance(item, dict):
             raw_title = _resolve_law_title(item)
             raw_content = item.get("content") or item.get("text") or item.get("summary") or "Citation mapped from analysis."
             title, content = _cleanse_text(raw_title), _cleanse_text(raw_content)
+        
+        # 2. HANDLE STRING INPUT (LLM Citation)
         else:
-            title, content = str(item), "Legal authority identified during case analysis."
+            title = str(item)
+            # Try to find a summary from vector search results if this title matches
+            matched_law = next((l for l in state.get("laws", []) if l.get("title") == title or l.get("article_number") == title), None)
+            if matched_law:
+                content = matched_law.get("summary") or matched_law.get("content") or matched_law.get("text") or "Statutory provision identified during legal framework mapping."
+            else:
+                content = "Statutory provision identified during legal framework mapping."
+        
+        # Strip score formatting if LLM halluncinated it into the title (e.g. '| Match: 0.85')
+        if " | Match:" in title:
+            title = title.split(" | Match:")[0].strip()
+        if " | MATCH:" in title:
+            title = title.split(" | MATCH:")[0].strip()
+            
         if _is_hallucination(title) or _is_hallucination(content): return None
+        
+        title = _cleanse_text(title)
+        content = _cleanse_text(content)
+        
+        # Cap length for hover UI
         short_content = content[:400] + "..." if len(content) > 400 else content
         return {"title": title, "content": short_content}
 
@@ -1071,8 +1176,20 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
     # Filter out Nones from the list comprehension
     law_articles = [obj for l in raw_laws if (obj := _to_article_obj(l)) is not None]
 
-    raw_precedents = reasoning.get("cited_cases") or state.get("precedents", [])
-    similar_precedents = [obj for p in raw_precedents if (obj := _to_precedent_obj(p)) is not None]
+    # Task 5: Ensure vector search precedents are NOT lost. Merge them with LLM citations.
+    vector_precedents = state.get("precedents", [])
+    llm_citations = reasoning.get("cited_cases", [])
+    
+    # Start with vector results as they have full metadata/IDs
+    similar_precedents = [obj for p in vector_precedents if (obj := _to_precedent_obj(p)) is not None]
+    
+    # Add any LLM citations that aren't already represented by title similarity
+    seen_titles = {str(p.get('title', '')).lower() for p in similar_precedents}
+    for cite in llm_citations:
+        if str(cite).lower() not in seen_titles:
+            if (obj := _to_precedent_obj(cite)) is not None:
+                similar_precedents.append(obj)
+                seen_titles.add(str(cite).lower())
 
     explainability = {
         "summary": reasoning.get("summary", ""),
@@ -1092,6 +1209,32 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
 async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: judgment_drafting_agent_node starting for case {state['case_id']}")
+    db: AsyncSession = state["db"]
+    
+    await AuditService(db).log(
+        user_id=state["user_id"],
+        action="ai_node_start",
+        resource_type="case",
+        resource_id=state["case_id"],
+        metadata={
+            "phase": "Judicial_Review",
+            "node": "Drafting Agent",
+            "description": "Formulating the final judicial determination and court orders."
+        }
+    )
+    
+    await AuditService(db).log(
+        user_id=state["user_id"],
+        action="ai_node_start",
+        resource_type="case",
+        resource_id=state["case_id"],
+        metadata={
+            "phase": "Judgment_Drafting",
+            "node": "Drafting Agent",
+            "description": "Generating the formal court ruling and finalizing judicial orders."
+        }
+    )
+
     reasoning = state.get("reasoning", {})
     context = state.get("context", {})
     meta = context.get("case_metadata", {})
@@ -1154,7 +1297,24 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
         draft_content = _cleanse_text(draft_content)
     except Exception as e:
         logger.warning(f"judgment_drafting_agent_node failed: {e}, using reasoning fallback")
-        draft_content = reasoning.get("draft_judgment") or reasoning.get("reasoning") or ""
+        # Build HTML summary fallback from existing variables
+        lang = state.get("ui_language", "en")
+        if lang == "ar":
+            draft_content = (
+                f"<p>نظرت هذه المحكمة في دعوى <strong>{claimant}</strong> ضد <strong>{respondent}</strong> بشأن <strong>{case_type}</strong>.</p>"
+                f"<h3>🔹 النتائج الواقعية</h3><p>{facts_summary}</p>"
+                f"<h3>🔹 التحليل القانوني</h3><p>{reasoning_text}</p>"
+                f"<h3>🔹 القرار والأوامر</h3><p>تم {outcome} الطلب.</p>"
+                f"<h3>🔹 السند القانوني</h3><p>{', '.join(cited_laws[:5])}</p>"
+            )
+        else:
+            draft_content = (
+                f"<p>This Tribunal has considered the claim of <strong>{claimant}</strong> against <strong>{respondent}</strong> regarding <strong>{case_type}</strong>.</p>"
+                f"<h3>🔹 FINDINGS OF FACT</h3><p>{facts_summary}</p>"
+                f"<h3>🔹 LEGAL ANALYSIS</h3><p>{reasoning_text}</p>"
+                f"<h3>🔹 DECISION & ORDERS</h3><p>The claim is {outcome}.</p>"
+                f"<h3>🔹 LEGAL BASIS</h3><p>{', '.join(cited_laws[:5])}</p>"
+            )
 
     final_draft = (
         f"<div style='font-family: inherit; color: #1a1a1a;'>"

@@ -1,4 +1,5 @@
 import asyncio
+import time
 import uuid
 import httpx
 import logging
@@ -19,6 +20,7 @@ class SearchService:
         self.evaluation_repository = EvaluationEventRepository(db)
 
     async def search(self, request: SearchRequest, precomputed_embedding: list[float] | None = None) -> SearchResponse:
+        search_start = time.monotonic()
         if settings.enable_sparse_search:
             logger.warning("Sparse search requested but not implemented in this dense-only baseline. Falling back to dense only.")
         query_id = str(uuid.uuid4())
@@ -177,7 +179,14 @@ class SearchService:
                 metric_type="search_result_count",
                 value=float(len(final_results)),
             )
-            await self.db.commit()
+            await self.evaluation_repository.create_search_event(
+                query_id=query_id,
+                case_id=request.case_id,
+                metric_type="search_latency",
+                value=time.monotonic() - search_start,
+            )
+            # KPI logging failure must NOT break a successful search
+            await self.db.flush()
         except Exception as exc:
             # KPI logging failure must NOT break a successful search
             logger.exception("Search KPI persistence failed — returning results anyway")

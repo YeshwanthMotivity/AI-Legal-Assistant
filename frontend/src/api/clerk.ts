@@ -80,3 +80,8 @@ export const clerkGetDocumentContent = async (caseId: string, documentId: string
   })
   return response.data
 }
+
+export const clerkGetAuditLogs = async (caseId: string) => {
+  const response = await apiClient.get<any[]>(`/audit?case_id=${caseId}`)
+  return response.data
+}

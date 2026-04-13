@@ -222,7 +222,7 @@ const PrecedentDetailPage: React.FC = () => {
                       const getOutcomeStyle = (oRaw: string) => {
                         const o = oRaw.toLowerCase()
                         if (o.includes('dismiss')) return { label: 'Dismissed', className: 'bg-red-50 text-red-700 border-red-200' }
-                        if (o.includes('award') || o.includes('upheld')) return { label: 'Awarded', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+                        if (o.includes('award') || o.includes('upheld')) return { label: 'Awarded', className: 'bg-primary/5 text-primary border-primary/20' }
                         if (o.includes('settle')) return { label: 'Settled', className: 'bg-blue-50 text-blue-700 border-blue-200' }
                         return { label: oRaw || 'N/A', className: 'bg-slate-50 text-slate-700 border-slate-200' }
                       }

@@ -45,7 +45,17 @@ async def create_case(
 ):
     """Create a new case."""
     case = await service.create_case(case_data, current_user["sub"])
-    await AuditService(db).log(current_user["sub"], "create_case", "case", case.id)
+    await AuditService(db).log(
+        user_id=current_user["sub"],
+        action="create_case",
+        resource_type="case",
+        resource_id=case.id,
+        metadata={
+            "phase": "Case_Creation",
+            "description": "New judicial case registry established in system.",
+            "case_number": case.case_number
+        }
+    )
     await db.commit()
     return case
 
@@ -122,7 +132,7 @@ async def analyze_case(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Case not found"
         )
-    return await service.analyze_case(case_id, background_tasks, language)
+    return await service.analyze_case(case_id, current_user["sub"], background_tasks, language)
 
 
 @router.get("/{case_id}/analysis", response_model=CaseAnalysisResponse)

@@ -3,114 +3,112 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
 import { Link } from 'react-router-dom';
 import { 
- FileText, 
- Upload, 
- Briefcase, 
- Clock, 
- CheckCircle2,
- Settings,
- ArrowRight,
- Gavel
+  FileText, 
+  Upload, 
+  Briefcase, 
+  CheckCircle2,
+  ArrowRight,
+  Gavel
 } from 'lucide-react';
 import PortalLayout from '../components/layout/PortalLayout';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import StatCard from '@/components/StatCard';
 import { Button } from '@/components/ui/button';
 
 export default function ClerkDashboard(): ReactNode {
- const { user } = useAuth();
- const { t } = useTranslation();
+  const { user } = useAuth();
+  const { t } = useTranslation();
 
- return (
- <PortalLayout title={t('clerk.dashboard.title')} subtitle={`${t('common.welcome')}, ${user?.email || 'Legal Assistant'}`}>
- 
- {/* Quick Stats Banner */}
- <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
- <StatCard label={t('clerk.dashboard.pendingUploads')} value="12"icon={Upload} className="border-l-4 border-l-amber-500"/>
- <StatCard label={t('clerk.dashboard.activeCases')} value="48"icon={Briefcase} className="border-l-4 border-l-primary"/>
- <StatCard label={t('clerk.dashboard.completedTasks')} value="124"icon={CheckCircle2} className="border-l-4 border-l-[var(--primary)]"/>
- </div>
+  return (
+    <PortalLayout title={t('clerk.dashboard.title')} subtitle={`${t('common.welcome')}, ${user?.email || 'Legal Assistant'}`}>
+      <div className="space-y-16">
+        {/* Top Section: Summary Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="imperial-card p-6 group">
+            <div className="flex items-center justify-between mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                <Upload className="w-6 h-6"/>
+              </div>
+              <span className="text-[10px] font-black text-amber-500/40 uppercase tracking-widest">{t('clerk.dashboard.pendingUploads')}</span>
+            </div>
+            <h3 className="text-3xl font-black tracking-tighter tabular-nums text-foreground/90">12</h3>
+          </div>
 
- <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
- {/* Case Management Card */}
- <Card className="shadow-sm border-border/50 hover:shadow-md transition-shadow group">
- <CardHeader className="bg-muted/10 border-b py-6 px-8">
- <div className="flex items-center justify-between">
- <div className="flex items-center gap-3">
- <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
- <FileText className="w-6 h-6"/>
- </div>
- <div>
- <CardTitle className="text-xl">{t('clerk.dashboard.caseManagement')}</CardTitle>
- <CardDescription className="text-xs font-medium uppercase tracking-wider mt-1 opacity-70">{t('clerk.dashboard.docControlCenter')}</CardDescription>
- </div>
- </div>
- <Link to="/clerk/cases">
- <Button variant="ghost"size="icon"className="group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
- <ArrowRight className="w-5 h-5 rtl:rotate-180"/>
- </Button>
- </Link>
- </div>
- </CardHeader>
- <CardContent className="p-8">
- <p className="text-muted-foreground text-sm leading-relaxed mb-6 italic">
- {t('clerk.dashboard.caseMgmtDesc')}
- </p>
- <Link to="/clerk/cases">
- <Button className="w-full h-11 shadow-lg shadow-primary/20 gap-2 font-bold">
- {t('clerk.dashboard.openWorkspace')}
- </Button>
- </Link>
- </CardContent>
- </Card>
+          <div className="imperial-card p-6 group">
+            <div className="flex items-center justify-between mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary shadow-inner group-hover:scale-110 transition-transform duration-500">
+                <Briefcase className="w-6 h-6"/>
+              </div>
+              <span className="text-[10px] font-black text-primary/40 uppercase tracking-widest">{t('clerk.dashboard.activeCases')}</span>
+            </div>
+            <h3 className="text-3xl font-black tracking-tighter tabular-nums text-foreground/90">48</h3>
+          </div>
 
- {/* Case Assignment Card */}
- <Card className="shadow-sm border-border/50 hover:shadow-md transition-shadow group">
- <CardHeader className="bg-muted/10 border-b py-6 px-8">
- <div className="flex items-center justify-between">
- <div className="flex items-center gap-3">
- <div className="p-2.5 bg-[var(--accent-gold)]/10 rounded-xl text-[var(--accent-gold)]">
- <Gavel className="w-6 h-6"/>
- </div>
- <div>
- <CardTitle className="text-xl">{t('clerk.dashboard.caseAssignment', 'Case Assignment')}</CardTitle>
- <CardDescription className="text-xs font-medium uppercase tracking-wider mt-1 opacity-70">{t('clerk.dashboard.assignmentCenter', 'Judicial Assignment Center')}</CardDescription>
- </div>
- </div>
- <Link to="/clerk/assignments">
- <Button variant="ghost" size="icon" className="group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
- <ArrowRight className="w-5 h-5 rtl:rotate-180"/>
- </Button>
- </Link>
- </div>
- </CardHeader>
- <CardContent className="p-8">
- <p className="text-muted-foreground text-sm leading-relaxed mb-6 italic">
- {t('clerk.dashboard.assignmentDesc', 'Assign analyzed cases to the appropriate judge for review and final decision-making.')}
- </p>
- <Link to="/clerk/assignments">
- <Button variant="outline" className="w-full h-11 border-[var(--accent-gold)]/20 text-[var(--accent-gold)] bg-[var(--accent-gold)]/5 hover:bg-[var(--accent-gold)]/10 gap-2 font-bold">
- {t('clerk.dashboard.openAssignments', 'Open Assignments')}
- </Button>
- </Link>
- </CardContent>
- </Card>
- </div>
+          <div className="imperial-card p-6 group">
+            <div className="flex items-center justify-between mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-primary shadow-inner group-hover:scale-110 transition-transform duration-500">
+                <CheckCircle2 className="w-6 h-6"/>
+              </div>
+              <span className="text-[10px] font-black text-primary/40 uppercase tracking-widest">{t('clerk.dashboard.completedTasks')}</span>
+            </div>
+            <h3 className="text-3xl font-black tracking-tighter tabular-nums text-foreground/90">124</h3>
+          </div>
+        </div>
 
- {/* System Status Banner */}
- <div className="mt-10 p-6 bg-card border rounded-2xl flex items-center justify-between shadow-sm">
- <div className="flex items-center gap-4">
- <div className="w-3 h-3 bg-[var(--primary)] rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"/>
- <div>
- <h4 className="text-sm font-bold tracking-tight">{t('clerk.dashboard.aiNodesOnline')}</h4>
- <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest leading-none mt-0.5">{t('clerk.dashboard.latencyInfo')}</p>
- </div>
- </div>
- <Button variant="ghost"size="sm"className="gap-2 text-muted-foreground text-xs uppercase font-black hover:text-primary transition-colors">
- <Settings className="w-4 h-4"/>
- {t('clerk.dashboard.hardwareDiagnostics')}
- </Button>
- </div>
- </PortalLayout>
- );
+        {/* Bottom Section: Management & Assignment Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Case Management Card */}
+          <div className="imperial-card overflow-hidden group flex flex-col">
+            <div className="p-8 flex-1">
+              <div className="flex items-center justify-between mb-6">
+                <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-xl shadow-primary/10 transition-all duration-700 group-hover:rotate-6">
+                  <FileText className="w-7 h-7"/>
+                </div>
+                <div className="text-right">
+                  <h3 className="text-xl font-black tracking-tight text-foreground/90">{t('clerk.dashboard.caseManagement') || 'Case Management'}</h3>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40 mt-1">{t('clerk.dashboard.docControlCenter')}</p>
+                </div>
+              </div>
+              <p className="text-[14px] font-medium text-muted-foreground leading-relaxed italic font-serif opacity-80 antialiased">
+                {t('clerk.dashboard.caseMgmtDesc')}
+              </p>
+            </div>
+            <div className="p-6 bg-muted/5 group-hover:bg-primary/5 transition-colors border-t border-border/10">
+              <Link to="/clerk/cases">
+                <Button className="w-full h-12 bg-primary hover:bg-primary-hover text-white rounded-xl gap-3 flex items-center justify-center font-black uppercase tracking-[0.2em] text-[11px] shadow-xl shadow-primary/20 transition-all active:scale-95">
+                  <span>{t('clerk.dashboard.openWorkspace')}</span>
+                  <ArrowRight className="w-5 h-5 rtl:rotate-180 group-hover:translate-x-1 transition-transform"/>
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Case Assignment Card */}
+          <div className="imperial-card overflow-hidden group flex flex-col">
+            <div className="p-8 flex-1">
+              <div className="flex items-center justify-between mb-6">
+                <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center text-white shadow-xl shadow-accent/20 transition-all duration-700 group-hover:-rotate-6">
+                  <Gavel className="w-7 h-7"/>
+                </div>
+                <div className="text-right">
+                  <h3 className="text-xl font-black tracking-tight text-foreground/90">{t('clerk.dashboard.caseAssignment')}</h3>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40 mt-1">{t('clerk.dashboard.assignmentCenter')}</p>
+                </div>
+              </div>
+              <p className="text-[14px] font-medium text-muted-foreground leading-relaxed italic font-serif opacity-80 antialiased">
+                {t('clerk.dashboard.assignmentDesc')}
+              </p>
+            </div>
+            <div className="p-6 bg-muted/5 group-hover:bg-accent/5 transition-colors border-t border-border/10">
+              <Link to="/clerk/assignments">
+                <Button className="w-full h-12 bg-accent hover:opacity-90 text-white rounded-xl gap-3 flex items-center justify-center font-black uppercase tracking-[0.2em] text-[11px] shadow-xl shadow-accent/20 transition-all active:scale-95">
+                  <span>{t('clerk.dashboard.openAssignments')}</span>
+                  <ArrowRight className="w-5 h-5 rtl:rotate-180 group-hover:translate-x-2 transition-transform"/>
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </PortalLayout>
+  );
 }

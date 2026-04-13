@@ -78,7 +78,7 @@ async def validate_document_relevance(
         
         if not is_relevant:
             # More descriptive message for the user
-            return False, f"The AI indicates this document (type: {detected_type}) is NOT relevant to the case parties or narrative: {explanation}"
+            return False, "Upload failed: This document is not relevant to the case."
         
         # If is_relevant is true, we allow the upload even if category matching was strict previously.
         # This ensures that if the parties match (the primary concern), the file gets in.

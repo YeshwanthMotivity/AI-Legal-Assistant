@@ -198,7 +198,7 @@ const UserManagement = () => {
  <Button 
  variant="ghost"
  size="sm"
- className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-bold gap-2 h-8"
+ className="text-primary hover:text-primary-hover hover:bg-primary/10 font-bold gap-2 h-8"
  disabled={activateMutation.isPending}
  onClick={() => {
  if (!window.confirm(t('admin.messages.confirmActivate', 'Are you sure you want to activate this user?'))) return

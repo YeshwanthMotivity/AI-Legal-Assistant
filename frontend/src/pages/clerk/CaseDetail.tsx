@@ -43,8 +43,10 @@ import {
   clerkDeleteCase,
   clerkGetCase,
   clerkDeleteCaseDocument,
-  clerkGetDocumentContent
+  clerkGetDocumentContent,
+  clerkGetAuditLogs
 } from '../../api/clerk'
+import ActivityLogMatrix from '../../components/judge/workspace/ActivityLogMatrix'
 import { useCaseAnalysisPolling } from '../../hooks/useCaseAnalysisPolling'
 import type { DocumentType, JudgmentRequest } from '../../types/judge'
 import { Button } from '@/components/ui/button'
@@ -134,11 +136,12 @@ const CaseDetail = () => {
   const [phaseChats, setPhaseChats] = useState<Record<number, {role: 'user'|'assistant', content: string}[]>>({});
   const chatHistory = phaseChats[viewedIdx] || [];
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [isActivityMatrixOpen, setIsActivityMatrixOpen] = useState(false)
 
   const stages = [
     { id: 1, label: t('judge.stages.creation', 'Case Creation'), sub: 'Details confirmation', icon: FileText, statuses: ['Created'] },
     { id: 2, label: t('judge.stages.evidence', 'Evidence Upload'), sub: 'Documents & Evidence', icon: Upload, statuses: ['DocumentsUploaded'] },
-    { id: 3, label: t('judge.stages.analysis', 'AI - Analysis'), sub: 'Research & Synthesis', icon: BrainCircuit, statuses: ['AIAnalysisPending', 'AIAnalysisReady', 'DraftGenerated', 'Finalized'] },
+    { id: 3, label: t('judge.stages.analysis', 'AI - Analysis'), sub: 'Research & Analysis', icon: BrainCircuit, statuses: ['AIAnalysisPending', 'AIAnalysisReady', 'DraftGenerated', 'Finalized'] },
   ];
 
   const caseQuery = useQuery({
@@ -167,6 +170,7 @@ const CaseDetail = () => {
 
   const shouldPoll = analysisRequested || caseData?.status === 'AIAnalysisPending';
   const analysisQuery = useCaseAnalysisPolling(id, shouldPoll)
+
 
   const deleteMutation = useMutation({
     mutationFn: () => clerkDeleteCase(id as string),
@@ -217,6 +221,13 @@ const CaseDetail = () => {
     }
   })
 
+  const auditLogsQuery = useQuery({
+    queryKey: ['case-audit-logs', id],
+    queryFn: () => clerkGetAuditLogs(id as string),
+    enabled: Boolean(id) && isActivityMatrixOpen,
+    refetchInterval: isActivityMatrixOpen ? 3000 : false
+  })
+
   const handleViewDocument = async (docId: string) => {
     if (!id) return;
     try {
@@ -235,6 +246,15 @@ const CaseDetail = () => {
   const lawArticles = analysis?.lawArticles ?? []
   const precedents = useMemo(() => (analysis?.similarPrecedents ?? []).slice(0, 5), [analysis?.similarPrecedents])
   const entitlements = analysis?.entitlementBreakdown ?? []
+
+  // AUTOMATED ANALYSIS TRIGGER: When clerk moves to Phase 3 (viewedIdx === 2), 
+  // trigger analysis if it hasn't been started or results are missing.
+  useEffect(() => {
+    if (viewedIdx === 2 && !isReady && !isActivelyLoading && !analysisRequested) {
+      runAnalysisMutation.mutate();
+      setAnalysisRequested(true);
+    }
+  }, [viewedIdx, isReady, isActivelyLoading, analysisRequested, runAnalysisMutation]);
 
   const handleBatchFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
@@ -416,16 +436,18 @@ const CaseDetail = () => {
         
         <div className={cn("flex-1 flex flex-col min-w-0 bg-white/40 shadow-inner", i18n.language === 'ar' ? "border-r border-border/40" : "border-l border-border/40")}>
           
-          <CaseContextBar
-            caseNumber={caseData?.case_number ?? '...'}
-            title={caseData?.title ?? ''}
-            status={caseData?.status}
-            confidence={analysis?.confidence}
-            isActivelyLoading={isActivelyLoading}
-            isDeleting={deleteMutation.isPending}
-            onRunAnalysis={() => { runAnalysisMutation.mutate(undefined as any) }}
-            onDelete={() => { deleteMutation.mutate(undefined as any) }}
-          />
+      <CaseContextBar
+        caseId={id!}
+        caseNumber={caseData?.case_number ?? '...'}
+        title={caseData?.title ?? ''}
+        status={caseData?.status}
+        confidence={analysis?.confidence}
+        isActivelyLoading={isActivelyLoading}
+        isDeleting={deleteMutation.isPending}
+        onRunAnalysis={() => { runAnalysisMutation.mutate(undefined as any) }}
+        onDelete={() => { deleteMutation.mutate(undefined as any) }}
+        onOpenActivity={() => setIsActivityMatrixOpen(true)}
+      />
           
           <div className="flex-1 flex flex-col overflow-y-auto">
              <CaseWorkflow 
@@ -435,17 +457,6 @@ const CaseDetail = () => {
                 onStageClick={(idx) => { setLocalMessage(null); setViewedIdx(idx); setChatInput(""); }}
              />
 
-             {localMessage && localMessage.phase === viewedIdx && (
-               <div className="mx-8 mt-6 p-4 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-between animate-in zoom-in duration-300 shadow-sm">
-                 <div className="flex items-center gap-3">
-                   <Sparkles className="w-4 h-4 text-primary animate-pulse"/>
-                   <span className="text-xs font-bold text-foreground">{localMessage.text}</span>
-                 </div>
-                 <button onClick={() => setLocalMessage(null)} className="p-1 hover:bg-primary/10 rounded-md transition-colors">
-                   <XIcon className="w-4 h-4 text-muted-foreground"/>
-                 </button>
-               </div>
-             )}
 
              <div className="px-8 py-8 w-full">
                 <div className="max-w-5xl mx-auto space-y-8 pb-32">
@@ -456,13 +467,22 @@ const CaseDetail = () => {
                               <h2 className="text-lg font-black tracking-tight text-foreground uppercase leading-none">{t('judge.workspace.caseOverview', 'Case Overview')}</h2>
                               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-2 opacity-50">{t('judge.workspace.caseInfo', 'Case Registry Detail')}</p>
                            </div>
-                           <button 
-                             className="flex items-center gap-2 h-10 px-5 text-[11px] font-black bg-white border-2 border-primary/20 rounded-xl shadow-md hover:border-primary/60 hover:text-primary hover:shadow-lg transition-all uppercase tracking-widest group"
-                           >
-                             <ActivityIcon className="w-4 h-4 text-primary opacity-40 group-hover:opacity-100 transition-opacity" /> 
-                             {t('judge.workspace.activityLogs', 'Activity Logs Matrix')}
-                           </button>
                         </header>
+
+                        {localMessage && localMessage.phase === 0 && (
+                          <div className={cn(
+                            "p-4 rounded-xl border flex items-center justify-between animate-in zoom-in duration-300 shadow-sm",
+                            messageType === 'success' ? "border-primary/30 bg-primary/5" : "border-rose-200 bg-rose-50"
+                          )}>
+                            <div className="flex items-center gap-3">
+                              {messageType === 'success' ? <Sparkles className="w-4 h-4 text-primary animate-pulse"/> : <ActivityIcon className="w-4 h-4 text-rose-600"/>}
+                              <span className={cn("text-xs font-bold", messageType === 'success' ? "text-foreground" : "text-rose-900 line-clamp-2")}>{localMessage.text}</span>
+                            </div>
+                            <button onClick={() => setLocalMessage(null)} className="p-1 hover:bg-primary/10 rounded-md transition-colors">
+                              <XIcon className="w-4 h-4 text-muted-foreground"/>
+                            </button>
+                          </div>
+                        )}
 
                         <div className="grid grid-cols-3 gap-4">
                            <div className="bg-white p-5 rounded-2xl border border-border shadow-sm flex flex-col gap-3 group hover:border-primary/20 transition-all h-[110px]">
@@ -553,33 +573,65 @@ const CaseDetail = () => {
                    )}
 
                    {viewedIdx === 1 && (
-                     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-border/80">
-                           <DocumentsPanel
-                             documents={documentsQuery.data?.items ?? []}
-                             isActivelyLoading={isActivelyLoading}
-                             isReady={isReady}
-                             caseTitle={caseData?.title ?? undefined}
-                             caseDescription={caseData?.description ?? undefined}
-                             selectedFiles={selectedFiles}
-                             setSelectedFiles={setSelectedFiles}
-                             selectedDocTypes={selectedDocTypes}
-                             setSelectedDocTypes={setSelectedDocTypes}
-                             batchFileInputRef={fileInputRef}
-                             onBatchFileSelect={handleBatchFileSelect}
-                             onBatchUpload={handleBatchUpload}
-                             isBatchUploading={batchUploading}
-                             batchProgress={batchProgress}
-                             onDeleteDocument={(docId) => deleteDocumentMutation.mutate(docId)}
-                             isDeletingDocument={deleteDocumentMutation.isPending ? deleteDocumentMutation.variables as string : null}
-                             onViewDocument={handleViewDocument}
-                           />
-                        </div>
-                     </div>
+                      <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-8">
+                        <header className="flex items-center justify-between">
+                            <div>
+                               <h2 className="text-lg font-black tracking-tight text-foreground uppercase leading-none">{t('judge.workspace.evidenceUpload', 'Evidence Upload')}</h2>
+                               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-2 opacity-50">{t('judge.workspace.discoveryInventory', 'Discovery Inventory Control')}</p>
+                            </div>
+                        </header>
+
+                        <DocumentsPanel
+                          documents={documentsQuery.data?.items ?? []}
+                          isActivelyLoading={isActivelyLoading}
+                          isReady={isReady}
+                          caseTitle={caseData?.title ?? undefined}
+                          caseDescription={caseData?.description ?? undefined}
+                          selectedFiles={selectedFiles}
+                          setSelectedFiles={setSelectedFiles}
+                          selectedDocTypes={selectedDocTypes}
+                          setSelectedDocTypes={setSelectedDocTypes}
+                          batchFileInputRef={fileInputRef}
+                          onBatchFileSelect={handleBatchFileSelect}
+                          onBatchUpload={handleBatchUpload}
+                          isBatchUploading={batchUploading}
+                          batchProgress={batchProgress}
+                          onDeleteDocument={(docId) => deleteDocumentMutation.mutate(docId)}
+                          isDeletingDocument={deleteDocumentMutation.isPending ? deleteDocumentMutation.variables as string : null}
+                          onViewDocument={handleViewDocument}
+                          notification={localMessage && localMessage.phase === 1 ? {
+                            text: localMessage.text,
+                            type: messageType,
+                            onClear: () => setLocalMessage(null)
+                          } : undefined}
+                        />
+                      </div>
                    )}
 
                    {viewedIdx === 2 && (
-                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-8">
+                        <header className="flex items-center justify-between">
+                            <div>
+                               <h2 className="text-lg font-black tracking-tight text-foreground uppercase leading-none">{t('judge.workspace.aiAnalysis', 'AI Analysis')}</h2>
+                               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-2 opacity-50">{t('judge.workspace.intelligenceCenter', 'Neural Reasoning Engine')}</p>
+                            </div>
+                        </header>
+
+                        {localMessage && localMessage.phase === 2 && (
+                          <div className={cn(
+                            "p-4 rounded-xl border flex items-center justify-between animate-in zoom-in duration-300 shadow-sm",
+                            messageType === 'success' ? "border-primary/30 bg-primary/5" : "border-rose-200 bg-rose-50"
+                          )}>
+                            <div className="flex items-center gap-3">
+                              {messageType === 'success' ? <Sparkles className="w-4 h-4 text-primary animate-pulse"/> : <ActivityIcon className="w-4 h-4 text-rose-600"/>}
+                              <span className={cn("text-xs font-bold", messageType === 'success' ? "text-foreground" : "text-rose-900")}>{localMessage.text}</span>
+                            </div>
+                            <button onClick={() => setLocalMessage(null)} className="p-1 hover:bg-primary/10 rounded-md transition-colors">
+                              <XIcon className="w-4 h-4 text-muted-foreground"/>
+                            </button>
+                          </div>
+                        )}
+
                         <IntelligenceCenter
                           analysis={analysis}
                           caseId={id ?? ''}
@@ -598,8 +650,8 @@ const CaseDetail = () => {
                                 <BrainCircuit className="w-10 h-10 text-primary animate-pulse"/>
                              </div>
                              <div>
-                                <h3 className="text-xl font-black text-foreground uppercase tracking-tight">{t('judge.workspace.runAnalysis', 'Initialize Synthesis')}</h3>
-                                <p className="text-xs font-semibold text-muted-foreground mt-2 opacity-60 antialiased max-w-sm mx-auto">Activate the Cylix reasoning engine for cross-statutory discovery.</p>
+                                <h3 className="text-xl font-black text-foreground uppercase tracking-tight">{t('judge.workspace.runAnalysis', 'Initialize Analysis')}</h3>
+                                <p className="text-xs font-semibold text-muted-foreground mt-2 opacity-60 antialiased max-w-sm mx-auto">Activate the Cylix reasoning engine for deep case analysis.</p>
                              </div>
                              <Button 
                                className="h-12 px-10 bg-primary text-on-primary rounded-xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-[11px]"
@@ -615,7 +667,7 @@ const CaseDetail = () => {
                                 <CheckCircle2 className="w-8 h-8"/>
                              </div>
                              <div>
-                               <h3 className="text-xl font-black text-foreground uppercase tracking-tight">{t('clerk.analysis.ready', 'Analysis Synthesis Complete')}</h3>
+                               <h3 className="text-xl font-black text-foreground uppercase tracking-tight">{t('clerk.analysis.ready', 'AI Case Analysis Complete')}</h3>
                                <p className="text-xs font-semibold text-muted-foreground mt-2 opacity-60">Verified legal insights are now available. Proceed to judge allocation.</p>
                              </div>
                              <Button 
@@ -636,6 +688,21 @@ const CaseDetail = () => {
                    )}
                 </div>
              </div>
+
+             {/* Activity Log Overlay */}
+             {isActivityMatrixOpen && (
+               <div className="fixed inset-0 z-[100] flex justify-end animate-in fade-in duration-300">
+                 <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setIsActivityMatrixOpen(false)} />
+                 <div className="relative w-full max-w-xl h-full shadow-2xl">
+                   <ActivityLogMatrix 
+                     logs={auditLogsQuery.data || []} 
+                     onClose={() => setIsActivityMatrixOpen(false)} 
+                     isOpen={isActivityMatrixOpen}
+                     isLoading={auditLogsQuery.isLoading}
+                   />
+                 </div>
+               </div>
+             )}
 
              <div className="sticky bottom-0 bg-white border-t border-border/40 px-8 py-3 w-full flex items-center justify-between z-30 shadow-[0_-4px_20px_rgba(0,0,0,0.02)] shrink-0">
                 <Button
@@ -659,6 +726,10 @@ const CaseDetail = () => {
                     if (viewedIdx === 2) {
                       navigate('/clerk/assignments');
                     } else {
+                      // Trigger Analysis when moving to Phase 3
+                      if (viewedIdx === 1 && !isReady && !isActivelyLoading) {
+                        runAnalysisMutation.mutate();
+                      }
                       setLocalMessage(null); 
                       setViewedIdx(prev => Math.min(2, prev + 1)); 
                       setChatInput(""); 
@@ -698,7 +769,7 @@ const CaseDetail = () => {
              <div className="flex-1 overflow-y-auto w-full flex flex-col">
                 <div className="p-6 bg-primary/5 border-b border-border/40 relative overflow-hidden shrink-0 group">
                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
-                   <p className="text-[8px] font-black uppercase tracking-[0.25em] text-primary opacity-60 mb-3">{t('judge.assistant.synthesis', 'Strategic Synthesis')}</p>
+                   <p className="text-[8px] font-black uppercase tracking-[0.25em] text-primary opacity-60 mb-3">{t('judge.assistant.synthesis', 'Strategic Analysis')}</p>
                    <p className="text-[12px] font-bold italic leading-relaxed text-foreground antialiased">
                      &ldquo;{assistant.insight}&rdquo;
                    </p>

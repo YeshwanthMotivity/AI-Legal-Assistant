@@ -70,7 +70,7 @@ async def get_case_activity(
     case_id: str,
     limit: int = 50,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(require_role(UserRole.JUDGE))
+    current_user: dict = Depends(require_role(UserRole.JUDGE, UserRole.CLERK, UserRole.ADMIN))
 ):
     """Get activity for a specific case (accessible by Judges)."""
     query = select(AuditLog).where(

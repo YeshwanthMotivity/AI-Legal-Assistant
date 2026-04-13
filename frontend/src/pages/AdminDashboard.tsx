@@ -1,156 +1,170 @@
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
- Users, 
- BarChart3, 
- ShieldAlert, 
- Settings, 
- Activity,
- ArrowRight,
- Database,
- Lock
+  Users, 
+  BarChart3, 
+  ShieldAlert, 
+  Settings, 
+  Activity,
+  ArrowRight,
+  Database,
+  Lock
 } from 'lucide-react';
 import PortalLayout from '../components/layout/PortalLayout';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import StatCard from '@/components/StatCard';
 import { Button } from '@/components/ui/button';
 
-import { useNavigate } from 'react-router-dom';
-
 export default function AdminDashboard(): ReactNode {
- const { user } = useAuth();
- const { t } = useTranslation();
- const navigate = useNavigate();
+  const { user } = useAuth();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
 
- return (
- <PortalLayout title={t('admin.dashboard.title')} subtitle={t('admin.dashboard.subtitle', { email: user?.email || 'Admin' })}>
- 
- {/* System Health Overview */}
- <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
- <StatCard label={t('admin.dashboard.totalUsers')} value="1,284"icon={Users} className="border-l-4 border-l-blue-500"/>
- <StatCard label={t('admin.dashboard.systemUptime')} value="99.9%"icon={Activity} className="border-l-4 border-l-[var(--primary)]"/>
- <StatCard label={t('admin.dashboard.databaseLoad')} value="14%"icon={Database} className="border-l-4 border-l-amber-500"/>
- <StatCard label={t('admin.dashboard.securityAlerts')} value="0"icon={ShieldAlert} className="border-l-4 border-l-primary"/>
- </div>
+  return (
+    <PortalLayout title={t('admin.dashboard.title')} subtitle={t('admin.dashboard.subtitle', { email: user?.email || 'Admin' })}>
+      
+      {/* System Health Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+        <div className="imperial-card p-8 group">
+          <div className="flex items-center justify-between mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-inner group-hover:scale-110 transition-transform duration-500">
+              <Users className="w-6 h-6"/>
+            </div>
+            <span className="text-[10px] font-black text-blue-500/40 uppercase tracking-widest">{t('admin.dashboard.totalUsers')}</span>
+          </div>
+          <h3 className="text-3xl font-black tracking-tighter tabular-nums">1,284</h3>
+        </div>
 
- <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
- {/* User Management Card */}
- <Card className="shadow-sm border-border/50 hover:shadow-md transition-shadow group">
- <CardHeader className="bg-muted/10 border-b py-6 px-8">
- <div className="flex items-center justify-between">
- <div className="flex items-center gap-3">
- <div className="p-2.5 bg-[var(--accent-gold)]/10 rounded-xl text-[var(--accent-gold)]">
- <Users className="w-6 h-6"/>
- </div>
- <div>
- <CardTitle className="text-lg">{t('admin.dashboard.userAccess')}</CardTitle>
- <CardDescription className="text-[10px] font-black uppercase tracking-widest mt-0.5 opacity-70">{t('admin.dashboard.iamController')}</CardDescription>
- </div>
- </div>
- <Link to="/admin/users">
- <Button variant="ghost"size="icon"className="group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
- <ArrowRight className="w-5 h-5 rtl:rotate-180"/>
- </Button>
- </Link>
- </div>
- </CardHeader>
- <CardContent className="p-8">
- <p className="text-muted-foreground text-xs leading-relaxed mb-6 italic">
- {t('admin.dashboard.userAccessDesc')}
- </p>
- <Link to="/admin/users">
- <Button variant="outline"className="w-full h-10 border-indigo-500/20 text-[var(--accent-gold)] bg-indigo-500/5 hover:bg-[var(--accent-gold)]/10 gap-2 font-bold uppercase text-[10px] tracking-widest">
- {t('admin.dashboard.manageAccess')}
- </Button>
- </Link>
- </CardContent>
- </Card>
+        <div className="imperial-card p-8 group">
+          <div className="flex items-center justify-between mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-primary shadow-inner group-hover:scale-110 transition-transform duration-500">
+              <Activity className="w-6 h-6"/>
+            </div>
+            <span className="text-[10px] font-black text-primary/40 uppercase tracking-widest">{t('admin.dashboard.systemUptime')}</span>
+          </div>
+          <h3 className="text-3xl font-black tracking-tighter tabular-nums">99.9%</h3>
+        </div>
 
- {/* System Metrics Card */}
- <Card className="shadow-sm border-border/50 hover:shadow-md transition-shadow group">
- <CardHeader className="bg-muted/10 border-b py-6 px-8">
- <div className="flex items-center justify-between">
- <div className="flex items-center gap-3">
- <div className="p-2.5 bg-[var(--primary)]/10 dark:bg-[var(--primary)]/20 rounded-xl text-[var(--primary)]">
- <BarChart3 className="w-6 h-6"/>
- </div>
- <div>
- <CardTitle className="text-lg">{t('admin.dashboard.aiPerformance')}</CardTitle>
- <CardDescription className="text-[10px] font-black uppercase tracking-widest mt-0.5 opacity-70">{t('admin.dashboard.resourceMonitor')}</CardDescription>
- </div>
- </div>
- <Link to="/admin/metrics">
- <Button variant="ghost"size="icon"className="group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
- <ArrowRight className="w-5 h-5 rtl:rotate-180"/>
- </Button>
- </Link>
- </div>
- </CardHeader>
- <CardContent className="p-8">
- <p className="text-muted-foreground text-xs leading-relaxed mb-6 italic">
- {t('admin.dashboard.aiPerfDesc')}
- </p>
- <Link to="/admin/metrics">
- <Button variant="outline"className="w-full h-10 border-[var(--primary)]/20 text-[var(--primary)] bg-[var(--primary)]/5 hover:bg-[var(--primary)]/10 gap-2 font-bold uppercase text-[10px] tracking-widest">
- {t('admin.dashboard.viewAnalytics')}
- </Button>
- </Link>
- </CardContent>
- </Card>
+        <div className="imperial-card p-8 group">
+          <div className="flex items-center justify-between mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 shadow-inner group-hover:scale-110 transition-transform duration-500">
+              <Database className="w-6 h-6"/>
+            </div>
+            <span className="text-[10px] font-black text-amber-500/40 uppercase tracking-widest">{t('admin.dashboard.databaseLoad')}</span>
+          </div>
+          <h3 className="text-3xl font-black tracking-tighter tabular-nums">14%</h3>
+        </div>
 
- {/* Audit Logs Card */}
- <Card className="shadow-sm border-border/50 hover:shadow-md transition-shadow group">
- <CardHeader className="bg-muted/10 border-b py-6 px-8">
- <div className="flex items-center justify-between">
- <div className="flex items-center gap-3">
- <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
- <Lock className="w-6 h-6"/>
- </div>
- <div>
- <CardTitle className="text-lg">{t('admin.dashboard.securityAudit')}</CardTitle>
- <CardDescription className="text-[10px] font-black uppercase tracking-widest mt-0.5 opacity-70">{t('admin.dashboard.complianceLedger')}</CardDescription>
- </div>
- </div>
- <Link to="/admin/audit">
- <Button variant="ghost"size="icon"className="group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
- <ArrowRight className="w-5 h-5 rtl:rotate-180"/>
- </Button>
- </Link>
- </div>
- </CardHeader>
- <CardContent className="p-8">
- <p className="text-muted-foreground text-xs leading-relaxed mb-6 italic">
- {t('admin.dashboard.auditDesc')}
- </p>
- <Link to="/admin/audit">
- <Button variant="outline"className="w-full h-10 border-primary/20 text-primary bg-primary/5 hover:bg-primary/10 gap-2 font-bold uppercase text-[10px] tracking-widest">
- {t('admin.dashboard.reviewLogs')}
- </Button>
- </Link>
- </CardContent>
- </Card>
- </div>
+        <div className="imperial-card p-8 group focus-within:ring-2 ring-red-500/20">
+          <div className="flex items-center justify-between mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center text-red-600 shadow-inner group-hover:scale-110 transition-transform duration-500">
+              <ShieldAlert className="w-6 h-6"/>
+            </div>
+            <span className="text-[10px] font-black text-red-500/40 uppercase tracking-widest">{t('admin.dashboard.securityAlerts')}</span>
+          </div>
+          <h3 className="text-3xl font-black tracking-tighter tabular-nums text-red-600">0</h3>
+        </div>
+      </div>
 
- {/* Global Configuration Banner */}
- <div className="mt-10 p-8 bg-black/5 dark:bg-white/5 border border-dashed rounded-3xl flex items-center justify-between">
- <div className="flex items-center gap-6">
- <div className="p-4 bg-white/50 dark:bg-black/50 rounded-2xl shadow-inner border">
- <Settings className="w-8 h-8 text-black/40 dark:text-white/40"/>
- </div>
- <div>
- <h4 className="text-lg font-black tracking-tight">{t('admin.dashboard.globalConfig')}</h4>
- <p className="text-xs text-muted-foreground font-medium italic">{t('admin.dashboard.globalConfigDesc')}</p>
- </div>
- </div>
- <Button 
- className="h-12 px-8 font-black uppercase tracking-widest text-xs"
- onClick={() => navigate('/admin/config')}
- >
- {t('admin.dashboard.enterConfigMode')}
- </Button>
- </div>
- </PortalLayout>
- );
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* User Management Card */}
+        <div className="imperial-card overflow-hidden group">
+          <div className="p-8 border-b border-border/10 bg-muted/5">
+            <div className="flex items-center justify-between mb-8">
+              <div className="w-14 h-14 bg-accent/10 rounded-2xl flex items-center justify-center text-accent shadow-inner border border-accent/10 transition-all duration-500 group-hover:rotate-6">
+                <Users className="w-7 h-7"/>
+              </div>
+              <div className="text-right">
+                <h3 className="text-sm font-black uppercase tracking-widest">{t('admin.dashboard.userAccess')}</h3>
+                <p className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-[0.3em] mt-2">{t('admin.dashboard.iamController')}</p>
+              </div>
+            </div>
+            <p className="text-[12px] font-medium text-muted-foreground leading-relaxed italic font-serif h-12">
+              {t('admin.dashboard.userAccessDesc')}
+            </p>
+          </div>
+          <div className="p-8 bg-white group-hover:bg-accent/5 transition-colors">
+            <Link to="/admin/users">
+              <Button className="w-full h-14 btn-royal-shine rounded-2xl gap-4 flex items-center justify-center">
+                <span>{t('admin.dashboard.manageAccess')}</span>
+                <ArrowRight className="w-5 h-5 rtl:rotate-180 group-hover:translate-x-2 transition-transform"/>
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* AI Performance Card */}
+        <div className="imperial-card overflow-hidden group">
+          <div className="p-8 border-b border-border/10 bg-muted/5">
+            <div className="flex items-center justify-between mb-8">
+              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-inner border border-primary/10 transition-all duration-500 group-hover:rotate-6">
+                <BarChart3 className="w-7 h-7"/>
+              </div>
+              <div className="text-right">
+                <h3 className="text-sm font-black uppercase tracking-widest">{t('admin.dashboard.aiPerformance')}</h3>
+                <p className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-[0.3em] mt-2">{t('admin.dashboard.resourceMonitor')}</p>
+              </div>
+            </div>
+            <p className="text-[12px] font-medium text-muted-foreground leading-relaxed italic font-serif h-12">
+              {t('admin.dashboard.aiPerfDesc')}
+            </p>
+          </div>
+          <div className="p-8 bg-white group-hover:bg-primary/5 transition-colors">
+            <Link to="/admin/metrics">
+              <Button className="w-full h-14 bg-primary hover:bg-primary-hover text-white rounded-2xl gap-4 flex items-center justify-center font-black uppercase tracking-widest text-[11px] shadow-xl shadow-primary/20 transition-all active:scale-95">
+                <span>{t('admin.dashboard.viewAnalytics')}</span>
+                <ArrowRight className="w-5 h-5 rtl:rotate-180 group-hover:translate-x-2 transition-transform"/>
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Security Audit Card */}
+        <div className="imperial-card overflow-hidden group">
+          <div className="p-8 border-b border-border/10 bg-muted/5">
+            <div className="flex items-center justify-between mb-8">
+              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-inner border border-primary/10 transition-all duration-500 group-hover:rotate-6">
+                <Lock className="w-7 h-7"/>
+              </div>
+              <div className="text-right">
+                <h3 className="text-sm font-black uppercase tracking-widest">{t('admin.dashboard.securityAudit')}</h3>
+                <p className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-[0.3em] mt-2">{t('admin.dashboard.complianceLedger')}</p>
+              </div>
+            </div>
+            <p className="text-[12px] font-medium text-muted-foreground leading-relaxed italic font-serif h-12">
+              {t('admin.dashboard.auditDesc')}
+            </p>
+          </div>
+          <div className="p-8 bg-white group-hover:bg-primary/5 transition-colors">
+            <Link to="/admin/audit">
+              <Button className="w-full h-14 bg-primary hover:bg-primary-hover text-white rounded-2xl gap-4 flex items-center justify-center font-black uppercase tracking-widest text-[11px] shadow-xl shadow-primary/20 transition-all active:scale-95">
+
+                <span>{t('admin.dashboard.reviewLogs')}</span>
+                <ArrowRight className="w-5 h-5 rtl:rotate-180 group-hover:translate-x-2 transition-transform"/>
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Global Configuration Banner */}
+      <div className="mt-12 p-10 bg-white border-2 border-dashed border-primary/20 rounded-[3rem] flex flex-col md:flex-row items-center justify-between shadow-inner gap-8">
+        <div className="flex items-center gap-8">
+          <div className="p-6 bg-primary/5 rounded-[2rem] shadow-sm border border-primary/10">
+            <Settings className="w-12 h-12 text-primary animate-pulse"/>
+          </div>
+          <div>
+            <h4 className="text-sm font-black uppercase tracking-widest">{t('admin.dashboard.globalConfig')}</h4>
+            <p className="text-[12px] text-muted-foreground font-medium italic mt-2 opacity-60 font-serif max-w-lg">{t('admin.dashboard.globalConfigDesc')}</p>
+          </div>
+        </div>
+        <Button 
+          className="h-14 px-12 font-black uppercase tracking-widest text-[11px] bg-white border-2 border-primary text-primary hover:bg-primary/5 transition-all rounded-2xl shadow-lg active:scale-95"
+          onClick={() => navigate('/admin/config')}
+        >
+          {t('admin.dashboard.enterConfigMode')}
+        </Button>
+      </div>
+    </PortalLayout>
+  );
 }

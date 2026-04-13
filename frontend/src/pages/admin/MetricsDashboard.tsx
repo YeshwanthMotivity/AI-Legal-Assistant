@@ -136,8 +136,8 @@ const MetricsDashboard = () => {
 
  // Phase 5 latency bar data
  const latencyData = [
- { name: 'Search Latency', ms: metrics?.search_latency ?? 0 },
- { name: 'AI Latency', ms: metrics?.ai_latency ?? 0 },
+ { name: t('admin.metrics.searchLatency'), ms: metrics?.search_latency ?? 0 },
+ { name: t('admin.metrics.aiLatency'), ms: metrics?.ai_latency ?? 0 },
  ]
 
  return (
@@ -177,25 +177,25 @@ const MetricsDashboard = () => {
  <CardHeader>
  <CardTitle className="text-lg flex items-center gap-2">
  <Zap className="w-5 h-5 text-primary"/>
- ⚡ System Latency & Accuracy
+ {t('admin.metrics.systemPerformance')}
  </CardTitle>
  </CardHeader>
  <CardContent>
  <div className="grid grid-cols-2 gap-4 mb-6">
  <div className="p-4 rounded-lg bg-accent/30 border">
- <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-1">Search Latency</p>
+ <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-1">{t('admin.metrics.searchLatency')}</p>
  <p className="text-xl font-bold">{metrics ? ms(metrics.search_latency) : '—'}</p>
  </div>
  <div className="p-4 rounded-lg bg-accent/30 border">
- <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-1">AI Latency</p>
+ <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-1">{t('admin.metrics.aiLatency')}</p>
  <p className="text-xl font-bold">{metrics ? ms(metrics.ai_latency) : '—'}</p>
  </div>
  <div className="p-4 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/20">
- <p className="text-xs text-[var(--primary)] font-bold uppercase tracking-wider mb-1">Outcome Agreement</p>
+ <p className="text-xs text-[var(--primary)] font-bold uppercase tracking-wider mb-1">{t('admin.metrics.outcomeAgreement')}</p>
  <p className="text-xl font-bold text-[var(--primary)]">{metrics ? pct(metrics.outcome_agreement) : '—'}</p>
  </div>
  <div className="p-4 rounded-lg bg-[var(--accent-gold)]/10 border border-indigo-100">
- <p className="text-xs text-[var(--accent-gold)] font-bold uppercase tracking-wider mb-1">Judge Score (Avg)</p>
+ <p className="text-xs text-[var(--accent-gold)] font-bold uppercase tracking-wider mb-1">{t('admin.metrics.judgeScore')}</p>
  <p className="text-xl font-bold text-indigo-800">{metrics ? score(metrics.judge_score) + ' / 5' : '—'}</p>
  </div>
  </div>
@@ -224,21 +224,21 @@ const MetricsDashboard = () => {
  <CardHeader>
  <CardTitle className="text-lg flex items-center gap-2">
  <SearchIcon className="w-5 h-5 text-primary"/>
- 🔍 Retrieval Performance (Phase 2)
+ {t('admin.metrics.retrievalPerformance')}
  </CardTitle>
  </CardHeader>
  <CardContent>
  <div className="grid grid-cols-3 gap-2 mb-6">
  <div className="text-center p-3 rounded-lg border bg-muted/20">
- <p className="text-[10px] text-muted-foreground font-bold uppercase">Prec@5</p>
+ <p className="text-[10px] text-muted-foreground font-bold uppercase">{t('admin.metrics.prec5')}</p>
  <p className="text-lg font-bold">{metrics ? pct(metrics.precision_at_5) : '—'}</p>
  </div>
  <div className="text-center p-3 rounded-lg border bg-muted/20">
- <p className="text-[10px] text-muted-foreground font-bold uppercase">Recall@5</p>
+ <p className="text-[10px] text-muted-foreground font-bold uppercase">{t('admin.metrics.recall5')}</p>
  <p className="text-lg font-bold">{metrics ? pct(metrics.recall_at_5) : '—'}</p>
  </div>
  <div className="text-center p-3 rounded-lg border bg-muted/20">
- <p className="text-[10px] text-muted-foreground font-bold uppercase">MRR</p>
+ <p className="text-[10px] text-muted-foreground font-bold uppercase">{t('admin.metrics.mrr')}</p>
  <p className="text-lg font-bold">{metrics ? score(metrics.mrr) : '—'}</p>
  </div>
  </div>
@@ -280,9 +280,9 @@ const MetricsDashboard = () => {
  <CardHeader>
  <CardTitle className="text-lg flex items-center gap-2">
  <BarChart3 className="w-5 h-5 text-primary"/>
- 📋 Extraction Accuracy
+ {t('admin.metrics.extractionAccuracy')}
  </CardTitle>
- <CardDescription>Accuracy by entity type (Phase 1)</CardDescription>
+ <CardDescription>{t('admin.metrics.extractionAccuracyDesc')}</CardDescription>
  </CardHeader>
  <CardContent>
  {entityBarData.length > 0 ? (
@@ -299,7 +299,7 @@ const MetricsDashboard = () => {
  </div>
  ) : <p className="text-center py-10 text-muted-foreground text-sm">No data available</p>}
  <div className="mt-4 pt-4 border-t flex justify-between items-center">
- <span className="text-xs font-bold uppercase text-muted-foreground">Overall Accuracy</span>
+ <span className="text-xs font-bold uppercase text-muted-foreground">{t('admin.metrics.overallAccuracy')}</span>
  <Badge variant="success">{metrics ? pct(metrics.entity_extraction_accuracy) : '—'}</Badge>
  </div>
  </CardContent>
@@ -310,17 +310,17 @@ const MetricsDashboard = () => {
  <CardHeader>
  <CardTitle className="text-lg flex items-center gap-2">
  <Activity className="w-5 h-5 text-primary"/>
- ⚖️ Case Similarity Engine (Phase 3)
+ {t('admin.metrics.similarityEngine')}
  </CardTitle>
  </CardHeader>
  <CardContent>
  <div className="grid grid-cols-2 gap-4 mb-6">
  <div className="p-4 rounded-xl bg-muted/20 border flex justify-between items-center">
- <p className="text-xs font-bold text-muted-foreground uppercase">Top-5 Accuracy</p>
+ <p className="text-xs font-bold text-muted-foreground uppercase">{t('admin.metrics.top5Accuracy')}</p>
  <p className="text-xl font-black text-primary">{metrics ? pct(metrics.top_5_accuracy) : '—'}</p>
  </div>
  <div className="p-4 rounded-xl bg-muted/20 border flex justify-between items-center">
- <p className="text-xs font-bold text-muted-foreground uppercase">Avg Similarity</p>
+ <p className="text-xs font-bold text-muted-foreground uppercase">{t('admin.metrics.avgSimilarity')}</p>
  <p className="text-xl font-black text-primary">{metrics ? score(metrics.avg_similarity_score) : '—'}</p>
  </div>
  </div>
@@ -360,7 +360,7 @@ const MetricsDashboard = () => {
  <CardHeader className="bg-muted/30 border-b flex flex-row items-center justify-between">
  <CardTitle className="text-lg flex items-center gap-2">
  <FlaskConical className="w-5 h-5 text-primary"/>
- 🧪 Evaluation Benchmark (UAE Labour Law)
+ {t('admin.metrics.benchmarkTitle')}
  </CardTitle>
  <div className="flex gap-2">
  <select
@@ -368,15 +368,15 @@ const MetricsDashboard = () => {
  onChange={(e: any) => setBenchmarkMode(e.target.value as 'dense_baseline' | 'hybrid')}
  className="bg-background border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
  >
- <option value="dense_baseline">Dense Baseline</option>
- <option value="hybrid">Hybrid (Sparse + Dense)</option>
+ <option value="dense_baseline">{t('admin.metrics.denseBaseline')}</option>
+ <option value="hybrid">{t('admin.metrics.hybridMode')}</option>
  </select>
  <Button
  size="sm"
  onClick={() => runBenchmarkMut.mutate()}
  disabled={runBenchmarkMut.isPending}
  >
- {runBenchmarkMut.isPending ? 'Running…' : 'Run Benchmark'}
+ {runBenchmarkMut.isPending ? t('admin.metrics.running') : t('admin.metrics.runBenchmark')}
  </Button>
  </div>
  </CardHeader>
@@ -385,12 +385,12 @@ const MetricsDashboard = () => {
  <Table>
  <TableHeader>
  <TableRow>
- <TableHead className="pl-6">Mode</TableHead>
- <TableHead>Precision@5</TableHead>
- <TableHead>Recall@5</TableHead>
- <TableHead>MRR</TableHead>
- <TableHead>Queries</TableHead>
- <TableHead className="pr-6 text-right">Run At</TableHead>
+ <TableHead className="pl-6">{t('common.mode')}</TableHead>
+ <TableHead>{t('admin.metrics.prec5')}</TableHead>
+ <TableHead>{t('admin.metrics.recall5')}</TableHead>
+ <TableHead>{t('admin.metrics.mrr')}</TableHead>
+ <TableHead>{t('admin.metrics.queries')}</TableHead>
+ <TableHead className="pr-6 text-right">{t('admin.metrics.runAt')}</TableHead>
  </TableRow>
  </TableHeader>
  <TableBody>
@@ -407,7 +407,7 @@ const MetricsDashboard = () => {
  </TableBody>
  </Table>
  ) : (
- <div className="py-12 text-center text-muted-foreground italic text-sm">No benchmark data loaded</div>
+ <div className="py-12 text-center text-muted-foreground italic text-sm">{t('admin.metrics.noBenchmarkData')}</div>
  )}
  </CardContent>
  </Card>
@@ -418,13 +418,13 @@ const MetricsDashboard = () => {
  <div>
  <CardTitle className="text-lg flex items-center gap-2">
  <TrendingUp className="w-5 h-5 text-primary"/>
- 🚦 Model Release Gates
+ {t('admin.metrics.releaseGates')}
  </CardTitle>
- <CardDescription>Decisions for phase promotion to production</CardDescription>
+ <CardDescription>{t('admin.metrics.releaseGatesDesc')}</CardDescription>
  </div>
  <Button variant="outline"size="sm"onClick={() => setIsGateOpen(true)}>
  <Plus className="w-4 h-4 mr-2"/>
- Record New Decision
+ {t('admin.metrics.recordDecision')}
  </Button>
  </CardHeader>
  <CardContent className="p-0">
@@ -432,11 +432,11 @@ const MetricsDashboard = () => {
  <Table>
  <TableHeader>
  <TableRow>
- <TableHead className="pl-6">Phase</TableHead>
- <TableHead>Mode</TableHead>
- <TableHead>Status</TableHead>
- <TableHead>Sign-off</TableHead>
- <TableHead className="pr-6 text-right">Decision Date</TableHead>
+ <TableHead className="pl-6">{t('admin.audit.resource')}</TableHead>
+ <TableHead>{t('common.mode')}</TableHead>
+ <TableHead>{t('case.status')}</TableHead>
+ <TableHead>{t('admin.metrics.signOff')}</TableHead>
+ <TableHead className="pr-6 text-right">{t('admin.metrics.decisionDate')}</TableHead>
  </TableRow>
  </TableHeader>
  <TableBody>
@@ -465,7 +465,7 @@ const MetricsDashboard = () => {
  ) : (
  <div className="py-20 text-center flex flex-col items-center">
  <AlertCircle className="w-8 h-8 text-muted-foreground mb-2"/>
- <p className="text-muted-foreground text-sm italic">No gate decisions recorded yet.</p>
+ <p className="text-muted-foreground text-sm italic">{t('admin.metrics.noGateDecisions')}</p>
  </div>
  )}
  </CardContent>
@@ -477,8 +477,8 @@ const MetricsDashboard = () => {
  <div className="w-full max-w-lg bg-card border shadow-2xl rounded-3xl overflow-hidden animate-in zoom-in-95 duration-200">
  <div className="p-6 border-b flex justify-between items-center bg-muted/20">
  <div>
- <h3 className="text-xl font-bold">Record Release Decision</h3>
- <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-0.5">Model Governance Gate</p>
+ <h3 className="text-xl font-bold">{t('admin.metrics.modalTitle')}</h3>
+ <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-0.5">{t('admin.metrics.modalSubtitle')}</p>
  </div>
  <Button variant="ghost"size="icon"className="rounded-full"onClick={() => setIsGateOpen(false)}>
  <Plus className="w-5 h-5 rotate-45"/>
@@ -488,35 +488,35 @@ const MetricsDashboard = () => {
  <div className="p-8 space-y-6">
  <div className="grid grid-cols-2 gap-6">
  <div className="space-y-2">
- <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Phase</label>
+ <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">{t('admin.audit.resource')}</label>
  <select
  value={gateForm.phase}
  onChange={(e: any) => setGateForm((f: any) => ({ ...f, phase: e.target.value }))}
  className="w-full bg-background border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
  >
- <option value="phase_1">Phase 1 — Entities</option>
- <option value="phase_2">Phase 2 — Retrieval</option>
- <option value="phase_3">Phase 3 — Similarity</option>
- <option value="phase_5">Phase 5 — AI Agent</option>
+  <option value="phase_1">{t('stages.creation')}</option>
+  <option value="phase_2">{t('stages.evidence')}</option>
+  <option value="phase_3">{t('stages.analysis')}</option>
+  <option value="phase_5">{t('stages.review')}</option>
  </select>
  </div>
  <div className="space-y-2">
- <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Mode</label>
+ <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">{t('common.mode')}</label>
  <select
  value={gateForm.mode}
  onChange={(e: any) => setGateForm((f: any) => ({ ...f, mode: e.target.value }))}
  className="w-full bg-background border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
  >
- <option value="dense_baseline">Dense Baseline</option>
- <option value="hybrid">Hybrid</option>
+  <option value="dense_baseline">{t('admin.metrics.denseBaseline')}</option>
+  <option value="hybrid">{t('admin.metrics.hybridMode')}</option>
  </select>
  </div>
  </div>
 
  <div className="space-y-2">
- <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Judge Sign-off</label>
+ <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">{t('admin.metrics.judgeSignOff')}</label>
  <input
- placeholder="Name of approving judge"
+ placeholder={t('admin.metrics.judgePlaceholder')}
  value={gateForm.judge_sign_off}
  onChange={(e: any) => setGateForm((f: any) => ({ ...f, judge_sign_off: e.target.value }))}
  className="w-full bg-background border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
@@ -524,9 +524,9 @@ const MetricsDashboard = () => {
  </div>
 
  <div className="space-y-2">
- <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Rationale</label>
+ <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">{t('admin.metrics.rationale')}</label>
  <textarea
- placeholder="Technical justification for promotion..."
+ placeholder={t('admin.metrics.rationalePlaceholder')}
  value={gateForm.rationale}
  rows={4}
  onChange={(e: any) => setGateForm((f: any) => ({ ...f, rationale: e.target.value }))}
@@ -541,21 +541,21 @@ const MetricsDashboard = () => {
  className="flex-1 rounded-xl h-11 font-bold"
  onClick={() => setIsGateOpen(false)}
  >
- Cancel
+ {t('common.cancel')}
  </Button>
  <Button 
  className="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl h-11 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-amber-500/20"
  disabled={submitGateMut.isPending || !gateForm.judge_sign_off || !gateForm.rationale}
  onClick={() => submitGateMut.mutate({ ...gateForm, status: 'deferred' })}
  >
- ⏸ Defer
+ ⏸ {t('admin.metrics.defer')}
  </Button>
  <Button 
  className="flex-1 rounded-xl h-11 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20"
  disabled={submitGateMut.isPending || !gateForm.judge_sign_off || !gateForm.rationale}
  onClick={() => submitGateMut.mutate({ ...gateForm, status: 'approved' })}
  >
- ✓ Approve
+ ✓ {t('admin.metrics.approve')}
  </Button>
  </div>
  </div>

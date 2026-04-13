@@ -33,6 +33,10 @@ const DialogTitle = ({ children, className }: { children: React.ReactNode, class
   <h2 className={cn("text-lg font-semibold leading-none tracking-tight", className)}>{children}</h2>
 )
 
+const DialogDescription = ({ children, className }: { children: React.ReactNode, className?: string }) => (
+  <p className={cn("text-sm text-muted-foreground", className)}>{children}</p>
+)
+
 export {
   Dialog,
   DialogTrigger,
@@ -40,4 +44,5 @@ export {
   DialogHeader,
   DialogFooter,
   DialogTitle,
+  DialogDescription,
 }

@@ -66,9 +66,9 @@ function App() {
         }
       />
       <Route
-        path="/judge/cases/:id/activity"
+        path="/cases/:id/activity"
         element={
-          <PrivateRoute allowedRoles={['judge']}>
+          <PrivateRoute allowedRoles={['judge', 'clerk', 'admin']}>
             <AIActivityLogs />
           </PrivateRoute>
         }

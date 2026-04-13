@@ -5,13 +5,15 @@
   /* Enterprise Variable Fonts */
   --font-sans: 'Inter', 'Cairo', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+  --font-serif: 'Inter', sans-serif;
 
   /* Royal Emerald Precision Palette */
   --color-emerald-50: #F0FDF4;
   --color-emerald-100: #DCFCE7;
   --color-emerald-200: #BBF7D0;
-  --color-emerald-600: #00573F;
+  --color-emerald-600: #58761B;
   --color-emerald-800: #003D2C;
+  --color-emerald-900: #01140d;
 
   --color-navy-50: #F8FAFC;
   --color-navy-100: #F1F5F9;
@@ -35,7 +37,6 @@
   --color-gold: #C9A03D;
   --color-deep-green: #065F46;
 
-  /* Sovereign Legal Intelligence Palette */
   /* Sovereign Legal Intelligence Palette mapped to Royal Adaptive/Perfection */
   --color-surface-bright: var(--bg-surface);
   --color-surface-container: var(--bg-card);
@@ -134,17 +135,18 @@
 }
 
 :root {
-  /* Royal Adaptive Theme — Light (Ivory & Emerald) */
+  /* Royal Adaptive Theme — Imperial Palette (Ivory & Emerald) */
   --bg-color: #F9F8F2;
   --surface-color: #FFFFFF;
   --text-main: #003426;
-  --primary-royal: #00573F;
+  --primary-royal: #58761B;
   --accent-gold: #D4AF37;
   --border-subtle: #E2E8F0;
 
   --primary: var(--primary-royal);
+  --primary-rgb: 88, 118, 27;
   --primary-foreground: #ffffff;
-  --primary-hover: #004532;
+  --primary-hover: #486215;
   --primary-light: #BBF7D0;
   
   --secondary: #1F2937;
@@ -153,7 +155,7 @@
   --success: #16A34A;
   --warning: #C9A03D;
   --danger: #823F3A;
-  --info: #00573F;
+  --info: #58761B;
   --destructive-foreground: #ffffff;
 
   /* Layout Base — Golden Ratio Spacing */
@@ -161,11 +163,11 @@
   --bg-surface: var(--surface-color);
   --bg-card: var(--surface-color);
   --bg-card-hover: #F1F5F9;
-  --bg-sidebar: #00573F;
-  --sidebar-active: #004532;
+  --bg-sidebar: #1A3F22; /* Royal Emerald Sidebar */
+  --sidebar-active: #58761B; /* Olive Active */
   --sidebar-text: #F9F8F2;
 
-  --p-ratio: 1.2; /* 20% increase for Golden Ratio padding */
+  --p-ratio: 1.2; 
   
   --border-color: #E2E8F0;
   --border-light: #F1F5F9;
@@ -186,6 +188,7 @@
 
   --font-body: 'Inter', sans-serif;
   --font-heading: 'Inter', sans-serif;
+  --font-serif: 'Inter', sans-serif;
 }
 
 
@@ -201,6 +204,10 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+[dir="rtl"], [dir="rtl"] body {
+  font-family: 'Cairo', sans-serif;
 }
 
 h1, h2, h3, .judicial-title {
@@ -226,14 +233,6 @@ h1, h2, h3, .judicial-title {
   -webkit-backdrop-filter: blur(20px) saturate(190%);
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-lg);
-}
-
-.glass-goated {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(30px) saturate(210%);
-  -webkit-backdrop-filter: blur(30px) saturate(210%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 40px 120px -25px rgba(0, 0, 0, 0.6);
 }
 
 .portal-divider-glow {
@@ -262,30 +261,8 @@ h1, h2, h3, .judicial-title {
   opacity: 0.6;
 }
 
-.portal-divider-curve {
-  position: absolute;
-  top: 0;
-  right: -4px;
-  width: 25vw;
-  height: 100%;
-  background: linear-gradient(to right, #01140d 0%, #01140d 10%, rgba(1,20,13,0.4) 60%, transparent 100%);
-  z-index: 15;
-  pointer-events: none;
-}
-
-.portal-divider-curve-rtl {
-  position: absolute;
-  top: 0;
-  left: -4px;
-  width: 25vw;
-  height: 100%;
-  background: linear-gradient(to left, #01140d 0%, #01140d 10%, rgba(1,20,13,0.4) 60%, transparent 100%);
-  z-index: 15;
-  pointer-events: none;
-}
-
 .text-gradient-gold {
-  background: linear-gradient(135deg, #D4AF37, #F9F8F2);
+  background: linear-gradient(135deg, #D4AF37, #AA8A2E);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -295,77 +272,49 @@ h1, h2, h3, .judicial-title {
   background: linear-gradient(145deg, var(--accent-gold), #AA8A2E);
   box-shadow: 0 4px 15px rgba(184, 134, 11, 0.3);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: white;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .btn-royal-shine:hover {
   background: linear-gradient(145deg, #AA8A2E, var(--accent-gold));
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 0 20px rgba(184, 134, 11, 0.5);
+  box-shadow: 0 8px 25px rgba(184, 134, 11, 0.4);
   filter: brightness(1.05);
 }
 
-.shadow-royal {
-  box-shadow: 0 10px 30px rgba(0, 26, 19, 0.2);
+.imperial-card {
+  background: white;
+  border-radius: 2rem;
+  border: 1px solid rgba(0, 52, 38, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 26, 19, 0.02);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.imperial-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 20px 50px rgba(0, 26, 19, 0.06);
+  transform: translateY(-2px);
+}
+
+.judicial-section-header {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(0, 52, 38, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 /* Natural transitions for high-end feel */
 * {
-  transition-property: background-color, border-color, color, opacity;
-  transition-duration: 200ms;
-  transition-timing-function: ease-in-out;
-}
-
-/* Unified Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 0.5rem 1.5rem;
-  border-radius: var(--radius-md);
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid transparent;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.btn-primary {
-  background: var(--primary);
-  color: var(--primary-foreground);
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-primary:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.btn-secondary {
-  background: var(--secondary);
-  color: var(--primary-foreground);
-  border: 1px solid var(--secondary);
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-secondary:hover {
-  background: #111827;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.btn-outlined {
-  background: transparent;
-  color: var(--primary);
-  border: 1px solid var(--primary);
-}
-
-.btn-outlined:hover {
-  background: var(--primary-light);
-  transform: translateY(-1px);
+  transition-property: background-color, border-color, color, opacity, transform, box-shadow;
+  transition-duration: 250ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Status Badges */
@@ -389,7 +338,7 @@ h1, h2, h3, .judicial-title {
 @layer base {
   /* Forms */
   input, select, textarea {
-    background: var(--bg-surface);
+    background: white;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 0.875rem 1rem;
@@ -403,7 +352,7 @@ h1, h2, h3, .judicial-title {
   input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(162, 209, 187, 0.1);
+    box-shadow: 0 0 0 4px rgba(88, 118, 27, 0.05);
   }
 
   input::placeholder {
@@ -412,33 +361,23 @@ h1, h2, h3, .judicial-title {
   }
 }
 
-/* Custom Login Styles (Sovereign Theme) */
 .islamic-pattern {
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l2.5 7.5L40 10l-7.5 2.5L30 20l-2.5-7.5L20 10l7.5-2.5L30 0zm0 40l2.5 7.5L40 50l-7.5 2.5L30 60l-2.5-7.5L20 50l7.5-2.5L30 40zM0 30l7.5 2.5L10 40l2.5-7.5L20 30l-7.5-2.5L10 20l-2.5 7.5L0 30zm40 0l7.5 2.5L50 40l2.5-7.5L60 30l-7.5-2.5L50 20l-2.5 7.5L40 30z' fill='%23a2d1bb' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l2.5 7.5L40 10l-7.5 2.5L30 20l-2.5-7.5L20 10l7.5-2.5L30 0zm0 40l2.5 7.5L40 50l-7.5 2.5L30 60l-2.5-7.5L20 50l7.5-2.5L30 40zM0 30l7.5 2.5L10 40l2.5-7.5L20 30l-7.5-2.5L10 20l-2.5 7.5L0 30zm40 0l7.5 2.5L50 40l2.5-7.5L60 30l-7.5-2.5L50 20l-2.5 7.5L40 30z' fill='%2358761b' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
-
-.gold-glow:focus {
-  box-shadow: 0 0 15px -3px rgba(233, 195, 73, 0.3);
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
 }
-
-/* LexAI UAE Utility Classes */
-.editorial-shadow {
-  box-shadow: 0 4px 16px rgba(0, 26, 19, 0.08);
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(88, 118, 27, 0.1);
+  border-radius: 10px;
 }
-
-.ghost-border {
-  border-bottom: 1px solid rgba(192, 200, 195, 0.15);
-}
-
-.glass-nav {
-  backdrop-filter: blur(20px);
-  background: rgba(10, 15, 26, 0.8);
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(88, 118, 27, 0.2);
 }
 
 

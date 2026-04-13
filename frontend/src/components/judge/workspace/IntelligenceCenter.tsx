@@ -51,6 +51,30 @@ const IntelligenceCenter = ({
   const { t, i18n } = useTranslation()
   const isRTL = i18n.language === 'ar'
 
+  // GLOBAL SYNCHRONIZED LOADING: If analysis is pending, show a unified high-fidelity loader
+  if (analysis?.status === 'AIAnalysisPending') return (
+    <div className="p-24 text-center border-2 border-dashed border-primary/20 rounded-[3rem] bg-white w-full flex flex-col items-center gap-8 animate-in fade-in duration-500 shadow-inner">
+      <div className="relative">
+        <div className="w-24 h-24 rounded-3xl bg-primary/5 flex items-center justify-center text-primary/40 border border-primary/10 animate-pulse">
+          <BrainCircuit className="w-12 h-12" />
+        </div>
+        <div className="absolute -top-2 -right-2">
+           <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center animate-bounce shadow-lg shadow-primary/20">
+              <Sparkles className="w-3 h-3 text-white" />
+           </div>
+        </div>
+      </div>
+      <div className="space-y-3">
+        <h2 className="text-2xl font-black text-foreground uppercase tracking-tight">{t('judge.workspace.analysing', 'ANALYSING...')}</h2>
+        <p className="text-[11px] font-black text-primary uppercase tracking-[0.4em] italic opacity-60">Deep Judicial Analysis Active...</p>
+      </div>
+      <div className="flex items-center gap-1.5 px-4 py-2 bg-muted/20 rounded-full border border-border/40">
+         <Loader2 className="w-3 h-3 text-muted-foreground animate-spin" />
+         <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Logic Nodes: 12/12 Indexed</span>
+      </div>
+    </div>
+  )
+
   if (!analysis && !caseData) return (
     <div className="p-12 text-center border-2 border-dashed border-border/40 rounded-3xl bg-white/50 w-full flex flex-col items-center gap-6 animate-in fade-in duration-500">
       <div className="w-16 h-16 rounded-2xl bg-primary/5 flex items-center justify-center text-primary/30 border border-primary/10">
@@ -64,11 +88,11 @@ const IntelligenceCenter = ({
   )
 
   return (
-    <div className={cn("space-y-16 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-32", isRTL ? "text-right" : "text-left")}>
+    <div className={cn("space-y-16 animate-in fade-in slide-in-from-bottom-2 duration-700 pb-32", isRTL ? "text-right" : "text-left")}>
       
       {/* 1. CASE SUMMARY CARD */}
-      <section className="bg-white rounded-[3rem] border border-border shadow-soft overflow-hidden">
-        <header className="p-8 border-b border-border/40 bg-neutral-50/50 flex items-center justify-between">
+      <section className="imperial-card overflow-hidden">
+        <header className="p-8 border-b border-border/10 bg-muted/5 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-primary text-on-primary rounded-2xl shadow-xl shadow-primary/20 flex items-center justify-center">
               <Briefcase className="w-6 h-6"/>
@@ -82,7 +106,7 @@ const IntelligenceCenter = ({
         </header>
 
         <div className="divide-y divide-border/40">
-           {/* Registry Profile & Narrative Content (No separate heading) */}
+           {/* Registry Profile & Narrative Content */}
            <div className="p-8">
               <div className="grid grid-cols-12 gap-10">
                  <div className="col-span-12 lg:col-span-7 space-y-10">
@@ -105,114 +129,23 @@ const IntelligenceCenter = ({
                         <h3 className="text-xl font-black text-foreground uppercase tracking-tighter">{caseData?.respondent_name || '...'}</h3>
                       </div>
                     </div>
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3 px-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
-                        <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">{t('judge.workspace.factualContext', 'Factual Context')}</h4>
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-3 px-3 text-primary/60">
+                         <div className="w-2 h-2 rounded-full bg-primary/20 animate-pulse" />
+                         <h4 className="text-[11px] font-black uppercase tracking-[0.4em]">{t('judge.workspace.factualContext', 'Factual Context')}</h4>
                       </div>
-                      <div className="p-8 bg-neutral-50/30 rounded-[2.5rem] border border-border/60 relative group hover:border-primary/20 transition-all">
-                        <div className="absolute top-0 left-0 w-1.5 h-full bg-primary/5 rounded-l-[2.5rem]" />
-                        <p className="text-[14px] font-medium leading-[1.7] text-foreground/80 italic antialiased">
+                      <div className="p-8 bg-white border border-border/60 rounded-[2.5rem] relative group hover:border-primary/20 transition-all shadow-inner">
+                        <div className="absolute top-0 left-0 w-2 h-full bg-primary/5 rounded-l-[2.5rem]" />
+                        <p className="text-[14px] font-medium leading-[1.8] text-foreground antialiased font-serif italic">
                           {caseData?.description || t('judge.workspace.noDescription', 'No factual description provided for this case.')}
                         </p>
                       </div>
                     </div>
-
-                    {/* Key Facts Section - Only show when ready */}
-                    {analysis?.status === 'AIAnalysisReady' && analysis?.facts && analysis.facts.length > 0 && (
-                      <div className="space-y-4 pt-4 animate-in fade-in slide-in-from-top-2 duration-500">
-                        <div className="flex items-center gap-3 px-2 mb-2">
-                           <Zap className="w-3.5 h-3.5 text-amber-500 opacity-60 mb-0.5" />
-                           <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-600">{t('judge.workspace.keyCaseFacts', 'Key Case Facts')}</h4>
-                        </div>
-                        <div className="grid grid-cols-1 gap-3">
-                           {analysis.facts.map((fact: string, idx: number) => (
-                             <div key={idx} className="flex gap-4 p-4 bg-amber-50/30 border border-amber-100/50 rounded-2xl group hover:bg-amber-50/50 transition-colors">
-                                <div className="shrink-0 w-6 h-6 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 text-[10px] font-bold">
-                                   {idx + 1}
-                                </div>
-                                <p className="text-[12px] font-medium leading-relaxed text-amber-900/80">
-                                   {fact}
-                                </p>
-                             </div>
-                           ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Logic: Show summary if it's NOT the placeholder. If it IS the placeholder, show reasoning. */}
-                    {analysis?.status === 'AIAnalysisReady' ? (
-                      analysis?.summary && analysis.summary !== "Analysis complete. See draft for details.." && analysis.summary.length > 5 ? (
-                        <div className="space-y-4 pt-6 animate-in fade-in slide-in-from-top-2 duration-700 border-t border-border/40 mt-6">
-                          <div className="flex items-center gap-3 px-2 mb-2">
-                             <Sparkles className="w-3.5 h-3.5 text-primary opacity-60 mb-0.5" />
-                             <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary">{t('judge.workspace.aiSynthesizedSummary', 'AI Synthesized Summary')}</h4>
-                          </div>
-                          <div className="p-8 bg-primary/[0.02] border border-primary/10 rounded-[2.5rem] relative group hover:bg-primary/[0.04] transition-colors">
-                            <div className="absolute top-6 left-6">
-                              <Sparkles className="w-4 h-4 text-primary opacity-30 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500"/>
-                            </div>
-                            <p className="text-[14px] font-medium leading-[1.6] text-foreground/90 antialiased pl-8">
-                              {analysis.summary}
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        analysis?.reasoning && (
-                          <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-700">
-                             <div className="flex items-center gap-3 px-2 mb-2">
-                               <Zap className="w-3.5 h-3.5 text-primary opacity-60 mb-0.5" />
-                               <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary">{t('judge.workspace.judicialReasoningNode', 'Judicial Reasoning Node')}</h4>
-                            </div>
-                            <div className={cn(
-                              "p-8 rounded-[2.5rem] relative group transition-colors border",
-                              analysis.reasoning.includes("Error:") 
-                                ? "bg-rose-50/30 border-rose-100 text-rose-900" 
-                                : "bg-primary/[0.02] border-primary/10 text-foreground/90"
-                            )}>
-                              <div className="absolute top-6 left-6">
-                                {analysis.reasoning.includes("Error:") ? (
-                                  <Info className="w-4 h-4 text-rose-400 opacity-60"/>
-                                ) : (
-                                  <Sparkles className="w-4 h-4 text-primary opacity-30 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500"/>
-                                )}
-                              </div>
-                              <p className={cn(
-                                "text-[14px] font-medium leading-[1.6] antialiased pl-8",
-                                analysis.reasoning.includes("Error:") ? "italic opacity-80" : ""
-                              )}>
-                                {analysis.reasoning}
-                              </p>
-                              {analysis.reasoning.includes("Error:") && (
-                                <div className="mt-4 pl-8 flex items-center gap-2">
-                                  <Badge variant="outline" className="bg-rose-50 border-rose-100 text-rose-600 text-[9px] font-black uppercase tracking-widest px-2 py-0.5">
-                                    System Exception
-                                  </Badge>
-                                  <p className="text-[10px] font-black text-rose-400/60 uppercase tracking-widest">Retrying in background node...</p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      )
-                    ) : (
-                      /* Skeleton state while generating summary */
-                      analysis?.status === 'AIAnalysisPending' && (
-                        <div className="space-y-4 pt-8 animate-pulse text-center">
-                           <div className="w-12 h-12 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-primary/10">
-                              <Sparkles className="w-6 h-6 text-primary/20 animate-spin duration-[3000ms]" />
-                           </div>
-                           <p className="text-[10px] font-black text-primary/40 uppercase tracking-[.3em]">{t('judge.workspace.generatingSummary', 'Generating Judicial Summary...')}</p>
-                           <div className="w-3/4 h-3 bg-muted/30 rounded-full mx-auto" />
-                           <div className="w-1/2 h-3 bg-muted/20 rounded-full mx-auto" />
-                        </div>
-                      )
-                    )}
                  </div>
                  
                  <div className="col-span-12 lg:col-span-5 space-y-3">
                     {[
-                      { label: t('judge.workspace.claimValue', 'Total Claimed Value'), val: caseData?.claim_amount ? `AED ${Number(String(caseData.claim_amount).replace(/,/g, '')).toLocaleString('en-AE', { minimumFractionDigits: 2 })}` : 'AED 0.00', icon: TrendingUp, color: 'text-emerald-600' },
+                      { label: t('judge.workspace.claimValue', 'Total Claimed Value'), val: caseData?.claim_amount ? `AED ${Number(String(caseData.claim_amount).replace(/,/g, '')).toLocaleString('en-AE', { minimumFractionDigits: 2 })}` : 'AED 0.00', icon: TrendingUp, color: 'text-primary' },
                       { label: t('judge.workspace.filingDate', 'Filing Registry Date'), val: caseData?.filing_date ? new Date(caseData.filing_date).toLocaleDateString() : 'N/A', icon: History, color: 'text-blue-600' },
                       { label: t('judge.workspace.caseType', 'Statutory Classification'), val: caseData?.case_type?.replace(/_/g, ' ') || 'LABOR DISPUTE', icon: Briefcase, color: 'text-amber-600' },
                       { label: t('judge.workspace.courtRef', 'Court Reference'), val: caseData?.court_number || 'DIFC-JUDICIAL', icon: Scale, color: 'text-slate-600' },
@@ -230,6 +163,70 @@ const IntelligenceCenter = ({
                  </div>
               </div>
            </div>
+
+           {/* SECOND ROW: FACTS AND SUMMARY (Full Width side-by-side) */}
+           {analysis?.status === 'AIAnalysisReady' && (
+              <div className="p-8 border-t border-border/40 bg-muted/5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
+                    {/* Key Facts Section */}
+                    {analysis?.facts && analysis.facts.length > 0 && (
+                      <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-500">
+                        <div className="flex items-center gap-3 px-2 mb-2">
+                           <Zap className="w-4 h-4 text-accent animate-pulse" />
+                           <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-accent font-black">{t('judge.workspace.keyCaseFacts', 'Key Case Facts')}</h4>
+                        </div>
+                        <div className="grid grid-cols-1 gap-3">
+                           {analysis.facts.map((fact: string, idx: number) => (
+                             <div key={idx} className="flex gap-4 p-5 bg-accent/5 border border-accent/10 rounded-[2rem] group hover:bg-accent/10 transition-colors shadow-sm">
+                                <div className="shrink-0 w-8 h-8 rounded-full bg-accent flex items-center justify-center text-[#111] text-[10px] font-black shadow-lg shadow-accent/20">
+                                   {idx + 1}
+                                </div>
+                                <p className="text-[13px] font-black leading-relaxed text-foreground/80 antialiased">
+                                   {fact}
+                                </p>
+                             </div>
+                           ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* AI Analysis Summary */}
+                    {analysis?.summary && analysis.summary !== "Analysis complete. See draft for details.." && analysis.summary.length > 5 ? (
+                      <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-700">
+                        <div className="flex items-center gap-3 px-2 mb-2">
+                           <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+                           <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary font-black">{t('judge.workspace.aiSummary', 'AI Synthesized Summary')}</h4>
+                        </div>
+                        <div className="p-8 bg-primary/5 border border-primary/10 rounded-[2.5rem] relative group hover:bg-primary/10 transition-colors shadow-sm h-full">
+                          <div className="absolute bottom-6 right-6 opacity-40">
+                             <Sparkles className="w-12 h-12 text-primary opacity-20 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500"/>
+                          </div>
+                          <div className="text-[14px] font-black leading-[1.8] text-foreground antialiased whitespace-pre-wrap relative z-10">
+                            {analysis.summary}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      analysis?.reasoning && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-700">
+                           <div className="flex items-center gap-3 px-2 mb-2">
+                             <Zap className="w-4 h-4 text-primary opacity-60 mb-0.5" />
+                             <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary">{t('judge.workspace.judicialReasoningNode', 'Judicial Reasoning Node')}</h4>
+                          </div>
+                          <div className={cn(
+                            "p-8 rounded-[2.5rem] relative group transition-colors border shadow-sm h-full font-serif italic",
+                            analysis.reasoning.includes("Error:") 
+                              ? "bg-rose-50/30 border-rose-100 text-rose-900" 
+                              : "bg-primary/[0.02] border-primary/10 text-foreground/90"
+                          )}>
+                            {analysis.reasoning}
+                          </div>
+                        </div>
+                      )
+                    )}
+                </div>
+              </div>
+           )}
 
            {/* Entitlement Calculation */}
            {entitlements.length > 0 && entitlements.some((item: any) => {
@@ -329,15 +326,15 @@ const IntelligenceCenter = ({
         </div>
       </section>
 
-       {/* 2. SIMILAR CASES CARD */}
+      {/* 2. SIMILAR CASES CARD */}
       {precedents.length > 0 && (
         <section className={cn(
-          "bg-white rounded-[3rem] border border-border shadow-soft overflow-hidden transition-all duration-700",
+          "imperial-card overflow-hidden transition-all duration-700",
           analysis?.status !== 'AIAnalysisReady' && "opacity-30 pointer-events-none grayscale"
         )}>
-          <header className="p-8 border-b border-border/40 bg-neutral-50/50 flex items-center justify-between">
+          <header className="p-8 border-b border-border/10 bg-muted/5 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-amber-500 text-white rounded-2xl shadow-xl shadow-amber-500/20 flex items-center justify-center">
+              <div className="w-12 h-12 bg-accent/20 text-accent rounded-2xl shadow-inner border border-accent/10 flex items-center justify-center">
                  <History className="w-6 h-6"/>
               </div>
               <div>
@@ -407,56 +404,63 @@ const IntelligenceCenter = ({
        {/* 3. LAW ARTICLES CARD */}
       {lawArticles.length > 0 && (
         <section className={cn(
-          "bg-white rounded-[3rem] border border-border shadow-soft overflow-hidden transition-all duration-700",
+          "imperial-card overflow-hidden transition-all duration-700",
           analysis?.status !== 'AIAnalysisReady' && "opacity-30 pointer-events-none grayscale"
         )}>
-          <header className="p-8 border-b border-border/40 bg-neutral-50/50 flex items-center justify-between">
+          <header className="p-8 border-b border-border/10 bg-muted/5 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-neutral-100 rounded-2xl flex items-center justify-center text-neutral-400">
+              <div className="w-12 h-12 bg-primary/5 rounded-2xl border border-primary/10 flex items-center justify-center text-primary">
                  <BookOpen className="w-6 h-6"/>
               </div>
-              <h2 className="text-2xl font-black text-foreground uppercase tracking-tight">{t('judge.workspace.relatedLaws', 'Law Articles')}</h2>
+              <div>
+                <h2 className="text-2xl font-black text-foreground uppercase tracking-tight leading-none">{t('judge.workspace.relatedLaws', 'Law Articles')}</h2>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mt-1.5 opacity-40">Statutory Framework Index</p>
+              </div>
             </div>
           </header>
 
-           <div className="p-6">
+           <div className="p-5">
             <div className="flex flex-row overflow-x-auto gap-4 pb-4 custom-scrollbar">
               {lawArticles
                 .filter((art: any) => art.article_number || art.title || art.content || art.summary)
                 .map((art: any, idx: number) => (
-                <div key={idx} className="bg-white p-5 rounded-[2rem] border border-border shadow-sm hover:border-primary/30 min-w-[260px] max-w-[300px] transition-all duration-500 group flex flex-col gap-3 relative overflow-hidden shrink-0 hover:shadow-xl hover:shadow-primary/5">
-                  <div className="absolute top-0 right-0 p-4 opacity-[0.02] group-hover:scale-110 transition-transform duration-1000 pointer-events-none">
-                     <Zap className="w-24 h-24 text-primary fill-current"/>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="shrink-0 w-10 h-10 rounded-xl bg-muted/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-all duration-300 border border-border/20">
-                      <BookOpen className="w-5 h-5"/>
-                    </div>
-                    <p className="text-[9px] font-black uppercase text-primary tracking-[0.2em]">{art.article_number || art.title || `Article ${idx + 1}`}</p>
-                  </div>
-                   <div className="min-w-0 flex-1 relative z-10 transition-all duration-500">
-                     <h5 className="text-[12px] font-black text-foreground uppercase tracking-tight leading-tight mb-2.5 group-hover:text-primary transition-colors">{art.law_title || art.title}</h5>
-                     
-                     {/* HOVER SUMMARY EFFECT */}
-                     {(art.content || art.summary) && (
-                       <div className="relative h-24 overflow-hidden">
-                          {/* Default VIEW: Law Title/Article only */}
-                          <div className="absolute inset-0 flex flex-col justify-start opacity-100 group-hover:opacity-0 group-hover:-translate-y-4 transition-all duration-500 bg-white z-10">
-                             <div className="p-3 bg-muted/20 rounded-xl border border-border/40 border-dashed animate-in fade-in zoom-in duration-300">
-                                <p className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest text-center mt-4">Hover to review summary</p>
-                             </div>
-                          </div>
-
-                          {/* HOVER VIEW: Concise Summary */}
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 translate-y-4 transition-all duration-500 p-3.5 bg-primary/[0.03] rounded-xl border-l-[3px] border-primary/40 shadow-inner overflow-hidden">
-                            <p className="text-[10px] font-semibold text-foreground/80 italic leading-relaxed antialiased line-clamp-4">
-                              &ldquo;{art.content || art.summary}&rdquo;
-                            </p>
-                          </div>
-                       </div>
-                     )}
+                  <div key={idx} className="bg-white p-3 rounded-[1.5rem] border border-border shadow-sm hover:border-primary/30 min-w-[160px] max-w-[200px] transition-all duration-500 group flex flex-col gap-2 relative overflow-visible shrink-0 hover:shadow-xl hover:shadow-primary/5">
+                   <div className="absolute top-0 right-0 p-3 opacity-[0.02] group-hover:scale-110 transition-transform duration-1000 pointer-events-none">
+                      <Zap className="w-16 h-16 text-primary fill-current"/>
                    </div>
-                </div>
+                   <div className="flex items-center gap-2">
+                     <div className="shrink-0 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300 border border-primary/10">
+                       <BookOpen className="w-3.5 h-3.5"/>
+                     </div>
+                     <p className="text-[7.5px] font-black uppercase text-primary tracking-[0.15em] line-clamp-1">
+                       {(art.article_number || art.title || `Article ${idx + 1}`).split('|')[0].trim()}
+                     </p>
+                   </div>
+                    <div className="min-w-0 flex-1 relative z-10 transition-all duration-500">
+                      <h5 className="text-[10px] font-black text-foreground uppercase tracking-tight leading-tight mb-1 group-hover:text-primary transition-colors line-clamp-2">{art.law_title || art.title}</h5>
+                      
+                      {/* Summary shown on hover — replaces decorative bars */}
+                      {(art.content || art.summary) ? (
+                        <>
+                          <p className="text-[9px] font-medium text-foreground/70 leading-relaxed italic line-clamp-2 max-h-0 overflow-hidden opacity-0 group-hover:max-h-[60px] group-hover:opacity-100 transition-all duration-500 mt-1">
+                            {art.summary || art.content}
+                          </p>
+                          {/* Decorative bars — hidden on hover */}
+                          <div className="mt-2 space-y-1.5 opacity-[0.1] group-hover:opacity-0 group-hover:max-h-0 group-hover:mt-0 overflow-hidden transition-all duration-300">
+                             <div className="w-16 h-1 bg-primary rounded-full" />
+                             <div className="w-20 h-1 bg-primary rounded-full opacity-60" />
+                             <div className="w-12 h-1 bg-primary rounded-full opacity-40" />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="mt-2 space-y-1.5 opacity-[0.1]">
+                           <div className="w-16 h-1 bg-primary rounded-full" />
+                           <div className="w-20 h-1 bg-primary rounded-full opacity-60" />
+                           <div className="w-12 h-1 bg-primary rounded-full opacity-40" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
               ))}
             </div>
           </div>

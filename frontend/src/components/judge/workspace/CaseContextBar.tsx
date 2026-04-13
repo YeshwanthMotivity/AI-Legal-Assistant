@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Sparkles, Gavel, Trash2, AlertTriangle, ChevronRight, PlayCircle } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Sparkles, Gavel, Trash2, AlertTriangle, ChevronRight, PlayCircle, Activity } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -8,37 +9,42 @@ import { cn } from '@/lib/utils'
 import LanguageToggle from '../../LanguageToggle'
 
 interface CaseContextBarProps {
- caseNumber: string
- title: string
- status?: string
- confidence?: number
- isActivelyLoading: boolean
- isDeleting?: boolean
- onRunAnalysis?: () => void
- onFinalize?: () => void
- onDelete: () => void
+  caseId: string
+  caseNumber: string
+  title: string
+  status?: string
+  confidence?: number
+  isActivelyLoading: boolean
+  isDeleting?: boolean
+  onRunAnalysis?: () => void
+  onFinalize?: () => void
+  onDelete: () => void
+  onOpenActivity?: () => void
 }
 
 const CaseContextBar = ({
- caseNumber,
- title,
- status,
- confidence,
- isActivelyLoading,
- isDeleting = false,
- onRunAnalysis,
- onFinalize,
- onDelete,
+  caseId,
+  caseNumber,
+  title,
+  status,
+  confidence,
+  isActivelyLoading,
+  isDeleting = false,
+  onRunAnalysis,
+  onFinalize,
+  onDelete,
+  onOpenActivity,
 }: CaseContextBarProps) => {
- const { t } = useTranslation()
- const [showConfirm, setShowConfirm] = useState(false)
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const [showConfirm, setShowConfirm] = useState(false)
 
- const handleDeleteClick = () => setShowConfirm(true)
- const handleConfirm = () => {
- setShowConfirm(false)
- onDelete()
- }
- const handleCancel = () => setShowConfirm(false)
+  const handleDeleteClick = () => setShowConfirm(true)
+  const handleConfirm = () => {
+    setShowConfirm(false)
+    onDelete()
+  }
+  const handleCancel = () => setShowConfirm(false)
 
  return (
  <>
@@ -54,12 +60,20 @@ const CaseContextBar = ({
           <span className="text-[var(--primary)]">{caseNumber}</span>
         </nav>
         <div className="flex items-center gap-4">
+          <button 
+            onClick={onOpenActivity}
+            className="flex items-center gap-2 text-[10px] font-black text-primary hover:text-primary/70 transition-colors uppercase tracking-[0.2em]"
+          >
+            <Activity className="w-3.5 h-3.5" />
+            {t('judge.workspace.aiActivityLogs', 'AI Activity Logs')}
+          </button>
+          <div className="w-px h-4 bg-border/40" />
           <div className="flex items-center gap-3 mr-2 bg-[var(--primary)]/5 px-2 py-1 rounded-md border border-[var(--primary)]/10">
             <span className="text-[9px] font-black text-muted-foreground uppercase opacity-40">AI Grounding:</span>
             <div className="flex items-center gap-1.5">
               <span className={cn(
                 "text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded shadow-sm",
-                confidence ? "bg-[var(--primary)] text-white" : "bg-emerald-600 text-white animate-pulse"
+                confidence ? "bg-[var(--primary)] text-white" : "bg-[var(--primary)] text-white animate-pulse"
               )}>
                 {confidence ? `${Math.round(confidence)}% PRECISION` : 'ANALYZING...'}
               </span>
@@ -90,7 +104,7 @@ const CaseContextBar = ({
             onClick={onRunAnalysis}
           >
             <Sparkles className={cn("w-4 h-4 text-[var(--primary)]", isActivelyLoading && "animate-spin")} />
-            {isActivelyLoading ? 'Synthesizing...' : 'Run Analysis'}
+            {isActivelyLoading ? t('judge.workspace.analysing', 'Analysing...') : 'Run Analysis'}
           </Button>
           )}
 

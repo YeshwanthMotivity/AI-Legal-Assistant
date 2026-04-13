@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { 
  Activity, 
  User, 
@@ -27,6 +28,7 @@ const PAGE_SIZE = 20
 
 const AuditLog = () => {
  const { t } = useTranslation()
+ const navigate = useNavigate()
  const [page, setPage] = useState(1)
 
  const skip = (page - 1) * PAGE_SIZE
@@ -44,7 +46,7 @@ const AuditLog = () => {
  return (
  <PortalLayout 
  title={t('admin.pages.auditTitle')} 
- subtitle="Immutable cryptographic ledger of all judicial and administrative operations."
+ subtitle={t('admin.audit.subtitle')}
  >
  <div className="space-y-6">
  {/* Dynamic Header Controls */}
@@ -54,8 +56,8 @@ const AuditLog = () => {
  <ShieldCheck className="w-5 h-5"/>
  </div>
  <div>
- <h2 className="text-xl font-black uppercase tracking-tight text-foreground">Compliance Ledger</h2>
- <p className="text-xs text-muted-foreground font-medium italic">Verified Audit Stream • v5.2 (Real-time)</p>
+ <h2 className="text-xl font-black uppercase tracking-tight text-foreground">{t('admin.audit.ledgerTitle')}</h2>
+ <p className="text-xs text-muted-foreground font-medium italic">{t('admin.audit.ledgerSubtitle')}</p>
  </div>
  </div>
  
@@ -63,7 +65,7 @@ const AuditLog = () => {
  <div className="relative group">
  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors"/>
  <input 
- placeholder="Filter by description..."
+ placeholder={t('admin.audit.filterPlaceholder')}
  className="h-10 pl-10 pr-4 bg-muted/20 border-border/50 border rounded-xl text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none w-64 transition-all"
  />
  </div>
@@ -131,7 +133,19 @@ const AuditLog = () => {
  <Database className="w-3.5 h-3.5 text-muted-foreground opacity-50"/>
  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{item.resource_type ?? '-'}</span>
  <span className="text-[10px] font-bold opacity-30">/</span>
- <span className="text-[10px] font-medium text-muted-foreground/60">{item.resource_id ?? '-'}</span>
+ {item.resource_type === 'case' && item.resource_id ? (
+  <button 
+   onClick={() => navigate(`/cases/${item.resource_id}/activity`)}
+   className="text-[10px] font-bold text-primary hover:underline underline-offset-2 flex items-center gap-1 group/link"
+  >
+   {item.resource_id}
+   <div className="p-0.5 bg-primary/10 rounded group-hover/link:bg-primary group-hover/link:text-white transition-colors">
+    <Activity className="w-2.5 h-2.5"/>
+   </div>
+  </button>
+ ) : (
+  <span className="text-[10px] font-medium text-muted-foreground/60">{item.resource_id ?? '-'}</span>
+ )}
  </div>
  </TableCell>
  <TableCell className="pr-8 max-w-xs">
@@ -149,7 +163,11 @@ const AuditLog = () => {
  {/* Premium Pagination Footer */}
  <div className="p-6 border-t bg-muted/5 flex items-center justify-between">
  <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
- Showing {skip + 1} to {Math.min(skip + PAGE_SIZE, auditQuery.data?.total ?? 0)} of {auditQuery.data?.total ?? 0} events
+ {t('admin.audit.showingRange', { 
+    start: skip + 1, 
+    end: Math.min(skip + PAGE_SIZE, auditQuery.data?.total ?? 0), 
+    total: auditQuery.data?.total ?? 0 
+  })}
  </div>
  <div className="flex items-center gap-4">
  <Button

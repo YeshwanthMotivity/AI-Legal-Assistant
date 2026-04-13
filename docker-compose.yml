@@ -79,6 +79,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    extra_hosts:
+      - "ollama:host-gateway"
     restart: unless-stopped
  
   # ── Frontend ──────────────────────────────────────────────────────────────

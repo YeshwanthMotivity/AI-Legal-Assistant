@@ -211,7 +211,7 @@ const DocumentUpload = () => {
  </div>
  <Button 
  size="sm"
- className="h-9 px-6 shadow-lg shadow-emerald-500/20 font-bold gap-2"
+ className="h-9 px-6 shadow-lg shadow-[rgba(var(--primary-rgb),0.2)] lg:shadow-primary/20 font-bold gap-2"
  disabled={!selectedCaseId || uploadMutation.isPending} 
  onClick={runUploads}
  >

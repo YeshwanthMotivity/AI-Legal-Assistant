@@ -48,6 +48,8 @@ import {
   saveJudgment,
   getAnalysis
 } from '../../api/judge'
+import { clerkGetAuditLogs as getAuditLogs } from '../../api/clerk'
+import ActivityLogMatrix from '../../components/judge/workspace/ActivityLogMatrix'
 import { useCaseAnalysisPolling } from '../../hooks/useCaseAnalysisPolling'
 import type { DocumentType, JudgmentRequest } from '../../types/judge'
 import { Button } from '@/components/ui/button'
@@ -200,10 +202,19 @@ const CaseDetail = () => {
   const [isChatLoading, setIsChatLoading] = useState(false);
 
   const stages = [
-    { id: 1, label: t('judge.stages.analysis', 'Analysis Results'), sub: 'Research & Synthesis', icon: BrainCircuit, statuses: ['Created', 'DocumentsUploaded', 'AIAnalysisPending', 'AIAnalysisReady'] },
+    { id: 1, label: t('judge.stages.analysis', 'Analysis Results'), sub: 'Research & Analysis', icon: BrainCircuit, statuses: ['Created', 'DocumentsUploaded', 'AIAnalysisPending', 'AIAnalysisReady'] },
     { id: 2, label: t('judge.stages.review', 'Judicial Review'), sub: 'Judgment drafting', icon: Gavel, statuses: ['DraftGenerated'] },
     { id: 3, label: t('judge.stages.feedback', 'Feedback'), sub: 'Outcome learning', icon: MessagesSquare, statuses: ['Finalized'] },
   ];
+
+  const [isActivityMatrixOpen, setIsActivityMatrixOpen] = useState(false)
+
+  const auditLogsQuery = useQuery({
+    queryKey: ['case-audit-logs', id],
+    queryFn: () => getAuditLogs(id!),
+    enabled: !!id,
+    refetchInterval: isActivityMatrixOpen ? 5000 : false
+  })
 
   const caseQuery = useQuery({
     queryKey: ['judge-case', id],
@@ -463,13 +474,14 @@ const CaseDetail = () => {
 
   return (
     <PortalLayout title={t('judge.workspace.orchestrator', "Case Orchestrator")} hideHeaderContent>
-      <div className={cn("flex h-full bg-[#F8F8F5] overflow-hidden", i18n.language === 'ar' ? "flex-row-reverse text-right" : "flex-row")}>
+      <div className={cn("flex h-full bg-[var(--bg-base)] overflow-hidden", i18n.language === 'ar' ? "flex-row-reverse text-right" : "flex-row")}>
         
         {/* LEFT/CENTER ACTION AREA (Workspace + Header) */}
-        <div className={cn("flex-1 flex flex-col min-w-0 bg-white/40 shadow-inner", i18n.language === 'ar' ? "border-r border-border/40" : "border-l border-border/40")}>
+        <div className={cn("flex-1 flex flex-col min-w-0 bg-white shadow-inner", i18n.language === 'ar' ? "border-r border-border/10" : "border-l border-border/10")}>
           
           {/* TOP CONTEXT BAR - Scoped to this column, so it starts after the left sidebar */}
           <CaseContextBar
+            caseId={id!}
             caseNumber={caseData?.case_number ?? '...'}
             title={caseData?.title ?? ''}
             status={caseData?.status}
@@ -477,6 +489,7 @@ const CaseDetail = () => {
             isActivelyLoading={isActivelyLoading}
             isDeleting={deleteMutation.isPending}
             onDelete={() => { deleteMutation.mutate(undefined as any) }}
+            onOpenActivity={() => setIsActivityMatrixOpen(true)}
           />
           
           <div className="flex-1 flex flex-col overflow-y-auto">
@@ -517,6 +530,7 @@ const CaseDetail = () => {
                           isDeletingDocument={deleteDocumentMutation.isPending ? deleteDocumentMutation.variables as string : null}
                           onViewDocument={handleViewDocument}
                         />
+                        
                         {!isReady && !isActivelyLoading && (
                           <div className="mt-8 text-center p-12 bg-white border border-dashed border-border/80 rounded-2xl shadow-inner w-full flex flex-col items-center gap-6">
                              <div className="w-20 h-20 bg-primary/5 border border-primary/10 rounded-3xl flex items-center justify-center">
@@ -693,7 +707,7 @@ const CaseDetail = () => {
                                </div>
                             </div>
                           ) : (
-                            chatHistory.map((msg, idx) => (
+                            chatHistory.map((msg: { role: string; content: string }, idx: number) => (
                               <div key={idx} className={cn("flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300", 
                                 msg.role === 'user' 
                                 ? (i18n.language === 'ar' ? "flex-row" : "flex-row-reverse") 
@@ -706,10 +720,10 @@ const CaseDetail = () => {
                                     {msg.role === 'user' ? <User className="w-3.5 h-3.5 text-muted-foreground"/> : <Sparkles className="w-3.5 h-3.5 text-primary"/>}
                                  </div>
                                  <div className={cn(
-                                    "p-3.5 rounded-2xl flex-1 max-w-[85%] border shadow-sm",
+                                    "p-3.5 rounded-2xl flex-1 max-w-[85%] border shadow-sm transition-all duration-500",
                                     msg.role === 'user' 
                                     ? (i18n.language === 'ar' ? "rounded-tl-none" : "bg-white border-border/60 rounded-tr-none") 
-                                    : (i18n.language === 'ar' ? "rounded-tr-none" : "bg-[#F8F8F5] border-border/40 rounded-tl-none")
+                                    : (i18n.language === 'ar' ? "rounded-tr-none" : "bg-[var(--bg-base)] border-border/40 rounded-tl-none")
                                  )}>
                                     <p className="text-[11px] font-medium text-foreground antialiased leading-relaxed">{msg.content}</p>
                                  </div>
@@ -792,6 +806,13 @@ const CaseDetail = () => {
               <Sparkles className="w-5 h-5 animate-pulse group-hover:rotate-12 transition-transform" />
             </button>
           )}
+
+          <ActivityLogMatrix 
+            isOpen={isActivityMatrixOpen} 
+            onClose={() => setIsActivityMatrixOpen(false)} 
+            logs={auditLogsQuery.data || []}
+            isLoading={auditLogsQuery.isLoading}
+          />
         </div>
     </PortalLayout>
   )

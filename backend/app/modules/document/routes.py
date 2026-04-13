@@ -133,6 +133,8 @@ async def upload_document(
         resource_type="document",
         resource_id=str(document.id),
         metadata={
+            "phase": "Evidence_Upload",
+            "description": f"Document '{file.filename}' uploaded and verified for case relevance.",
             "file_name": file.filename or "unknown",
             "document_type": document_type,
             "case_id": case_id

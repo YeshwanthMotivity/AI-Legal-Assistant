@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FileText, Upload, Calculator, Terminal, Plus, Verified, CheckCircle2, AlertCircle, X, ChevronDown, Files, Trash2 } from 'lucide-react'
+import { FileText, Upload, Calculator, Terminal, Plus, Verified, CheckCircle2, AlertCircle, X, ChevronDown, Files, Trash2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -38,6 +38,7 @@ type DocumentsPanelProps = {
   onViewDocument?: (docId: string) => void
   caseTitle?: string
   caseDescription?: string
+  notification?: { text: string; type: 'success' | 'error'; onClear: () => void }
 } & (SingleFileProps | BatchFileProps)
 
 const DOCUMENT_TYPES: DocumentType[] = [
@@ -47,7 +48,7 @@ const DOCUMENT_TYPES: DocumentType[] = [
 ]
 
 // Type guard
-function isBatchMode(props: DocumentsPanelProps): props is ({ documents: any[]; isActivelyLoading: boolean; isReady: boolean; entitlements?: any[] } & BatchFileProps) {
+function isBatchMode(props: DocumentsPanelProps): props is (DocumentsPanelProps & BatchFileProps) {
   return 'selectedFiles' in props
 }
 
@@ -195,7 +196,7 @@ const DocumentsPanel = (props: DocumentsPanelProps) => {
       if (result.is_relevant === false && result.confidence > 0.8) {
         setRelevanceAudit({ 
           status: 'warning', 
-          message: result.reason || "This document seems unrelated to the current case parties or facts.",
+          message: result.reason || "Upload failed: This document is not relevant to the case.",
           onBypass: originalUpload
         })
       } else {
@@ -265,6 +266,36 @@ const DocumentsPanel = (props: DocumentsPanelProps) => {
                 <p className="text-[10px] font-black text-[var(--primary)]/70 uppercase tracking-[0.2em] mt-1.5">Batch upload with multi-category tagging</p>
               </div>
             </header>
+
+            {props.notification && (
+              <div className={cn(
+                "p-4 rounded-xl border flex items-center justify-between animate-in zoom-in duration-300 shadow-sm relative z-20",
+                props.notification.type === 'success' ? "border-primary/30 bg-primary/5" : "border-rose-200 bg-rose-50"
+              )}>
+                <div className="flex items-center gap-3">
+                  {props.notification.type === 'success' ? (
+                    <Sparkles className="w-4 h-4 text-primary animate-pulse"/>
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-rose-600"/>
+                  )}
+                  <span className={cn(
+                    "text-[11px] font-bold antialiased leading-tight",
+                    props.notification.type === 'success' ? "text-foreground" : "text-rose-900"
+                  )}>
+                    {props.notification.text}
+                  </span>
+                </div>
+                <button 
+                  onClick={props.notification.onClear} 
+                  className={cn(
+                    "p-1 rounded-md transition-colors shrink-0",
+                    props.notification.type === 'success' ? "hover:bg-primary/10 text-muted-foreground" : "hover:bg-rose-100 text-rose-400"
+                  )}
+                >
+                  <X className="w-4 h-4"/>
+                </button>
+              </div>
+            )}
 
             {/* Category Multi-Select */}
             <div className="space-y-3 relative z-40">
@@ -387,9 +418,9 @@ const DocumentsPanel = (props: DocumentsPanelProps) => {
                     <AlertCircle className="w-5 h-5 text-rose-600" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-black text-rose-900 uppercase tracking-tight">Relevance Warning</h4>
+                    <h4 className="text-sm font-black text-rose-900 uppercase tracking-tight">Validation Failure</h4>
                     <p className="text-[11px] font-medium text-rose-800/80 leading-relaxed mt-1">
-                      {relevanceAudit.message}
+                      Upload failed: This document is not relevant to the case.
                     </p>
                   </div>
                 </div>
@@ -454,6 +485,36 @@ const DocumentsPanel = (props: DocumentsPanelProps) => {
             </div>
           </header>
 
+          {props.notification && (
+            <div className={cn(
+              "p-4 rounded-xl border flex items-center justify-between animate-in zoom-in duration-300 shadow-sm relative z-20",
+              props.notification.type === 'success' ? "border-primary/30 bg-primary/5" : "border-rose-200 bg-rose-50"
+            )}>
+              <div className="flex items-center gap-3">
+                {props.notification.type === 'success' ? (
+                  <Sparkles className="w-4 h-4 text-primary animate-pulse"/>
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-rose-600"/>
+                )}
+                <span className={cn(
+                  "text-[11px] font-bold antialiased leading-tight",
+                  props.notification.type === 'success' ? "text-foreground" : "text-rose-900"
+                )}>
+                  {props.notification.text}
+                </span>
+              </div>
+              <button 
+                onClick={props.notification.onClear} 
+                className={cn(
+                  "p-1 rounded-md transition-colors shrink-0",
+                  props.notification.type === 'success' ? "hover:bg-primary/10 text-muted-foreground" : "hover:bg-rose-100 text-rose-400"
+                )}
+              >
+                <X className="w-4 h-4"/>
+              </button>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-6 relative z-10">
             <div className="space-y-3">
               <label className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground">Document Type</label>
@@ -516,9 +577,9 @@ const DocumentsPanel = (props: DocumentsPanelProps) => {
                   <AlertCircle className="w-5 h-5 text-rose-600" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-black text-rose-900 uppercase tracking-tight">Relevance Audit Warning</h4>
+                  <h4 className="text-sm font-black text-rose-900 uppercase tracking-tight">Validation Failure</h4>
                   <p className="text-[11px] font-medium text-rose-800/80 leading-relaxed mt-1">
-                    {relevanceAudit.message}
+                    Upload failed: This document is not relevant to the case.
                   </p>
                 </div>
               </div>

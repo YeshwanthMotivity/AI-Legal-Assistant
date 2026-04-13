@@ -21,15 +21,28 @@ class OrchestratorService:
         self.case_repository = CaseRepository(db)
         self.judgment_repository = JudgmentRepository(db)
 
-    async def run_analysis(self, case_id: str, language: str = "en") -> dict[str, Any]:
+    async def run_analysis(self, case_id: str, user_id: str, language: str = "en") -> dict[str, Any]:
         case = await self.case_repository.update_status(case_id, CaseStatus.AI_ANALYSIS_PENDING)
         if not case:
             raise ValueError(f"Case not found: {case_id}")
         await self.db.commit()
 
+        from app.modules.audit.service import AuditService
+        await AuditService(self.db).log(
+            user_id=user_id,
+            action="ai_analysis_started",
+            resource_type="case",
+            resource_id=case_id,
+            metadata={
+                "phase": "Intelligence_Initialization",
+                "description": "Triggering high-fidelity judicial AI analysis pipeline."
+            }
+        )
+
         ai_start_time = time.monotonic()
         run_id = f"orchestrator_{case_id}_{int(time.time())}"
         initial_state: AnalysisState = {
+            "user_id": user_id,
             "case_id": case_id,
             "entities": [],
             "search_results": [],
@@ -150,11 +163,12 @@ class OrchestratorService:
         self.db.add(feedback)
 
         run_id = f"feedback_{case_id}_{int(time.time())}"
+        outcome_agreement = 1.0 if str(feedback_data.get("outcome", "")).lower() == str(judgment.decision).lower() else 0.0
         await self.evaluation_repository.create_ai_event(
             run_id=run_id,
             case_id=case_id,
             metric_type="outcome_agreement",
-            value=1.0,
+            value=outcome_agreement,
         )
         await self.evaluation_repository.create_ai_event(
             run_id=run_id,
