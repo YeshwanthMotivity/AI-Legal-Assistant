@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios, { InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 
 const API_BASE_URL = "/api/v1"
 
@@ -10,12 +10,12 @@ export const apiClient = axios.create({
 })
 
 // Request interceptor to add access token from localStorage
-// We sync the Keycloak token to localStorage in AuthContext
 apiClient.interceptors.request.use(
-  (config) => {
-    const accessToken = localStorage.getItem('accessToken')
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`
+  (config: InternalAxiosRequestConfig) => {
+    const accessToken = localStorage.getItem('kc_access_token')
+    if (accessToken && config.headers) {
+      // Use the syntax suggested to ensure header is attached
+      config.headers['Authorization'] = `Bearer ${accessToken}`
     }
     return config
   },
@@ -26,12 +26,10 @@ apiClient.interceptors.request.use(
 
 // Simplified response interceptor
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response: AxiosResponse) => response,
   (error) => {
-    // If we get a 401, it means the token is likely invalid or Keycloak refresh failed
-    // Redirect to login will be handled by the next route change or AuthContext
     if (error.response?.status === 401) {
-       console.error('Session expired or unauthorized request')
+      console.error('Session expired or unauthorized request')
     }
     return Promise.reject(error)
   }

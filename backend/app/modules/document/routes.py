@@ -98,7 +98,7 @@ async def upload_document(
     repository = DocumentRepository(db)
     document = await repository.create(
         document_data,
-        current_user["sub"],
+        current_user["db_id"],
         storage_key="",
         mime_type=file.content_type or "application/octet-stream",
         file_size=str(len(file_bytes)),
@@ -128,7 +128,7 @@ async def upload_document(
 
     audit_service = AuditService(db)
     await audit_service.log(
-        user_id=current_user.get("sub", "unknown"),
+        user_id=current_user.get("db_id", "unknown"),
         action="DOCUMENT_UPLOAD",
         resource_type="document",
         resource_id=str(document.id),
@@ -220,7 +220,7 @@ async def delete_case_document(
     """Delete a document from a case."""
     audit_service = AuditService(db)
     await audit_service.log(
-        user_id=current_user.get("sub", "unknown"),
+        user_id=current_user.get("db_id", "unknown"),
         action="DOCUMENT_DELETE",
         resource_type="document",
         resource_id=document_id,

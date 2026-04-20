@@ -52,7 +52,9 @@
     "password": "كلمة المرور",
     "loginButton": "دخول",
     "loginError": "بيانات الاعتماد غير صحيحة",
-    "welcome": "مرحباً بعودتك"
+    "welcome": "مرحباً بعودتك",
+    "secureAccess": "دخول قضائي آمن",
+    "loggingIn": "جاري تسجيل الدخول..."
   },
   "roles": {
     "admin": "مدير",
@@ -157,7 +159,13 @@
       "userCreateFailed": "فشل إنشاء المستخدم.",
       "userDeactivated": "تم تعطيل المستخدم بنجاح.",
       "userDeactivateFailed": "فشل تعطيل المستخدم.",
+      "userActivated": "تم تفعيل المستخدم بنجاح.",
+      "userActivateFailed": "فشل تفعيل المستخدم.",
+      "userDeleted": "تم حذف المستخدم نهائياً.",
+      "userDeleteFailed": "فشل حذف المستخدم.",
       "confirmDeactivate": "هل تريد تعطيل هذا المستخدم؟",
+      "confirmActivate": "هل تريد تفعيل هذا المستخدم؟",
+      "confirmDelete": "سيؤدي هذا إلى حذف المستخدم نهائياً. لا يمكن التراجع عن هذا الإجراء. هل تريد المتابعة؟",
       "caseAssigned": "تم تعيين القضية بنجاح.",
       "caseAssignFailed": "فشل تعيين القضية."
     },
@@ -225,6 +233,28 @@
       "rationalePlaceholder": "المبررات الفنية للترقية...",
       "defer": "تأجيل",
       "approve": "اعتماد"
+    },
+    "globalConfig": {
+      "title": "تكوين المحرك العالمي",
+      "subtitle": "تعديل معلمات RAG، وأوزان النماذج، وإعدادات النظام",
+      "inferenceEngine": "محرك الاستدلال",
+      "inferenceEngineDesc": "اختر النموذج اللغوي الأساسي للاستدلال القضائي",
+      "ragSettings": "إعدادات RAG والاسترجاع",
+      "ragSettingsDesc": "تحسين عمليات البحث عن القضايا والقوانين",
+      "similarityThreshold": "عتبة التشابه",
+      "maxRetrievalCount": "الحد الأقصى لعدد النتائج",
+      "thresholdHelp": "العتبة الأعلى تزيد من الدقة ولكن قد تعيد نتائج أقل. الموصى به: 0.70 - 0.80.",
+      "systemDefaults": "افتراضيات النظام العالمية",
+      "systemDefaultsDesc": "تفضيلات اللغة والأتمتة",
+      "defaultLanguage": "لغة مساحة العمل الافتراضية",
+      "autoAnalyze": "المعالجة الخلفية الآلية",
+      "autoAnalyzeTitle": "التحليل التلقائي عند الرفع",
+      "autoAnalyzeDesc": "بدء الاستدلال الذكي مباشرة بعد إدخال البيانات",
+      "resetDefaults": "إعادة ضبط الافتراضيات",
+      "saveConfiguration": "حفظ التكوين",
+      "saving": "جاري الحفظ...",
+      "saveSuccess": "تم تحديث تكوين النظام بنجاح!",
+      "footerHelp": "التغييرات تؤثر على جميع مساحات عمل القضاة والموظفين عالمياً."
     }
   },
   "metrics": {

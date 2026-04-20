@@ -30,13 +30,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken')
+    const token = localStorage.getItem('kc_access_token')
     if (token) {
       try {
         const parsed = JSON.parse(atob(token.split('.')[1]))
         // check expiry
         if (parsed.exp * 1000 < Date.now()) {
-          localStorage.removeItem('accessToken')
+          localStorage.removeItem('kc_access_token')
           setAccessToken(null)
           setUser(null)
         } else {
@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } catch (err) {
         console.error('Failed to parse token from storage:', err)
-        localStorage.removeItem('accessToken')
+        localStorage.removeItem('kc_access_token')
       }
     }
     setIsLoading(false)
@@ -87,7 +87,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const data = await res.json()
     setAccessToken(data.access_token)
-    localStorage.setItem('accessToken', data.access_token)
+    localStorage.setItem('kc_access_token', data.access_token)
     
     const parsed = JSON.parse(atob(data.access_token.split('.')[1]))
     const roles = parsed.realm_access?.roles || []
@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     setAccessToken(null)
     setUser(null)
-    localStorage.removeItem('accessToken')
+    localStorage.removeItem('kc_access_token')
     window.location.href = '/login'
   }
 

@@ -41,7 +41,7 @@ export default function GlobalConfig(): ReactNode {
  };
 
  return (
- <PortalLayout title="Global Engine Configuration"subtitle="Adjust RAG parameters, model weights, and system-wide settings">
+ <PortalLayout title={t('admin.globalConfig.title')} subtitle={t('admin.globalConfig.subtitle')}>
  
  <div className="flex flex-col gap-8">
  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -52,8 +52,8 @@ export default function GlobalConfig(): ReactNode {
  <div className="flex items-center gap-3">
  <Cpu className="w-5 h-5 text-primary"/>
  <div>
- <CardTitle className="text-lg">Inference Engine</CardTitle>
- <CardDescription>Select the primary LLM for judicial reasoning</CardDescription>
+ <CardTitle className="text-lg">{t('admin.globalConfig.inferenceEngine')}</CardTitle>
+ <CardDescription>{t('admin.globalConfig.inferenceEngineDesc')}</CardDescription>
  </div>
  </div>
  </CardHeader>
@@ -102,15 +102,15 @@ export default function GlobalConfig(): ReactNode {
  <div className="flex items-center gap-3">
  <Search className="w-5 h-5 text-amber-600"/>
  <div>
- <CardTitle className="text-lg">RAG & Retrieval Settings</CardTitle>
- <CardDescription>Optimize precedent and law searches</CardDescription>
+ <CardTitle className="text-lg">{t('admin.globalConfig.ragSettings')}</CardTitle>
+ <CardDescription>{t('admin.globalConfig.ragSettingsDesc')}</CardDescription>
  </div>
  </div>
  </CardHeader>
  <CardContent className="p-6 space-y-8">
  <div className="space-y-4">
  <div className="flex justify-between items-center">
- <label className="text-xs font-black uppercase text-muted-foreground tracking-tighter">Similarity Threshold</label>
+ <label className="text-xs font-black uppercase text-muted-foreground tracking-tighter">{t('admin.globalConfig.similarityThreshold')}</label>
  <span className="text-xs font-black text-amber-600 bg-amber-600/10 px-2 py-0.5 rounded-full">{Math.round(config.similarityThreshold * 100)}%</span>
  </div>
  <input 
@@ -126,7 +126,7 @@ export default function GlobalConfig(): ReactNode {
 
  <div className="space-y-4">
  <div className="flex justify-between items-center">
- <label className="text-xs font-black uppercase text-muted-foreground tracking-tighter">Max Retrieval Count</label>
+ <label className="text-xs font-black uppercase text-muted-foreground tracking-tighter">{t('admin.globalConfig.maxRetrievalCount')}</label>
  <span className="text-xs font-black text-amber-600 bg-amber-600/10 px-2 py-0.5 rounded-full">{config.ragLimit} Results</span>
  </div>
  <input 
@@ -142,7 +142,7 @@ export default function GlobalConfig(): ReactNode {
 
  <div className="p-4 bg-muted/20 border-l-4 border-l-amber-500 rounded-lg">
  <p className="text-[10px] text-muted-foreground italic leading-relaxed">
- Higher threshold increases precision but may return fewer results. Recommended: 0.70 - 0.80.
+ {t('admin.globalConfig.thresholdHelp')}
  </p>
  </div>
  </CardContent>
@@ -154,8 +154,8 @@ export default function GlobalConfig(): ReactNode {
  <div className="flex items-center gap-3">
  <Globe className="w-5 h-5 text-[var(--accent-gold)]"/>
  <div>
- <CardTitle className="text-lg">Global System Defaults</CardTitle>
- <CardDescription>Language and automation preferences</CardDescription>
+ <CardTitle className="text-lg">{t('admin.globalConfig.systemDefaults')}</CardTitle>
+ <CardDescription>{t('admin.globalConfig.systemDefaultsDesc')}</CardDescription>
  </div>
  </div>
  </CardHeader>
@@ -164,7 +164,7 @@ export default function GlobalConfig(): ReactNode {
  <div className="space-y-4">
  <label className="text-xs font-black uppercase text-muted-foreground flex items-center gap-2">
  <Globe className="w-3.5 h-3.5"/>
- Default Workspace Language
+ {t('admin.globalConfig.defaultLanguage')}
  </label>
  <div className="flex bg-accent/20 p-1.5 rounded-2xl border w-full max-w-sm gap-2 mt-4 ml-1">
  <Button 
@@ -189,12 +189,12 @@ export default function GlobalConfig(): ReactNode {
  <div className="space-y-4">
  <label className="text-xs font-black uppercase text-muted-foreground flex items-center gap-2">
  <Database className="w-3.5 h-3.5"/>
- Automated Background Processing
+ {t('admin.globalConfig.autoAnalyze')}
  </label>
  <div className="flex items-center justify-between p-3 border rounded-xl bg-card">
  <div>
- <p className="text-sm font-bold">Auto-Analyze on Upload</p>
- <p className="text-xs text-muted-foreground italic">Start AI reasoning immediately after clerk data entry</p>
+ <p className="text-sm font-bold">{t('admin.globalConfig.autoAnalyzeTitle')}</p>
+ <p className="text-xs text-muted-foreground italic">{t('admin.globalConfig.autoAnalyzeDesc')}</p>
  </div>
  <input 
  type="checkbox"
@@ -213,17 +213,17 @@ export default function GlobalConfig(): ReactNode {
  <div className="flex justify-between items-center p-6 bg-muted/20 border rounded-3xl">
  <div className="flex items-center gap-3 text-muted-foreground">
  <RefreshCcw className="w-4 h-4"/>
- <span className="text-xs italic">Changes affect all active JUDGE and CLERK workspaces globally.</span>
+ <span className="text-xs italic">{t('admin.globalConfig.footerHelp')}</span>
  </div>
  <div className="flex gap-4">
- <Button variant="ghost"className="font-bold">Reset to Defaults</Button>
+ <Button variant="ghost"className="font-bold">{t('admin.globalConfig.resetDefaults')}</Button>
  <Button 
  className="px-10 h-12 shadow-lg shadow-primary/20 font-black uppercase tracking-widest text-xs gap-2"
  onClick={handleSave}
  disabled={isSaving}
  >
  <Save className="w-4 h-4"/>
- {isSaving ?"Saving...":"Save Configuration"}
+ {isSaving ? t('admin.globalConfig.saving') : t('admin.globalConfig.saveConfiguration')}
  </Button>
  </div>
  </div>

@@ -60,6 +60,8 @@ def create_app() -> FastAPI:
     
     # JWT middleware
     app.add_middleware(JWTMiddleware)
+
+
     
     # Health check endpoint
     @app.get("/health")

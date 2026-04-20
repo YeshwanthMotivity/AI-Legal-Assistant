@@ -40,8 +40,9 @@ async def create_user(
 ):
     """Create a new user (Admin only)."""
     user = await service.create_user(user_data)
+    await db.commit()
     from app.modules.audit.service import AuditService
-    await AuditService(db).log(current_user.get("sub", ""), "create_user", "user", user.id)
+    await AuditService(db).log(current_user.get("db_id", ""), "create_user", "user", user.id)
     return user
 
 
@@ -59,8 +60,9 @@ async def delete_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
+    await db.commit()
     from app.modules.audit.service import AuditService
-    await AuditService(db).log(current_user.get("sub", ""), "deactivate_user", "user", user_id)
+    await AuditService(db).log(current_user.get("db_id", ""), "deactivate_user", "user", user_id)
 
 
 @admin_router.patch("/{user_id}/activate", status_code=status.HTTP_204_NO_CONTENT)
@@ -77,8 +79,9 @@ async def activate_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
+    await db.commit()
     from app.modules.audit.service import AuditService
-    await AuditService(db).log(current_user.get("sub", ""), "activate_user", "user", user_id)
+    await AuditService(db).log(current_user.get("db_id", ""), "activate_user", "user", user_id)
 
 
 @admin_router.delete("/{user_id}/permanent", status_code=status.HTTP_204_NO_CONTENT)
@@ -95,5 +98,6 @@ async def permanently_delete_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
+    await db.commit()
     from app.modules.audit.service import AuditService
-    await AuditService(db).log(current_user.get("sub", ""), "delete_user_permanent", "user", user_id)
+    await AuditService(db).log(current_user.get("db_id", ""), "delete_user_permanent", "user", user_id)

@@ -7,18 +7,17 @@ import {
 } from 'recharts'
 import { format } from 'date-fns'
 import { 
- TrendingUp, 
+  
  Activity, 
  Search as SearchIcon, 
  Shield, 
  Database, 
  Zap,
  CheckCircle,
- AlertCircle,
+ 
  BarChart3,
  FlaskConical,
  GanttChart,
- Plus
 } from 'lucide-react'
 import PortalLayout from '../../components/layout/PortalLayout'
 import {
@@ -27,12 +26,9 @@ import {
  adminGetUsers,
  adminRunBenchmark,
  adminGetBenchmarkLatest,
- adminGetReleaseGate,
- adminSubmitReleaseGate,
 } from '../../api/admin'
 import { clerkGetCaseDocuments } from '../../api/clerk'
 import { queryKeys } from '../../api/queryKeys'
-import type { ReleaseGateRequest } from '../../types/evaluation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -56,9 +52,7 @@ const MetricsDashboard = () => {
  const { t } = useTranslation()
  const queryClient = useQueryClient()
  const [docsProcessed, setDocsProcessed] = useState(0)
- const [isGateOpen, setIsGateOpen] = useState(false)
  const [benchmarkMode, setBenchmarkMode] = useState<'dense_baseline' | 'hybrid'>('dense_baseline')
- const [gateForm, setGateForm] = useState({ phase: 'phase_2', mode: 'hybrid', rationale: '', judge_sign_off: '' })
 
  // ── data fetching ───────────────────────────────────────────────────────
  const usersQ = useQuery({ queryKey: queryKeys.adminUsers, queryFn: () => adminGetUsers({ limit: 500 }) })
@@ -75,10 +69,6 @@ const MetricsDashboard = () => {
  queryFn: () => adminGetBenchmarkLatest(benchmarkMode).catch(() => null),
  })
 
- const gatesQ = useQuery({
- queryKey: ['admin-release-gates'],
- queryFn: () => adminGetReleaseGate(),
- })
 
  useQuery({
  queryKey: ['admin-docs-processed', (casesQ.data?.items ?? []).map((i: any) => i.id).join(',')],
@@ -100,13 +90,6 @@ const MetricsDashboard = () => {
  onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-benchmark-latest'] }),
  })
 
- const submitGateMut = useMutation({
- mutationFn: (payload: ReleaseGateRequest) => adminSubmitReleaseGate(payload),
- onSuccess: () => {
- queryClient.invalidateQueries({ queryKey: ['admin-release-gates'] })
- setIsGateOpen(false)
- },
- })
 
  // ── derived stats ─────────────────────────────────────────────────────
  const overview = useMemo(() => {
@@ -412,155 +395,6 @@ const MetricsDashboard = () => {
  </CardContent>
  </Card>
 
- {/* Release Gate section */}
- <Card className="shadow-sm border border-border/50 mb-12">
- <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10">
- <div>
- <CardTitle className="text-lg flex items-center gap-2">
- <TrendingUp className="w-5 h-5 text-primary"/>
- {t('admin.metrics.releaseGates')}
- </CardTitle>
- <CardDescription>{t('admin.metrics.releaseGatesDesc')}</CardDescription>
- </div>
- <Button variant="outline"size="sm"onClick={() => setIsGateOpen(true)}>
- <Plus className="w-4 h-4 mr-2"/>
- {t('admin.metrics.recordDecision')}
- </Button>
- </CardHeader>
- <CardContent className="p-0">
- {gatesQ.data && gatesQ.data.length > 0 ? (
- <Table>
- <TableHeader>
- <TableRow>
- <TableHead className="pl-6">{t('admin.audit.resource')}</TableHead>
- <TableHead>{t('common.mode')}</TableHead>
- <TableHead>{t('case.status')}</TableHead>
- <TableHead>{t('admin.metrics.signOff')}</TableHead>
- <TableHead className="pr-6 text-right">{t('admin.metrics.decisionDate')}</TableHead>
- </TableRow>
- </TableHeader>
- <TableBody>
- {gatesQ.data.map((g: any) => (
- <TableRow key={g.id}>
- <TableCell className="pl-6 font-bold text-xs uppercase text-primary">{g.phase.replace('_', ' ')}</TableCell>
- <TableCell className="text-xs uppercase font-medium">{g.mode.replace('_', ' ')}</TableCell>
- <TableCell>
- <Badge variant={g.status === 'approved' ? 'success' : 'warning'} className="uppercase text-[9px] font-black">
- {g.status}
- </Badge>
- </TableCell>
- <TableCell>
- <div className="flex flex-col">
- <span className="text-sm font-semibold">{g.judge_sign_off || '—'}</span>
- <span className="text-[10px] text-muted-foreground truncate max-w-[200px]">{g.rationale}</span>
- </div>
- </TableCell>
- <TableCell className="pr-6 text-right text-muted-foreground text-xs">
- {g.decided_at ? format(new Date(g.decided_at), 'dd/MM/yyyy HH:mm') : '—'}
- </TableCell>
- </TableRow>
- ))}
- </TableBody>
- </Table>
- ) : (
- <div className="py-20 text-center flex flex-col items-center">
- <AlertCircle className="w-8 h-8 text-muted-foreground mb-2"/>
- <p className="text-muted-foreground text-sm italic">{t('admin.metrics.noGateDecisions')}</p>
- </div>
- )}
- </CardContent>
- </Card>
-
- {/* FIXED OVERLAY MODAL */}
- {isGateOpen && (
- <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
- <div className="w-full max-w-lg bg-card border shadow-2xl rounded-3xl overflow-hidden animate-in zoom-in-95 duration-200">
- <div className="p-6 border-b flex justify-between items-center bg-muted/20">
- <div>
- <h3 className="text-xl font-bold">{t('admin.metrics.modalTitle')}</h3>
- <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-0.5">{t('admin.metrics.modalSubtitle')}</p>
- </div>
- <Button variant="ghost"size="icon"className="rounded-full"onClick={() => setIsGateOpen(false)}>
- <Plus className="w-5 h-5 rotate-45"/>
- </Button>
- </div>
- 
- <div className="p-8 space-y-6">
- <div className="grid grid-cols-2 gap-6">
- <div className="space-y-2">
- <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">{t('admin.audit.resource')}</label>
- <select
- value={gateForm.phase}
- onChange={(e: any) => setGateForm((f: any) => ({ ...f, phase: e.target.value }))}
- className="w-full bg-background border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
- >
-  <option value="phase_1">{t('stages.creation')}</option>
-  <option value="phase_2">{t('stages.evidence')}</option>
-  <option value="phase_3">{t('stages.analysis')}</option>
-  <option value="phase_5">{t('stages.review')}</option>
- </select>
- </div>
- <div className="space-y-2">
- <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">{t('common.mode')}</label>
- <select
- value={gateForm.mode}
- onChange={(e: any) => setGateForm((f: any) => ({ ...f, mode: e.target.value }))}
- className="w-full bg-background border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
- >
-  <option value="dense_baseline">{t('admin.metrics.denseBaseline')}</option>
-  <option value="hybrid">{t('admin.metrics.hybridMode')}</option>
- </select>
- </div>
- </div>
-
- <div className="space-y-2">
- <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">{t('admin.metrics.judgeSignOff')}</label>
- <input
- placeholder={t('admin.metrics.judgePlaceholder')}
- value={gateForm.judge_sign_off}
- onChange={(e: any) => setGateForm((f: any) => ({ ...f, judge_sign_off: e.target.value }))}
- className="w-full bg-background border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
- />
- </div>
-
- <div className="space-y-2">
- <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">{t('admin.metrics.rationale')}</label>
- <textarea
- placeholder={t('admin.metrics.rationalePlaceholder')}
- value={gateForm.rationale}
- rows={4}
- onChange={(e: any) => setGateForm((f: any) => ({ ...f, rationale: e.target.value }))}
- className="w-full bg-background border rounded-xl px-4 py-2.5 text-sm resize-none focus:ring-2 focus:ring-primary/20 outline-none"
- />
- </div>
- </div>
-
- <div className="p-6 border-t bg-muted/10 flex gap-3">
- <Button 
- variant="outline"
- className="flex-1 rounded-xl h-11 font-bold"
- onClick={() => setIsGateOpen(false)}
- >
- {t('common.cancel')}
- </Button>
- <Button 
- className="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl h-11 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-amber-500/20"
- disabled={submitGateMut.isPending || !gateForm.judge_sign_off || !gateForm.rationale}
- onClick={() => submitGateMut.mutate({ ...gateForm, status: 'deferred' })}
- >
- ⏸ {t('admin.metrics.defer')}
- </Button>
- <Button 
- className="flex-1 rounded-xl h-11 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20"
- disabled={submitGateMut.isPending || !gateForm.judge_sign_off || !gateForm.rationale}
- onClick={() => submitGateMut.mutate({ ...gateForm, status: 'approved' })}
- >
- ✓ {t('admin.metrics.approve')}
- </Button>
- </div>
- </div>
- </div>
- )}
  </PortalLayout>
  )
 }

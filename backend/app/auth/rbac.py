@@ -1,6 +1,11 @@
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
 from app.auth.jwt import verify_token
+from app.database import get_db
+from app.modules.user.models import User
 
 
 security = HTTPBearer(auto_error=False)
@@ -58,12 +63,54 @@ async def get_current_user_payload(
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: AsyncSession = Depends(get_db)
 ) -> dict:
-    """Get current user with role validation."""
+    """Get current user with role validation and internal ID resolution."""
     payload = await get_current_user_payload(credentials)
 
     # Keycloak roles are in realm_access.roles
     payload["role"] = extract_role(payload)
+    
+    # Resolve local user ID from Keycloak ID (sub)
+    keycloak_id = payload.get("sub")
+    if keycloak_id:
+        from app.modules.user.repository import UserRepository
+        user_repo = UserRepository(db)
+        user = await user_repo.get_by_keycloak_id(keycloak_id)
+        
+        if not user:
+            # Resolve legacy user or auto-provision
+            email = payload.get("email")
+            username = payload.get("preferred_username")
+            
+            if email:
+                user = await user_repo.get_by_email_any(email)
+            if not user and username:
+                user = await user_repo.get_by_username_any(username)
+                
+            if user:
+                # Link existing legacy user to Keycloak
+                user.keycloak_id = keycloak_id
+                await db.commit()
+            else:
+                # Auto-provision minimal user record
+                import uuid
+                from app.modules.user.models import User as UserModel
+                user = UserModel(
+                    id=str(uuid.uuid4()),
+                    email=email or f"{username or keycloak_id}@keycloak.local",
+                    username=username or keycloak_id,
+                    full_name=payload.get("name", username or "Keycloak User"),
+                    role=payload["role"],
+                    keycloak_id=keycloak_id
+                )
+                db.add(user)
+                await db.commit()
+                await db.refresh(user)
+            
+        payload["db_id"] = user.id
+    else:
+        payload["db_id"] = None
 
     return payload
 

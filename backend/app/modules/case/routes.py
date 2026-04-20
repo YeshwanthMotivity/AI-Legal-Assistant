@@ -33,7 +33,7 @@ async def get_cases(
     current_user: dict = Depends(require_role(UserRole.ADMIN, UserRole.JUDGE, UserRole.CLERK))
 ):
     """Get all cases."""
-    return await service.get_all_cases(user_id=current_user["sub"], user_role=current_user["role"], skip=skip, limit=limit, status=status)
+    return await service.get_all_cases(user_id=current_user["db_id"], user_role=current_user["role"], skip=skip, limit=limit, status=status)
 
 
 @router.post("", response_model=CaseResponse, status_code=status.HTTP_201_CREATED)
@@ -44,9 +44,9 @@ async def create_case(
     current_user: dict = Depends(require_role(UserRole.ADMIN, UserRole.JUDGE, UserRole.CLERK))
 ):
     """Create a new case."""
-    case = await service.create_case(case_data, current_user["sub"])
+    case = await service.create_case(case_data, current_user["db_id"])
     await AuditService(db).log(
-        user_id=current_user["sub"],
+        user_id=current_user["db_id"],
         action="create_case",
         resource_type="case",
         resource_id=case.id,
@@ -67,7 +67,7 @@ async def get_case(
     current_user: dict = Depends(require_role(UserRole.ADMIN, UserRole.JUDGE, UserRole.CLERK))
 ):
     """Get case by ID."""
-    case = await service.get_case(case_id, user_id=current_user["sub"], user_role=current_user["role"])
+    case = await service.get_case(case_id, user_id=current_user["db_id"], user_role=current_user["role"])
     if not case:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -91,7 +91,7 @@ async def update_case(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Case not found"
         )
-    await AuditService(db).log(current_user["sub"], "update_case", "case", case.id)
+    await AuditService(db).log(current_user["db_id"], "update_case", "case", case.id)
     await db.commit()
     return case
 
@@ -111,7 +111,7 @@ async def assign_case(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Case not found"
         )
-    await AuditService(db).log(current_user["sub"], "assign_case", "case", case.id)
+    await AuditService(db).log(current_user["db_id"], "assign_case", "case", case.id)
     await db.commit()
     return case
 
@@ -126,13 +126,13 @@ async def analyze_case(
 ):
     """Analyze case with AI."""
     # Verify case exists
-    case = await service.get_case(case_id, user_id=current_user["sub"], user_role=current_user["role"])
+    case = await service.get_case(case_id, user_id=current_user["db_id"], user_role=current_user["role"])
     if not case:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Case not found"
         )
-    return await service.analyze_case(case_id, current_user["sub"], background_tasks, language)
+    return await service.analyze_case(case_id, current_user["db_id"], background_tasks, language)
 
 
 @router.get("/{case_id}/analysis", response_model=CaseAnalysisResponse)
@@ -142,7 +142,7 @@ async def get_case_analysis(
     current_user: dict = Depends(require_role(UserRole.JUDGE, UserRole.CLERK))
 ):
     """Get case analysis."""
-    case = await service.get_case(case_id, user_id=current_user["sub"], user_role=current_user["role"])
+    case = await service.get_case(case_id, user_id=current_user["db_id"], user_role=current_user["role"])
     if not case:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -159,7 +159,7 @@ async def draft_judgment(
     current_user: dict = Depends(require_role(UserRole.JUDGE))
 ):
     """Generate judgment draft."""
-    case = await service.get_case(case_id, user_id=current_user["sub"], user_role=current_user["role"])
+    case = await service.get_case(case_id, user_id=current_user["db_id"], user_role=current_user["role"])
     if not case:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -177,14 +177,14 @@ async def create_judgment(
     current_user: dict = Depends(require_role(UserRole.JUDGE))
 ):
     """Create judgment for case."""
-    case = await service.get_case(case_id, user_id=current_user["sub"], user_role=current_user["role"])
+    case = await service.get_case(case_id, user_id=current_user["db_id"], user_role=current_user["role"])
     if not case:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Case not found"
         )
-    judgment_res = await service.create_judgment(case_id, judgment_data.model_dump(), current_user["sub"])
-    await AuditService(db).log(current_user["sub"], "finalize_judgment", "case", case_id)
+    judgment_res = await service.create_judgment(case_id, judgment_data.model_dump(), current_user["db_id"])
+    await AuditService(db).log(current_user["db_id"], "finalize_judgment", "case", case_id)
     await db.commit()
     return judgment_res
 
@@ -197,13 +197,13 @@ async def submit_feedback(
     current_user: dict = Depends(require_role(UserRole.JUDGE))
 ):
     """Submit judge feedback."""
-    case = await service.get_case(case_id, user_id=current_user["sub"], user_role=current_user["role"])
+    case = await service.get_case(case_id, user_id=current_user["db_id"], user_role=current_user["role"])
     if not case:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Case not found"
         )
-    return await service.submit_feedback(case_id, feedback_data.model_dump(), current_user["sub"])
+    return await service.submit_feedback(case_id, feedback_data.model_dump(), current_user["db_id"])
 
 
 @router.delete("/{case_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -220,7 +220,7 @@ async def delete_case(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Case not found"
         )
-    await AuditService(db).log(current_user["sub"], "delete_case", "case", case_id)
+    await AuditService(db).log(current_user["db_id"], "delete_case", "case", case_id)
     await db.commit()
     return None
 

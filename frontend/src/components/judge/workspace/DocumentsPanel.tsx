@@ -180,7 +180,7 @@ const DocumentsPanel = (props: DocumentsPanelProps) => {
     Respond with JSON: {"is_relevant": boolean, "confidence": float (0-1), "reason": string}`
 
     try {
-      const response = await fetch('http://172.20.100.215:11434/api/chat', {
+      const response = await fetch(import.meta.env.VITE_LLM_URL || 'http://172.20.100.215:11434/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

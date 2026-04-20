@@ -15,6 +15,10 @@ class UserRepository:
         result = await self.db.execute(select(User).where(User.id == user_id))
         return result.scalar_one_or_none()
     
+    async def get_by_keycloak_id(self, keycloak_id: str) -> Optional[User]:
+        result = await self.db.execute(select(User).where(User.keycloak_id == keycloak_id))
+        return result.scalar_one_or_none()
+    
     async def get_by_email(self, email: str) -> Optional[User]:
         result = await self.db.execute(
             select(User).where(User.email == email).where(User.is_active == "true")

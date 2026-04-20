@@ -40,6 +40,7 @@ const UserManagement = () => {
  username: '',
  full_name: '',
  role: 'clerk',
+  password: '',
  })
 
  const usersQuery = useQuery({
@@ -53,8 +54,8 @@ const UserManagement = () => {
  queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers })
  setMessageType('success')
  setMessage(t('admin.messages.userCreated'))
- setIsCreateOpen(false)
- setForm({ email: '', username: '', full_name: '', role: 'clerk', password: '' })
+  setIsCreateOpen(false)
+  setForm({ email: '', username: '', full_name: '', role: 'clerk', password: '' })
  },
  onError: () => {
  setMessageType('error')
@@ -104,7 +105,7 @@ const UserManagement = () => {
  return (
  <PortalLayout 
  title={t('admin.pages.usersTitle')} 
- subtitle="Identity and Access Management (IAM) for the Judicial Network."
+ subtitle={t('admin.pages.iamSubtitle')}
  >
  <div className="space-y-8">
  {message && (
@@ -127,8 +128,8 @@ const UserManagement = () => {
  <Users className="w-5 h-5"/>
  </div>
  <div>
- <CardTitle className="text-lg">Platform Identities</CardTitle>
- <CardDescription className="text-xs font-medium italic">Active registry of authorized judicial personnel</CardDescription>
+ <CardTitle className="text-lg">{t('admin.pages.platformIdentities')}</CardTitle>
+ <CardDescription className="text-xs font-medium italic">{t('admin.pages.activeRegistry')}</CardDescription>
  </div>
  </div>
  <Button 
@@ -240,7 +241,7 @@ const UserManagement = () => {
  <CardHeader className="bg-primary/5 border-b py-5">
  <div className="flex items-center gap-2">
  <UserPlus className="w-5 h-5 text-primary"/>
- <CardTitle className="text-lg">Institutional Onboarding</CardTitle>
+ <CardTitle className="text-lg">{t('admin.pages.institutionalOnboarding')}</CardTitle>
  </div>
  </CardHeader>
  <CardContent className="p-8 space-y-6">
@@ -298,6 +299,7 @@ const UserManagement = () => {
  <option value="judge">{t('roles.judge')}</option>
  <option value="clerk">{t('roles.clerk')}</option>
  </select>
+  <div className="space-y-2">     <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 flex items-center gap-1.5">       <Key className="w-3 h-3"/>       {t('admin.forms.password')}     </label>     <input        type="password"       placeholder="••••••••"       className="w-full bg-muted/20 border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none font-bold"       value={form.password}        onChange={(e) => setForm(prev => ({ ...prev, password: e.target.value }))}      />   </div>
  </div>
 
  </div>
@@ -314,7 +316,7 @@ const UserManagement = () => {
  className="flex-1 rounded-xl h-11 font-bold shadow-lg shadow-primary/20"
  disabled={createMutation.isPending}
  onClick={() => {
- if (!form.email || !form.username ) {
+ if (!form.email || !form.username || !form.password) {
  setMessageType('error')
  setMessage(t('admin.messages.requiredFields'))
  return
@@ -331,10 +333,10 @@ const UserManagement = () => {
  <div className="mt-8 p-6 bg-amber-500/5 border border-amber-500/10 rounded-2xl">
  <div className="flex items-center gap-3 text-amber-600 mb-2">
  <ShieldAlert className="w-5 h-5"/>
- <h5 className="text-[11px] font-black uppercase tracking-widest">IAM Security Policy</h5>
+ <h5 className="text-[11px] font-black uppercase tracking-widest">{t('admin.pages.iamSecurityPolicy')}</h5>
  </div>
  <p className="text-[10px] text-muted-foreground font-medium italic leading-relaxed">
- All new accounts require mandatory 2FA activation upon first login. Judicial roles gain immediate access to the Reasoning Engine cluster.
+ {t('admin.pages.iamSecurityPolicyDesc')}
  </p>
  </div>
  </div>

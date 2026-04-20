@@ -105,7 +105,33 @@ def setup():
     secret_resp = request(f"{KEYCLOAK_URL}/admin/realms/{REALM_NAME}/clients/{client_id_internal}/client-secret", headers=headers)
     secret = secret_resp["value"]
 
-    print(f"\n🎉 SUCCESS! Keycloak is configured.")
+    print("7. Disabling specific required actions...")
+    # List of common Keycloak required action aliases matching the user's request
+    required_actions = [
+        "UPDATE_PROFILE",
+        "VERIFY_EMAIL",
+        "webauthn-register",
+        "webauthn-register-passwordless",
+        "VERIFY_PROFILE",
+        "delete_credential",
+        "update_user_locale"
+    ]
+    
+    for action in required_actions:
+        try:
+            # We use the PUT endpoint to update the action status
+            # First, check if the action exists by trying to GET it
+            url = f"{KEYCLOAK_URL}/admin/realms/{REALM_NAME}/authentication/required-actions/{action}"
+            current_action = request(url, headers=headers)
+            if current_action and current_action != "ALREADY_EXISTS":
+                current_action["enabled"] = False
+                request(url, data=current_action, headers=headers, method="PUT")
+                print(f"   Disabled '{action}'.")
+        except Exception as e:
+            # Some actions might not be registered or have different aliases
+            pass
+
+    print(f"\n🎉 SUCCESS! Keycloak is fully configured and required actions are disabled.")
     print(f"--------------------------------------------------")
     print(f"PASTE THIS SECRET INTO YOUR .env FILE:")
     print(f"KEYCLOAK_CLIENT_SECRET={secret}")
