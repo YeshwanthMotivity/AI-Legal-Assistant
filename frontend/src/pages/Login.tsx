@@ -139,27 +139,60 @@ const Login = () => {
                 <p className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[10px] opacity-80">{t('auth.legalIntelligence')}</p>
               </div>
 
-              <div className="space-y-6 relative z-10">
-                <p className="text-text-secondary text-sm font-light leading-relaxed">
-                  Access the Sovereign AI Judicial Assistant platform via the centralized identity service.
-                </p>
+              <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+                <div className="space-y-4">
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#003426]/40" />
+                    <input
+                      type="text"
+                      placeholder={t('auth.username')}
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 bg-white/50 border border-[#003426]/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] transition-all"
+                      required
+                    />
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#003426]/40" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder={t('auth.password')}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full pl-12 pr-12 py-4 bg-white/50 border border-[#003426]/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] transition-all"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#003426]/40 hover:text-[#003426]"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {error && (
+                  <p className="text-red-500 text-xs font-medium bg-red-50 p-3 rounded-lg border border-red-100 italic">
+                    {error}
+                  </p>
+                )}
                 
                 <button
-                  onClick={login}
-                  className="w-full py-4 btn-royal-shine text-white font-black text-xs uppercase tracking-[0.4em] rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-emerald-500/20"
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-4 btn-royal-shine text-white font-black text-xs uppercase tracking-[0.4em] rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-emerald-500/20 disabled:opacity-50"
                 >
-                  <span>{t('auth.login')}</span>
+                  <span>{isLoading ? t('auth.loggingIn') : t('auth.login')}</span>
                   <ArrowRight className="w-5 h-5" />
                 </button>
                 
                 <div className="pt-6 border-t border-border-subtle">
                   <p className="text-[10px] text-text-muted text-center uppercase tracking-widest font-bold">
-                    Authenticated via Keycloak SSO
+                    {t('auth.secureAccess')}
                   </p>
                 </div>
-              </div>
-v>
-              </div>
+              </form>
  
             </motion.div>
  

@@ -13,7 +13,7 @@ async def extract_token(credentials: HTTPAuthorizationCredentials = None) -> Opt
         return None
     
     token = credentials.credentials
-    payload = verify_token(token)
+    payload = await verify_token(token)
     
     if payload is None:
         raise HTTPException(
