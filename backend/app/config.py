@@ -37,6 +37,22 @@ class Settings(BaseSettings):
     minio_host: str = "minio"
     minio_port: int = 9000
     
+    # Keycloak
+    keycloak_url: str = "http://keycloak:8080"
+    keycloak_realm: str = "judicial"
+    keycloak_client_id: str = "judicial-frontend"
+    keycloak_client_secret: str = ""
+    keycloak_admin_user: str = "admin"
+    keycloak_admin_password: str = "admin"
+    
+    @property
+    def keycloak_issuer(self) -> str:
+        return f"{self.keycloak_url}/realms/{self.keycloak_realm}"
+    
+    @property
+    def keycloak_jwks_url(self) -> str:
+        return f"{self.keycloak_issuer}/protocol/openid-connect/certs"
+    
     # Service URLs
     ollama_url: str = "http://10.10.0.1:11434"
     bge_m3_url: str = "http://bge_m3:8001"

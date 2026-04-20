@@ -134,111 +134,31 @@ const Login = () => {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-text-accent/5 to-transparent pointer-events-none" />
              
-              <div className="space-y-1.5 text-center lg:text-left relative z-10">
+              <div className="space-y-6 text-center lg:text-left relative z-10 py-4">
                 <h2 className="text-3xl font-headline font-bold text-[#003426] tracking-tight">{t('auth.loginButton')}</h2>
                 <p className="text-[#D4AF37] font-black uppercase tracking-[0.4em] text-[10px] opacity-80">{t('auth.legalIntelligence')}</p>
               </div>
- 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-4">
-                  {/* Email Input */}
-                  <div className="group">
-                    <label className="block text-[10px] uppercase tracking-[0.3em] text-text-secondary font-black mb-3" htmlFor="email">
-                      {t('auth.institutionalEmail')}
-                    </label>
-                    <div className="relative group-focus-within:scale-[1.01] transition-transform duration-300">
-                      <User className="absolute start-6 top-1/2 -translate-y-1/2 text-primary/40 w-4 h-4 group-focus-within:text-text-accent transition-colors" />
-                      <input
-                        className="w-full bg-bg-surface border border-border-color focus:border-text-accent/50 focus:ring-8 focus:ring-text-accent/5 rounded-2xl text-text-primary py-3.5 ps-14 pe-6 transition-all duration-300 outline-none placeholder:text-text-muted/50 font-medium text-sm"
-                        id="email"
-                        placeholder="justice.smith@firm.ae"
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
- 
-                  {/* Password Input */}
-                  <div className="group">
-                    <div className="flex justify-between items-center mb-3">
-                      <label className="block text-[10px] uppercase tracking-[0.3em] text-text-secondary font-black" htmlFor="password">
-                        {t('auth.accessKey')}
-                      </label>
-                      <a className="text-[10px] uppercase tracking-[0.2em] text-text-accent hover:opacity-80 transition-opacity font-bold" href="#">
-                        {t('auth.forgot')}
-                      </a>
-                    </div>
-                    <div className="relative group-focus-within:scale-[1.01] transition-transform duration-300">
-                      <Lock className="absolute start-6 top-1/2 -translate-y-1/2 text-primary/40 w-4 h-4 group-focus-within:text-text-accent transition-colors" />
-                      <input
-                        className="w-full bg-bg-surface border border-border-color focus:border-text-accent/50 focus:ring-8 focus:ring-text-accent/5 rounded-2xl text-text-primary py-3.5 ps-14 pe-14 transition-all duration-300 outline-none placeholder:text-text-muted/50 font-medium text-sm"
-                        id="password"
-                        placeholder="••••••••••••"
-                        type={showPassword ? "text" : "password"}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                      <button
-                         className="absolute end-6 top-1/2 -translate-y-1/2 text-text-muted/50 hover:text-text-accent transition-colors"
-                         type="button"
-                         onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
- 
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="p-3 rounded bg-error-container/20 border border-error-container text-error text-[11px] font-bold uppercase tracking-widest text-center"
-                  >
-                    {error}
-                  </motion.div>
-                )}
- 
-                {/* Login Button */}
+
+              <div className="space-y-6 relative z-10">
+                <p className="text-text-secondary text-sm font-light leading-relaxed">
+                  Access the Sovereign AI Judicial Assistant platform via the centralized identity service.
+                </p>
+                
                 <button
-                  className="w-full py-3.5 btn-royal-shine text-white font-black text-xs uppercase tracking-[0.4em] rounded-2xl disabled:opacity-70 flex items-center justify-center gap-3 mt-2"
-                  type="submit"
-                  disabled={isLoading}
+                  onClick={login}
+                  className="w-full py-4 btn-royal-shine text-white font-black text-xs uppercase tracking-[0.4em] rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-emerald-500/20"
                 >
-                  {isLoading ? (
-                    <div className="flex items-center gap-3">
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>{t('auth.authenticating')}</span>
-                    </div>
-                  ) : (
-                    <>
-                      <span>{t('auth.login')}</span>
-                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </>
-                  )}
+                  <span>{t('auth.login')}</span>
+                  <ArrowRight className="w-5 h-5" />
                 </button>
-              </form>
- 
-              {/* Demo Credentials Section (from original logic) */}
-              <div className="pt-6 mt-4 border-t border-border-subtle">
-                <span className="block text-[9px] uppercase tracking-[0.3em] text-text-muted mb-6 text-center font-bold">
-                  {t('auth.envAccessCredentials')}
-                </span>
-                <div className="grid grid-cols-1 gap-3">
-                  {[
-                    { role: 'judge', pass: 'judge', color: 'bg-primary/5 text-primary border-primary/10' },
-                    { role: 'clerk', pass: 'clerk', color: 'bg-indigo-500/5 text-indigo-400 border-indigo-500/10' },
-                    { role: 'admin', pass: 'admin', color: 'bg-accent-gold/5 text-text-accent border-accent-gold/10' }
-                  ].map(({ role, pass, color }) => (
-                    <div key={role} className={cn("flex flex-row items-center justify-between p-3 px-5 rounded-xl border text-[11px] font-bold", color)}>
-                      <span className="uppercase tracking-widest">{role}</span>
-                      <span className="font-mono tracking-widest opacity-80">{pass}</span>
-                    </div>
-                  ))}
+                
+                <div className="pt-6 border-t border-border-subtle">
+                  <p className="text-[10px] text-text-muted text-center uppercase tracking-widest font-bold">
+                    Authenticated via Keycloak SSO
+                  </p>
                 </div>
+              </div>
+v>
               </div>
  
             </motion.div>

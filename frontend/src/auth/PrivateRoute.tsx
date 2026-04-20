@@ -9,7 +9,11 @@ interface PrivateRouteProps {
 }
 
 const PrivateRoute = ({ children, allowedRoles }: PrivateRouteProps) => {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, user, isLoading } = useAuth()
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />

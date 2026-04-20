@@ -13,6 +13,7 @@ async def call_ollama(model_url: str, model_name: str, system: str, user: str, t
         "model": model_name,
         "prompt": f"System: {system}\n\nUser Context: {user}\n\nAssistant Response (JSON ONLY):",
         "stream": False,
+        "keep_alive": 0,
         "options": {
             "num_ctx": 4096,
             "temperature": 0.1,

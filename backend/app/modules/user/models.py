@@ -17,7 +17,7 @@ class User(Base):
     id = Column(String, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     username = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
+    keycloak_id = Column(String, unique=True, index=True, nullable=True)
     full_name = Column(String)
     role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.CLERK)
     is_active = Column(String, default="true")

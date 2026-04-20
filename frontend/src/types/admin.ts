@@ -16,7 +16,7 @@ export interface AdminCreateUserRequest {
   username: string
   full_name?: string
   role: 'admin' | 'judge' | 'clerk'
-  password: string
+  password?: string
 }
 
 export interface AdminAuditLogItem {

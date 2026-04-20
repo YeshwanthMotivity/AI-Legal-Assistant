@@ -40,7 +40,6 @@ const UserManagement = () => {
  username: '',
  full_name: '',
  role: 'clerk',
- password: '',
  })
 
  const usersQuery = useQuery({
@@ -301,19 +300,6 @@ const UserManagement = () => {
  </select>
  </div>
 
- <div className="space-y-2">
- <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 flex items-center gap-1.5">
- <Key className="w-3 h-3"/>
- {t('admin.forms.password')}
- </label>
- <input 
- type="password"
- placeholder="••••••••"
- className="w-full bg-muted/20 border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none font-bold"
- value={form.password} 
- onChange={(e) => setForm(prev => ({ ...prev, password: e.target.value }))} 
- />
- </div>
  </div>
 
  <div className="flex gap-4 pt-4 border-t">
@@ -328,7 +314,7 @@ const UserManagement = () => {
  className="flex-1 rounded-xl h-11 font-bold shadow-lg shadow-primary/20"
  disabled={createMutation.isPending}
  onClick={() => {
- if (!form.email || !form.username || !form.password) {
+ if (!form.email || !form.username ) {
  setMessageType('error')
  setMessage(t('admin.messages.requiredFields'))
  return

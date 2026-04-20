@@ -45,18 +45,14 @@ class UserRepository:
         )
         return list(result.scalars().all())
     
-    async def create(self, user_data: UserCreate) -> User:
-        hashed_password = bcrypt.hashpw(
-            user_data.password.encode("utf-8"),
-            bcrypt.gensalt(),
-        ).decode("utf-8")
+    async def create(self, user_data: UserCreate, keycloak_id: str) -> User:
         user = User(
             id=str(uuid.uuid4()),
             email=user_data.email,
             username=user_data.username,
             full_name=user_data.full_name,
             role=user_data.role,
-            hashed_password=hashed_password,
+            keycloak_id=keycloak_id,
         )
         self.db.add(user)
         await self.db.flush()
@@ -102,13 +98,4 @@ class UserRepository:
         await self.db.delete(user)
         await self.db.flush()
         return True
-    
-    async def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        try:
-            return bcrypt.checkpw(
-                plain_password.encode("utf-8"),
-                hashed_password.encode("utf-8"),
-            )
-        except ValueError:
-            return False
 

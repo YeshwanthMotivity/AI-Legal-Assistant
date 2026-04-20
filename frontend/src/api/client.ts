@@ -9,7 +9,8 @@ export const apiClient = axios.create({
   },
 })
 
-// Request interceptor to add access token
+// Request interceptor to add access token from localStorage
+// We sync the Keycloak token to localStorage in AuthContext
 apiClient.interceptors.request.use(
   (config) => {
     const accessToken = localStorage.getItem('accessToken')
@@ -23,40 +24,17 @@ apiClient.interceptors.request.use(
   }
 )
 
-// Response interceptor for auto-refresh
+// Simplified response interceptor
 apiClient.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true
-
-      try {
-        const refreshToken = localStorage.getItem('refreshToken')
-        if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-            refresh_token: refreshToken,
-          })
-
-          const { access_token } = response.data
-          localStorage.setItem('accessToken', access_token)
-
-          originalRequest.headers.Authorization = `Bearer ${access_token}`
-          return apiClient(originalRequest)
-        }
-      } catch (refreshError) {
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('refreshToken')
-        localStorage.removeItem('user')
-        window.location.href = '/login'
-        return Promise.reject(refreshError)
-      }
+  (error) => {
+    // If we get a 401, it means the token is likely invalid or Keycloak refresh failed
+    // Redirect to login will be handled by the next route change or AuthContext
+    if (error.response?.status === 401) {
+       console.error('Session expired or unauthorized request')
     }
-
     return Promise.reject(error)
   }
 )
 
 export default apiClient
-

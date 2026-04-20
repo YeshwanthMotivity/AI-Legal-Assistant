@@ -21,6 +21,16 @@ ROLE_HIERARCHY = {
 }
 
 
+def extract_role(payload: dict) -> str:
+    """Extract the primary role from Keycloak's realm_access."""
+    roles = payload.get("realm_access", {}).get("roles", [])
+    # Order of precedence for multi-role users
+    for r in ["admin", "judge", "clerk"]:
+        if r in roles:
+            return r.upper()
+    return "CLERK"
+
+
 async def get_current_user_payload(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> dict:
@@ -33,7 +43,8 @@ async def get_current_user_payload(
         )
 
     token = credentials.credentials
-    payload = verify_token(token)
+    # verify_token is now async because it may fetch JWKS
+    payload = await verify_token(token)
 
     if payload is None:
         raise HTTPException(
@@ -51,34 +62,22 @@ async def get_current_user(
     """Get current user with role validation."""
     payload = await get_current_user_payload(credentials)
 
-    # Ensure user has a role
-    if "role" not in payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token: missing role",
-        )
+    # Keycloak roles are in realm_access.roles
+    payload["role"] = extract_role(payload)
 
     return payload
 
 
 def require_role(*allowed_roles: str):
-    """Dependency factory for role-based access control.
-
-    Respects ROLE_HIERARCHY: ADMIN inherits JUDGE and CLERK permissions,
-    JUDGE inherits CLERK permissions. An admin can access any judge or
-    clerk route without being explicitly listed.
-    """
-    # Normalize allowed roles to uppercase for comparison
+    """Dependency factory for role-based access control."""
     normalized_allowed = {r.upper() for r in allowed_roles}
 
     async def role_checker(
         user: dict = Depends(get_current_user)
     ) -> dict:
         user_role = user.get("role", "")
-        # Normalize the user's role to uppercase for comparison
-        normalized_user_role = user_role.upper() if isinstance(user_role, str) else user_role
-        # Expand the user's role to all roles they are permitted to act under
-        effective_roles = ROLE_HIERARCHY.get(normalized_user_role, [normalized_user_role])
+        # Expansion based on hierarchy
+        effective_roles = ROLE_HIERARCHY.get(user_role, [user_role])
 
         if not any(r.upper() in normalized_allowed for r in effective_roles):
             raise HTTPException(
@@ -86,8 +85,6 @@ def require_role(*allowed_roles: str):
                 detail=f"Access denied. Required roles: {', '.join(allowed_roles)}"
             )
 
-        # Store normalized role back so downstream code sees uppercase
-        user["role"] = normalized_user_role
         return user
 
     return role_checker
@@ -98,9 +95,15 @@ def require_permission(*required_permissions: str):
     async def permission_checker(
         user: dict = Depends(get_current_user)
     ) -> dict:
+        # Keycloak might have permissions in claims, but for now we stick to roles
+        # If specific permissions are needed, they can be added to the token or mapped from roles
+        user_role = user.get("role", "")
+        
+        # Simple mapping: ADMIN has all permissions
+        if user_role == UserRole.ADMIN:
+            return user
+            
         user_permissions = user.get("permissions", [])
-
-        # Check if user has any of the required permissions
         has_permission = any(perm in user_permissions for perm in required_permissions)
 
         if not has_permission:

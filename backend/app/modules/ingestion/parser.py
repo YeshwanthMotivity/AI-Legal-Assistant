@@ -130,6 +130,7 @@ class LegalStructureParser:
             "model": settings.ollama_model_fallback,
             "prompt": f"System: {system}\n\nUser Context: {user}\n\nAssistant Response:",
             "stream": False,
+            "keep_alive": 0,
             "options": {
                 "num_ctx": 4096,
                 "temperature": 0.1,

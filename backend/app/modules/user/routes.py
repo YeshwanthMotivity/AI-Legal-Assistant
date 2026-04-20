@@ -11,42 +11,6 @@ from app.modules.user.services import UserService
 from app.auth.rbac import require_role, UserRole
 
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
-
-
-def get_user_service(db: AsyncSession = Depends(get_db)) -> UserService:
-    repository = UserRepository(db)
-    return UserService(repository)
-
-
-# Auth routes
-@router.post("/login", response_model=TokenResponse)
-async def login(
-    login_data: UserLogin,
-    service: UserService = Depends(get_user_service)
-):
-    """Login and receive access and refresh tokens."""
-    return await service.login(login_data)
-
-
-@router.post("/refresh", response_model=TokenResponse)
-async def refresh_token(
-    refresh_token: str,
-    service: UserService = Depends(get_user_service)
-):
-    """Refresh access token using refresh token."""
-    return await service.refresh_access_token(refresh_token)
-
-
-@router.get("/judges", response_model=List[UserResponse])
-async def get_judges(
-    service: UserService = Depends(get_user_service),
-    current_user: dict = Depends(require_role(UserRole.CLERK))
-):
-    """Get all active judges (Clerk or higher)."""
-    return await service.get_users_by_role(UserRole.JUDGE)
-
-
 # Admin user management routes
 admin_router = APIRouter(prefix="/admin/users", tags=["User Management"])
 
