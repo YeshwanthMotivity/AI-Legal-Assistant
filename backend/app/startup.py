@@ -13,10 +13,9 @@ logger = logging.getLogger(__name__)
 async def init_qdrant():
     """Initialize Qdrant collections."""
     try:
-        from qdrant_client import QdrantClient
         from qdrant_client.models import Distance, VectorParams
-        
-        client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+        from app.modules.shared.qdrant_client import get_qdrant_client
+        client = get_qdrant_client()
         
         collections = client.get_collections().collections
         collection_names = [c.name for c in collections]

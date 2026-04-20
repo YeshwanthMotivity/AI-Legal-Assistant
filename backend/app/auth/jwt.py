@@ -1,26 +1,36 @@
 from typing import Optional, Dict, Any
 from jose import jwt, JWTError
 import httpx
+import time
 from app.config import settings
 
 import logging
 
 logger = logging.getLogger(__name__)
 
-_jwks_cache = None
+_jwks_cache: Optional[dict] = None
+_jwks_cache_time: float = 0.0
+_JWKS_TTL: float = 3600.0  # refresh every hour; covers Keycloak key rotation
 
-async def get_jwks():
-    global _jwks_cache
-    if not _jwks_cache:
-        try:
-            url = settings.keycloak_jwks_url
-            async with httpx.AsyncClient() as client:
-                r = await client.get(url)
-                r.raise_for_status()
-                _jwks_cache = r.json()
-        except Exception:
-            # If Keycloak is not reachable, don't cache error
-            return None
+
+async def get_jwks() -> Optional[dict]:
+    global _jwks_cache, _jwks_cache_time
+    now = time.monotonic()
+    if _jwks_cache and (now - _jwks_cache_time) < _JWKS_TTL:
+        return _jwks_cache
+    try:
+        url = settings.keycloak_jwks_url
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            r = await client.get(url)
+            r.raise_for_status()
+            _jwks_cache = r.json()
+            _jwks_cache_time = now
+    except Exception as exc:
+        if _jwks_cache:
+            logger.warning("JWKS refresh failed (%s); serving stale keys until next retry", exc)
+            return _jwks_cache
+        logger.error("JWKS fetch failed and no cached keys available: %s", exc)
+        return None
     return _jwks_cache
 
 

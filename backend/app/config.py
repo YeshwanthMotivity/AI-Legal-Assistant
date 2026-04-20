@@ -19,9 +19,10 @@ class Settings(BaseSettings):
     def sync_database_url(self) -> str:
         return f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
     
-    # JWT
+    # JWT — tokens are RS256-signed by Keycloak; the secret_key field is kept
+    # only for any internal HS256 utility tokens (e.g. password-reset links).
+    # RS256 verification uses JWKS from Keycloak, NOT this secret.
     jwt_secret_key: str = "your-secret-key-change-in-production"
-    jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 30
     jwt_refresh_token_expire_days: int = 7
     
@@ -68,8 +69,17 @@ class Settings(BaseSettings):
     # Application
     debug: bool = True
     app_name: str = "AI Judicial Assistant"
-    CORS_ORIGINS: list[str] = ["*"]
+    # "* " with allow_credentials=True is rejected by browsers — list origins explicitly.
+    # Override via CORS_ORIGINS env var (comma-separated) in production.
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://172.20.100.215:3000",
+    ]
     ALLOWED_HOSTS: list[str] = ["*"]
+    # Max concurrent AI analyses a single user may run simultaneously.
+    max_concurrent_analyses_per_user: int = 2
+    max_file_size_mb: int = 50
 
     model_config = ConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
@@ -87,4 +97,26 @@ class Settings(BaseSettings):
         return value
     
 settings = Settings()
+
+# --- Security Guards (R2, R5) ---
+if settings.jwt_secret_key == "your-secret-key-change-in-production":
+    import sys
+    if not settings.debug:
+        raise RuntimeError(
+            "FATAL: jwt_secret_key is set to the default placeholder. "
+            "Set JWT_SECRET_KEY in your .env before deploying."
+        )
+    else:
+        import logging
+        logging.getLogger(__name__).warning(
+            "WARNING: jwt_secret_key is using the default placeholder. "
+            "This is only acceptable in local dev."
+        )
+
+if settings.keycloak_admin_password == "admin" and not settings.debug:
+    import logging as _log5
+    _log5.getLogger(__name__).critical(
+        "SECURITY: keycloak_admin_password is set to 'admin' in a non-debug environment. "
+        "Set KEYCLOAK_ADMIN_PASSWORD in your .env before going to production."
+    )
 

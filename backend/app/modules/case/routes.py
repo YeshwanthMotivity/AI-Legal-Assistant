@@ -1,7 +1,9 @@
+from collections import defaultdict
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
+from app.config import settings
 from app.database import get_db
 from app.modules.case.schemas import (
     CaseCreate, CaseUpdate, CaseResponse, CaseListResponse,
@@ -17,6 +19,10 @@ from app.modules.audit.service import AuditService
 
 
 router = APIRouter(prefix="/cases", tags=["Cases"])
+
+# In-process counter: user_id → number of analyses currently running.
+# Prevents a single user from queuing unlimited long-running LLM jobs.
+_active_analyses: dict[str, int] = defaultdict(int)
 
 
 def get_case_service(db: AsyncSession = Depends(get_db)) -> CaseService:
@@ -125,14 +131,32 @@ async def analyze_case(
     current_user: dict = Depends(require_role(UserRole.JUDGE, UserRole.CLERK))
 ):
     """Analyze case with AI."""
-    # Verify case exists
+    user_id: str = current_user["db_id"] or current_user.get("sub", "unknown")
+
+    # Rate-limit: cap concurrent analyses per user to avoid overwhelming Ollama.
+    if _active_analyses[user_id] >= settings.max_concurrent_analyses_per_user:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                f"You already have {_active_analyses[user_id]} analysis/analyses running. "
+                "Please wait for one to complete before starting another."
+            ),
+        )
+
     case = await service.get_case(case_id, user_id=current_user["db_id"], user_role=current_user["role"])
     if not case:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Case not found"
         )
-    return await service.analyze_case(case_id, current_user["db_id"], background_tasks, language)
+
+    _active_analyses[user_id] += 1
+    try:
+        result = await service.analyze_case(case_id, current_user["db_id"], background_tasks, language)
+    finally:
+        _active_analyses[user_id] = max(0, _active_analyses[user_id] - 1)
+
+    return result
 
 
 @router.get("/{case_id}/analysis", response_model=CaseAnalysisResponse)

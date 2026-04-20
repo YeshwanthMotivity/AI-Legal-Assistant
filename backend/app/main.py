@@ -28,6 +28,12 @@ async def lifespan(app: FastAPI):
     # Startup
     await init_db()
     await init_stores()
+    
+    # R1 — Start Persistent Job Worker
+    from app.worker import process_jobs
+    import asyncio
+    asyncio.create_task(process_jobs())
+    
     yield
     # Shutdown
     pass

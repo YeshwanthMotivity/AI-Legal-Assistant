@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useState, useEffect, useRef, ReactNode } from 'react'
 
 export type UserRole = 'admin' | 'judge' | 'clerk'
 
@@ -24,40 +24,111 @@ interface AuthProviderProps {
   children: ReactNode
 }
 
+const KC_URL = import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:8080'
+const TOKEN_ENDPOINT = `${KC_URL}/realms/judicial/protocol/openid-connect/token`
+// Refresh 60 s before the token actually expires.
+const REFRESH_BUFFER_MS = 60_000
+
+function parseToken(token: string): { parsed: Record<string, unknown>; role: UserRole; user: User } | null {
+  try {
+    const parsed = JSON.parse(atob(token.split('.')[1])) as Record<string, unknown>
+    const roles = (parsed.realm_access as Record<string, string[]> | undefined)?.roles ?? []
+    let role: UserRole = 'clerk'
+    if (roles.includes('admin')) role = 'admin'
+    else if (roles.includes('judge')) role = 'judge'
+    const user: User = {
+      sub: parsed.sub as string,
+      username: parsed.preferred_username as string,
+      email: parsed.email as string | undefined,
+      role,
+    }
+    return { parsed, role, user }
+  } catch {
+    return null
+  }
+}
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const scheduleRefresh = (token: string) => {
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
+    try {
+      const parsed = JSON.parse(atob(token.split('.')[1])) as Record<string, number>
+      const msUntilExpiry = parsed.exp * 1000 - Date.now()
+      const delay = Math.max(msUntilExpiry - REFRESH_BUFFER_MS, 0)
+      refreshTimerRef.current = setTimeout(() => attemptSilentRefresh(), delay)
+    } catch {
+      // If we can't parse exp, fall through — the 401 interceptor will catch it.
+    }
+  }
+
+  const attemptSilentRefresh = async () => {
+    const refreshToken = localStorage.getItem('kc_refresh_token')
+    if (!refreshToken) { doLogout(); return }
+    try {
+      const params = new URLSearchParams({
+        client_id: 'judicial-frontend',
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+      })
+      const res = await fetch(TOKEN_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params,
+      })
+      if (!res.ok) { doLogout(); return }
+      const data = await res.json() as { access_token: string; refresh_token?: string }
+      applyTokens(data.access_token, data.refresh_token)
+    } catch {
+      doLogout()
+    }
+  }
+
+  const applyTokens = (access: string, refresh?: string) => {
+    const info = parseToken(access)
+    if (!info) { doLogout(); return }
+    setAccessToken(access)
+    setUser(info.user)
+    localStorage.setItem('kc_access_token', access)
+    if (refresh) localStorage.setItem('kc_refresh_token', refresh)
+    scheduleRefresh(access)
+  }
+
+  const doLogout = () => {
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
+    setAccessToken(null)
+    setUser(null)
+    localStorage.removeItem('kc_access_token')
+    localStorage.removeItem('kc_refresh_token')
+    window.location.href = '/login'
+  }
+
+  // Restore session on mount
   useEffect(() => {
     const token = localStorage.getItem('kc_access_token')
     if (token) {
-      try {
-        const parsed = JSON.parse(atob(token.split('.')[1]))
-        // check expiry
+      const info = parseToken(token)
+      if (!info) {
+        localStorage.removeItem('kc_access_token')
+      } else {
+        const parsed = info.parsed as Record<string, number>
         if (parsed.exp * 1000 < Date.now()) {
-          localStorage.removeItem('kc_access_token')
-          setAccessToken(null)
-          setUser(null)
+          // Already expired — try silent refresh before giving up
+          attemptSilentRefresh()
         } else {
           setAccessToken(token)
-          const roles = parsed.realm_access?.roles || []
-          let role: UserRole = 'clerk'
-          if (roles.includes('admin')) role = 'admin'
-          else if (roles.includes('judge')) role = 'judge'
-          setUser({
-            sub: parsed.sub,
-            username: parsed.preferred_username,
-            email: parsed.email,
-            role,
-          })
+          setUser(info.user)
+          scheduleRefresh(token)
         }
-      } catch (err) {
-        console.error('Failed to parse token from storage:', err)
-        localStorage.removeItem('kc_access_token')
       }
     }
     setIsLoading(false)
+    return () => { if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const login = async (username: string, password: string) => {
@@ -67,47 +138,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       username,
       password,
     })
-    
-    const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:8080'
-    const res = await fetch(
-      `${keycloakUrl}/realms/judicial/protocol/openid-connect/token`,
-      { 
-        method: 'POST', 
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: params 
-      }
-    )
-
+    const res = await fetch(TOKEN_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params,
+    })
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}))
+      const errorData = await res.json().catch(() => ({})) as Record<string, string>
       throw new Error(errorData.error_description || 'Invalid credentials')
     }
-
-    const data = await res.json()
-    setAccessToken(data.access_token)
-    localStorage.setItem('kc_access_token', data.access_token)
-    
-    const parsed = JSON.parse(atob(data.access_token.split('.')[1]))
-    const roles = parsed.realm_access?.roles || []
-    let role: UserRole = 'clerk'
-    if (roles.includes('admin')) role = 'admin'
-    else if (roles.includes('judge')) role = 'judge'
-    
-    setUser({ 
-      sub: parsed.sub, 
-      username: parsed.preferred_username, 
-      email: parsed.email, 
-      role 
-    })
-  }
-
-  const logout = () => {
-    setAccessToken(null)
-    setUser(null)
-    localStorage.removeItem('kc_access_token')
-    window.location.href = '/login'
+    const data = await res.json() as { access_token: string; refresh_token?: string }
+    applyTokens(data.access_token, data.refresh_token)
   }
 
   return (
@@ -118,7 +159,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isAuthenticated: !!accessToken,
         isLoading,
         login,
-        logout,
+        logout: doLogout,
       }}
     >
       {children}

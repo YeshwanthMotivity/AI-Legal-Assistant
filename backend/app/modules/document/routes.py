@@ -1,7 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, BackgroundTasks, Form, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
+import os
+import re
 
+from app.config import settings
 from app.database import get_db, AsyncSessionLocal
 from app.modules.document.schemas import (
     DocumentCreate, DocumentUpdate, DocumentResponse, DocumentListResponse
@@ -15,6 +18,16 @@ from app.auth.rbac import require_role, UserRole
 from app.modules.audit.service import AuditService
 from app.modules.document.relevance import validate_document_relevance
 from app.modules.case.repository import CaseRepository
+
+
+def _safe_filename(raw: str) -> str:
+    """Strip directory components and non-safe characters to prevent path traversal."""
+    name = os.path.basename(raw or "document")
+    # Allow only word chars, hyphens, underscores, dots
+    name = re.sub(r"[^\w\-_\.]", "_", name)
+    # Collapse leading dots to prevent hidden-file tricks
+    name = name.lstrip(".")
+    return (name[:200] or "document")
 
 
 router = APIRouter(prefix="/cases", tags=["Documents"])
@@ -69,12 +82,23 @@ async def upload_document(
         )
 
     file_bytes = await file.read()
+    
+    # R7 fix — reject oversized files before any processing
+    max_size_bytes = settings.max_file_size_mb * 1024 * 1024
+    if len(file_bytes) > max_size_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File size {len(file_bytes) // (1024*1024)}MB exceeds the {settings.max_file_size_mb}MB limit."
+        )
+
+    # Sanitize filename to prevent path traversal attacks
+    safe_name = _safe_filename(file.filename or "document")
 
     # 2. AI Relevance & Audit Layer
     selected_categories = [document_type] if "," not in document_type else document_type.split(",")
     is_relevant, relevance_message = await validate_document_relevance(
         file_bytes=file_bytes,
-        file_name=file.filename or "unknown",
+        file_name=safe_name,
         mime_type=file.content_type or "application/octet-stream",
         selected_categories=selected_categories,
         case_title=case.title or "Unknown Case",
@@ -92,7 +116,7 @@ async def upload_document(
     document_data = DocumentCreate(
         case_id=case_id,
         document_type=document_type,
-        file_name=file.filename or "unknown"
+        file_name=safe_name,
     )
 
     repository = DocumentRepository(db)
@@ -105,16 +129,24 @@ async def upload_document(
         processing_status=ProcessingStatus.UPLOADED,
     )
 
-    storage_key = f"{case_id}/{document.id}/{file.filename or 'document'}"
-    await upload_to_minio(
-        bucket="case-documents",
-        key=storage_key,
-        data=file_bytes,
-        length=len(file_bytes),
-        content_type=file.content_type or "application/octet-stream",
-    )
+    storage_key = f"{case_id}/{document.id}/{safe_name}"
 
-    import os
+    # Upload to MinIO; roll back the DB record on failure so there is no orphan.
+    try:
+        await upload_to_minio(
+            bucket="case-documents",
+            key=storage_key,
+            data=file_bytes,
+            length=len(file_bytes),
+            content_type=file.content_type or "application/octet-stream",
+        )
+    except Exception as exc:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Object storage unavailable — upload aborted: {exc}",
+        )
+
     DATA_DIR = os.environ.get("DATA_DIR", "/app/data")
     local_path = os.path.join(DATA_DIR, storage_key)
     os.makedirs(os.path.dirname(local_path), exist_ok=True)
@@ -134,27 +166,26 @@ async def upload_document(
         resource_id=str(document.id),
         metadata={
             "phase": "Evidence_Upload",
-            "description": f"Document '{file.filename}' uploaded and verified for case relevance.",
-            "file_name": file.filename or "unknown",
+            "description": f"Document '{safe_name}' uploaded and verified for case relevance.",
+            "file_name": safe_name,
             "document_type": document_type,
             "case_id": case_id
         }
     )
 
-    if background_tasks is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Background task manager unavailable",
-        )
-
-    background_tasks.add_task(
-        _run_ingestion_task,
-        str(document.id),
-        case_id,
-        storage_key,
-        file.content_type or "application/octet-stream",
-        document_type,
+    # R1 — Persistent Job Queue
+    from app.modules.ingestion.models import IngestionJob, JobStatus
+    
+    new_job = IngestionJob(
+        document_id=document.id,
+        case_id=case_id,
+        storage_key=storage_key,
+        mime_type=file.content_type or "application/octet-stream",
+        doc_type=document_type,
+        status=JobStatus.PENDING
     )
+    db.add(new_job)
+    await db.commit()
 
     return DocumentResponse.model_validate(document)
 
@@ -195,11 +226,13 @@ async def get_document_content(
     
     try:
         content = await download_file(bucket="case-documents", key=document.storage_key)
+        safe_dl_name = _safe_filename(document.file_name or "document")
         return Response(
             content=content,
             media_type=document.mime_type or "application/octet-stream",
             headers={
-                "Content-Disposition": f'inline; filename="{document.file_name}"'
+                # Use attachment + sanitized name to prevent header injection
+                "Content-Disposition": f'attachment; filename="{safe_dl_name}"'
             }
         )
     except Exception as e:

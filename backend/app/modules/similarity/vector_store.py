@@ -28,8 +28,9 @@ async def upsert_case_summary(
     """
     loop = asyncio.get_event_loop()
 
+    from app.modules.shared.qdrant_client import get_qdrant_client
     def _upsert() -> None:
-        client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+        client = get_qdrant_client()
         
         # Use UUID5 with NAMESPACE_URL for idempotent point IDs
         point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, case_id))

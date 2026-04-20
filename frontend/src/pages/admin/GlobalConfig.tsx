@@ -1,11 +1,11 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
- Settings, 
- Cpu, 
- Search, 
- Globe, 
- Save, 
+import {
+ Settings,
+ Cpu,
+ Search,
+ Globe,
+ Save,
  RefreshCcw,
  Sliders,
  Database,
@@ -17,27 +17,55 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+const CONFIG_STORAGE_KEY = 'judicial_global_config';
+
+const DEFAULT_CONFIG = {
+  model: 'qwen-2.5',
+  reranker: 'cross-encoder',
+  ragLimit: 5,
+  similarityThreshold: 0.75,
+  defaultLanguage: 'en',
+  autoAnalyze: true,
+};
+
 export default function GlobalConfig(): ReactNode {
  const { t } = useTranslation();
  const [isSaving, setIsSaving] = useState(false);
- 
- // Local state for configuration parameters
- const [config, setConfig] = useState({
- model: 'qwen-2.5',
- reranker: 'cross-encoder',
- ragLimit: 5,
- similarityThreshold: 0.75,
- defaultLanguage: 'en',
- autoAnalyze: true
+ const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+ const [config, setConfig] = useState(() => {
+   try {
+     const stored = localStorage.getItem(CONFIG_STORAGE_KEY);
+     return stored ? { ...DEFAULT_CONFIG, ...JSON.parse(stored) } : DEFAULT_CONFIG;
+   } catch {
+     return DEFAULT_CONFIG;
+   }
  });
 
+ // Clear the status badge after 3 s
+ useEffect(() => {
+   if (saveStatus !== 'idle') {
+     const timer = setTimeout(() => setSaveStatus('idle'), 3000);
+     return () => clearTimeout(timer);
+   }
+ }, [saveStatus]);
+
  const handleSave = () => {
- setIsSaving(true);
- // Simulate API call
- setTimeout(() => {
- setIsSaving(false);
- alert("System configuration updated successfully!");
- }, 1000);
+   setIsSaving(true);
+   try {
+     localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
+     setSaveStatus('success');
+   } catch {
+     setSaveStatus('error');
+   } finally {
+     setIsSaving(false);
+   }
+ };
+
+ const handleReset = () => {
+   setConfig(DEFAULT_CONFIG);
+   localStorage.removeItem(CONFIG_STORAGE_KEY);
+   setSaveStatus('idle');
  };
 
  return (
@@ -215,9 +243,17 @@ export default function GlobalConfig(): ReactNode {
  <RefreshCcw className="w-4 h-4"/>
  <span className="text-xs italic">{t('admin.globalConfig.footerHelp')}</span>
  </div>
- <div className="flex gap-4">
- <Button variant="ghost"className="font-bold">{t('admin.globalConfig.resetDefaults')}</Button>
- <Button 
+ <div className="flex items-center gap-4">
+ {saveStatus === 'success' && (
+   <span className="text-xs text-green-600 font-semibold">{t('admin.globalConfig.savedSuccess', 'Configuration saved.')}</span>
+ )}
+ {saveStatus === 'error' && (
+   <span className="text-xs text-red-600 font-semibold">{t('admin.globalConfig.savedError', 'Save failed — storage unavailable.')}</span>
+ )}
+ <Button variant="ghost" className="font-bold" onClick={handleReset}>
+   {t('admin.globalConfig.resetDefaults')}
+ </Button>
+ <Button
  className="px-10 h-12 shadow-lg shadow-primary/20 font-black uppercase tracking-widest text-xs gap-2"
  onClick={handleSave}
  disabled={isSaving}

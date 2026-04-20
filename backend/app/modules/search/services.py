@@ -64,8 +64,9 @@ class SearchService:
 
         loop = asyncio.get_event_loop()
 
+        from app.modules.shared.qdrant_client import get_qdrant_client
         def _qdrant_search():
-            client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+            client = get_qdrant_client()
             must = [FieldCondition(key="case_id", match=MatchValue(value=request.case_id))]
             if hasattr(request, "language") and request.language:
                 must.append(FieldCondition(key="language", match=MatchValue(value=request.language)))

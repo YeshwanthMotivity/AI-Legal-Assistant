@@ -41,6 +41,7 @@ class OrchestratorService:
 
         ai_start_time = time.monotonic()
         run_id = f"orchestrator_{case_id}_{int(time.time())}"
+        from app.database import AsyncSessionLocal
         initial_state: AnalysisState = {
             "user_id": user_id,
             "case_id": case_id,
@@ -57,7 +58,10 @@ class OrchestratorService:
             "model_used": None,
             "query_language": language,
             "ui_language": language or "en",
+            # Pass the session used by the calling service (sequential nodes only).
+            # Parallel nodes must NOT use this — they create their own sessions via db_factory.
             "db": self.db,
+            "db_factory": AsyncSessionLocal,
         }
         import logging
         logger = logging.getLogger(__name__)

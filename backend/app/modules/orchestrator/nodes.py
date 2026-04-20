@@ -240,8 +240,8 @@ async def document_agent_node(state: AnalysisState) -> dict[str, Any]:
         for row in rows
     ]
 
-    # 2. Build enriched query ONCE
-    query_text = await _build_enriched_query(state)
+    # 2. Build enriched query ONCE (returns text + detected language, never mutates state)
+    query_text, detected_language = await _build_enriched_query(state)
     logger.info(f"--- Node: document_agent_node built query ({len(query_text)} chars), now embedding...")
 
     # 3. Embed ONCE
@@ -258,53 +258,45 @@ async def document_agent_node(state: AnalysisState) -> dict[str, Any]:
 
     return {
         "entities": entities,
-        "query_text": query_text,           # ← stored in state
-        "query_embedding": query_embedding, # ← stored in state
+        "query_text": query_text,
+        "query_language": detected_language,
+        "query_embedding": query_embedding,
     }
 
 
-async def _build_enriched_query(state: AnalysisState) -> str:
+async def _build_enriched_query(state: AnalysisState) -> tuple[str, str]:
+    """Returns (query_text, detected_language). Never mutates state directly."""
     db: AsyncSession = state["db"]
     from app.modules.case.models import Case
     result = await db.execute(select(Case).where(Case.id == state["case_id"]))
     case = result.scalar_one_or_none()
-    
+
     if not case:
         query = f"case {state['case_id']}"
-        state["query_language"] = await _detect_query_language(query)
-        return query
-    
+        return query, await _detect_query_language(query)
+
     parts = [
         case.title,
         case.case_type.value if case.case_type else "",
         f"Claimant: {case.claimant_name}" if case.claimant_name else "",
         f"Respondent: {case.respondent_name}" if case.respondent_name else "",
         case.description or "",
-        case.notes or ""
+        case.notes or "",
     ]
     query = " ".join(p for p in parts if p).strip()
-    state["query_language"] = await _detect_query_language(query)
-    return query
+    return query, await _detect_query_language(query)
 
 
 async def search_agent_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: search_agent_node starting for case {state['case_id']}")
-    db: AsyncSession = state["db"]
-    
-    await AuditService(db).log(
-        user_id=state["user_id"],
-        action="ai_node_start",
-        resource_type="case",
-        resource_id=state["case_id"],
-        metadata={
-            "phase": "Vector_Retrieval",
-            "node": "Search Agent",
-            "description": "Performing neural search across judicial document embeddings."
-        }
-    )
 
-    # Use pre-computed values
+    # Parallel node: use its own session to avoid concurrent access on the shared session.
+    db_factory = state.get("db_factory")
+    if db_factory is None:
+        logger.error("search_agent_node: db_factory missing from state")
+        return {"search_results": []}
+
     query_text = state.get("query_text")
     query_embedding = state.get("query_embedding")
 
@@ -315,18 +307,32 @@ async def search_agent_node(state: AnalysisState) -> dict[str, Any]:
     from app.modules.search.schemas import SearchRequest
     from app.modules.search.services import SearchService
 
-    try:
-        response = await SearchService(db).search(
-            SearchRequest(query_text=query_text or "", case_id=state["case_id"], top_k=5),
-            precomputed_embedding=query_embedding,
+    async with db_factory() as db:
+        await AuditService(db).log(
+            user_id=state["user_id"],
+            action="ai_node_start",
+            resource_type="case",
+            resource_id=state["case_id"],
+            metadata={
+                "phase": "Vector_Retrieval",
+                "node": "Search Agent",
+                "description": "Performing neural search across judicial document embeddings.",
+            },
         )
-        search_results = [
-            {"chunk_text": item.chunk_text, "score": item.score, "document_id": item.document_id}
-            for item in response.results if item.score > 0.6
-        ]
-    except Exception as e:
-        logger.error(f"Search agent failed for case {state['case_id']}: {e}")
-        search_results = []
+        await db.commit()
+
+        try:
+            response = await SearchService(db).search(
+                SearchRequest(query_text=query_text or "", case_id=state["case_id"], top_k=5),
+                precomputed_embedding=query_embedding,
+            )
+            search_results = [
+                {"chunk_text": item.chunk_text, "score": item.score, "document_id": item.document_id}
+                for item in response.results if item.score > 0.6
+            ]
+        except Exception as e:
+            logger.error(f"Search agent failed for case {state['case_id']}: {e}")
+            search_results = []
 
     duration = time.time() - start_time
     logger.info(f"--- Node: search_agent_node finished in {duration:.2f}s")
@@ -336,19 +342,23 @@ async def search_agent_node(state: AnalysisState) -> dict[str, Any]:
 async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: precedent_search_node starting for case {state['case_id']}")
-    db: AsyncSession = state["db"]
-    
-    await AuditService(db).log(
-        user_id=state["user_id"],
-        action="ai_node_start",
-        resource_type="case",
-        resource_id=state["case_id"],
-        metadata={
-            "phase": "Precedent_Analysis",
-            "node": "Precedent Agent",
-            "description": "Identifying relevant judicial precedents from the high court database."
-        }
-    )
+
+    # Parallel node — use its own session.
+    db_factory = state.get("db_factory")
+    if db_factory:
+        async with db_factory() as _audit_db:
+            await AuditService(_audit_db).log(
+                user_id=state["user_id"],
+                action="ai_node_start",
+                resource_type="case",
+                resource_id=state["case_id"],
+                metadata={
+                    "phase": "Precedent_Analysis",
+                    "node": "Precedent Agent",
+                    "description": "Identifying relevant judicial precedents from the high court database.",
+                },
+            )
+            await _audit_db.commit()
 
     query_embedding = state.get("query_embedding")
 
@@ -359,8 +369,8 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
     from qdrant_client.models import Filter, FieldCondition, MatchValue
 
     async def _qdrant_search():
-        from qdrant_client import AsyncQdrantClient
-        client = AsyncQdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+        from app.modules.shared.qdrant_client import get_async_qdrant_client
+        client = get_async_qdrant_client()
         # Self-matching protection: Filter out this case_id
         must_not = [FieldCondition(key="case_id", match=MatchValue(value=state["case_id"]))]
         # 1. Try with strict language filter
@@ -393,7 +403,6 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
                 result.get("points", []) if isinstance(result, dict) else result
             )
 
-        await client.close()
         return points
 
     try:
@@ -532,19 +541,23 @@ async def precedent_search_node(state: AnalysisState) -> dict[str, Any]:
 async def law_search_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: law_search_node starting for case {state['case_id']}")
-    db: AsyncSession = state["db"]
-    
-    await AuditService(db).log(
-        user_id=state["user_id"],
-        action="ai_node_start",
-        resource_type="case",
-        resource_id=state["case_id"],
-        metadata={
-            "phase": "Legal_Validation",
-            "node": "Law Agent",
-            "description": "Cross-referencing statutory articles and civil code requirements."
-        }
-    )
+
+    # Parallel node — use its own session.
+    db_factory = state.get("db_factory")
+    if db_factory:
+        async with db_factory() as _audit_db:
+            await AuditService(_audit_db).log(
+                user_id=state["user_id"],
+                action="ai_node_start",
+                resource_type="case",
+                resource_id=state["case_id"],
+                metadata={
+                    "phase": "Legal_Validation",
+                    "node": "Law Agent",
+                    "description": "Cross-referencing statutory articles and civil code requirements.",
+                },
+            )
+            await _audit_db.commit()
 
     query_embedding = state.get("query_embedding")
 
@@ -555,8 +568,8 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
     from qdrant_client.models import Filter, FieldCondition, MatchValue
 
     async def _qdrant_search():
-        from qdrant_client import AsyncQdrantClient
-        client = AsyncQdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+        from app.modules.shared.qdrant_client import get_async_qdrant_client
+        client = get_async_qdrant_client()
         
         must = []
         must_not = []
@@ -594,7 +607,6 @@ async def law_search_node(state: AnalysisState) -> dict[str, Any]:
                 result.get("points", []) if isinstance(result, dict) else result
             )
 
-        await client.close()
         return points
 
     try:
@@ -693,19 +705,23 @@ async def _citation_bridge_sync_fallback(extended_citations: list[str], case_id:
 async def calculation_agent_node(state: AnalysisState) -> dict[str, Any]:
     start_time = time.time()
     logger.info(f"--- Node: calculation_agent_node starting for case {state['case_id']}")
-    db: AsyncSession = state["db"]
-    
-    await AuditService(db).log(
-        user_id=state["user_id"],
-        action="ai_node_start",
-        resource_type="case",
-        resource_id=state["case_id"],
-        metadata={
-            "phase": "Numerical_Analysis",
-            "node": "Calculation Agent",
-            "description": "Synthesizing financial metrics and entitlement breakdowns."
-        }
-    )
+
+    # Parallel node — use its own session.
+    db_factory = state.get("db_factory")
+    if db_factory:
+        async with db_factory() as _audit_db:
+            await AuditService(_audit_db).log(
+                user_id=state["user_id"],
+                action="ai_node_start",
+                resource_type="case",
+                resource_id=state["case_id"],
+                metadata={
+                    "phase": "Numerical_Analysis",
+                    "node": "Calculation Agent",
+                    "description": "Synthesizing financial metrics and entitlement breakdowns.",
+                },
+            )
+            await _audit_db.commit()
 
     entities = state.get("entities", [])
     salary = _parse_salary(_first_entity(entities, "salary"))
@@ -863,9 +879,9 @@ def _cleanse_text(text: Any) -> str:
     return str(text).replace("\n", " ").replace("  ", " ").strip()
 
 
-def _is_hallucination(text: str) -> bool:
+def _is_missing_data(text: str) -> bool:
+    """Returns True when LLM returned a placeholder instead of real content."""
     if not text: return True
-    # Basic check for typical LLM "I don't know" phrases used in place of data
     low = text.lower()
     return any(p in low for p in ["unknown", "n/a", "[missing]", "hallucination detected"])
 
@@ -1163,8 +1179,8 @@ async def explainability_builder_node(state: AnalysisState) -> dict[str, Any]:
         if " | MATCH:" in title:
             title = title.split(" | MATCH:")[0].strip()
             
-        if _is_hallucination(title) or _is_hallucination(content): return None
-        
+        if _is_missing_data(title) or _is_missing_data(content): return None
+
         title = _cleanse_text(title)
         content = _cleanse_text(content)
         
@@ -1217,22 +1233,10 @@ async def judgment_drafting_agent_node(state: AnalysisState) -> dict[str, Any]:
         resource_type="case",
         resource_id=state["case_id"],
         metadata={
-            "phase": "Judicial_Review",
-            "node": "Drafting Agent",
-            "description": "Formulating the final judicial determination and court orders."
-        }
-    )
-    
-    await AuditService(db).log(
-        user_id=state["user_id"],
-        action="ai_node_start",
-        resource_type="case",
-        resource_id=state["case_id"],
-        metadata={
             "phase": "Judgment_Drafting",
             "node": "Drafting Agent",
-            "description": "Generating the formal court ruling and finalizing judicial orders."
-        }
+            "description": "Generating the formal court ruling and finalizing judicial orders.",
+        },
     )
 
     reasoning = state.get("reasoning", {})

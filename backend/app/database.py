@@ -55,6 +55,7 @@ async def init_db():
     from app.modules.document import models as document_models  # noqa: F401
     from app.modules.evaluation import models as evaluation_models  # noqa: F401
     from app.modules.audit import models as audit_models  # noqa: F401
+    from app.modules.ingestion import models as ingestion_models  # noqa: F401
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -65,7 +66,7 @@ async def init_db():
     async with AsyncSessionLocal() as session:
         count_result = await session.execute(select(func.count(User.id)))
         user_count = count_result.scalar_one()
-        if user_count == 0:
+        if user_count == 0 and settings.debug:
             default_users = [
                 User(
                     id=str(uuid.uuid4()),
@@ -97,6 +98,12 @@ async def init_db():
             ]
             session.add_all(default_users)
             await session.commit()
+        elif user_count == 0 and not settings.debug:
+            import logging
+            logging.getLogger(__name__).warning(
+                "No users exist in production mode. "
+                "Provision users via Keycloak or the admin API."
+            )
 
 
 async def close_db():

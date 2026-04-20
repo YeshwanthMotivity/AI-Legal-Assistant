@@ -8,7 +8,7 @@ import httpx
 import json
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from qdrant_client import QdrantClient
+from app.modules.shared.qdrant_client import get_qdrant_client as _get_qdrant
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 from app.config import settings
 from app.modules.evaluation.repository import EvaluationEventRepository
@@ -95,7 +95,7 @@ class SimilarityService:
 
         def _fetch_active_case_vector():
             """Fetch the stored embedding vector for the active case from case_summaries."""
-            client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+            client = _get_qdrant()
             try:
                 # Search for the active case's point in case_summaries
                 search_filter = Filter(
@@ -191,7 +191,7 @@ class SimilarityService:
         loop = asyncio.get_event_loop()
 
         def _qdrant_search():
-            client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+            client = _get_qdrant()
             
             # Filter by case_type and exclude the current case
             search_filter = Filter(
@@ -403,7 +403,7 @@ class SimilarityService:
 
     async def get_precedent(self, precedent_id: str, language: str = "en") -> PrecedentDetail:
         """Fetch full details of a precedent from Qdrant, with language-aware lookup."""
-        client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+        client = _get_qdrant()
         point = None
 
         def _scroll_filter(must_conditions):

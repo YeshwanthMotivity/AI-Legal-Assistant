@@ -20,8 +20,9 @@ async def upsert_chunks(
     logger.info(f"upsert_chunks called for case {case_id}, doc {document_id} with {len(chunks)} chunks and {len(embeddings)} embeddings")
     loop = asyncio.get_event_loop()
 
+    from app.modules.shared.qdrant_client import get_qdrant_client
     def _upsert() -> None:
-        client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+        client = get_qdrant_client()
         points = []
         for idx, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
             point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{document_id}:{idx}"))

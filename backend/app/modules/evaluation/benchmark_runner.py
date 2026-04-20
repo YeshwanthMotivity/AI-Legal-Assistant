@@ -13,7 +13,6 @@ from datetime import datetime
 from typing import Optional
 
 import httpx
-from qdrant_client import QdrantClient
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -128,7 +127,8 @@ class BenchmarkRunner:
             return embeddings[0]
 
     def _qdrant_search(self, embedding: list[float]) -> list[str]:
-        client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+        from app.modules.shared.qdrant_client import get_qdrant_client
+        client = get_qdrant_client()
 
         if hasattr(client, "search"):
             results = client.search(
